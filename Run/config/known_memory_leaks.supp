@@ -1,0 +1,113 @@
+{
+   libCint_leaks
+   Memcheck:Leak
+   ...
+   obj:*/libCint.so
+}
+
+{
+   libRIO_leaks
+   Memcheck:Leak
+   ...
+   obj:*/libRIO.so
+}
+
+{
+   dyld_leaks
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/dyld
+}
+
+{
+   Foundation_C_leaks
+   Memcheck:Leak
+   ...
+   obj:/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation
+}
+
+{
+   CoreFoundation_A_leaks
+   Memcheck:Leak
+   ...
+   obj:/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+}
+
+{
+   libsystem_info_leaks
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/system/libsystem_info.dylib
+}
+
+{
+   StreamerInfo_leaks
+   Memcheck:Leak
+   ...
+   fun:*TStreamerInfo*Compile*
+}
+
+{
+   basic_ostream_buffer
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*char_traits*basic_ostream*
+}
+
+{
+   basic_istream_buffer
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*basic_istream*char_traits*
+}
+
+{
+   exception_buffer
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:__cxa_get_globals
+   fun:__cxa_throw
+}
+
+{
+   libCore_leaks_ROOT
+   Memcheck:Leak
+   ...
+   fun:*ROOT*
+   obj:*/libCore.so
+}
+
+{
+   libCore_leaks_TClass
+   Memcheck:Leak
+   ...
+   fun:*TClass*
+   obj:*/libCore.so
+}
+
+{
+   libCore_leaks_TCint
+   Memcheck:Leak
+   ...
+   fun:*TCint*
+   obj:*/libCore.so
+}
+
+{
+   libCore_leaks_TApplication
+   Memcheck:Leak
+   ...
+   fun:*TApplication*
+   obj:*/libCore.so
+}
+
+{
+   libCore_leaks_TFormula
+   Memcheck:Leak
+   ...
+   fun:*TFormula*
+   obj:*/libCore.so
+}

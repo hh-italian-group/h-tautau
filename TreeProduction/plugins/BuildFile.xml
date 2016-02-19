@@ -1,0 +1,5 @@
+<use   name="HHbbTauTau/TreeProduction"/>
+
+<library   file="*.cc" name="TreeMakerPlugins">
+  <flags   EDM_PLUGIN="1"/>
+</library>

@@ -1,0 +1,12 @@
+<lcgdict>
+    <selection>
+        <class name="pat::Vertex"  ClassVersion="0">
+            <version ClassVersion="0" checksum="1676559698"/>
+        </class>
+        <class name="std::vector<pat::Vertex>" />
+        <class name="std::vector<pat::Vertex>::const_iterator" />
+        <class name="edm::Wrapper<std::vector<pat::Vertex> >" />
+        <class name="std::vector<float>" />
+        <class name="std::vector<math::XYZVector>" />
+    </selection>
+</lcgdict>

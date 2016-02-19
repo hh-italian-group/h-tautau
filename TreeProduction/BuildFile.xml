@@ -1,0 +1,33 @@
+<use name="rootrflx"/>
+<use name="HLTrigger/HLTcore" />
+<use name="RecoEgamma/EgammaIsolationAlgos" />
+<use name="DataFormats/PatCandidates" />
+<use name="DataFormats/TauReco" />
+<use name="DataFormats/METReco" />
+<use name="DataFormats/MuonReco" />
+<use name="DataFormats/HepMCCandidate" />
+<use name="CommonTools/CandUtils" />
+<use name="CommonTools/ParticleFlow" />
+<use name="CommonTools/UtilAlgos" />
+<use name="CondFormats/JetMETObjects" />
+<use name="CondFormats/EgammaObjects" />
+<use name="JetMETCorrections/Objects" />
+<use name="JetMETCorrections/Algorithms" />
+<use name="JetMETCorrections/Modules" />
+<use name="PhysicsTools/PatAlgos" />
+<use name="PhysicsTools/PatUtils" />
+<use name="PhysicsTools/CandUtils" />
+<use name="PhysicsTools/UtilAlgos" />
+<use name="PhysicsTools/HepMCCandAlgos" />
+<use name="PhysicsTools/SelectorUtils" />
+<use name="PhysicsTools/IsolationAlgos" />
+<use name="PhysicsTools/Utilities" />
+<use name="MuonAnalysis/MomentumScaleCalibration" />
+<use name="RecoTauTag/TauTagTools" />
+<use name="RecoTauTag/RecoTau" />
+<use name="RecoMET/METAlgorithms" />
+<use name="RecoMuon/MuonIsolation" />
+<use name="HHbbTauTau/PatProduction" />
+<export>
+  <lib name="1"/>
+</export>
