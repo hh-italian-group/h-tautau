@@ -6,10 +6,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalyzerData.h"
 #include "Candidate.h"
 
-#include "microAODProduction/interface/Candidate.h"
-
 #include "SVfit.h"
-#include "KinFit.h"
+//#include "KinFit.h"
 
 #define SELECTION_ENTRY(name) \
     ANA_DATA_ENTRY(cuts::ObjectSelector, name) \
@@ -41,26 +39,26 @@ private:
     double weight;
 };
 
-struct SelectionResults {
-    static constexpr size_t NumberOfLegs = 2;
+//struct SelectionResults {
+//    static constexpr size_t NumberOfLegs = 2;
 
-    virtual ~SelectionResults() {}
-    CandidatePtr higgs;
-    sv_fit::CombinedFitResults svfitResults;
-    kinematic_fit::four_body::FitResults kinfitResults;
-    CandidatePtrVector jets;
-    CandidatePtrVector jetsPt20;
-    CandidatePtrVector bjets_all;
-    CandidatePtrVector retagged_bjets;
-    VertexPtrVector vertices;
-    ntuple::MET pfMET;
-    ntuple::MET MET_with_recoil_corrections;
-    ntuple::EventType eventType;
+//    virtual ~SelectionResults() {}
+//    CandidatePtr higgs;
+//    sv_fit::CombinedFitResults svfitResults;
+//    kinematic_fit::four_body::FitResults kinfitResults;
+//    CandidatePtrVector jets;
+//    CandidatePtrVector jetsPt20;
+//    CandidatePtrVector bjets_all;
+//    CandidatePtrVector retagged_bjets;
+//    VertexPtrVector vertices;
+//    ntuple::MET pfMET;
+//    ntuple::MET MET_with_recoil_corrections;
+//    ntuple::EventType eventType;
 
-    VertexPtr GetPrimaryVertex() const { return vertices.front(); }
-    virtual CandidatePtr GetLeg(size_t leg_id) const = 0;
-    virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
-};
+//    VertexPtr GetPrimaryVertex() const { return vertices.front(); }
+//    virtual CandidatePtr GetLeg(size_t leg_id) const = 0;
+//    virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
+//};
 
 struct SelectionResultsV2 {
     static constexpr size_t NumberOfLegs = 2;
