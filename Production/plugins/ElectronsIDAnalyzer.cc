@@ -269,8 +269,8 @@ ElectronsIDAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   lumi_ = iEvent.id().luminosityBlock();
   evtnum_ = iEvent.id().event();
 
-  syncTree.run() = iEvent.id().run();
-  syncTree.evt() = iEvent.id().event();
+  syncTree().run = iEvent.id().run();
+  syncTree().evt = iEvent.id().event();
 
   // Retrieve the collection of electrons from the event.
   // If we fail to retrieve the collection with the standard AOD
@@ -360,9 +360,9 @@ ElectronsIDAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
       }
     if(nTau_ == 1){
-        syncTree.pt_1() = tau->pt();
-        syncTree.eta_1() = tau->eta();
-        syncTree.phi_1() = tau->phi();
+        syncTree().pt_1 = tau->pt();
+        syncTree().eta_1 = tau->eta();
+        syncTree().phi_1 = tau->phi();
     }
   }
   //tauTree_->Fill();
