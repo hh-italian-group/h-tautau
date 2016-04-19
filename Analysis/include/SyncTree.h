@@ -121,6 +121,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Float_t>, rawf_jets) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VAR(std::vector<Float_t>, mva_jets) /* Jet MVA id value */ \
     VAR(std::vector<Float_t>, csv_jets) /* Jet CSV value */ \
+    VAR(std::vector<Int_t>, partonFlavour_jets) \
     /* Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau) */ \
     /* VAR(Float_t, jpt_2)  Jet Pt after corrections */ \
     /* VAR(Float_t, jeta_2)  Jet Eta */ \

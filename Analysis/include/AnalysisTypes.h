@@ -53,7 +53,7 @@ std::istream& operator>> (std::istream& s, Channel& c)
             return s;
         }
     }
-    throw exception("Unknown channel name '") << name << "'.";
+    throw exception("Unknown channel name '%1%'.") % name;
 }
 
 std::ostream& operator<< (std::ostream& s, const EventEnergyScale& es)
@@ -72,7 +72,7 @@ std::istream& operator>> (std::istream& s, EventEnergyScale& es)
             return s;
         }
     }
-    throw exception("Unknown event energy scale '") << name << "'.";
+    throw exception("Unknown event energy scale '%1%'.") % name;
 }
 
 

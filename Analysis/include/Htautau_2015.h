@@ -13,22 +13,15 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //#include "../../TreeProduction/interface/Tau.h"
 //#include "../../TreeProduction/interface/Jet.h"
 
+
 namespace analysis{
 
-enum class DataSourceType { Spring15MC=0, Fall15MC=1, Run2015B=2, Run2015C , Run2015D };
+enum class DataSourceType { Spring15MC=0, Run2015B=1, Run2015C , Run2015D };
 
 static const std::map<DataSourceType,std::string> dataSourceTypeMap = {{DataSourceType::Spring15MC , "Spring15MC"},
-                                                                       {DataSourceType::Fall15MC , "Fall15MC"},
                                                                        {DataSourceType::Run2015B , "Run2015B"},
                                                                        {DataSourceType::Run2015C , "Run2015C"},
                                                                        {DataSourceType::Run2015D , "Run2015D"}};
-
-static const std::map<std::string, DataSourceType> stringToDataSourceTypeMap = {{ "Spring15MC", DataSourceType::Spring15MC},
-                                                                       { "Fall15MC", DataSourceType::Fall15MC},
-                                                                       { "Run2015B" , DataSourceType::Run2015B},
-                                                                       { "Run2015C" , DataSourceType::Run2015C},
-                                                                       { "Run2015D" , DataSourceType::Run2015D}};
-
 
 std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType) {
     s << dataSourceTypeMap.at(dataSourceType);
@@ -38,6 +31,29 @@ std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType)
 }//namespace analysis
 
 namespace cuts {
+
+// To be checked!
+namespace massWindow{
+    const double m_tautau_low = 90;
+    const double m_tautau_high = 150;
+    const double m_bb_low = 70;
+    const double m_bb_high = 150;
+}
+
+// To be checked!
+namespace WjetsBackgroundEstimation {
+    const double HighMtRegion = 70; // > For W-jets data driven estimation
+    const double HighMtRegion_low = 60; // > For W-jets data driven estimation in 2jet2tag for ltau channels
+    const double HighMtRegion_high = 120; // < For W-jets data driven estimation in 2jet2tag for ltau channels
+}
+
+// To be checked!
+namespace IsolationRegionForLeptonicChannel {
+    const double pfRelIso = 0.1;
+    const double isolation_low = 0.2; // > For QCD data driven estimation in 2jet*tag for ltau channels
+    const double isolation_high = 0.5; // < For QCD data driven estimation in 2jet*tag for ltau channels
+}
+
 namespace Htautau_2015 {
 // AN-2013/178 H->etau,mutau
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/analyzers/DiLeptonAnalyzer.py
@@ -50,14 +66,16 @@ const double DeltaR_triggerMatch = 0.5; // <
 namespace MuTau {
     namespace trigger {
         // https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2015  - Trigger Session
-        const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
-                                    {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1_v1"}},
-                                     {analysis::DataSourceType::Fall15MC,{"HLT_IsoMu18_v2"}},
+        const std::map<analysis::DataSourceType , std::set<std::string>> hltPathMaps =
+                                    {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1"}},
                                      {analysis::DataSourceType::Run2015B,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
                                                                             "HLT_IsoMu24_eta2p1_v2"}},
                                      {analysis::DataSourceType::Run2015C,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
                                                                           "HLT_IsoMu24_eta2p1_v2"}},
                                      {analysis::DataSourceType::Run2015D,{"HLT_IsoMu18_v"}}};
+
+        const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_v1"};
+        //const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v1","HLT_IsoMu24_eta2p1_v1"};
     }
 
     namespace muonID {
@@ -72,6 +90,7 @@ namespace MuTau {
         //After Synctuple
 
         const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorking2015#Muons
+        const double mt = 30; // <
 
      /*   //const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
                                          //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
@@ -98,6 +117,7 @@ namespace MuTau {
 
         const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double againstElectronVLooseMVA5 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstElectronVLooseMVA6 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h 76x
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
                                                       // GeV < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
 
@@ -274,7 +294,7 @@ namespace muonVeto {
 
 namespace jetID {
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
-    const double pt = 30; // > , njets is filled with a 30 GeV cuts. All the other variables use jets with 20 pt cut
+    const double pt = 30; // >
     const double eta = 4.7; // <
     const bool puLooseID = true; // =
     const double deltaR_signalObjects = 0.5; // >
@@ -284,32 +304,36 @@ namespace jetID {
 
     const double pt_loose = 20; // >
 
-    //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
-    inline bool passPFLooseId(const pat::Jet& jet)
-    {
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
-        if(momentum.E() == 0)                                  return false;
-        if(jet.neutralHadronEnergyFraction() > 0.99)   return false;
-        if(jet.neutralEmEnergyFraction()     > 0.99)   return false;
-        if(jet.nConstituents() <  1)                   return false;
-        if(jet.chargedHadronEnergyFraction() <= 0 && std::abs(jet.eta()) < 2.4 ) return false;
-        if(jet.chargedEmEnergyFraction() >  0.99  && std::abs(jet.eta()) < 2.4 ) return false;
-        if(jet.chargedMultiplicity()     <= 0      && std::abs(jet.eta()) < 2.4 ) return false;
-        return true;
-    }
+    // https://github.com/ajgilbert/ICHiggsTauTau/blob/production-27Feb2014/plugins/MVAMETPairProducer.cc#L410
+//    inline bool passPFLooseId(const ntuple::Jet& jet)
+//    {
+//        TLorentzVector momentum;
+//        momentum.SetPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
+//        if(momentum.E() == 0)                                  return false;
+//        if(jet.neutralHadronEnergyFraction > 0.99)   return false;
+//        if(jet.neutralEmEnergyFraction     > 0.99)   return false;
+//        if(jet.nConstituents <  2)                          return false;
+//        if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
+//        if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
+//        if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
+//        return true;
+//    }
 }
 
 namespace btag {
-    // pfCombinedInclusiveSecondaryVertexV2BJetTags, twiki
-    const double CSVL = 0.605; // > loose
-    const double CSVM = 0.89; // > medium
-    const double CSVT = 0.97; // > tight
+    // twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
+    // const double CSVL = 0.605; // > loose
+    // const double CSVM = 0.89; // > medium
+    // const double CSVT = 0.97; // > tight
+    // Fall 2015
+    const double CSVL = 0.460; // > loose
+    const double CSVM = 0.800; // > medium
+    const double CSVT = 0.935; // > tight
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
     const double pt = 20; // >
     const double eta = 2.4; // <
-    const double CSV = 0.8; // > HTauTau Twiki
+    const double CSV = CSVM; // >
     // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
     const bool puLooseID = true; // =
     const bool pfLooseID = true; // =
@@ -336,22 +360,22 @@ namespace tauCorrections {
 
     // For taus that matched MC truth.
     // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.
-    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode,
-                                      bool useLegacyCorrections)
-    {
-        if(!hasMCmatch) return 1.0;
-        if(decayMode == ntuple::tau_id::kOneProng1PiZero || decayMode == ntuple::tau_id::kOneProng2PiZero) {
-            if(useLegacyCorrections)
-                return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
-            return 1.012;
-        }
-        if(decayMode == ntuple::tau_id::kThreeProng0PiZero) {
-            if(useLegacyCorrections)
-                return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
-            return 1.012;
-        }
-        return 1.0;
-    }
+//    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode,
+//                                      bool useLegacyCorrections)
+//    {
+//        if(!hasMCmatch) return 1.0;
+//        if(decayMode == ntuple::tau_id::kOneProng1PiZero || decayMode == ntuple::tau_id::kOneProng2PiZero) {
+//            if(useLegacyCorrections)
+//                return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
+//            return 1.012;
+//        }
+//        if(decayMode == ntuple::tau_id::kThreeProng0PiZero) {
+//            if(useLegacyCorrections)
+//                return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
+//            return 1.012;
+//        }
+//        return 1.0;
+//    }
 }
 
 namespace jetToTauFakeRateWeight {
@@ -367,17 +391,17 @@ namespace jetToTauFakeRateWeight {
 namespace electronEtoTauFakeRateWeight {
 
     //inline double CalculateEtoTauFakeWeight(const ntuple::Tau& tau_leg)
-    inline double CalculateEtoTauFakeWeight(double tau_eta, ntuple::tau_id::hadronicDecayMode tau_decayMode)
-    {
-        static const double eta = 1.5 ;
-        static const std::map<ntuple::tau_id::hadronicDecayMode, std::vector<double>> decayModeMap= {
-        { ntuple::tau_id::kOneProng0PiZero, {1.37 , 1.11} }, { ntuple::tau_id::kOneProng1PiZero, {2.18 , 0.47} } };
+//    inline double CalculateEtoTauFakeWeight(double tau_eta, ntuple::tau_id::hadronicDecayMode tau_decayMode)
+//    {
+//        static const double eta = 1.5 ;
+//        static const std::map<ntuple::tau_id::hadronicDecayMode, std::vector<double>> decayModeMap= {
+//        { ntuple::tau_id::kOneProng0PiZero, {1.37 , 1.11} }, { ntuple::tau_id::kOneProng1PiZero, {2.18 , 0.47} } };
 
-        if (!decayModeMap.count(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)))
-            return 1;
-        const size_t eta_bin = std::abs(tau_eta) < eta ? 0 : 1;
-        return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)).at(eta_bin);
-    }
+//        if (!decayModeMap.count(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)))
+//            return 1;
+//        const size_t eta_bin = std::abs(tau_eta) < eta ? 0 : 1;
+//        return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)).at(eta_bin);
+//    }
 
 }
 
@@ -402,8 +426,8 @@ namespace DYEmbedded {
     const double deltaR_matchGenParticle = DrellYannCategorization::deltaR_matchGenParticle;
 }
 
-//namespace customTauMVA {
-//    // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/Utilities/src/FnPredicates.cc#L319
+namespace customTauMVA {
+    // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/Utilities/src/FnPredicates.cc#L319
 //    bool ComputeAntiElectronMVA3New(const ntuple::Tau& tau, size_t WP, bool applyDzCut = false)
 //    {
 //        static size_t n_categories = 16;
@@ -436,7 +460,7 @@ namespace DYEmbedded {
 
 //        return raw > cuts.at(WP).at(u_category);
 //    }
-//}
+}
 
 } // Htautau_2015
 } // cuts
