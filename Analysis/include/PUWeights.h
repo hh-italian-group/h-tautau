@@ -43,8 +43,8 @@ public:
 
         isoIdScaleFactor = new htt_utilities::ScaleFactor();
         triggerScaleFactor = new htt_utilities::ScaleFactor();
-        isoIdScaleFactor->init_ScaleFactor("/Users/claup/workspace/HHbbTauTau_Run2/HTT-utilities/LepEffInterface/data/Muon/Muon_IdIso0p1_fall15.root");
-        triggerScaleFactor->init_ScaleFactor("/Users/claup/workspace/HHbbTauTau_Run2/HTT-utilities/LepEffInterface/data/Muon/Muon_IsoMu18_fall15.root");
+        isoIdScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Muon/Muon_IdIso0p1_fall15.root");
+        triggerScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Muon/Muon_IsoMu18_fall15.root");
 
         if(is_data && apply_pu_weight)
             throw exception("Inconsistend event weight configuration: requested to apply PU weight for data sample.");
