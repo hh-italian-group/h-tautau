@@ -83,23 +83,24 @@ private:
     CandidateV2PtrVector finalStateDaughters;
 
     const reco::LeafCandidate* ntupleObject;
+    const size_t index;
 
 public:
     template<typename PATObject>
-    explicit CandidateV2(const PATObject& _ntupleObject) :
+    explicit CandidateV2(const PATObject& _ntupleObject, const size_t n=-1) :
         type(TypeFromNtupleObject<PATObject>(_ntupleObject)), charge(_ntupleObject.charge()),
         momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt(), _ntupleObject.eta(), _ntupleObject.phi(), _ntupleObject.mass())),
         has_vertexPosition(true), vertexPosition(_ntupleObject.vx(), _ntupleObject.vy(), _ntupleObject.vz()),
-        ntupleObject(&_ntupleObject)
+        ntupleObject(&_ntupleObject), index(n)
     {}
 
     explicit CandidateV2(const pat::Jet& _ntupleObject) :
         type(TypeFromNtupleObject<pat::Jet>(_ntupleObject)), charge(UnknownCharge()),
         momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt(), _ntupleObject.eta(), _ntupleObject.phi(), _ntupleObject.mass())),
-        has_vertexPosition(false), ntupleObject(&_ntupleObject) {}
+        has_vertexPosition(false), ntupleObject(&_ntupleObject), index(-1) {}
 
     CandidateV2(Type _type, const CandidateV2Ptr& daughter1, const CandidateV2Ptr& daughter2)
-        : type(_type), has_vertexPosition(false), ntupleObject(nullptr)
+        : type(_type), has_vertexPosition(false), ntupleObject(nullptr), index(-1)
     {
         if(!daughter1 || !daughter2)
             throw exception("Candidate daughters can't be nullptr.");
@@ -121,6 +122,7 @@ public:
     }
 
     Type GetType() const { return type; }
+    const size_t GetIndex() const { return index; };
     int GetCharge() const { return charge; }
     const TLorentzVector& GetMomentum() const { return momentum; }
     bool HasVertexPosition() const { return has_vertexPosition; }
@@ -301,7 +303,7 @@ const std::map<CandidateV2::Type, std::string> CandidateV2TypeNameMap = {
 
 // enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
 
-std::ostream& operator<< (std::ostream& s, const CandidateV2::Type& t)
+inline std::ostream& operator<< (std::ostream& s, const CandidateV2::Type& t)
 {
     s << detail::CandidateV2TypeNameMap.at(t);
     return s;

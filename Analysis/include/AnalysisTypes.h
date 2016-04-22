@@ -37,13 +37,13 @@ typedef std::set<EventEnergyScale> EventEnergyScaleSet;
 
 const std::set<EventEnergyScale> AllEventEnergyScales = tools::collect_map_keys(detail::EventEnergyScaleNameMap);
 
-std::ostream& operator<< (std::ostream& s, const Channel& c)
+inline std::ostream& operator<< (std::ostream& s, const Channel& c)
 {
     s << detail::ChannelNameMap.at(c);
     return s;
 }
 
-std::istream& operator>> (std::istream& s, Channel& c)
+inline std::istream& operator>> (std::istream& s, Channel& c)
 {
     std::string name;
     s >> name;
@@ -56,13 +56,13 @@ std::istream& operator>> (std::istream& s, Channel& c)
     throw exception("Unknown channel name '%1%'.") % name;
 }
 
-std::ostream& operator<< (std::ostream& s, const EventEnergyScale& es)
+inline std::ostream& operator<< (std::ostream& s, const EventEnergyScale& es)
 {
     s << detail::EventEnergyScaleNameMap.at(es);
     return s;
 }
 
-std::istream& operator>> (std::istream& s, EventEnergyScale& es)
+inline std::istream& operator>> (std::istream& s, EventEnergyScale& es)
 {
     std::string name;
     s >> name;

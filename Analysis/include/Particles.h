@@ -60,18 +60,18 @@ public:
     }
     ParticleCode(int _raw_code, const std::string& name)
         : raw_code(_raw_code) {
-        if(Freeze())
-            throw std::runtime_error("New particle code can not be defined.");
-        if(Names().find(raw_code) != Names().end()) {
-            std::ostringstream ss;
-            ss << "Particle id " << raw_code << " is already defined.";
-            throw std::runtime_error(ss.str());
-        }
-        if(Codes().find(name) != Codes().end()) {
-            std::ostringstream ss;
-            ss << "Particle name '" << name << "' is already taken.";
-            throw std::runtime_error(ss.str());
-        }
+        // if(Freeze())
+//             throw std::runtime_error("New particle code can not be defined.");
+//         if(Names().find(raw_code) != Names().end()) {
+//             std::ostringstream ss;
+//             ss << "Particle id " << raw_code << " is already defined.";
+//             throw std::runtime_error(ss.str());
+//         }
+//         if(Codes().find(name) != Codes().end()) {
+//             std::ostringstream ss;
+//             ss << "Particle name '" << name << "' is already taken.";
+//             throw std::runtime_error(ss.str());
+//         }
 
         Names()[raw_code] = name;
         Codes()[name] = raw_code;
@@ -462,17 +462,17 @@ struct PdgParticle {
 typedef std::vector<particles::ParticleCode> ParticleCodes;
 typedef std::vector<ParticleCodes> ParticleCodes2D;
 
-std::ostream& operator<<(std::ostream& s, const Status& particleStatus){
+inline std::ostream& operator<<(std::ostream& s, const Status& particleStatus){
     s << particles::NameProvider<particles::Status>::Name(particleStatus);
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const ParticleCode& code){
+inline std::ostream& operator<<(std::ostream& s, const ParticleCode& code){
     s << code.Name();
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const PdgParticle& particle){
+inline std::ostream& operator<<(std::ostream& s, const PdgParticle& particle){
     s << particle.Name();
     return s;
 }

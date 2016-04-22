@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, run) /* Run */ \
     VAR(Int_t, lumi) /* Lumi */ \
     VAR(ULong64_t, evt) /* Evt */ \
+    VAR(Int_t, channelID) /* Channel: MuTau, ETau, TauTau */ \
     VAR(Int_t, eventType) /* event type category */ \
     VAR(Int_t, HTBin) /* event type category */ \
     VAR(Double_t, weightevt) /*Gen Event Weight*/ \
@@ -50,6 +51,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, byIsolationMVA3oldDMwoLTraw_1) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
     VAR(Float_t, byIsolationMVA3newDMwLTraw_1) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
     VAR(Float_t, byIsolationMVA3oldDMwLTraw_1) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
+    VAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
+    VAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Loose WP */ \
+    VAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Medium WP */ \
+    VAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Tight WP */ \
+    VAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime VTight WP */ \
     VAR(Float_t, chargedIsoPtSum_1) \
     VAR(Int_t, decayModeFindingOldDMs_1) /* Old Decay Mode finding */\
     VAR(Float_t, neutralIsoPtSum_1) \
@@ -82,6 +88,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, byIsolationMVA3oldDMwoLTraw_2) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
     VAR(Float_t, byIsolationMVA3newDMwLTraw_2) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
     VAR(Float_t, byIsolationMVA3oldDMwLTraw_2) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
+    VAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
+    VAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Loose WP */ \
+    VAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Medium WP */ \
+    VAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Tight WP */ \
+    VAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime VTight WP */ \
     VAR(Float_t, chargedIsoPtSum_2) \
     VAR(Int_t, decayModeFindingOldDMs_2) /* Old Decay Mode finding */\
     VAR(Float_t, neutralIsoPtSum_2) \
@@ -138,6 +149,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Float_t>, rawf_bjets) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VAR(std::vector<Float_t>, mva_bjets) /* Btag mva */ \
     VAR(std::vector<Float_t>, csv_bjets) /* Btag CSV */ \
+    VAR(std::vector<Int_t>, partonFlavour_bjets) /* Jet CSV value */ \
     /* Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
     /* VAR(Float_t, bpt_2)  Corrected BTag Pt */ \
     /* VAR(Float_t, beta_2)  Btag Eta */ \
@@ -168,5 +180,3 @@ inline float DefaultFloatFillValueForSyncTree() { return std::numeric_limits<flo
 enum class HTbinning { lt100 = 0, f100to200 = 1, f200to400 = 2, f400to600 = 3, gt600 = 4 };
 
 }
-
-
