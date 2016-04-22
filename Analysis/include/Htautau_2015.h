@@ -10,8 +10,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTools/Core/include/Tools.h"
 #include "AnalysisTools/Core/include/exception.h"
-//#include "../../TreeProduction/interface/Tau.h"
-//#include "../../TreeProduction/interface/Jet.h"
 
 namespace analysis{
 
@@ -73,19 +71,8 @@ namespace MuTau {
 
         const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorking2015#Muons
 
-     /*   //const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
-                                         //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
-        const bool isGlobalMuonPromptTight = true;
-              // = https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/DataFormats/MuonReco/src/MuonSelectors.cc#L534
-              // def: https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/DataFormats/MuonReco/src/MuonSelectors.cc#L534
-              // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
-        const bool isPFMuon = true; // = def of isTightMuon
-        const int nMatched_Stations = 1; // > def of isTightMuon
-        const int pixHits = 0; // > def of isTightMuon
-        const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
-
         const double mt = 30; // < not used for sync, only for the final selection.
-        */
+
     }
 
     namespace tauID {
@@ -98,6 +85,7 @@ namespace MuTau {
 
         const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double againstElectronVLooseMVA5 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstElectronVLooseMVA6 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h 76x
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
                                                       // GeV < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
 
@@ -295,20 +283,6 @@ namespace jetID {
 
     const double pt_loose = 20; // >
 
-    //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
-    inline bool passPFLooseId(const pat::Jet& jet)
-    {
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
-        if(momentum.E() == 0)                                  return false;
-        if(jet.neutralHadronEnergyFraction() > 0.99)   return false;
-        if(jet.neutralEmEnergyFraction()     > 0.99)   return false;
-        if(jet.nConstituents() <  1)                   return false;
-        if(jet.chargedHadronEnergyFraction() <= 0 && std::abs(jet.eta()) < 2.4 ) return false;
-        if(jet.chargedEmEnergyFraction() >  0.99  && std::abs(jet.eta()) < 2.4 ) return false;
-        if(jet.chargedMultiplicity()     <= 0      && std::abs(jet.eta()) < 2.4 ) return false;
-        return true;
-    }
 }
 
 namespace btag {
@@ -344,25 +318,6 @@ namespace tauCorrections {
     const double deltaR = 0.3; // < Updated to be compatible with H->tautau code
 
     const double energyUncertainty = 0.03;
-
-    // For taus that matched MC truth.
-    // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.
-    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode,
-                                      bool useLegacyCorrections)
-    {
-        if(!hasMCmatch) return 1.0;
-        if(decayMode == ntuple::tau_id::kOneProng1PiZero || decayMode == ntuple::tau_id::kOneProng2PiZero) {
-            if(useLegacyCorrections)
-                return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
-            return 1.012;
-        }
-        if(decayMode == ntuple::tau_id::kThreeProng0PiZero) {
-            if(useLegacyCorrections)
-                return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
-            return 1.012;
-        }
-        return 1.0;
-    }
 }
 
 namespace jetToTauFakeRateWeight {
@@ -372,24 +327,6 @@ namespace jetToTauFakeRateWeight {
         const double tau_pt = tauPt < 200 ? tauPt : 200 ;
         return (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
     }
-}
-
-// twiki HiggsToTauTauWorkingSummer2013
-namespace electronEtoTauFakeRateWeight {
-
-    //inline double CalculateEtoTauFakeWeight(const ntuple::Tau& tau_leg)
-    inline double CalculateEtoTauFakeWeight(double tau_eta, ntuple::tau_id::hadronicDecayMode tau_decayMode)
-    {
-        static const double eta = 1.5 ;
-        static const std::map<ntuple::tau_id::hadronicDecayMode, std::vector<double>> decayModeMap= {
-        { ntuple::tau_id::kOneProng0PiZero, {1.37 , 1.11} }, { ntuple::tau_id::kOneProng1PiZero, {2.18 , 0.47} } };
-
-        if (!decayModeMap.count(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)))
-            return 1;
-        const size_t eta_bin = std::abs(tau_eta) < eta ? 0 : 1;
-        return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)).at(eta_bin);
-    }
-
 }
 
 namespace DrellYannCategorization {

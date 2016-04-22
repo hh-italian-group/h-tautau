@@ -1,26 +1,6 @@
-/*!
- * \file BaseEDAnalyzer.h
- * \brief Definition of BaseEDAnalyzer class which is the base class for all X->HH->bbTauTau and H->tautau analyzers.
- * \author Claudio Caputo (INFN Bari)
- * \date 2014-03-20 created
- *
- * Copyright 2016 Claudio Caputo <cld.cpt@gmail.com>
- *
- * This file is part of X->HH->bbTauTau.
- *
- * X->HH->bbTauTau is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * X->HH->bbTauTau is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
- */
+/*! Definition of BaseEDAnalyzer class which is the base class for all X->HH->bbTauTau and H->tautau analyzers.
+This file is part of https://github.com/hh-italian-group/h-tautau. */
+
 #pragma once
 
 #include <iomanip>
@@ -188,7 +168,7 @@ struct SelectionResultsV2 {
 } //namespace analysis
 
 
-class BaseEDAnalyzer: public edm::EDAnalyzer {
+class BaseEDAnalyzer : public edm::EDAnalyzer {
 
 protected:
     std::shared_ptr<TFile> outputFile;
@@ -239,7 +219,6 @@ protected:
   const edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> GetMETCovMatrix() {return metCovMatrix;}
   const std::string							  GetSampleType()		const {return sampleType;}
 
-
 public:
     BaseEDAnalyzer(const edm::ParameterSet& iConfig):
         outputFile(root_ext::CreateRootFile("cuts.root")),
@@ -271,6 +250,22 @@ public:
     virtual void analyze(const edm::Event&, const edm::EventSetup&) = 0;
     virtual void endJob() = 0;
     //virtual void ProcessEvent(const edm::Event&, const edm::EventSetup&) = 0;
+
+    //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
+    static bool passPFLooseId(const pat::Jet& jet)
+    {
+        TLorentzVector momentum;
+        momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
+        if(momentum.E() == 0)                                  return false;
+        if(jet.neutralHadronEnergyFraction() > 0.99)   return false;
+        if(jet.neutralEmEnergyFraction()     > 0.99)   return false;
+        if(jet.nConstituents() <  1)                   return false;
+        if(jet.chargedHadronEnergyFraction() <= 0 && std::abs(jet.eta()) < 2.4 ) return false;
+        if(jet.chargedEmEnergyFraction() >  0.99  && std::abs(jet.eta()) < 2.4 ) return false;
+        if(jet.chargedMultiplicity()     <= 0      && std::abs(jet.eta()) < 2.4 ) return false;
+        return true;
+    }
+
 
     void Initialize(const edm::Event& iEvent){
       iEvent.getByToken(electronsMiniAODToken_, electrons);

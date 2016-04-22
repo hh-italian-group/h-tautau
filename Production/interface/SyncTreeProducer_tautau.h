@@ -1,3 +1,6 @@
+/*! Definition of a SyncTree producer for the tau-tau channel.
+This file is part of https://github.com/hh-italian-group/h-tautau. */
+
 // system include files
 #include <memory>
 #include <vector>
