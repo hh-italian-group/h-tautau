@@ -406,7 +406,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
           }
 
       cut(triggerFired,"trigger");
-  
+
       const auto PV = (*vertices).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
                                             //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
                                             //Es. edm::View<int> gestisce int semplici, vector<int>, set<int> etc.
@@ -541,7 +541,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     CandidateV2PtrVector jetsCollection, bjetsCollection;
     for(const pat::Jet &jet : *jets){
 
-        if (!( jet.pt()>jetID::pt_loose && fabs(jet.eta())<jetID::eta && passPFLooseId(jet) ) ) continue;
+        //if (!( jet.pt()>jetID::pt_loose && fabs(jet.eta())<jetID::eta && passPFLooseId(jet) ) ) continue;
 
         const CandidateV2Ptr jet_candidate(new CandidateV2(jet));
 

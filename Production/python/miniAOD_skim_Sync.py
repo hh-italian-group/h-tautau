@@ -78,7 +78,7 @@ SyncSignal = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIIFall15M
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = DYSample
+    fileNames = SyncSignal
 )
 
 ## Output file
@@ -192,7 +192,7 @@ process.p = cms.Path(
              process.egmGsfElectronIDSequence*
              process.electronMVAValueMapProducer*
              process.bbttSkim*
-             process.syncNtupler_mutau
+             (process.syncNtupler_mutau + process.syncNtupler_etau)
 	   	    )
 
 

@@ -8,7 +8,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //
 SyncTreeProducer_tautau::SyncTreeProducer_tautau(const edm::ParameterSet& iConfig):
   BaseEDAnalyzer(iConfig),
-  syncTree(&edm::Service<TFileService>()->file(),false),
+  sync_tree(BaseEDAnalyzer::GetSyncTree(&edm::Service<TFileService>()->file())),
+  syncTree(*sync_tree),
   anaData("tautau_cuts.root") {}
 
 

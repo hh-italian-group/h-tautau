@@ -82,7 +82,8 @@ class SyncTreeProducer_etau: public BaseEDAnalyzer {
 
       // ----------member data --------------------------
 
-      ntuple::SyncTree syncTree;
+      std::shared_ptr<ntuple::SyncTree> sync_tree;
+      ntuple::SyncTree& syncTree;
       analysis::SyncAnalyzerData_eTau anaData;
       analysis::SelectionResultsV2_etau selection;
 };

@@ -219,6 +219,14 @@ protected:
   const edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> GetMETCovMatrix() {return metCovMatrix;}
   const std::string							  GetSampleType()		const {return sampleType;}
 
+  static std::shared_ptr<ntuple::SyncTree> GetSyncTree(TFile* file)
+  {
+      static std::shared_ptr<ntuple::SyncTree> sync_tree;
+      if(!sync_tree)
+          sync_tree = std::shared_ptr<ntuple::SyncTree>(new ntuple::SyncTree(file, false));
+      return sync_tree;
+  }
+
 public:
     BaseEDAnalyzer(const edm::ParameterSet& iConfig):
         outputFile(root_ext::CreateRootFile("cuts.root")),
