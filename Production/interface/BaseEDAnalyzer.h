@@ -170,6 +170,9 @@ struct SelectionResultsV2 {
 
 class BaseEDAnalyzer : public edm::EDAnalyzer {
 
+// typedef std::pair<analysis::CandidateV2Ptr&, TLorentzVector&> l1JetMatchPair;
+// typedef std::vector<l1JetMatchPair> l1JetMatchPairVtr;
+
 protected:
     std::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
@@ -188,6 +191,7 @@ private:
     edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_;
     edm::EDGetTokenT<GenEventInfoProduct> genWeights_;
+    edm::EDGetTokenT< std::vector<l1extra::L1JetParticle> > l1JetParticle_;
     bool isMC_;
     bool computeHT_;
     std::string sampleType;
@@ -207,6 +211,7 @@ protected:
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
   edm::Handle<LHEEventProduct> lheEventProduct;
   edm::Handle<GenEventInfoProduct> genEvt;
+  edm::Handle< std::vector<l1extra::L1JetParticle> > l1JetParticle;
 
 
   const bool	isMC() const {return isMC_;}
@@ -247,6 +252,7 @@ public:
         triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
         lheEventProduct_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
         genWeights_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
+        l1JetParticle_(mayConsume< std::vector<l1extra::L1JetParticle> >(iConfig.getParameter<edm::InputTag>("l1JetParticleProduct"))),
         isMC_(iConfig.getParameter<bool>("isMC")),
         computeHT_(iConfig.getParameter<bool>("HTBinning")),
         sampleType(iConfig.getParameter<std::string>("sampleType")){
@@ -289,6 +295,7 @@ public:
       iEvent.getByToken(PUInfo_, PUInfo);
       iEvent.getByToken(triggerPrescales_, triggerPrescales);
       iEvent.getByToken(triggerObjects_, triggerObjects);
+      iEvent.getByToken(l1JetParticle_,l1JetParticle);
       if (isMC()) iEvent.getByToken(genWeights_,genEvt);
       try {iEvent.getByToken(lheEventProduct_, lheEventProduct);} catch(...){;};
     }
@@ -300,6 +307,51 @@ protected:
     virtual analysis::CandidateV2Ptr SelectHiggs(analysis::CandidateV2PtrVector& higgses) = 0;
     virtual analysis::Channel ChannelId() const = 0;
 
+    analysis::CandidateV2PtrVector ApplyL1TriggerTauMatch(const analysis::CandidateV2PtrVector& higgses){
+    
+    	analysis::CandidateV2PtrVector L1Higgses;
+    	for (const auto& higgs : higgses){
+    	    std::cout<<"***********Higgs**********"<<std::endl;
+    		if (L1TauMatch(*higgs)) {
+    			std::cout<<"  Higgs Chosen =  "<<higgs->GetMomentum()<<std::endl;
+    			L1Higgses.push_back(higgs);}
+    	}
+    	return L1Higgses;
+    }
+    
+    
+    bool L1TauMatch(const analysis::CandidateV2& candidate){
+    
+    	std::vector<size_t> pairVector;
+    	
+    		if(candidate.GetFinalStateDaughters().size()) {
+            	for(const auto& daughter : candidate.GetFinalStateDaughters()) {
+            		std::cout<<"------------------------"<<std::endl;
+            		size_t jetPos = 0;
+            		for(const auto& isoTau : *l1JetParticle){
+            			jetPos+=1;
+            			TLorentzVector l1JetMomentum;
+            			l1JetMomentum.SetPtEtaPhiE(isoTau.pt(), isoTau.eta(), isoTau.phi(), isoTau.energy());
+            			if (!(isoTau.pt() > 28)) continue;
+            			std::cout<<"Jet position = "<<jetPos<<"  DeltaR = "<<l1JetMomentum.DeltaR(daughter->GetMomentum())<<std::endl;
+            			if(l1JetMomentum.DeltaR(daughter->GetMomentum()) < 0.5 ) pairVector.push_back(jetPos);
+            		}
+    			}
+    			// std::cout<<"\t Size vettore  :  "<<pairVector.size()<<std::endl;
+//     			const size_t startingSize = pairVector.size();
+//     			std::sort (pairVector.begin(),pairVector.end());
+//     			std::vector<size_t>::iterator it;
+//     			it = std::unique (pairVector.begin(),pairVector.end());
+//     			pairVector.erase(it,pairVector.end());
+//     			std::cout<<"\t Size vettore dopo unique :  "<<pairVector.size()<< "   prima:  "<<startingSize<<std::endl;
+//     			if (startingSize > 1 && pairVector.size() == startingSize  ) return true;
+    			if (pairVector.size() == 2 && pairVector.at(0)!=pairVector.at(1)) return true;
+    		}
+    		
+    	
+    	return false;
+    }
+    
     bool HaveTriggerFired(const edm::Event& iEvent,const std::set<std::string>& hltPaths){
 
     	  const edm::TriggerNames &triggerNames= iEvent.triggerNames(*(GetTriggerBits()));

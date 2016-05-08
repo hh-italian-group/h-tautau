@@ -3,6 +3,16 @@
 
 import FWCore.ParameterSet.Config as cms
 
+ttbarStudiesBrances = cms.untracked.vstrin(['drop*'],
+                                            'keep patPackedCandidates_packedPFCandidates__PAT',
+                                            'keep patPackedGenParticles_packedGenParticles__PAT',
+                                            'keep recoGenJets_slimmedGenJets__PAT',
+                                            'keep recoGenParticles_prunedGenParticles__PAT',
+                                             'keep GenEventInfoProduct_generator__SIM',
+                                             'keep patJets_*__PAT',
+                                            'keep patMETs_*__PAT',
+                                             )
+
 BaseMCBranches = cms.untracked.vstring(['drop *',
                                          'keep GenEventInfoProduct_generator__SIM',
                                          'keep edmTriggerResults_*__HLT',

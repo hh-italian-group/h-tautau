@@ -33,8 +33,8 @@ public:
 
 
 struct SelectionResultsV2_tautau : public SelectionResultsV2 {
-    CandidateV2Ptr GetLeadingTau() const { return higgs->GetLeadingDaughter(CandidateV2::Type::Tau); }
-    CandidateV2Ptr GetSubleadingTau() const { return higgs->GetSubleadingDaughter(CandidateV2::Type::Tau); }
+    CandidateV2Ptr GetLeadingTau() const { return higgs->GetDaughters().at(0); }
+    CandidateV2Ptr GetSubleadingTau() const { return higgs->GetDaughters().at(1); }
 
     virtual CandidateV2Ptr GetLeg(size_t leg_id) const override
     {

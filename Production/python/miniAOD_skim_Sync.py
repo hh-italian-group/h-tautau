@@ -65,7 +65,7 @@ else:
 
 
 ## Events to process
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(5000) )
 
 inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD280.root")
 
@@ -74,11 +74,14 @@ DYSample = cms.untracked.vstring("/store/user/ccaputo/HHbbtautau/Run2/DYSample_f
 Diboson = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIISpring15MiniAODv2/VVTo2L2Nu_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/10000/1A826380-CB6D-E511-BCFA-0025901D4D6E.root')
 SyncSignal = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/B2FF8F77-3DB8-E511-B743-001E6757F1D4.root')
 
+SyncSignal_fewEvents = cms.untracked.vstring(("root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/E0B9088F-3DB8-E511-AFFD-001EC9ADCD52.root",
+											  "root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/70000/EAD78CAB-33B8-E511-8E8E-20CF3027A5BF.root"))
 ##inputSignal_v2 = cms.untracked.vstring(
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = SyncSignal
+    fileNames = SyncSignal_fewEvents#,
+                                 #eventsToProcess = cms.untracked.VEventRange('1:449465','1:475952')
 )
 
 ## Output file
@@ -186,13 +189,37 @@ process.syncNtupler_etau = cms.EDAnalyzer('SyncTreeProducer_etau',
                                             HTBinning        = cms.bool(options.computeHT),
                                             sampleType = cms.string(options.sampleType),
                                             )
+process.syncNtupler_tautau = cms.EDAnalyzer('SyncTreeProducer_tautau',
+                                            genParticles  = cms.InputTag("genParticles"),
+                                            electronSrc   = cms.InputTag("slimmedElectrons"),
+                                            eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
+                                            eleMediumIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
+                                            tauSrc        = cms.InputTag("slimmedTaus"),
+                                            muonSrc       = cms.InputTag("slimmedMuons"),
+                                            vtxSrc        = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                            jetSrc        = cms.InputTag("slimmedJets"),
+                                            PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
+                                            ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
+                                            pfMETSrc         = cms.InputTag("slimmedMETs"),
+                                            bits             = cms.InputTag("TriggerResults","","HLT"),
+                                            prescales        = cms.InputTag("patTrigger"),
+                                            objects          = cms.InputTag("selectedPatTrigger"),
+                                            metCov     = cms.InputTag("METSignificance","METCovariance"),
+                                            lheEventProducts = cms.InputTag("externalLHEProducer"),
+                                            genEventInfoProduct = cms.InputTag("generator"),
+                                            l1JetParticleProduct = cms.InputTag("l1extraParticles","IsoTau"),
+                                            isMC             = cms.bool(isMC),
+                                            HTBinning        = cms.bool(options.computeHT),
+                                            sampleType = cms.string(options.sampleType),
+                                            )                                            
 
 process.p = cms.Path(
              process.METSignificance*
              process.egmGsfElectronIDSequence*
              process.electronMVAValueMapProducer*
              process.bbttSkim*
-             (process.syncNtupler_mutau + process.syncNtupler_etau)
+             process.syncNtupler_tautau
+             #(process.syncNtupler_mutau + process.syncNtupler_etau)
 	   	    )
 
 

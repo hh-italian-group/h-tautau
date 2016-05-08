@@ -74,38 +74,39 @@ SyncTreeProducer_tautau::analyze(const edm::Event& iEvent, const edm::EventSetup
 
       cut(selectedTaus.size(),"taus");
 
-//      auto higgses = BaseEDAnalyzer::FindCompatibleObjects(selectedElectrons,selectedTaus,DeltaR_betweenSignalObjects,analysis::CandidateV2::Type::Higgs,
-//                                         "H_mu_tau");
+     auto higgses = BaseEDAnalyzer::FindCompatibleObjects(selectedTaus,selectedTaus,DeltaR_betweenSignalObjects,analysis::CandidateV2::Type::Higgs,
+                                        "H_mu_tau");
 
-//      cut(higgses.size(),"ele_tau_pair");
+      cut(higgses.size(),"tau_tau_pair");
 
-//      bool isCrossTrigger = false;
-//      auto triggeredHiggses = ApplyTriggerMatch(iEvent, higgses,hltPaths,false,isCrossTrigger);
+     bool isCrossTrigger = true;
+     auto triggeredHiggses = ApplyTriggerMatch(iEvent, higgses,hltPaths,false,isCrossTrigger);
 
-//      cut(triggeredHiggses.size(),"triggerMatch");
+      cut(triggeredHiggses.size(),"triggerMatch");
+      
+     auto l1TriggeredHiggses = ApplyL1TriggerTauMatch(triggeredHiggses);
+     
+     cut(l1TriggeredHiggses.size(),"L1triggerMatch");
 
-//      selection.higgs = SelectHiggs(triggeredHiggses);
-//      auto higgs = selection.higgs;
+     selection.higgs = SelectHiggs(l1TriggeredHiggses);
+     auto higgs = selection.higgs;
 
-//      //Third-Lepton Veto
-//      const auto muonVetoCollection     = CollectVetoMuons();
-//      const auto electronVetoCollection = CollectVetoElectrons();
+     //Third-Lepton Veto
+     const auto muonVetoCollection     = CollectVetoMuons();
+     const auto electronVetoCollection = CollectVetoElectrons();
 
-//      selection.muonVeto = muonVetoCollection.size() ? true : false;
+     selection.muonVeto = muonVetoCollection.size() ? true : false;
+     selection.electronVeto = electronVetoCollection.size() ? true : false;
 
-//      selection.electronVeto = false;
-//      for (auto &electron: electronVetoCollection){
-//           if (!(selection.GetLeg(1)->GetMomentum().DeltaR(electron->GetMomentum()) < 0.05)) selection.electronVeto = true;
-//      }
 
-//      analysis::MissingETPtr pfMET(new analysis::MissingET((*pfMETs)[0],*(BaseEDAnalyzer::GetMETCovMatrix())));
-//      selection.pfMET = pfMET;
+     analysis::MissingETPtr pfMET(new analysis::MissingET((*pfMETs)[0],*(BaseEDAnalyzer::GetMETCovMatrix())));
+     selection.pfMET = pfMET;
 
-//      selection.jets   = CollectJets();
-//      selection.bjets  = CollectBJets();
+     selection.jets   = CollectJets();
+     selection.bjets  = CollectBJets();
 
-//      selection.svfitResult = BaseEDAnalyzer::SVFit<pat::Electron>(higgs,pfMET);
-//          std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
+     selection.svfitResult = BaseEDAnalyzer::SVFit<pat::Tau>(higgs,pfMET);
+         std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
 
       FillSyncTree(iEvent);
 
@@ -118,8 +119,8 @@ SyncTreeProducer_tautau::analyze(const edm::Event& iEvent, const edm::EventSetup
 // ------------ objects selection  ------------
 
 void SyncTreeProducer_tautau::SelectSignalTau(const analysis::CandidateV2Ptr& tau, analysis::SelectionManager& selectionManager, cuts::Cutter& cut){
-    using namespace cuts::Htautau_2015::ETau;
-    using namespace cuts::Htautau_2015::ETau::tauID;
+    using namespace cuts::Htautau_2015::TauTau;
+    using namespace cuts::Htautau_2015::TauTau::tauID;
     const pat::Tau& object = tau->GetNtupleObject<pat::Tau>();
 
     pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(object.leadChargedHadrCand().get());
@@ -230,32 +231,26 @@ analysis::CandidateV2Ptr SyncTreeProducer_tautau::SelectHiggs(analysis::Candidat
 
     const auto higgsSelector = [&] (const analysis::CandidateV2Ptr& first, const analysis::CandidateV2Ptr& second) -> bool
     {
-        const pat::Electron& first_electron  = first->GetDaughter(analysis::CandidateV2::Type::Electron)->GetNtupleObject<pat::Electron>();
-        const pat::Tau&  first_tau           = first->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
-        const pat::Electron& second_electron = second->GetDaughter(analysis::CandidateV2::Type::Electron)->GetNtupleObject<pat::Electron>();
-        const pat::Tau&  second_tau          = second->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
+        const pat::Tau& first_tau1  = first->GetDaughters().at(0)->GetNtupleObject<pat::Tau>();
+        const pat::Tau& first_tau2  = first->GetDaughters().at(1)->GetNtupleObject<pat::Tau>();
+        const pat::Tau& second_tau1 = second->GetDaughters().at(0)->GetNtupleObject<pat::Tau>();
+        const pat::Tau& second_tau2 = second->GetDaughters().at(1)->GetNtupleObject<pat::Tau>();
 
-        double iso_ele1 = (first_electron.pfIsolationVariables().sumChargedHadronPt
-                           + std::max(first_electron.pfIsolationVariables().sumNeutralHadronEt
-                           + first_electron.pfIsolationVariables().sumPhotonEt -
-                           0.5 * first_electron.pfIsolationVariables().sumPUPt, 0.0)) / first_electron.pt();
-        double iso_ele2 = (second_electron.pfIsolationVariables().sumChargedHadronPt
-                           + std::max(second_electron.pfIsolationVariables().sumNeutralHadronEt
-                           + second_electron.pfIsolationVariables().sumPhotonEt -
-                           0.5 * second_electron.pfIsolationVariables().sumPUPt, 0.0)) / second_electron.pt();
+        double iso_ele1 = first_tau1.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        double iso_ele2 = second_tau1.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 
-        double iso_tau1 = first_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-        double iso_tau2 = second_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        double iso_tau1 = first_tau2.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        double iso_tau2 = second_tau2.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 
         std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_ele1<<"  IsoMu2 = "<<iso_ele2
                   << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
-        std::cout << " PtMu1 = "<<first_electron.pt()<<"  PtMu2 = "<<second_electron.pt()
-                  << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
+    //     std::cout << " PtMu1 = "<<first_electron.pt()<<"  PtMu2 = "<<second_electron.pt()
+//                   << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
 
-        bool electron = (iso_ele1 < iso_ele2) ||
-                        ((iso_ele1 == iso_ele2) ? first_electron.pt() > second_electron.pt() : false);
+        bool electron = (iso_ele1 > iso_ele2) ||
+                        ((iso_ele1 == iso_ele2) ? first_tau1.pt() > second_tau1.pt() : false);
         bool tau      = (iso_tau1 > iso_tau2) ||
-                        ((iso_tau1 == iso_tau2) ? first_tau.pt() > second_tau.pt() : false);
+                        ((iso_tau1 == iso_tau2) ? first_tau2.pt() > second_tau2.pt() : false);
 
 //        if ( &first_muon==&second_muon ){
 //            if ( &first_tau==&second_tau ) return true;
@@ -264,8 +259,8 @@ analysis::CandidateV2Ptr SyncTreeProducer_tautau::SelectHiggs(analysis::Candidat
 
 //        if (!muon) return tau;
 //        return muon;
-        if ( &first_electron!=&second_electron ) return electron;
-        if ( &first_tau!=&second_tau ) return tau;
+        if ( &first_tau1!=&second_tau1 ) return electron;
+        if ( &first_tau2!=&second_tau2 ) return tau;
 
         throw analysis::exception("not found a good criteria for best tau pair");
     };
@@ -276,167 +271,176 @@ analysis::CandidateV2Ptr SyncTreeProducer_tautau::SelectHiggs(analysis::Candidat
 
 void SyncTreeProducer_tautau::FillSyncTree(const edm::Event& iEvent)
     {
-//         using namespace analysis;
-//         static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
-//
-//
-//         const VertexV2Ptr primaryVertex(new VertexV2((*(BaseEDAnalyzer::GetVertexCollection())).front()));
-//
-//         //BaseEDAnalyzer::FillSyncTree(iEvent, selection, syncTree);
-//
-//         //const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
-//
-//         // Event
-//         std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
-//         std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
-//                 <<" Event = "<<iEvent.id().event()<<std::endl;
-//         syncTree.run()  = iEvent.id().run();
-//         syncTree.lumi() = iEvent.id().luminosityBlock();
-//         syncTree.evt()  = iEvent.id().event();
-//         syncTree.channelID() = static_cast<int>(SyncTreeProducer_tautau::ChannelId());
-//
-// //         if(computeHT_){
-// //             syncTree.HT()   = selection.HT;
-// //             if(selection.HT<100) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::lt100);
-// //             if(100<=selection.HT && selection.HT<200) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f100to200);
-// //             if(200<=selection.HT && selection.HT<400) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f200to400);
-// //             if(400<=selection.HT && selection.HT<600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f400to600);
-// //             if(selection.HT>=600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::gt600);
-// // //        syncTree->eventType() = static_cast<int>(selection.eventType);
-// // //        syncTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
-// //         }
-// //         else {
-// //             syncTree.HT() = default_value;
-// //             syncTree.HTBin() = -1;
-// //         }
-//
-//         // if (sampleType == "Spring15MC" || sampleType == "Fall15MC") syncTree.weightevt() = selection.weightevt;
-// //         else syncTree.weightevt() = default_value;
-//
-//         syncTree.weightevt() = default_value;
-//         syncTree.npv() = selection.npv;
-//         syncTree.npu() = selection.numtruepileupinteractions;
-//
-//
-//         // HTT candidate
-//         syncTree.m_vis() = selection.higgs->GetMomentum().M();
-//         syncTree.pt_tt()  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
-// //        syncTree.m_sv() = selection.svfitResult.has_valid_mass
-// //                ? selection.svfitResult.mass : Run2::DefaultFillValueForSyncTree();
-// //        syncTree.pt_sv() = selection.svfitResult.has_valid_momentum
-// //                ? selection.svfitResult.momentum.Pt() : Run2::DefaultFillValueForSyncTree();
-// //        syncTree.eta_sv() = selection.svfitResult.has_valid_momentum
-// //                ? selection.svfitResult.momentum.Eta() : Run2::DefaultFillValueForSyncTree();
-// //        syncTree.phi_sv() = selection.svfitResult.has_valid_momentum
-// //                ? selection.svfitResult.momentum.Phi() : Run2::DefaultFillValueForSyncTree();
-//
-//
-//         syncTree.met()      = selection.pfMET->Pt();
-//         syncTree.metphi()   = selection.pfMET->Phi();
-//         syncTree.isPFMET()  = selection.pfMET->isPFMET();
-//         syncTree.metcov00() = selection.pfMET->GetCovVector().at(0);
-//         syncTree.metcov01() = selection.pfMET->GetCovVector().at(1);
-//         syncTree.metcov10() = selection.pfMET->GetCovVector().at(2);
-//         syncTree.metcov11() = selection.pfMET->GetCovVector().at(3);
-//
-//         // Leg 1, lepton
-//         const pat::Electron& patElectron = selection.GetLeg(1)->GetNtupleObject<pat::Electron>();
-//
-//         syncTree.pt_1()     = selection.GetLeg(1)->GetMomentum().Pt();
-//         syncTree.phi_1()    = selection.GetLeg(1)->GetMomentum().Phi();
-//         syncTree.eta_1()    = selection.GetLeg(1)->GetMomentum().Eta();
-//         syncTree.m_1()      = selection.GetLeg(1)->GetMomentum().M();
-//         syncTree.q_1()      = selection.GetLeg(1)->GetCharge();
-//         syncTree.pfmt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
-//         syncTree.d0_1()     = Calculate_dxy(selection.GetLeg(1)->GetVertexPosition(), primaryVertex->GetPosition(),
-//                                              selection.GetLeg(1)->GetMomentum());
-//         syncTree.dZ_1()     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
-//         syncTree.iso_1()    = (patElectron.pfIsolationVariables().sumChargedHadronPt
-//                                + std::max(patElectron.pfIsolationVariables().sumNeutralHadronEt
-//                                + patElectron.pfIsolationVariables().sumPhotonEt -
-//                                0.5 * patElectron.pfIsolationVariables().sumPUPt, 0.0)) / patElectron.pt();
-//
-//         syncTree.id_e_mva_nt_loose_1() = Run2::DefaultFillValueForSyncTree();
-//
-//         syncTree.gen_match_1() = true;
-//         // Leg 2, tau
-//         const pat::Tau& patTau = selection.GetLeg(2)->GetNtupleObject<pat::Tau>();
-//
-//         syncTree.pt_2()     = selection.GetLeg(2)->GetMomentum().Pt();
-//         syncTree.phi_2()    = selection.GetLeg(2)->GetMomentum().Phi();
-//         syncTree.eta_2()    = selection.GetLeg(2)->GetMomentum().Eta();
-//         syncTree.m_2()      = selection.GetLeg(2)->GetMomentum().M();
-//         syncTree.q_2()      = selection.GetLeg(2)->GetCharge();
-//         syncTree.pfmt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
-//         syncTree.d0_2()     = Calculate_dxy(selection.GetLeg(2)->GetVertexPosition(), primaryVertex->GetPosition(),
-//                                              selection.GetLeg(2)->GetMomentum());
-//         syncTree.dZ_2()     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
-//         syncTree.iso_2()    = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-//         syncTree.id_e_mva_nt_loose_1() = Run2::DefaultFillValueForSyncTree();
-//         syncTree.gen_match_2() = true;
-//
-//         syncTree.againstElectronLooseMVA6_2()   = patTau.tauID("againstElectronLooseMVA6");
-//         syncTree.againstElectronMediumMVA6_2()  = patTau.tauID("againstElectronMediumMVA6");
-//         syncTree.againstElectronTightMVA6_2()   = patTau.tauID("againstElectronTightMVA6");
-//         syncTree.againstElectronVLooseMVA6_2()  = patTau.tauID("againstElectronVLooseMVA6");
-//         syncTree.againstElectronVTightMVA6_2()  = patTau.tauID("againstElectronVTightMVA6");
-//
-//         syncTree.againstMuonLoose3_2()          = patTau.tauID("againstMuonLoose3");
-//         syncTree.againstMuonTight3_2()          = patTau.tauID("againstMuonTight3");
-//
-//         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = patTau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-//         syncTree.byIsolationMVA3newDMwLTraw_2()               = patTau.tauID("byIsolationMVArun2v1DBnewDMwLTraw");
-//         syncTree.byIsolationMVA3oldDMwLTraw_2()               = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-//         syncTree.byIsolationMVA3newDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
-//         syncTree.byIsolationMVA3oldDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
-//
-//         syncTree.byVLooseIsolationMVArun2v1DBoldDMwLT_2()     = patTau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
-//         syncTree.byLooseIsolationMVArun2v1DBoldDMwLT_2()      = patTau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-//         syncTree.byMediumIsolationMVArun2v1DBoldDMwLT_2()     = patTau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-//         syncTree.byTightIsolationMVArun2v1DBoldDMwLT_2()      = patTau.tauID("byTightIsolationMVArun2v1DBoldDMwLT");
-//         syncTree.byVTightIsolationMVArun2v1DBoldDMwLT_2()     = patTau.tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
-//
-//         syncTree.decayModeFindingOldDMs_2() = patTau.tauID("decayModeFinding");
-//
-//         syncTree.dilepton_veto()  = selection.Zveto;
-//         syncTree.extraelec_veto() = selection.electronVeto;
-//         syncTree.extramuon_veto() = selection.muonVeto;
-//
-//         // Jets
-//         syncTree.njetspt20() = selection.jets.size();
-//         //syncTree.njets()     = selection.numJet;
-//         syncTree.nbtag()     = selection.bjets.size();
-//         //int jetCount = 0;
-//
-//         Int_t numJet = 0;
-//         for( const CandidateV2Ptr& jet : selection.jets ){
-//                 const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
-//                 if (jet->GetMomentum().Pt() > 30 ) numJet++;
-//                 syncTree.pt_jets()   .push_back(jet->GetMomentum().Pt());
-//                 syncTree.eta_jets()  .push_back(jet->GetMomentum().Eta());
-//                 syncTree.phi_jets()  .push_back(jet->GetMomentum().Phi());
-//                 syncTree.energy_jets() .push_back(jet->GetMomentum().E());
-//                 syncTree.rawf_jets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
-//                 syncTree.mva_jets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
-//                 syncTree.csv_jets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-//                 syncTree.partonFlavour_jets() .push_back(pat_jet1.partonFlavour());
-//          }
-//         syncTree.njets() = numJet;
-//
-//
-//         for( const CandidateV2Ptr& jet : selection.bjets ){
-//                 const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
-//                 syncTree.pt_bjets()   .push_back(jet->GetMomentum().Pt());
-//                 syncTree.eta_bjets()  .push_back(jet->GetMomentum().Eta());
-//                 syncTree.phi_bjets()  .push_back(jet->GetMomentum().Phi());
-//                 syncTree.energy_bjets() .push_back(jet->GetMomentum().E());
-//                 syncTree.rawf_bjets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
-//                 syncTree.mva_bjets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
-//                 syncTree.csv_bjets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-//                 syncTree.partonFlavour_bjets() .push_back(pat_jet1.partonFlavour());
-//          }
-//
-//         syncTree.Fill();
+        using namespace analysis;
+        static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
+
+
+        const VertexV2Ptr primaryVertex(new VertexV2((*(BaseEDAnalyzer::GetVertexCollection())).front()));
+
+        //BaseEDAnalyzer::FillSyncTree(iEvent, selection, syncTree);
+
+        //const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+
+		// Event
+        std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
+        std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
+                <<" Event = "<<iEvent.id().event()<<std::endl;
+        syncTree().run  = iEvent.id().run();
+        syncTree().lumi = iEvent.id().luminosityBlock();
+        syncTree().evt  = iEvent.id().event();
+        syncTree().channelID = static_cast<int>(SyncTreeProducer_tautau::ChannelId());
+
+
+        syncTree().HT   = selection.HT;
+        if(selection.HT<100) syncTree().HTBin = static_cast<int>(Run2::HTbinning::lt100);
+        if(100<=selection.HT && selection.HT<200) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f100to200);
+        if(200<=selection.HT && selection.HT<400) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f200to400);
+        if(400<=selection.HT && selection.HT<600) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f400to600);
+        if(selection.HT>=600) syncTree().HTBin = static_cast<int>(Run2::HTbinning::gt600);
+        if(selection.HT<0)    syncTree().HTBin = -1;
+
+         if (BaseEDAnalyzer::isMC()) syncTree().weightevt = selection.weightevt;
+         else syncTree().weightevt = default_value;
+
+        syncTree().npv = selection.npv;
+        syncTree().npu = selection.numtruepileupinteractions;
+
+
+        // HTT candidate
+        syncTree().m_vis = selection.higgs->GetMomentum().M();
+        syncTree().pt_tt  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
+        syncTree().m_sv = selection.svfitResult.has_valid_mass
+               ? selection.svfitResult.mass : Run2::DefaultFillValueForSyncTree();
+        syncTree().pt_sv = selection.svfitResult.has_valid_momentum
+               ? selection.svfitResult.momentum.Pt() : Run2::DefaultFillValueForSyncTree();
+        syncTree().eta_sv = selection.svfitResult.has_valid_momentum
+               ? selection.svfitResult.momentum.Eta() : Run2::DefaultFillValueForSyncTree();
+        syncTree().phi_sv = selection.svfitResult.has_valid_momentum
+               ? selection.svfitResult.momentum.Phi() : Run2::DefaultFillValueForSyncTree();
+
+
+        syncTree().met      = selection.pfMET->Pt();
+        syncTree().metphi   = selection.pfMET->Phi();
+        syncTree().isPFMET  = selection.pfMET->isPFMET();
+        syncTree().metcov00 = selection.pfMET->GetCovVector().at(0);
+        syncTree().metcov01 = selection.pfMET->GetCovVector().at(1);
+        syncTree().metcov10 = selection.pfMET->GetCovVector().at(2);
+        syncTree().metcov11 = selection.pfMET->GetCovVector().at(3);
+
+        // Leg 1, tau
+        const pat::Tau& patTau1 = selection.GetLeg(1)->GetNtupleObject<pat::Tau>();
+
+        syncTree().pt_1     = selection.GetLeg(1)->GetMomentum().Pt();
+        syncTree().phi_1    = selection.GetLeg(1)->GetMomentum().Phi();
+        syncTree().eta_1    = selection.GetLeg(1)->GetMomentum().Eta();
+        syncTree().m_1      = selection.GetLeg(1)->GetMomentum().M();
+        syncTree().q_1      = selection.GetLeg(1)->GetCharge();
+        syncTree().pfmt_1     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
+        syncTree().d0_1     = Calculate_dxy(selection.GetLeg(1)->GetVertexPosition(), primaryVertex->GetPosition(),
+                                             selection.GetLeg(1)->GetMomentum());
+        syncTree().dZ_1     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+        syncTree().iso_1    = patTau1.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        syncTree().gen_match_1 = true;
+
+        syncTree().againstElectronLooseMVA6_1   = patTau1.tauID("againstElectronLooseMVA6");
+        syncTree().againstElectronMediumMVA6_1  = patTau1.tauID("againstElectronMediumMVA6");
+        syncTree().againstElectronTightMVA6_1   = patTau1.tauID("againstElectronTightMVA6");
+        syncTree().againstElectronVLooseMVA6_1  = patTau1.tauID("againstElectronVLooseMVA6");
+        syncTree().againstElectronVTightMVA6_1  = patTau1.tauID("againstElectronVTightMVA6");
+
+        syncTree().againstMuonLoose3_1          = patTau1.tauID("againstMuonLoose3");
+        syncTree().againstMuonTight3_1          = patTau1.tauID("againstMuonTight3");
+
+        syncTree().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = patTau1.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        syncTree().byIsolationMVA3newDMwLTraw_1               = patTau1.tauID("byIsolationMVArun2v1DBnewDMwLTraw");
+        syncTree().byIsolationMVA3oldDMwLTraw_1               = patTau1.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        syncTree().byIsolationMVA3newDMwoLTraw_1              = Run2::DefaultFillValueForSyncTree();
+        syncTree().byIsolationMVA3oldDMwoLTraw_1              = Run2::DefaultFillValueForSyncTree();
+
+        syncTree().byVLooseIsolationMVArun2v1DBoldDMwLT_1     = patTau1.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byLooseIsolationMVArun2v1DBoldDMwLT_1      = patTau1.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byMediumIsolationMVArun2v1DBoldDMwLT_1     = patTau1.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byTightIsolationMVArun2v1DBoldDMwLT_1      = patTau1.tauID("byTightIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byVTightIsolationMVArun2v1DBoldDMwLT_1     = patTau1.tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
+
+        syncTree().decayModeFindingOldDMs_1 = patTau1.tauID("decayModeFinding");
+        
+        // Leg 2, tau
+        const pat::Tau& patTau = selection.GetLeg(2)->GetNtupleObject<pat::Tau>();
+
+        syncTree().pt_2     = selection.GetLeg(2)->GetMomentum().Pt();
+        syncTree().phi_2    = selection.GetLeg(2)->GetMomentum().Phi();
+        syncTree().eta_2    = selection.GetLeg(2)->GetMomentum().Eta();
+        syncTree().m_2      = selection.GetLeg(2)->GetMomentum().M();
+        syncTree().q_2      = selection.GetLeg(2)->GetCharge();
+        syncTree().pfmt_2    = Calculate_MT(selection.GetLeg(2)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
+        syncTree().d0_2     = Calculate_dxy(selection.GetLeg(2)->GetVertexPosition(), primaryVertex->GetPosition(),
+                                             selection.GetLeg(2)->GetMomentum());
+        syncTree().dZ_2     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+        syncTree().iso_2    = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        syncTree().id_e_mva_nt_loose_1 = Run2::DefaultFillValueForSyncTree();
+        syncTree().gen_match_2 = true;
+
+        syncTree().againstElectronLooseMVA6_2   = patTau.tauID("againstElectronLooseMVA6");
+        syncTree().againstElectronMediumMVA6_2  = patTau.tauID("againstElectronMediumMVA6");
+        syncTree().againstElectronTightMVA6_2   = patTau.tauID("againstElectronTightMVA6");
+        syncTree().againstElectronVLooseMVA6_2  = patTau.tauID("againstElectronVLooseMVA6");
+        syncTree().againstElectronVTightMVA6_2  = patTau.tauID("againstElectronVTightMVA6");
+
+        syncTree().againstMuonLoose3_2          = patTau.tauID("againstMuonLoose3");
+        syncTree().againstMuonTight3_2          = patTau.tauID("againstMuonTight3");
+
+        syncTree().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = patTau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        syncTree().byIsolationMVA3newDMwLTraw_2               = patTau.tauID("byIsolationMVArun2v1DBnewDMwLTraw");
+        syncTree().byIsolationMVA3oldDMwLTraw_2               = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        syncTree().byIsolationMVA3newDMwoLTraw_2              = Run2::DefaultFillValueForSyncTree();
+        syncTree().byIsolationMVA3oldDMwoLTraw_2              = Run2::DefaultFillValueForSyncTree();
+
+        syncTree().byVLooseIsolationMVArun2v1DBoldDMwLT_2     = patTau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byLooseIsolationMVArun2v1DBoldDMwLT_2      = patTau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byMediumIsolationMVArun2v1DBoldDMwLT_2     = patTau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byTightIsolationMVArun2v1DBoldDMwLT_2      = patTau.tauID("byTightIsolationMVArun2v1DBoldDMwLT");
+        syncTree().byVTightIsolationMVArun2v1DBoldDMwLT_2     = patTau.tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
+
+        syncTree().decayModeFindingOldDMs_2 = patTau.tauID("decayModeFinding");
+
+        syncTree().dilepton_veto  = selection.Zveto;
+        syncTree().extraelec_veto = selection.electronVeto;
+        syncTree().extramuon_veto = selection.muonVeto;
+
+        // Jets
+        syncTree().njetspt20 = selection.jets.size();
+        syncTree().nbtag     = selection.bjets.size();
+
+        Int_t numJet = 0;
+        for( const CandidateV2Ptr& jet : selection.jets ){
+                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+                if (jet->GetMomentum().Pt() > 30 ) numJet++;
+                syncTree().pt_jets     .push_back(jet->GetMomentum().Pt());
+                syncTree().eta_jets    .push_back(jet->GetMomentum().Eta());
+                syncTree().phi_jets    .push_back(jet->GetMomentum().Phi());
+                syncTree().energy_jets .push_back(jet->GetMomentum().E());
+                syncTree().rawf_jets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
+                syncTree().mva_jets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
+                syncTree().csv_jets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                syncTree().partonFlavour_jets .push_back(pat_jet1.partonFlavour());
+         }
+        syncTree().njets = numJet;
+
+
+        for( const CandidateV2Ptr& jet : selection.bjets ){
+                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+                syncTree().pt_bjets   .push_back(jet->GetMomentum().Pt());
+                syncTree().eta_bjets  .push_back(jet->GetMomentum().Eta());
+                syncTree().phi_bjets  .push_back(jet->GetMomentum().Phi());
+                syncTree().energy_bjets .push_back(jet->GetMomentum().E());
+                syncTree().rawf_bjets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
+                syncTree().mva_bjets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
+                syncTree().csv_bjets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                syncTree().partonFlavour_bjets .push_back(pat_jet1.partonFlavour());
+         }
+
+        syncTree.Fill();
     }
 
 
