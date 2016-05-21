@@ -65,13 +65,13 @@ else:
 
 
 ## Events to process
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(2) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
 inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD280.root")
 
 DYSample = cms.untracked.vstring("/store/user/ccaputo/HHbbtautau/Run2/DYSample_forHT.root")
 
-TTBar = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/TT_TuneCUETP8M1_13TeV-powheg-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext4-v1/00000/0007DBD0-2ED2-E511-AD0D-20CF3019DEF5.root')
+TTBar = cms.untracked.vstring('/store/mc/RunIIFall15MiniAODv2/TT_TuneCUETP8M1_13TeV-powheg-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext4-v1/00000/0007DBD0-2ED2-E511-AD0D-20CF3019DEF5.root')
 SyncSignal = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/B2FF8F77-3DB8-E511-B743-001E6757F1D4.root')
 
 SyncSignal_fewEvents = cms.untracked.vstring(("root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/E0B9088F-3DB8-E511-AFFD-001EC9ADCD52.root",
@@ -124,7 +124,7 @@ process.ttbarAnalyzer   = cms.EDAnalyzer("TTBarGenAnalyzer",
                                   packed  = cms.InputTag('packedGenParticles'),
                                   genJet  = cms.InputTag('slimmedGenJets')
                                   )
-                                  
+
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 process.printTree = cms.EDAnalyzer("ParticleListDrawer",
                                     maxEventsToPrint = cms.untracked.int32(1),
@@ -136,7 +136,7 @@ process.printTree = cms.EDAnalyzer("ParticleListDrawer",
 #-------------
 # Output ROOT file
 #-------------
-process.TFileService = cms.Service("TFileService", fileName = cms.string("syncTree.root") )                                           
+process.TFileService = cms.Service("TFileService", fileName = cms.string("syncTree.root") )
 
 process.p = cms.Path(
              # process.METSignificance*
@@ -144,7 +144,7 @@ process.p = cms.Path(
 #              process.electronMVAValueMapProducer*
              process.bbttSkim*
              process.printTree*
-             process.ttbarAnalyzer   
+             process.ttbarAnalyzer
              #(process.syncNtupler_mutau + process.syncNtupler_etau)
 	   	    )
 
