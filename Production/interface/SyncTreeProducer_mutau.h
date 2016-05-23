@@ -82,8 +82,9 @@ class SyncTreeProducer_mutau: public BaseEDAnalyzer {
       virtual analysis::SyncAnalyzerData_muTau& GetAnaData() override { return anaData; }
       virtual analysis::CandidateV2Ptr SelectHiggs(analysis::CandidateV2PtrVector& higgses) override;
 
-      double SVFit(const analysis::CandidateV2Ptr& higgs, const analysis::MissingETPtr& met);
+      //double SVFit(const analysis::CandidateV2Ptr& higgs, const analysis::MissingETPtr& met);
       void FillSyncTree(const edm::Event& iEvent);
+      void ProcessEvent(const edm::Event&, const edm::EventSetup&, const analysis::EventEnergyScale);
 
 
 

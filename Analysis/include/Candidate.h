@@ -76,6 +76,8 @@ private:
     Type type;
     int charge;
     TLorentzVector momentum;
+    TLorentzVector *momentumPtr;
+    TLorentzVector scaledUpMomentum, scaledDownMomentum;
     bool has_vertexPosition;
     TVector3 vertexPosition;
 
@@ -90,9 +92,20 @@ public:
     explicit CandidateV2(const PATObject& _ntupleObject, const size_t n=-1) :
         type(TypeFromNtupleObject<PATObject>(_ntupleObject)), charge(_ntupleObject.charge()),
         momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt(), _ntupleObject.eta(), _ntupleObject.phi(), _ntupleObject.mass())),
+        momentumPtr(&momentum),
         has_vertexPosition(true), vertexPosition(_ntupleObject.vx(), _ntupleObject.vy(), _ntupleObject.vz()),
         ntupleObject(&_ntupleObject), index(n)
-    {}
+    {
+      
+      if (type == Type::Tau) {
+         scaledUpMomentum = momentum * 1.003;
+         scaledDownMomentum = momentum * 0.997;
+         }
+      else {
+         scaledUpMomentum = momentum;
+         scaledDownMomentum = momentum;
+         }
+    }
 
     explicit CandidateV2(const pat::Jet& _ntupleObject) :
         type(TypeFromNtupleObject<pat::Jet>(_ntupleObject)), charge(UnknownCharge()),
@@ -125,6 +138,9 @@ public:
     const size_t GetIndex() const { return index; };
     int GetCharge() const { return charge; }
     const TLorentzVector& GetMomentum() const { return momentum; }
+    const TLorentzVector& GetScaledUpMomentum () const{ return scaledUpMomentum;}
+    const TLorentzVector& GetScaledDownMomentum () const{ return scaledDownMomentum;}
+    void ScaleMomentum(const double sf) const {*momentumPtr= (*momentumPtr) * sf; }
     bool HasVertexPosition() const { return has_vertexPosition; }
     const TVector3& GetVertexPosition() const
     {

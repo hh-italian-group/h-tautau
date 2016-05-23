@@ -1,0 +1,54 @@
+DEBUG 2016-05-21 19:00:36,640: 	 Executing command: 'submit'
+DEBUG 2016-05-21 19:00:36,670: 	 Found CRAB cache file /afs/cern.ch/user/c/ccaputo/.crab3
+DEBUG 2016-05-21 19:00:36,804: 	 Checking credentials
+DEBUG 2016-05-21 19:00:36,804: 	 Proxy file /tmp/x509up_u44111 not found
+DEBUG 2016-05-21 19:00:36,804: 	 Creating new proxy for 24:00 hours with VO group '' and VO role 'NULL'.
+DEBUG 2016-05-21 19:01:06,611: 	 Executing : 
+ command : voms-proxy-init -voms cms:/cms -valid 24:00 -rfc
+ output : None
+ error: None
+ retcode : 0
+DEBUG 2016-05-21 19:01:08,732: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u44111 -timeleft
+ output : 86396
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-21 19:01:10,646: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u44111 -actimeleft
+ output : 86394
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-21 19:01:12,063: 	 Executing : 
+ command : env X509_USER_PROXY=/tmp/x509up_u44111 voms-proxy-info -fqan
+ output : /cms/Role=NULL/Capability=NULL
+/cms/itcms/Role=NULL/Capability=NULL
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-21 19:01:12,063: 	 Proxy created.
+INFO 2016-05-21 19:01:12,064: 	 Will use CRAB configuration file ttbar_crab.py
+DEBUG 2016-05-21 19:01:12,065: 	 Loading CRAB configuration file.
+ERROR 2016-05-21 19:01:12,072: 	 Error while loading CRAB configuration:
+invalid syntax (ttbar_crab.py, line 19)
+Please refer to https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3CommonErrors#Syntax_error_in_CRAB_configurati
+See the ./crab.log file for more details.
+The documentation about the CRAB configuration file can be found in https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3ConfigurationFile
+ERROR 2016-05-21 19:01:12,072: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/bin/crab", line 160, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/bin/crab", line 146, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/lib/python2.7/site-packages/CRABClient/Commands/submit.py", line 34, in __init__
+    SubCommand.__init__(self, logger, cmdargs, disable_interspersed_args=True)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/lib/python2.7/site-packages/CRABClient/Commands/SubCommand.py", line 295, in __init__
+    self.loadConfig(self.options.config, self.args)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/lib/python2.7/site-packages/CRABClient/Commands/SubCommand.py", line 84, in loadConfig
+    raise ConfigurationException(configmsg)
+ConfigurationException: Error while loading CRAB configuration:
+invalid syntax (ttbar_crab.py, line 19)
+Please refer to https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3CommonErrors#Syntax_error_in_CRAB_configurati
+See the ./crab.log file for more details.
+The documentation about the CRAB configuration file can be found in https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3ConfigurationFile

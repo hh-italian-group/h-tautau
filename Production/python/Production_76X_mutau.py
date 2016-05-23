@@ -85,7 +85,7 @@ SyncSignal_fewEvents = cms.untracked.vstring(("root://xrootd.unl.edu//store/mc/R
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = SyncSignal#,
+    fileNames = DYSample#,
                                  #eventsToProcess = cms.untracked.VEventRange('1:449465','1:475952')
 )
 
@@ -189,8 +189,8 @@ process.syncNtupler_mutau = cms.EDAnalyzer('SyncTreeProducer_mutau',
                                  electronSrc      = cms.InputTag("slimmedElectrons"),
                                  eleTightIdMap    = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
                                  eleMediumIdMap   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                 eleCutBasedVeto  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
-                                 tauSrc           = cms.InputTag("slimmedTaus"),
+                                 eleCutBasedVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
+				 tauSrc           = cms.InputTag("slimmedTaus"),
                                  muonSrc          = cms.InputTag("slimmedMuons"),
                                  vtxSrc           = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  jetSrc           = JetCollection,
@@ -210,65 +210,13 @@ process.syncNtupler_mutau = cms.EDAnalyzer('SyncTreeProducer_mutau',
                                   sampleType = cms.string(options.sampleType),
                                 )
 
-process.syncNtupler_etau = cms.EDAnalyzer('SyncTreeProducer_etau',
-                                            genParticles  = cms.InputTag("genParticles"),
-                                            electronSrc   = cms.InputTag("slimmedElectrons"),
-                                            eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
-                                            eleMediumIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                            eleCutBasedVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
-                                            tauSrc        = cms.InputTag("slimmedTaus"),
-                                            muonSrc       = cms.InputTag("slimmedMuons"),
-                                            vtxSrc        = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                            jetSrc        = JetCollection,
-                                            PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
-                                            ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
-                                            pfMETSrc         = cms.InputTag("slimmedMETs"),
-                                            bits             = cms.InputTag("TriggerResults","","HLT"),
-                                            prescales        = cms.InputTag("patTrigger"),
-                                            objects          = cms.InputTag("selectedPatTrigger"),
-                                            metCov     = cms.InputTag("METSignificance","METCovariance"),
-                                            lheEventProducts = cms.InputTag("externalLHEProducer"),
-                                            genEventInfoProduct = cms.InputTag("generator"),
-                                            pruned  = cms.InputTag('prunedGenParticles'),
-                                            l1JetParticleProduct = cms.InputTag("l1extraParticles","IsoTau"),
-                                            isMC             = cms.bool(isMC),
-                                            HTBinning        = cms.bool(options.computeHT),
-                                            sampleType = cms.string(options.sampleType),
-                                            )
-process.syncNtupler_tautau = cms.EDAnalyzer('SyncTreeProducer_tautau',
-                                            genParticles  = cms.InputTag("genParticles"),
-                                            electronSrc   = cms.InputTag("slimmedElectrons"),
-                                            eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
-                                            eleMediumIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                            eleCutBasedVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
-                                            tauSrc        = cms.InputTag("slimmedTaus"),
-                                            muonSrc       = cms.InputTag("slimmedMuons"),
-                                            vtxSrc        = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                            jetSrc        = JetCollection,
-                                            PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
-                                            ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
-                                            pfMETSrc         = cms.InputTag("slimmedMETs"),
-                                            bits             = cms.InputTag("TriggerResults","","HLT"),
-                                            prescales        = cms.InputTag("patTrigger"),
-                                            objects          = cms.InputTag("selectedPatTrigger"),
-                                            metCov     = cms.InputTag("METSignificance","METCovariance"),
-                                            lheEventProducts = cms.InputTag("externalLHEProducer"),
-                                            genEventInfoProduct = cms.InputTag("generator"),
-                                            pruned  = cms.InputTag('prunedGenParticles'),
-                                            l1JetParticleProduct = cms.InputTag("l1extraParticles","IsoTau"),
-                                            isMC             = cms.bool(isMC),
-                                            HTBinning        = cms.bool(options.computeHT),
-                                            sampleType = cms.string(options.sampleType),
-                                            )                                            
-
 process.p = cms.Path(
              process.JECsequence *
              process.METSignificance*
              process.egmGsfElectronIDSequence*
              process.electronMVAValueMapProducer*
              process.bbttSkim*
-             #process.syncNtupler_mutau
-             (process.syncNtupler_mutau + process.syncNtupler_etau + process.syncNtupler_tautau)
+             process.syncNtupler_mutau
 	   	    )
 
 

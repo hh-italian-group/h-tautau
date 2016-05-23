@@ -136,14 +136,14 @@ process.printTree = cms.EDAnalyzer("ParticleListDrawer",
 #-------------
 # Output ROOT file
 #-------------
-process.TFileService = cms.Service("TFileService", fileName = cms.string("syncTree.root") )
+process.TFileService = cms.Service("TFileService", fileName = cms.string("tree.root") )
 
 process.p = cms.Path(
              # process.METSignificance*
 #              process.egmGsfElectronIDSequence*
 #              process.electronMVAValueMapProducer*
              process.bbttSkim*
-             process.printTree*
+#             process.printTree*
              process.ttbarAnalyzer
              #(process.syncNtupler_mutau + process.syncNtupler_etau)
 	   	    )

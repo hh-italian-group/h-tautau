@@ -179,69 +179,14 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string("syncTr
 #-------------
 # SyncTree Producer
 #-------------
-process.syncNtupler_mutau = cms.EDAnalyzer('SyncTreeProducer_mutau',
 
-                                 genParticles = cms.InputTag("genParticles"),
-                                 #
-                                 # Objects specific to MiniAOD format
-                                 #
-
-                                 electronSrc      = cms.InputTag("slimmedElectrons"),
-                                 eleTightIdMap    = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
-                                 eleMediumIdMap   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                 eleCutBasedVeto  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
-                                 tauSrc           = cms.InputTag("slimmedTaus"),
-                                 muonSrc          = cms.InputTag("slimmedMuons"),
-                                 vtxSrc           = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                 jetSrc           = JetCollection,
-                                 PUInfo           = cms.InputTag("slimmedAddPileupInfo"),
-                                 ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
-                                 pfMETSrc         = cms.InputTag("slimmedMETs"),
-                                 bits             = cms.InputTag("TriggerResults","","HLT"),
-                                 prescales        = cms.InputTag("patTrigger"),
-                                 objects          = cms.InputTag("selectedPatTrigger"),
-                                 metCov     = cms.InputTag("METSignificance","METCovariance"),
-                                  lheEventProducts = cms.InputTag("externalLHEProducer"),
-                                  genEventInfoProduct = cms.InputTag("generator"),
-                                  pruned  = cms.InputTag('prunedGenParticles'),
-                                  l1JetParticleProduct = cms.InputTag("l1extraParticles","IsoTau"),
-                                  isMC             = cms.bool(isMC),
-                                  HTBinning        = cms.bool(options.computeHT),
-                                  sampleType = cms.string(options.sampleType),
-                                )
-
-process.syncNtupler_etau = cms.EDAnalyzer('SyncTreeProducer_etau',
-                                            genParticles  = cms.InputTag("genParticles"),
-                                            electronSrc   = cms.InputTag("slimmedElectrons"),
-                                            eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
-                                            eleMediumIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                            eleCutBasedVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
-                                            tauSrc        = cms.InputTag("slimmedTaus"),
-                                            muonSrc       = cms.InputTag("slimmedMuons"),
-                                            vtxSrc        = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                            jetSrc        = JetCollection,
-                                            PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
-                                            ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
-                                            pfMETSrc         = cms.InputTag("slimmedMETs"),
-                                            bits             = cms.InputTag("TriggerResults","","HLT"),
-                                            prescales        = cms.InputTag("patTrigger"),
-                                            objects          = cms.InputTag("selectedPatTrigger"),
-                                            metCov     = cms.InputTag("METSignificance","METCovariance"),
-                                            lheEventProducts = cms.InputTag("externalLHEProducer"),
-                                            genEventInfoProduct = cms.InputTag("generator"),
-                                            pruned  = cms.InputTag('prunedGenParticles'),
-                                            l1JetParticleProduct = cms.InputTag("l1extraParticles","IsoTau"),
-                                            isMC             = cms.bool(isMC),
-                                            HTBinning        = cms.bool(options.computeHT),
-                                            sampleType = cms.string(options.sampleType),
-                                            )
 process.syncNtupler_tautau = cms.EDAnalyzer('SyncTreeProducer_tautau',
                                             genParticles  = cms.InputTag("genParticles"),
                                             electronSrc   = cms.InputTag("slimmedElectrons"),
                                             eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
                                             eleMediumIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                            eleCutBasedVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
-                                            tauSrc        = cms.InputTag("slimmedTaus"),
+                                            eleCutBasedVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"), 
+					    tauSrc        = cms.InputTag("slimmedTaus"),
                                             muonSrc       = cms.InputTag("slimmedMuons"),
                                             vtxSrc        = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                             jetSrc        = JetCollection,
@@ -267,8 +212,7 @@ process.p = cms.Path(
              process.egmGsfElectronIDSequence*
              process.electronMVAValueMapProducer*
              process.bbttSkim*
-             #process.syncNtupler_mutau
-             (process.syncNtupler_mutau + process.syncNtupler_etau + process.syncNtupler_tautau)
+             process.syncNtupler_tautau
 	   	    )
 
 

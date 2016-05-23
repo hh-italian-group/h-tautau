@@ -51,6 +51,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/CutTools.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "h-tautau/Analysis/include/Candidate.h"
+#include "h-tautau/Analysis/include/CandidateUtilities.h"
 #include "h-tautau/Analysis/include/SyncTree.h"
 #include "h-tautau/Analysis/include/Htautau_2015.h"
 
@@ -156,6 +157,7 @@ struct SelectionResultsV2 {
     CandidateV2PtrVector retagged_bjets;
     VertexV2PtrVector vertices;
     MissingETPtr pfMET;
+    analysis::EventEnergyScale tauEnergyScale;
     //ntuple::MET MET_with_recoil_corrections;
     //ntuple::EventType eventType;
 
@@ -164,6 +166,60 @@ struct SelectionResultsV2 {
     //virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
 };
 //end export
+
+
+inline int genMatch( const reco::Candidate::LorentzVector& p4, const std::vector<reco::GenParticle>& genParticles){
+  int match = 6;
+  float dr = 0.2;
+  float dr_new = 0.2;
+
+  for ( std::vector<reco::GenParticle>::const_iterator genp = genParticles.begin();
+	genp != genParticles.end(); ++genp ) 
+	{
+    dr_new = ROOT::Math::VectorUtil::DeltaR( p4, genp->p4());
+    
+    if (dr_new < dr){
+      if (TMath::Abs(genp->pdgId()) == 11) {
+	if (genp->pt() > 8) {
+	  if (genp->statusFlags().isPrompt()) {
+	    match = 1;
+	    dr = dr_new;
+	  }
+	  else if (genp->statusFlags().isDirectPromptTauDecayProduct()) {
+	    match = 3;
+	    dr = dr_new;
+	  }
+	}
+      }
+      else if (TMath::Abs(genp->pdgId()) == 13) {
+	if (genp->pt() > 8) {
+	  if (genp->isPromptFinalState()){
+	    match = 2;
+	    dr = dr_new;
+	  }
+	  if (genp->isDirectPromptTauDecayProductFinalState()){
+	    match = 4;
+	    dr = dr_new;
+	  }
+	}
+      }
+      else if (TMath::Abs(genp->pdgId()) == 15) {
+	if (genp->statusFlags().isPrompt()) {
+	 reco::Candidate::LorentzVector tau_p4 = utils_genMatch::getVisMomentumNoLep(&(*genp));
+
+	  if (tau_p4.pt() > 15) {
+	    match = 5;
+	    dr = dr_new;
+	  }
+	}
+      }
+    }
+  }
+
+  return match;
+}
+
+
 
 } //namespace analysis
 
@@ -178,7 +234,7 @@ protected:
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
 private:
 	  edm::EDGetToken electronsMiniAODToken_;
-    edm::EDGetTokenT<edm::ValueMap<bool> > eleTightIdMapToken_,eleMediumIdMapToken_;
+    edm::EDGetTokenT<edm::ValueMap<bool> > eleTightIdMapToken_,eleMediumIdMapToken_,eleCutBasedVetoMapToken_;
     edm::EDGetToken tausMiniAODToken_;
     edm::EDGetToken muonsMiniAODToken_;
     edm::EDGetToken vtxMiniAODToken_;
@@ -191,6 +247,7 @@ private:
     edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_;
     edm::EDGetTokenT<GenEventInfoProduct> genWeights_;
+    edm::EDGetTokenT<std::vector<reco::GenParticle> > prunedGenToken_;
     edm::EDGetTokenT< std::vector<l1extra::L1JetParticle> > l1JetParticle_;
     bool isMC_;
     bool computeHT_;
@@ -198,7 +255,7 @@ private:
 
 protected:
   edm::Handle<std::vector<pat::Electron> > electrons;
-  edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions;
+  edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions, ele_cutBased_veto;
   edm::Handle<std::vector<pat::Tau> > taus;
   edm::Handle<std::vector<pat::Muon> > muons;
   edm::Handle<edm::View<reco::Vertex> > vertices;
@@ -211,7 +268,9 @@ protected:
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
   edm::Handle<LHEEventProduct> lheEventProduct;
   edm::Handle<GenEventInfoProduct> genEvt;
+  edm::Handle<std::vector<reco::GenParticle> > pruned;
   edm::Handle< std::vector<l1extra::L1JetParticle> > l1JetParticle;
+  
 
 
   const bool	isMC() const {return isMC_;}
@@ -221,16 +280,17 @@ protected:
   const edm::Handle<edm::View<pat::MET> >     GetPFMet()			const {return pfMETs;}
   const edm::Handle<edm::TriggerResults>      GetTriggerBits()      const {return triggerBits;}
   const edm::Handle<GenEventInfoProduct>      GetGenEventInfo()  const {return genEvt;}
+  const edm::Handle<std::vector<reco::GenParticle> > GetGenParticles() const {return pruned;}
   const edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> GetMETCovMatrix() {return metCovMatrix;}
   const std::string							  GetSampleType()		const {return sampleType;}
 
-  static std::shared_ptr<ntuple::SyncTree> GetSyncTree(TFile* file)
-  {
-      static std::shared_ptr<ntuple::SyncTree> sync_tree;
-      if(!sync_tree)
-          sync_tree = std::shared_ptr<ntuple::SyncTree>(new ntuple::SyncTree(file, false));
-      return sync_tree;
-  }
+  // static std::shared_ptr<ntuple::SyncTree> GetSyncTree(TFile* file)
+//   {
+//       static std::shared_ptr<ntuple::SyncTree> sync_tree;
+//       if(!sync_tree)
+//           sync_tree = std::shared_ptr<ntuple::SyncTree>(new ntuple::SyncTree(file, false));
+//       return sync_tree;
+//   }
 
 public:
     BaseEDAnalyzer(const edm::ParameterSet& iConfig):
@@ -240,6 +300,7 @@ public:
         electronsMiniAODToken_(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
   		  eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
         eleMediumIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
+        eleCutBasedVetoMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleCutBasedVeto"))),
         tausMiniAODToken_(mayConsume<std::vector<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
         muonsMiniAODToken_(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
         vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
@@ -252,6 +313,7 @@ public:
         triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
         lheEventProduct_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
         genWeights_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
+        prunedGenToken_(consumes<std::vector<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
         l1JetParticle_(mayConsume< std::vector<l1extra::L1JetParticle> >(iConfig.getParameter<edm::InputTag>("l1JetParticleProduct"))),
         isMC_(iConfig.getParameter<bool>("isMC")),
         computeHT_(iConfig.getParameter<bool>("HTBinning")),
@@ -285,6 +347,7 @@ public:
       iEvent.getByToken(electronsMiniAODToken_, electrons);
       iEvent.getByToken(eleTightIdMapToken_,tight_id_decisions);
       iEvent.getByToken(eleMediumIdMapToken_,medium_id_decisions);
+      iEvent.getByToken(eleCutBasedVetoMapToken_,ele_cutBased_veto);
       iEvent.getByToken(tausMiniAODToken_, taus);
       iEvent.getByToken(muonsMiniAODToken_, muons);
       iEvent.getByToken(vtxMiniAODToken_, vertices);
@@ -297,6 +360,7 @@ public:
       iEvent.getByToken(triggerObjects_, triggerObjects);
       iEvent.getByToken(l1JetParticle_,l1JetParticle);
       if (isMC()) iEvent.getByToken(genWeights_,genEvt);
+      iEvent.getByToken(prunedGenToken_,pruned);
       try {iEvent.getByToken(lheEventProduct_, lheEventProduct);} catch(...){;};
     }
 
@@ -515,8 +579,10 @@ protected:
             { analysis::CandidateV2::Type::Tau, svFitStandalone::kTauToHadDecay }
         };
 
-        const FirstLegPATType& leg1 = higgs->GetDaughters().at(0)->GetNtupleObject<FirstLegPATType>();
+        //const FirstLegPATType& leg1 = higgs->GetDaughters().at(0)->GetNtupleObject<FirstLegPATType>();
+        const TLorentzVector leg1_momentum = higgs->GetDaughters().at(0)->GetMomentum();
         const pat::Tau&  tau  = higgs->GetDaughters().at(1)->GetNtupleObject<pat::Tau>();
+        const TLorentzVector tau_momentum = higgs->GetDaughters().at(1)->GetMomentum();
         // define MET
           double measuredMETx = met->Px();
           double measuredMETy = met->Py();
@@ -528,10 +594,10 @@ protected:
           covMET[1][1] = met->GetCovVector().at(3);
           // define lepton four vectors
           std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
-          measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayTypeMap.at(higgs->GetDaughters().at(0)->GetType()), leg1.pt(),
-                                                                          leg1.eta(), leg1.phi(), leg1.mass())); // tau -> electron decay (Pt, eta, phi, mass)
-          measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayTypeMap.at(higgs->GetDaughters().at(1)->GetType()), tau.pt(),
-                                                                          tau.eta(), tau.phi(), tau.mass(),tau.decayMode())); // tau -> 1prong0pi0 hadronic decay (Pt, eta, phi, mass, pat::Tau.decayMode())
+          measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayTypeMap.at(higgs->GetDaughters().at(0)->GetType()), leg1_momentum.Pt(),
+                                                                          leg1_momentum.Eta(), leg1_momentum.Phi(), leg1_momentum.M())); // tau -> electron decay (Pt, eta, phi, mass)
+          measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayTypeMap.at(higgs->GetDaughters().at(1)->GetType()), tau_momentum.Pt(),
+                                                                          tau_momentum.Eta(), tau_momentum.Phi(), tau_momentum.M(),tau.decayMode())); // tau -> 1prong0pi0 hadronic decay (Pt, eta, phi, mass, pat::Tau.decayMode())
           SVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMETx, measuredMETy, covMET, 0);
           algo.addLogM(false);
           edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
@@ -559,34 +625,107 @@ protected:
           return svfitResult;
     }
 
-//    void FillSyncTree(const edm::Event& iEvent, const analysis::SelectionResultsV2& selection, Run2::SyncTree syncTree)
-//        {
-//            using namespace analysis;
-//            static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
+   void FillSyncTree(const edm::Event& iEvent, const analysis::SelectionResultsV2& selection, ntuple::SyncTree& syncTree)
+       {
+           using namespace analysis;
+        static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
 
-//            // Event
-//            std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
-//            std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
-//                    <<" Event = "<<iEvent.id().event()<<std::endl;
-//            syncTree.run()  = iEvent.id().run();
-//            syncTree.lumi() = iEvent.id().luminosityBlock();
-//            syncTree.evt()  = iEvent.id().event();
 
-//            if(computeHT_){
-//                syncTree.HT()   = selection.HT;
-//                if(selection.HT<100) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::lt100);
-//                if(100<=selection.HT && selection.HT<200) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f100to200);
-//                if(200<=selection.HT && selection.HT<400) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f200to400);
-//                if(400<=selection.HT && selection.HT<600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f400to600);
-//                if(selection.HT>=600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::gt600);
-//    //        syncTree->eventType() = static_cast<int>(selection.eventType);
-//    //        syncTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
-//            }
-//            else {
-//                syncTree.HT() = default_value;
-//                syncTree.HTBin() = -1;
-//            }
-//    }
+		    const VertexV2Ptr primaryVertex(new VertexV2((*(BaseEDAnalyzer::GetVertexCollection())).front()));
+
+        //BaseEDAnalyzer::FillSyncTree(iEvent, selection, syncTree);
+
+        //const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+
+        // Event
+        std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
+        std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
+                <<" Event = "<<iEvent.id().event()<<std::endl;
+        syncTree().run  = iEvent.id().run();
+        syncTree().lumi = iEvent.id().luminosityBlock();
+        syncTree().evt  = iEvent.id().event();
+        syncTree().channelID = static_cast<int>(ChannelId());
+        syncTree().eventEnergyScale = static_cast<int>(selection.tauEnergyScale);
+
+
+        syncTree().HT   = selection.HT;
+        if(selection.HT<100) syncTree().HTBin = static_cast<int>(Run2::HTbinning::lt100);
+        if(100<=selection.HT && selection.HT<200) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f100to200);
+        if(200<=selection.HT && selection.HT<400) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f200to400);
+        if(400<=selection.HT && selection.HT<600) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f400to600);
+        if(selection.HT>=600) syncTree().HTBin = static_cast<int>(Run2::HTbinning::gt600);
+        if(selection.HT<0)    syncTree().HTBin = -1;
+
+         if (BaseEDAnalyzer::isMC()) syncTree().weightevt = selection.weightevt;
+         else syncTree().weightevt = default_value;
+
+        syncTree().npv = selection.npv;
+        syncTree().npu = selection.numtruepileupinteractions;
+
+
+        // HTT candidate
+        syncTree().m_vis = selection.higgs->GetMomentum().M();
+        syncTree().pt_tt  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
+        syncTree().m_sv = selection.svfitResult.has_valid_mass
+                ? selection.svfitResult.mass : Run2::DefaultFillValueForSyncTree();
+        syncTree().pt_sv = selection.svfitResult.has_valid_momentum
+                ? selection.svfitResult.momentum.Pt() : Run2::DefaultFillValueForSyncTree();
+        syncTree().eta_sv = selection.svfitResult.has_valid_momentum
+                ? selection.svfitResult.momentum.Eta() : Run2::DefaultFillValueForSyncTree();
+        syncTree().phi_sv = selection.svfitResult.has_valid_momentum
+                ? selection.svfitResult.momentum.Phi() : Run2::DefaultFillValueForSyncTree();
+                
+         const pat::MET& patMET = selection.pfMET->GetNtupleObject<pat::MET>();
+         
+         std::cout<<" $$$$$$$  MET Pt(): "<< selection.pfMET->Pt()<< "    Shift-Up:  "<<patMET.shiftedPt(pat::MET::METUncertainty::JetEnUp)<<std::endl;
+        syncTree().met        = selection.pfMET->Pt();
+        syncTree().metphi     = selection.pfMET->Phi();
+        syncTree().isPFMET    = selection.pfMET->isPFMET();
+        syncTree().metcov00   = selection.pfMET->GetCovVector().at(0);
+        syncTree().metcov01   = selection.pfMET->GetCovVector().at(1);
+        syncTree().metcov10   = selection.pfMET->GetCovVector().at(2);
+        syncTree().metcov11   = selection.pfMET->GetCovVector().at(3);
+        
+        
+        // Jets
+        syncTree().njetspt20 = selection.jets.size();
+        //syncTree.njets()     = selection.numJet;
+        syncTree().nbtag     = selection.bjets.size();
+        //int jetCount = 0;
+
+        Int_t numJet = 0;
+        for( const CandidateV2Ptr& jet : selection.jets ){
+                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+                if (jet->GetMomentum().Pt() > 30 ) numJet++;
+                syncTree().pt_jets     .push_back(jet->GetMomentum().Pt());
+                syncTree().eta_jets    .push_back(jet->GetMomentum().Eta());
+                syncTree().phi_jets    .push_back(jet->GetMomentum().Phi());
+                syncTree().energy_jets .push_back(jet->GetMomentum().E());
+                syncTree().rawf_jets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
+                syncTree().mva_jets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
+                syncTree().csv_jets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                syncTree().partonFlavour_jets .push_back(pat_jet1.partonFlavour());
+         }
+        syncTree().njets = numJet;
+
+
+        for( const CandidateV2Ptr& jet : selection.bjets ){
+                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+                syncTree().pt_bjets     .push_back(jet->GetMomentum().Pt());
+                syncTree().eta_bjets    .push_back(jet->GetMomentum().Eta());
+                syncTree().phi_bjets    .push_back(jet->GetMomentum().Phi());
+                syncTree().energy_bjets .push_back(jet->GetMomentum().E());
+                syncTree().rawf_bjets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
+                syncTree().mva_bjets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
+                syncTree().csv_bjets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                syncTree().partonFlavour_bjets .push_back(pat_jet1.partonFlavour());
+         }
+         
+         syncTree().dilepton_veto  = selection.Zveto;
+        syncTree().extraelec_veto = selection.electronVeto;
+        syncTree().extramuon_veto = selection.muonVeto;
+        
+   }
 
 
     template<typename ObjectType, typename BaseSelectorType, typename NtupleObjectType,
@@ -681,6 +820,40 @@ protected:
         cut(X(isGlobalMuon()), "GlobalMuon");
         cut(X(isPFMuon()), "PFMuon");
         cut(Y(iso_mu) < 0.3, "pFRelIso");
+    }
+    
+    analysis::CandidateV2PtrVector CollectZelectrons()
+    {
+        return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectZElectron, *electrons);
+    }
+
+    virtual void SelectZElectron(const analysis::CandidateV2Ptr& electron, analysis::SelectionManager& selectionManager,
+                             cuts::Cutter& cut)
+    {
+        using namespace cuts::Htautau_2015::ETau;
+        const pat::Electron& object = electron->GetNtupleObject<pat::Electron>();
+
+        const auto PV = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+        const Ptr<pat::Electron> elPtr(electrons, electron->GetIndex() );
+        const double iso = (object.pfIsolationVariables().sumChargedHadronPt
+                           + std::max(object.pfIsolationVariables().sumNeutralHadronEt
+                           + object.pfIsolationVariables().sumPhotonEt -
+                           0.5 * object.pfIsolationVariables().sumPUPt, 0.0)) / object.pt();
+
+
+        cut(true, ">0 mu cand");
+//    std::cout<<"  edm::Ptr  id  =  "<<elPtr.id()<<"  edm::Ptr  key  =  "<<elPtr.key()<<
+//               " MVA TightID  = "<<isTight<<std::endl;
+
+        cut(X(pt()) > ZeeVeto::pt, "pt");
+        cut(std::abs( X(eta()) ) < ZeeVeto::eta, "eta");
+        const double electronD0 = fabs(object.gsfTrack()->dxy(PV->position()));
+        cut(Y(electronD0) < ZeeVeto::d0, "dxy");
+        const double electronDZ = fabs(object.gsfTrack()->dz(PV->position()));
+        cut(Y(electronDZ) < ZeeVeto::dz, "dz");
+        const bool veto  = (*ele_cutBased_veto)[elPtr];
+        cut(Y(veto), "cut based veto");
+        cut(Y(iso)< ZeeVeto::pfRelIso, "iso");
     }
 
 

@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, lumi) /* Lumi */ \
     VAR(ULong64_t, evt) /* Evt */ \
     VAR(Int_t, channelID) /* Channel: MuTau, ETau, TauTau */ \
+    VAR(Int_t, eventEnergyScale) /* event type category */ \
     VAR(Int_t, eventType) /* event type category */ \
     VAR(Int_t, HTBin) /* event type category */ \
     VAR(Double_t, weightevt) /*Gen Event Weight*/ \

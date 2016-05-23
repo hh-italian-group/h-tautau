@@ -45,6 +45,9 @@ const double DeltaR_betweenSignalObjects = 0.5; // >
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L665
 const double DeltaR_triggerMatch = 0.5; // <
 
+//https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2015#Baseline_e_tau_h_AN1
+const double DeltaR_DileptonVeto = 0.15;
+
 namespace MuTau {
     namespace trigger {
         // https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2015  - Trigger Session

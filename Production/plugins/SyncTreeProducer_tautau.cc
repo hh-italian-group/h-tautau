@@ -8,7 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //
 SyncTreeProducer_tautau::SyncTreeProducer_tautau(const edm::ParameterSet& iConfig):
   BaseEDAnalyzer(iConfig),
-  sync_tree(BaseEDAnalyzer::GetSyncTree(&edm::Service<TFileService>()->file())),
+  sync_tree(new ntuple::SyncTree("tautau",&edm::Service<TFileService>()->file(),false)),
   syncTree(*sync_tree),
   anaData("tautau_cuts.root") {}
 
@@ -31,6 +31,15 @@ analysis::Channel SyncTreeProducer_tautau::ChannelId() const {return analysis::C
 void
 SyncTreeProducer_tautau::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::Central);
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::TauUp);
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::TauDown);
+
+}
+
+void
+SyncTreeProducer_tautau::ProcessEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const analysis::EventEnergyScale tauEnergyScale)
+{
   using namespace cuts::Htautau_2015;
   using namespace cuts::Htautau_2015::TauTau;
 
@@ -43,6 +52,8 @@ SyncTreeProducer_tautau::analyze(const edm::Event& iEvent, const edm::EventSetup
   Initialize(iEvent);
 
   try{
+
+      selection.tauEnergyScale = tauEnergyScale;
 
       cut(true,"events");
 
@@ -122,6 +133,17 @@ void SyncTreeProducer_tautau::SelectSignalTau(const analysis::CandidateV2Ptr& ta
     using namespace cuts::Htautau_2015::TauTau;
     using namespace cuts::Htautau_2015::TauTau::tauID;
     const pat::Tau& object = tau->GetNtupleObject<pat::Tau>();
+    
+    std::cout<<" @@@@@@@@  Tau pt before ES : " << tau->GetMomentum() << std::endl;
+    
+    if(selection.tauEnergyScale == analysis::EventEnergyScale::TauUp || selection.tauEnergyScale == analysis::EventEnergyScale::TauDown) {
+            const double sign = selection.tauEnergyScale == analysis::EventEnergyScale::TauUp ? +1 : -1;
+            const double sf = 1.0 + sign * cuts::Htautau_2015::tauCorrections::energyUncertainty;
+            tau->ScaleMomentum(sf);
+    }
+        std::cout<<" @@@@@@@@  Tau pt after ES : " << tau->GetMomentum() << std::endl;
+
+    TLorentzVector momentum= tau->GetMomentum();
 
     pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(object.leadChargedHadrCand().get());
 
@@ -129,8 +151,8 @@ void SyncTreeProducer_tautau::SelectSignalTau(const analysis::CandidateV2Ptr& ta
     int const decayModeFinding    = object.tauID("decayModeFinding");
 
     cut(true, ">0 tau cand");
-    cut(X(pt()) > pt, "pt");
-    cut(std::fabs( X(eta()) ) < eta, "eta");
+    cut(Y(momentum.Pt()) > pt, "pt");
+    cut(std::fabs( Y(momentum.Eta()) ) < eta, "eta");
     cut(Y(decayModeFinding) > tauID::decayModeFinding, "oldDecayMode");
     cut(std::fabs( Y(taudz) ) < dz ,"dz");
     cut(std::abs(X(charge()))==1,"charge");
@@ -272,60 +294,12 @@ analysis::CandidateV2Ptr SyncTreeProducer_tautau::SelectHiggs(analysis::Candidat
 void SyncTreeProducer_tautau::FillSyncTree(const edm::Event& iEvent)
     {
         using namespace analysis;
-        static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
+        //static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
 
 
-        const VertexV2Ptr primaryVertex(new VertexV2((*(BaseEDAnalyzer::GetVertexCollection())).front()));
-
-        //BaseEDAnalyzer::FillSyncTree(iEvent, selection, syncTree);
-
-        //const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
-
-		// Event
-        std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
-        std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
-                <<" Event = "<<iEvent.id().event()<<std::endl;
-        syncTree().run  = iEvent.id().run();
-        syncTree().lumi = iEvent.id().luminosityBlock();
-        syncTree().evt  = iEvent.id().event();
-        syncTree().channelID = static_cast<int>(SyncTreeProducer_tautau::ChannelId());
-
-
-        syncTree().HT   = selection.HT;
-        if(selection.HT<100) syncTree().HTBin = static_cast<int>(Run2::HTbinning::lt100);
-        if(100<=selection.HT && selection.HT<200) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f100to200);
-        if(200<=selection.HT && selection.HT<400) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f200to400);
-        if(400<=selection.HT && selection.HT<600) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f400to600);
-        if(selection.HT>=600) syncTree().HTBin = static_cast<int>(Run2::HTbinning::gt600);
-        if(selection.HT<0)    syncTree().HTBin = -1;
-
-         if (BaseEDAnalyzer::isMC()) syncTree().weightevt = selection.weightevt;
-         else syncTree().weightevt = default_value;
-
-        syncTree().npv = selection.npv;
-        syncTree().npu = selection.numtruepileupinteractions;
-
-
-        // HTT candidate
-        syncTree().m_vis = selection.higgs->GetMomentum().M();
-        syncTree().pt_tt  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
-        syncTree().m_sv = selection.svfitResult.has_valid_mass
-               ? selection.svfitResult.mass : Run2::DefaultFillValueForSyncTree();
-        syncTree().pt_sv = selection.svfitResult.has_valid_momentum
-               ? selection.svfitResult.momentum.Pt() : Run2::DefaultFillValueForSyncTree();
-        syncTree().eta_sv = selection.svfitResult.has_valid_momentum
-               ? selection.svfitResult.momentum.Eta() : Run2::DefaultFillValueForSyncTree();
-        syncTree().phi_sv = selection.svfitResult.has_valid_momentum
-               ? selection.svfitResult.momentum.Phi() : Run2::DefaultFillValueForSyncTree();
-
-
-        syncTree().met      = selection.pfMET->Pt();
-        syncTree().metphi   = selection.pfMET->Phi();
-        syncTree().isPFMET  = selection.pfMET->isPFMET();
-        syncTree().metcov00 = selection.pfMET->GetCovVector().at(0);
-        syncTree().metcov01 = selection.pfMET->GetCovVector().at(1);
-        syncTree().metcov10 = selection.pfMET->GetCovVector().at(2);
-        syncTree().metcov11 = selection.pfMET->GetCovVector().at(3);
+		    const VertexV2Ptr primaryVertex(new VertexV2((*(BaseEDAnalyzer::GetVertexCollection())).front()));
+         
+         BaseEDAnalyzer::FillSyncTree(iEvent,selection,syncTree);
 
         // Leg 1, tau
         const pat::Tau& patTau1 = selection.GetLeg(1)->GetNtupleObject<pat::Tau>();
@@ -340,7 +314,8 @@ void SyncTreeProducer_tautau::FillSyncTree(const edm::Event& iEvent)
                                              selection.GetLeg(1)->GetMomentum());
         syncTree().dZ_1     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
         syncTree().iso_1    = patTau1.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-        syncTree().gen_match_1 = true;
+        if (BaseEDAnalyzer::isMC()) 
+               syncTree().gen_match_1 = analysis::genMatch(patTau1.p4(),*(BaseEDAnalyzer::GetGenParticles()));
 
         syncTree().againstElectronLooseMVA6_1   = patTau1.tauID("againstElectronLooseMVA6");
         syncTree().againstElectronMediumMVA6_1  = patTau1.tauID("againstElectronMediumMVA6");
@@ -379,7 +354,8 @@ void SyncTreeProducer_tautau::FillSyncTree(const edm::Event& iEvent)
         syncTree().dZ_2     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
         syncTree().iso_2    = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
         syncTree().id_e_mva_nt_loose_1 = Run2::DefaultFillValueForSyncTree();
-        syncTree().gen_match_2 = true;
+        if (BaseEDAnalyzer::isMC()) 
+               syncTree().gen_match_2 = analysis::genMatch(patTau.p4(),*(BaseEDAnalyzer::GetGenParticles()));
 
         syncTree().againstElectronLooseMVA6_2   = patTau.tauID("againstElectronLooseMVA6");
         syncTree().againstElectronMediumMVA6_2  = patTau.tauID("againstElectronMediumMVA6");
@@ -403,42 +379,6 @@ void SyncTreeProducer_tautau::FillSyncTree(const edm::Event& iEvent)
         syncTree().byVTightIsolationMVArun2v1DBoldDMwLT_2     = patTau.tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
 
         syncTree().decayModeFindingOldDMs_2 = patTau.tauID("decayModeFinding");
-
-        syncTree().dilepton_veto  = selection.Zveto;
-        syncTree().extraelec_veto = selection.electronVeto;
-        syncTree().extramuon_veto = selection.muonVeto;
-
-        // Jets
-        syncTree().njetspt20 = selection.jets.size();
-        syncTree().nbtag     = selection.bjets.size();
-
-        Int_t numJet = 0;
-        for( const CandidateV2Ptr& jet : selection.jets ){
-                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
-                if (jet->GetMomentum().Pt() > 30 ) numJet++;
-                syncTree().pt_jets     .push_back(jet->GetMomentum().Pt());
-                syncTree().eta_jets    .push_back(jet->GetMomentum().Eta());
-                syncTree().phi_jets    .push_back(jet->GetMomentum().Phi());
-                syncTree().energy_jets .push_back(jet->GetMomentum().E());
-                syncTree().rawf_jets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
-                syncTree().mva_jets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
-                syncTree().csv_jets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-                syncTree().partonFlavour_jets .push_back(pat_jet1.partonFlavour());
-         }
-        syncTree().njets = numJet;
-
-
-        for( const CandidateV2Ptr& jet : selection.bjets ){
-                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
-                syncTree().pt_bjets   .push_back(jet->GetMomentum().Pt());
-                syncTree().eta_bjets  .push_back(jet->GetMomentum().Eta());
-                syncTree().phi_bjets  .push_back(jet->GetMomentum().Phi());
-                syncTree().energy_bjets .push_back(jet->GetMomentum().E());
-                syncTree().rawf_bjets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
-                syncTree().mva_bjets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
-                syncTree().csv_bjets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-                syncTree().partonFlavour_bjets .push_back(pat_jet1.partonFlavour());
-         }
 
         syncTree.Fill();
     }

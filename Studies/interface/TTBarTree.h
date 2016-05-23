@@ -47,6 +47,21 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Float_t>, phi_bjet) /* phi  */ \
     VAR(std::vector<Float_t>, mass_bjet) /* mass  */ \
     VAR(std::vector<Float_t>, energy_bjet) /* energy  */ \
+    /* GenJet Matche */ \
+    VAR(std::vector<Int_t>, nConstituent_jet) /* num constituent  */ \
+    VAR(std::vector<Int_t>, nCarrying10_jet) /* num carrying 10% energy fraction  */ \
+    VAR(std::vector<Int_t>, nCarrying30_jet) /* num carrying 30% energy fraction  */ \
+    VAR(std::vector<Int_t>, nCarrying50_jet) /* num carrying 50% energy fraction  */ \
+    VAR(std::vector<Int_t>, nCarrying70_jet) /* num carrying 70% energy fraction  */ \
+    VAR(std::vector<Int_t>, nCarrying90_jet) /* num carrying 90% energy fraction  */ \
+    VAR(std::vector<Int_t>, nCarrying100_jet) /* num carrying 100% energy fraction  */ \
+    VAR(std::vector<Float_t>, pt_jet) /* pt  */ \
+    VAR(std::vector<Float_t>, eta_jet) /* eta  */ \
+    VAR(std::vector<Float_t>, phi_jet) /* phi  */ \
+    VAR(std::vector<Float_t>, emEnergy_jet) /* EM energy  */ \
+    VAR(std::vector<Float_t>, HadEnergy_jet) /* HAD energy  */ \
+    VAR(std::vector<Float_t>, invEnergy_jet) /* Invisible energy  */ \
+    
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

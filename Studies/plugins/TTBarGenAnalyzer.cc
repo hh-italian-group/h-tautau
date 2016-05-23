@@ -32,7 +32,8 @@ namespace analysis{
     const reco::Candidate *top;
     const reco::Candidate *W;
     std::vector<const reco::Candidate*> W_daugther;
-    const reco::Candidate *bjet, *genJetMatched;
+    const reco::Candidate *bjet; 
+    const reco::GenJet *genJetMatched;
   };
 
    typedef std::vector<GenState> GenStateVector;
@@ -61,14 +62,16 @@ class TTBarGenAnalyzer : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::View<reco::GenJet> > genJetToken_;
 
       analysis::GenStateVector ttbarStateVector;
-      ntuple::TTBarTree tree;
+      std::shared_ptr<ntuple::TTBarTree> sync_tree;
+      ntuple::TTBarTree& tree;
 };
 
 TTBarGenAnalyzer::TTBarGenAnalyzer(const edm::ParameterSet& iConfig):
   prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
   packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed"))),
   genJetToken_(consumes< edm::View<reco::GenJet> >(iConfig.getParameter<edm::InputTag>("genJet"))),
-  tree(&edm::Service<TFileService>()->file(),false)
+  sync_tree(new ntuple::TTBarTree("tree",&edm::Service<TFileService>()->file(),false)),
+  tree(*sync_tree)
 {
 }
 
@@ -152,8 +155,10 @@ TTBarGenAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                              ttbarState.bjet = daughter;
                               for (size_t i=0; i<genJet->size();i++){
                                  const GenJet * jet = &(*genJet)[i];
-                                 if (ROOT::Math::VectorUtil::DeltaR( daughter->p4(), jet->p4()) <0.02 ) ttbarState.genJetMatched = jet;
-                                 std::cout << "\t\t\t PdgID: " << jet->pdgId() << " pt " << jet->pt() << " eta: " << jet->eta() << " phi: " << jet->phi() << std::endl;
+                                 if (ROOT::Math::VectorUtil::DeltaR( daughter->p4(), jet->p4()) <0.2 ) {
+                                    ttbarState.genJetMatched = jet;
+                                    std::cout << "\t\t\t PdgID: " << ttbarState.genJetMatched->pdgId() << " pt " << ttbarState.genJetMatched->pt() << " eta: " << ttbarState.genJetMatched->eta() << " phi: " << ttbarState.genJetMatched->phi() << std::endl;
+                                 }
                               }
                            }
                         }
@@ -234,6 +239,22 @@ void TTBarGenAnalyzer::FillTree(const edm::Event& iEvent){
         tree().phi_bjet.push_back(ttbarState.bjet->phi());
         tree().mass_bjet.push_back(ttbarState.bjet->mass());
         tree().energy_bjet.push_back(ttbarState.bjet->energy());
+        
+        if (ttbarState.genJetMatched){
+        //tree().nConstituent_jet.push_back(ttbarState.genJetMatched->nConstituents());
+//         tree().nCarrying10_jet.push_back(ttbarState.genJetMatched->nCarrying(0.10));
+//         tree().nCarrying30_jet.push_back(ttbarState.genJetMatched->nCarrying(0.30));
+//         tree().nCarrying50_jet.push_back(ttbarState.genJetMatched->nCarrying(0.50));
+//         tree().nCarrying70_jet.push_back(ttbarState.genJetMatched->nCarrying(0.70));
+//         tree().nCarrying90_jet.push_back(ttbarState.genJetMatched->nCarrying(0.90));
+//         tree().nCarrying100_jet.push_back(ttbarState.genJetMatched->nCarrying(1.));
+        tree().pt_jet.push_back(ttbarState.genJetMatched->pt());
+        tree().eta_jet.push_back(ttbarState.genJetMatched->eta());
+        tree().phi_jet.push_back(ttbarState.genJetMatched->phi());
+        tree().emEnergy_jet.push_back(ttbarState.genJetMatched->emEnergy());
+        tree().HadEnergy_jet.push_back(ttbarState.genJetMatched->hadEnergy());
+        tree().invEnergy_jet.push_back(ttbarState.genJetMatched->invisibleEnergy());
+      }
       }
 
      tree.Fill();

@@ -78,6 +78,8 @@ class SyncTreeProducer_etau: public BaseEDAnalyzer {
       virtual analysis::CandidateV2Ptr SelectHiggs(analysis::CandidateV2PtrVector& higgses) override;
 
       void FillSyncTree(const edm::Event& iEvent);
+      void ProcessEvent(const edm::Event&, const edm::EventSetup&, const analysis::EventEnergyScale);
+
 
 
       // ----------member data --------------------------
