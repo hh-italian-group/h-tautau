@@ -57,7 +57,7 @@ struct SyncEventInfo {
     std::vector<TLorentzVector> bjet_momentums;
     BjetPair selected_bjets;
     bool has_bjet_pair;
-    TLorentzVector MET, Htt, Htt_MET, Hbb, resonance;
+    TLorentzVector MET, Htt_sv, Htt_vis, Hbb, resonance;
     TMatrixD MET_covariance;
 
 
@@ -71,7 +71,7 @@ struct SyncEventInfo {
 
         for(size_t n = 0; n < bjet_momentums.size(); ++n)
             bjet_momentums.at(n).SetPtEtaPhiE(event->pt_jets.at(n), event->eta_jets.at(n), event->phi_jets.at(n),
-        event->energy_jets.at(n));
+                                              event->energy_jets.at(n));
 
         MET.SetPtEtaPhiM(event->met, 0, event->metphi, 0);
         MET_covariance(0, 0) = event->metcov00;
@@ -79,16 +79,23 @@ struct SyncEventInfo {
         MET_covariance(0, 1) = event->metcov01;
         MET_covariance(1, 1) = event->metcov11;
 
-        Htt = lepton_momentums.at(0) + lepton_momentums.at(1);
-        Htt_MET = Htt + MET;
+        Htt_sv.SetPtEtaPhiM(event->pt_sv, event->eta_sv, event->phi_sv, event->m_sv);
+        Htt_vis = lepton_momentums.at(0) + lepton_momentums.at(1);
         has_bjet_pair = selected_bjets.first < bjet_momentums.size() && selected_bjets.second < bjet_momentums.size();
         if(has_bjet_pair) {
             Hbb = bjet_momentums.at(selected_bjets.first) + bjet_momentums.at(selected_bjets.second);
-            resonance = Htt_MET + Hbb;
+            resonance = Htt_sv + Hbb;
         }
     }
 
     const KinFitResult& GetKinFitResults() const
+    {
+        if(!kinFit_result)
+            throw exception("KinFit result not found.");
+        return *kinFit_result;
+    }
+
+    const KinFitResult& GetKinFitResults()
     {
         if(!kinFit_result) {
             kinFit_result = std::shared_ptr<KinFitResult>(new KinFitResult());
@@ -119,7 +126,7 @@ struct SyncEventInfo {
     }
 
 private:
-    mutable std::shared_ptr<KinFitResult> kinFit_result;
+    std::shared_ptr<KinFitResult> kinFit_result;
 };
 
 using SyncEventInfoPtr = std::shared_ptr<SyncEventInfo>;
