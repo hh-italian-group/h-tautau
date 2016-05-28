@@ -52,7 +52,8 @@ struct SyncEventInfo {
 
     static constexpr int verbosity = 0;
     const ntuple::Sync* event;
-    analysis::Channel channel;
+    Channel channel;
+    EventEnergyScale energy_scale;
     std::vector<TLorentzVector> lepton_momentums;
     std::vector<TLorentzVector> bjet_momentums;
     BjetPair selected_bjets;
@@ -62,7 +63,8 @@ struct SyncEventInfo {
 
 
     SyncEventInfo(const ntuple::Sync& _event, const BjetPair& _selected_bjets)
-        : event(&_event), channel(static_cast<analysis::Channel>(analysis::Channel::MuTau)),
+        : event(&_event), channel(static_cast<Channel>(_event.channelID)),
+          energy_scale(static_cast<EventEnergyScale>(_event.eventEnergyScale)),
           lepton_momentums(2), bjet_momentums(_event.pt_jets.size()), selected_bjets(_selected_bjets),
           has_bjet_pair(false), MET_covariance(2, 2)
     {
