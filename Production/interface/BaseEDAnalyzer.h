@@ -146,6 +146,7 @@ struct SelectionResultsV2 {
     CandidateV2Ptr higgs;
     Float_t numtruepileupinteractions =-1;
     Float_t HT;
+    Int_t NOutPartons;
     Double_t weightevt;
     bool Zveto, electronVeto, muonVeto;
     sv_fit::FitResults svfitResult;
@@ -649,6 +650,7 @@ protected:
 
 
         syncTree().HT   = selection.HT;
+        syncTree().NOutPartons = selection.NOutPartons;
         if(selection.HT<100) syncTree().HTBin = static_cast<int>(Run2::HTbinning::lt100);
         if(100<=selection.HT && selection.HT<200) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f100to200);
         if(200<=selection.HT && selection.HT<400) syncTree().HTBin = static_cast<int>(Run2::HTbinning::f200to400);

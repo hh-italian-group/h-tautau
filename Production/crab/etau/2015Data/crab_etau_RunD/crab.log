@@ -1,0 +1,130 @@
+DEBUG 2016-05-24 17:02:53,901: 	 Executing command: 'submit'
+DEBUG 2016-05-24 17:02:53,906: 	 Found CRAB cache file /afs/cern.ch/user/c/ccaputo/.crab3
+DEBUG 2016-05-24 17:02:54,000: 	 Checking credentials
+DEBUG 2016-05-24 17:02:54,001: 	 Proxy file /tmp/x509up_u44111 not found
+DEBUG 2016-05-24 17:02:54,001: 	 Creating new proxy for 24:00 hours with VO group '' and VO role 'NULL'.
+DEBUG 2016-05-24 17:03:13,363: 	 Executing : 
+ command : voms-proxy-init -voms cms:/cms -valid 24:00 -rfc
+ output : None
+ error: None
+ retcode : 0
+DEBUG 2016-05-24 17:03:15,063: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u44111 -timeleft
+ output : 86397
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:16,711: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u44111 -actimeleft
+ output : 86394
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:18,491: 	 Executing : 
+ command : env X509_USER_PROXY=/tmp/x509up_u44111 voms-proxy-info -fqan
+ output : /cms/Role=NULL/Capability=NULL
+/cms/itcms/Role=NULL/Capability=NULL
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:18,491: 	 Proxy created.
+INFO 2016-05-24 17:03:18,491: 	 Will use CRAB configuration file etau_RunD_crab.py
+DEBUG 2016-05-24 17:03:18,491: 	 Loading CRAB configuration file.
+DEBUG 2016-05-24 17:03:18,514: 	 Will use CRAB Analysis plugin (i.e. will run an analysis job type).
+DEBUG 2016-05-24 17:03:18,835: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /C=IT/O=INFN/OU=Personal Certificate/L=Bari/CN=Claudio Caputo
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:18,836: 	 Checking credentials
+DEBUG 2016-05-24 17:03:18,837: 	 Found proxy file /tmp/x509up_u44111
+DEBUG 2016-05-24 17:03:18,837: 	 Getting proxy life time left
+DEBUG 2016-05-24 17:03:20,566: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u44111 -timeleft
+ output : 86391
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:22,208: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u44111 -actimeleft
+ output : 86388
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:22,209: 	 Proxy valid for 23:59:51 hours
+DEBUG 2016-05-24 17:03:23,986: 	 Executing : 
+ command : env X509_USER_PROXY=/tmp/x509up_u44111 voms-proxy-info -fqan
+ output : /cms/Role=NULL/Capability=NULL
+/cms/itcms/Role=NULL/Capability=NULL
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:24,380: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0118a|0119).cern.ch
+DEBUG 2016-05-24 17:03:24,504: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /C=IT/O=INFN/OU=Personal Certificate/L=Bari/CN=Claudio Caputo
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:24,505: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2016-05-24 17:03:24,505: 	 Calculating hash of /C=IT/O=INFN/OU=Personal Certificate/L=Bari/CN=Claudio Caputo_cmsweb.cern.ch for credential name
+DEBUG 2016-05-24 17:03:26,131: 	 Executing : 
+ command : myproxy-info -l 3eced0e7f74c1152fff59ed2379b41175263d238 -s myproxy.cern.ch
+ output : username: 3eced0e7f74c1152fff59ed2379b41175263d238
+owner: /C=IT/O=INFN/OU=Personal Certificate/L=Bari/CN=Claudio Caputo
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0118a|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0118a|0119).cern.ch
+  timeleft: 609:28:46  (25.4 days)
+
+ error: 
+ retcode : 0
+DEBUG 2016-05-24 17:03:26,133: 	 Myproxy is valid: 2194126
+DEBUG 2016-05-24 17:03:26,133: 	 Command use: submit
+DEBUG 2016-05-24 17:03:26,133: 	 Options use: ['--dryrun', '-c', 'etau_RunD_crab.py']
+DEBUG 2016-05-24 17:03:26,465: 	 CRABClient version: 3.3.1605
+DEBUG 2016-05-24 17:03:26,465: 	 Instance is prod
+DEBUG 2016-05-24 17:03:26,465: 	 Server base url is cmsweb.cern.ch
+DEBUG 2016-05-24 17:03:26,465: 	 Command url /crabserver/prod/workflow
+DEBUG 2016-05-24 17:03:26,465: 	 Started submission
+DEBUG 2016-05-24 17:03:26,465: 	 Working on /afs/cern.ch/work/c/ccaputo/private/HHbbTauTau/Run2/DEV/CMSSW_7_6_3_patch2/src/h-tautau/Production/crab/etau/2015Data/crab_etau_RunD
+DEBUG 2016-05-24 17:03:28,673: 	 Loading required information from the environment
+DEBUG 2016-05-24 17:03:28,673: 	 Found CMSSW_7_6_3_patch2 for slc6_amd64_gcc493 with base /afs/cern.ch/work/c/ccaputo/private/HHbbTauTau/Run2/DEV/CMSSW_7_6_3_patch2
+DEBUG 2016-05-24 17:03:28,814: 	 UNIQUE NAME: tarUUID 684fd93c-e6f6-4dc0-bad1-551a56f2e5a1 
+DEBUG 2016-05-24 17:03:28,815: 	 self.config: from WMCore.Configuration import Configuration
+config = Configuration()
+config.section_('General')
+config.General.workArea = '2015Data'
+config.General.requestName = 'etau_RunD'
+config.section_('JobType')
+config.JobType.psetName = '../python/Production_76X_etau.py'
+config.JobType.pluginName = 'Analysis'
+config.JobType.pyCfgParams = ['sampleType=Run2015D', 'isData=True', 'ReRunJEC=True', 'computeHT=False']
+config.section_('Data')
+config.Data.inputDataset = '/SingleElectron/Run2015D-16Dec2015-v1/MINIAOD'
+config.Data.publication = False
+config.Data.unitsPerJob = 9000
+config.Data.splitting = 'EventAwareLumiBased'
+config.Data.inputDBS = 'global'
+config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/76X_Production_v3/'
+config.Data.lumiMask = '/afs/cern.ch/work/c/ccaputo/private/HHbbTauTau/Run2/DEV/CMSSW_7_6_3_patch2/src/h-tautau/Production/json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON.txt'
+config.section_('Site')
+config.Site.storageSite = 'T2_IT_Bari'
+config.section_('User')
+config.section_('Debug')
+
+DEBUG 2016-05-24 17:03:28,815: 	 self.config.JobType.psetName: ../python/Production_76X_etau.py
+ERROR 2016-05-24 17:03:28,815: 	 Cannot find CMSSW configuration file ../python/Production_76X_etau.py in /afs/cern.ch/work/c/ccaputo/private/HHbbTauTau/Run2/DEV/CMSSW_7_6_3_patch2/src/h-tautau/Production/crab/etau
+ERROR 2016-05-24 17:03:28,815: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/bin/crab", line 160, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/bin/crab", line 148, in __call__
+    self.cmd()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/lib/python2.7/site-packages/CRABClient/Commands/submit.py", line 98, in __call__
+    dummy_inputfiles, jobconfig = plugjobtype.run(filecacheurl)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/lib/python2.7/site-packages/CRABClient/JobType/Analysis.py", line 87, in run
+    userConfig=self.config.JobType.psetName)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc493/cms/crabclient/3.3.1605/lib/python2.7/site-packages/CRABClient/JobType/CMSSWConfig.py", line 40, in __init__
+    raise ConfigurationException(msg)
+ConfigurationException: Cannot find CMSSW configuration file ../python/Production_76X_etau.py in /afs/cern.ch/work/c/ccaputo/private/HHbbTauTau/Run2/DEV/CMSSW_7_6_3_patch2/src/h-tautau/Production/crab/etau

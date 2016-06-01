@@ -72,15 +72,15 @@ inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD28
 DYSample = cms.untracked.vstring("/store/user/ccaputo/HHbbtautau/Run2/DYSample_forHT.root")
 
 TTBar = cms.untracked.vstring('/store/mc/RunIIFall15MiniAODv2/TT_TuneCUETP8M1_13TeV-powheg-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext4-v1/00000/0007DBD0-2ED2-E511-AD0D-20CF3019DEF5.root')
-SyncSignal = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/B2FF8F77-3DB8-E511-B743-001E6757F1D4.root')
-
+SyncSignal = cms.untracked.vstring('/store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/B2FF8F77-3DB8-E511-B743-001E6757F1D4.root')
+Radion300  = cms.untracked.vstring('/store/mc/RunIIFall15MiniAODv2/GluGluToRadionToHHTo2B2Tau_M-300_narrow_13TeV-madgraph/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/20000/821F9C9F-28B8-E511-93CF-003048D2BF3E.root')
 SyncSignal_fewEvents = cms.untracked.vstring(("root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/E0B9088F-3DB8-E511-AFFD-001EC9ADCD52.root",
 											  "root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/70000/EAD78CAB-33B8-E511-8E8E-20CF3027A5BF.root"))
 ##inputSignal_v2 = cms.untracked.vstring(
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = TTBar#,
+    fileNames = Radion300#,
                                  #eventsToProcess = cms.untracked.VEventRange('1:449465','1:475952')
 )
 
@@ -122,7 +122,8 @@ process.bbttSkim   = cms.EDFilter("SkimFilterMiniAOD",
 process.ttbarAnalyzer   = cms.EDAnalyzer("TTBarGenAnalyzer",
                                   pruned  = cms.InputTag('prunedGenParticles'),
                                   packed  = cms.InputTag('packedGenParticles'),
-                                  genJet  = cms.InputTag('slimmedGenJets')
+                                  genJet  = cms.InputTag('slimmedGenJets'),
+                                  isSignal = cms.bool(True),
                                   )
 
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
@@ -143,7 +144,7 @@ process.p = cms.Path(
 #              process.egmGsfElectronIDSequence*
 #              process.electronMVAValueMapProducer*
              process.bbttSkim*
-#             process.printTree*
+             process.printTree*
              process.ttbarAnalyzer
              #(process.syncNtupler_mutau + process.syncNtupler_etau)
 	   	    )

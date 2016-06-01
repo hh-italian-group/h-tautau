@@ -64,6 +64,7 @@ class TTBarGenAnalyzer : public edm::EDAnalyzer {
       analysis::GenStateVector ttbarStateVector;
       std::shared_ptr<ntuple::TTBarTree> sync_tree;
       ntuple::TTBarTree& tree;
+      bool isSignal;
 };
 
 TTBarGenAnalyzer::TTBarGenAnalyzer(const edm::ParameterSet& iConfig):
@@ -71,7 +72,8 @@ TTBarGenAnalyzer::TTBarGenAnalyzer(const edm::ParameterSet& iConfig):
   packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed"))),
   genJetToken_(consumes< edm::View<reco::GenJet> >(iConfig.getParameter<edm::InputTag>("genJet"))),
   sync_tree(new ntuple::TTBarTree("tree",&edm::Service<TFileService>()->file(),false)),
-  tree(*sync_tree)
+  tree(*sync_tree),
+  isSignal(iConfig.getParameter<bool>("isSignal"))
 {
 }
 
@@ -132,7 +134,7 @@ TTBarGenAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
         for(size_t i=0; i<pruned->size();i++){
                 // if(abs((*pruned)[i].pdgId()) > 500 && abs((*pruned)[i].pdgId()) <600)
-                if(abs((*pruned)[i].pdgId()) == 6 ){
+                if(!isSignal && abs((*pruned)[i].pdgId()) == 6 ){
                         const Candidate * top = &(*pruned)[i];
                         if ((*pruned)[i].status() == 62){
                           ttbarState.top = top;
@@ -174,11 +176,46 @@ TTBarGenAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                         ttbarStateVector.push_back(ttbarState);
 
                        }
+                     FillTree(iEvent);
+                }
+                
+                else if (abs((*pruned)[i].pdgId()) == 35){
+                  const Candidate * H = &(*pruned)[i];
+                        if ((*pruned)[i].status() == 62){
+                        std::cout << "PdgID: " << H->pdgId() << " pt " << H->pt() << " eta: " << H->eta() << " phi: " << H->phi() << std::endl;
+                        std::cout << " Number of Daughters:  " << H->numberOfDaughters() << "  Status: " << H->status() << std::endl;
+                        for (size_t i=0; i<H->numberOfDaughters(); ++i){
+                           const Candidate * daughter = H->daughter(i);
+                           std::cout << "\t\t PdgID: " << daughter->pdgId() << " pt " << daughter->pt() << " eta: " << daughter->eta() << " phi: " << daughter->phi() << std::endl;
+
+                           if ( std::abs(daughter->pdgId()) == 25){
+                              auto h = findDecayParticle(daughter);
+                              for (size_t i=0; i<h->numberOfDaughters(); ++i){
+                                 const Candidate * h_daughter = h->daughter(i);
+                                 std::cout << "\t\t\t PdgID: " << h_daughter->pdgId() << " pt " << h_daughter->pt() << " eta: " << h_daughter->eta() << " phi: " << h_daughter->phi() << std::endl;
+                              
+                                 if ( std::abs(h_daughter->pdgId()) == 5 ){
+                                    for (size_t i=0; i<genJet->size();i++){
+                                       const GenJet * jet = &(*genJet)[i];
+                                       if (ROOT::Math::VectorUtil::DeltaR( h_daughter->p4(), jet->p4()) <0.2 ) {
+                                          std::cout << "\t\t\t PdgID: " << jet->pdgId() << " pt " << jet->pt() << " eta: " << jet->eta() << " phi: " << jet->phi() << std::endl;
+                                       }
+                                    }
+                                 }
+                                 if ( std::abs(h_daughter->pdgId()) == 15 ){
+                                    std::cout<<"\t\t\t  Tau!!!!!"<<std::endl;
+                                 }
+                              
+                              }
+                           }
+                           
+                        }
+         
+                       }
                 }
 
         }
 
-      FillTree(iEvent);
 	ttbarStateVector.clear();
 }
 

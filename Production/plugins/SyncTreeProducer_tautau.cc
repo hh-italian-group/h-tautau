@@ -58,11 +58,12 @@ SyncTreeProducer_tautau::ProcessEvent(const edm::Event& iEvent, const edm::Event
       cut(true,"events");
 
       cut(HaveTriggerFired(iEvent, hltPaths),"trigger");
-
-      auto lheInfoPair    = BaseEDAnalyzer::computeHtValue();
-      selection.HT        = lheInfoPair.first;
-      selection.weightevt = (BaseEDAnalyzer::GetGenEventInfo())->weight();
-
+      if(BaseEDAnalyzer::isMC()){
+         auto lheInfoPair    = BaseEDAnalyzer::computeHtValue();
+         selection.HT        = lheInfoPair.first;
+         selection.NOutPartons = lheInfoPair.second;
+         selection.weightevt = (BaseEDAnalyzer::GetGenEventInfo())->weight();
+      }
       const auto PV = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
                                             //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
                                             //Es. edm::View<int> gestisce int semplici, vector<int>, set<int> etc.

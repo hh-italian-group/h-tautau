@@ -160,6 +160,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /* VAR(Float_t, bcsv_2)  Btag CSV */ \
     /**/ \
     VAR(Float_t, HT) \
+    VAR(Int_t, NOutPartons) \
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
