@@ -14,7 +14,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
@@ -58,6 +64,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
+
+//HHKinFit
+#include "HHKinFit2/HHKinFit2/interface/HHKinFitMasterHeavyHiggs.h"
+
 
 #define SELECTION_ENTRY(name) \
     ANA_DATA_ENTRY(cuts::ObjectSelector, name) \
@@ -120,6 +130,14 @@ struct FitResults {
 }; //fix SVFit.h
 }//sv_fit namespace
 
+struct KinFitResult {
+    double mass, chi2, probability;
+    int convergence;
+    bool HasMass() const { return convergence > 0; }
+
+    KinFitResult() : convergence(std::numeric_limits<int>::lowest()) {}
+};
+
 // exported from other .h file
 class SelectionManager {
 public:
@@ -150,15 +168,15 @@ struct SelectionResultsV2 {
     Double_t weightevt;
     bool Zveto, electronVeto, muonVeto;
     sv_fit::FitResults svfitResult;
+    std::shared_ptr<KinFitResult> kinFit_result;
     //kinematic_fit::four_body::FitResults kinfitResults;
     CandidateV2PtrVector jets;
     int numJet=-1, npv=-1;
-    CandidateV2PtrVector jetsPt20;
+    CandidateV2PtrVector jetsTight;
     CandidateV2PtrVector bjets;
-    CandidateV2PtrVector retagged_bjets;
     VertexV2PtrVector vertices;
     MissingETPtr pfMET;
-    analysis::EventEnergyScale tauEnergyScale;
+    analysis::EventEnergyScale eventEnergyScale;
     //ntuple::MET MET_with_recoil_corrections;
     //ntuple::EventType eventType;
 
@@ -181,41 +199,40 @@ inline int genMatch( const reco::Candidate::LorentzVector& p4, const std::vector
     
     if (dr_new < dr){
       if (TMath::Abs(genp->pdgId()) == 11) {
-	if (genp->pt() > 8) {
-	  if (genp->statusFlags().isPrompt()) {
-	    match = 1;
-	    dr = dr_new;
-	  }
-	  else if (genp->statusFlags().isDirectPromptTauDecayProduct()) {
-	    match = 3;
-	    dr = dr_new;
-	  }
-	}
+	      if (genp->pt() > 8) {
+	         if (genp->statusFlags().isPrompt()) {
+	            match = 1;
+	            dr = dr_new;
+	         }
+	         else if (genp->statusFlags().isDirectPromptTauDecayProduct()) {
+	            match = 3;
+	            dr = dr_new;
+	         }
+	      }
       }
       else if (TMath::Abs(genp->pdgId()) == 13) {
-	if (genp->pt() > 8) {
-	  if (genp->isPromptFinalState()){
-	    match = 2;
-	    dr = dr_new;
-	  }
-	  if (genp->isDirectPromptTauDecayProductFinalState()){
-	    match = 4;
-	    dr = dr_new;
-	  }
-	}
+	      if (genp->pt() > 8) {
+	         if (genp->isPromptFinalState()){
+	            match = 2;
+	            dr = dr_new;
+	         }
+	         if (genp->isDirectPromptTauDecayProductFinalState()){
+	            match = 4;
+	            dr = dr_new;
+	         }
+	      }
       }
       else if (TMath::Abs(genp->pdgId()) == 15) {
-	if (genp->statusFlags().isPrompt()) {
-	 reco::Candidate::LorentzVector tau_p4 = utils_genMatch::getVisMomentumNoLep(&(*genp));
-
-	  if (tau_p4.pt() > 15) {
-	    match = 5;
-	    dr = dr_new;
-	  }
-	}
+	      if (genp->statusFlags().isPrompt()) {
+	         reco::Candidate::LorentzVector tau_p4 = utils_genMatch::getVisMomentumNoLep(&(*genp));
+         	if (tau_p4.pt() > 15) {
+	             match = 5;
+	            dr = dr_new;
+	         }
+	      }
       }
     }
-  }
+  } //GenParticle Loop
 
   return match;
 }
@@ -253,6 +270,7 @@ private:
     bool isMC_;
     bool computeHT_;
     std::string sampleType;
+
 
 protected:
   edm::Handle<std::vector<pat::Electron> > electrons;
@@ -329,18 +347,26 @@ public:
     //virtual void ProcessEvent(const edm::Event&, const edm::EventSetup&) = 0;
 
     //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
-    static bool passPFLooseId(const pat::Jet& jet)
+    //  PFJetID is tuned on Uncorrected Jet values
+    static bool passPFLooseId(const pat::Jet& pat_jet/*, const analysis::CandidateV2Ptr& jet*/)
     {
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
-        if(momentum.E() == 0)                                  return false;
-        if(jet.neutralHadronEnergyFraction() > 0.99)   return false;
-        if(jet.neutralEmEnergyFraction()     > 0.99)   return false;
-        if(jet.nConstituents() <  1)                   return false;
-        if(jet.chargedHadronEnergyFraction() <= 0 && std::abs(jet.eta()) < 2.4 ) return false;
-        if(jet.chargedEmEnergyFraction() >  0.99  && std::abs(jet.eta()) < 2.4 ) return false;
-        if(jet.chargedMultiplicity()     <= 0      && std::abs(jet.eta()) < 2.4 ) return false;
-        return true;
+      //TLorentzVector momentum = jet->GetMomentum();
+      const pat::Jet& patJet = pat_jet.correctedJet("Uncorrected");
+        //momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
+      if(std::abs(patJet.eta())<3.0){
+         //if(momentum.E() == 0)                                  return false;
+         if(patJet.neutralHadronEnergyFraction() > 0.99)   return false;
+         if(patJet.neutralEmEnergyFraction()     > 0.99)   return false;
+         if(patJet.nConstituents() <  1)                   return false;
+         if(patJet.chargedHadronEnergyFraction() <= 0 && std::abs(patJet.eta()) < 2.4 ) return false;
+         if(patJet.chargedEmEnergyFraction() >  0.99  && std::abs(patJet.eta()) < 2.4 ) return false;
+         if(patJet.chargedMultiplicity()     <= 0      && std::abs(patJet.eta()) < 2.4 ) return false;
+      }
+      if(std::abs(patJet.eta())>3.0){
+         if(patJet.neutralEmEnergyFraction()     > 0.90)   return false;
+         if(patJet.neutralMultiplicity() < 10 )            return false;
+      }
+      return true;
     }
 
 
@@ -646,7 +672,7 @@ protected:
         syncTree().lumi = iEvent.id().luminosityBlock();
         syncTree().evt  = iEvent.id().event();
         syncTree().channelID = static_cast<int>(ChannelId());
-        syncTree().eventEnergyScale = static_cast<int>(selection.tauEnergyScale);
+        syncTree().eventEnergyScale = static_cast<int>(selection.eventEnergyScale);
 
 
         syncTree().HT   = selection.HT;
@@ -677,9 +703,8 @@ protected:
         syncTree().phi_sv = selection.svfitResult.has_valid_momentum
                 ? selection.svfitResult.momentum.Phi() : Run2::DefaultFillValueForSyncTree();
                 
-         const pat::MET& patMET = selection.pfMET->GetNtupleObject<pat::MET>();
+        // const pat::MET& patMET = selection.pfMET->GetNtupleObject<pat::MET>();
          
-         std::cout<<" $$$$$$$  MET Pt(): "<< selection.pfMET->Pt()<< "    Shift-Up:  "<<patMET.shiftedPt(pat::MET::METUncertainty::JetEnUp)<<std::endl;
         syncTree().met        = selection.pfMET->Pt();
         syncTree().metphi     = selection.pfMET->Phi();
         syncTree().isPFMET    = selection.pfMET->isPFMET();
@@ -706,10 +731,10 @@ protected:
                 syncTree().rawf_jets   .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
                 syncTree().mva_jets    .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
                 syncTree().csv_jets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                //std::cout<<" \t\t CSV:  "<< pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") << std::endl;
                 syncTree().partonFlavour_jets .push_back(pat_jet1.partonFlavour());
          }
         syncTree().njets = numJet;
-
 
         for( const CandidateV2Ptr& jet : selection.bjets ){
                 const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
@@ -722,6 +747,11 @@ protected:
                 syncTree().csv_bjets    .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
                 syncTree().partonFlavour_bjets .push_back(pat_jet1.partonFlavour());
          }
+         
+         // syncTree().kinFit_m = selection.kinFit_result->mass;
+//          syncTree().kinFit_m = selection.kinFit_result->chi2;
+//          syncTree().kinFit_m = selection.kinFit_result->probability;
+//          syncTree().kinFit_m = selection.kinFit_result->convergence;
          
          syncTree().dilepton_veto  = selection.Zveto;
         syncTree().extraelec_veto = selection.electronVeto;
@@ -936,6 +966,16 @@ protected:
     }
 
     virtual void SelectJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+            throw std::runtime_error("Jets selection not implemented");
+    }
+    
+    analysis::CandidateV2PtrVector CollectJetsTight()
+    {
+        return CollectCandidateObjects("jets", &BaseEDAnalyzer::SelectJetsTight, *jets);
+    }
+
+    virtual void SelectJetsTight(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
     {
             throw std::runtime_error("Jets selection not implemented");
     }

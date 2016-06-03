@@ -158,7 +158,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /* VAR(Float_t, brawf_2)  Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     /* VAR(Float_t, bmva_2)  Btag mva */ \
     /* VAR(Float_t, bcsv_2)  Btag CSV */ \
-    /**/ \
+    /* KinFit Variables */ \
+    VAR(Double_t, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
+    VAR(Double_t, kinFit_chi2) /*  KinFit chi2 value*/ \
+    VAR(Double_t, kinFit_probability) /*  KinFit chi2 probability value*/ \
+    VAR(Int_t, kinFit_convergence) /* KinFit convergence code */\
+    /*------*/\
     VAR(Float_t, HT) \
     VAR(Int_t, NOutPartons) \
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \

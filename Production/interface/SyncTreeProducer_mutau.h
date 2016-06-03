@@ -66,6 +66,7 @@ class SyncTreeProducer_mutau: public BaseEDAnalyzer {
    	  virtual void SelectSignalMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
    	  virtual void SelectSignalTau(const analysis::CandidateV2Ptr& tau, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
 	  virtual void SelectJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
+        virtual void SelectJetsTight(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
       virtual void SelectBJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
 
 
@@ -84,6 +85,7 @@ class SyncTreeProducer_mutau: public BaseEDAnalyzer {
 
       //double SVFit(const analysis::CandidateV2Ptr& higgs, const analysis::MissingETPtr& met);
       void FillSyncTree(const edm::Event& iEvent);
+      void GetKinFitResults();
       void ProcessEvent(const edm::Event&, const edm::EventSetup&, const analysis::EventEnergyScale);
 
 
@@ -94,4 +96,5 @@ class SyncTreeProducer_mutau: public BaseEDAnalyzer {
       ntuple::SyncTree& syncTree;
       analysis::SyncAnalyzerData_muTau anaData;
       analysis::SelectionResultsV2_mutau selection;
+      JetCorrectionUncertainty *jecUnc;
 };
