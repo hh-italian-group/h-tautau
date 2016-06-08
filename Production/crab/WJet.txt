@@ -1,5 +1,5 @@
 EventAwareLumiBased
-sampleType=Fall15MC isData=False ReRunJEC=True computeHT=True
+sampleType=Fall15MC isData=False ReRunJEC=True computeHT=True globalTag=76X_mcRun2_asymptotic_RunIIFall15DR76_v1
 WJetsToLNu 37000 /WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM
 WJetsToLNu_HT-100to200 8000 /WJetsToLNu_HT-100To200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM
 WJetsToLNu_HT-200to400 7000 /WJetsToLNu_HT-200To400_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM

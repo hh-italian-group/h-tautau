@@ -130,7 +130,7 @@ SyncTreeProducer_etau::ProcessEvent(const edm::Event& iEvent, const edm::EventSe
          std::map<analysis::EventEnergyScale, pat::MET::METUncertainty > metUncertantyMap = {{analysis::EventEnergyScale::JetUp,pat::MET::METUncertainty::JetEnUp},
                                                                                              {analysis::EventEnergyScale::JetDown,pat::MET::METUncertainty::JetEnDown}};
          const reco::Candidate::LorentzVector shifted_p4 = ((*pfMETs)[0]).shiftedP4(metUncertantyMap[selection.eventEnergyScale]);
-         std::cout<<" MET   P4 Value:  "<< shifted_p4 <<std::endl;
+//         std::cout<<" MET   P4 Value:  "<< shifted_p4 <<std::endl;
          pfMET->ShiftMET(shifted_p4);
      }
       selection.pfMET = pfMET;
@@ -139,7 +139,7 @@ SyncTreeProducer_etau::ProcessEvent(const edm::Event& iEvent, const edm::EventSe
       selection.bjets  = CollectBJets();
 
       selection.svfitResult = BaseEDAnalyzer::SVFit<pat::Electron>(higgs,pfMET);
-          std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
+//          std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
 
       FillSyncTree(iEvent);
 
@@ -181,14 +181,14 @@ void SyncTreeProducer_etau::SelectSignalTau(const analysis::CandidateV2Ptr& tau,
     using namespace cuts::Htautau_2015::ETau::tauID;
     const pat::Tau& object = tau->GetNtupleObject<pat::Tau>();
 
-    std::cout<<" @@@@@@@@  Tau pt before ES : " << tau->GetMomentum() << std::endl;
+//    std::cout<<" @@@@@@@@  Tau pt before ES : " << tau->GetMomentum() << std::endl;
     
     if(selection.eventEnergyScale == analysis::EventEnergyScale::TauUp || selection.eventEnergyScale == analysis::EventEnergyScale::TauDown) {
             const double sign = selection.eventEnergyScale == analysis::EventEnergyScale::TauUp ? +1 : -1;
             const double sf = 1.0 + sign * cuts::Htautau_2015::tauCorrections::energyUncertainty;
             tau->ScaleMomentum(sf);
     }
-        std::cout<<" @@@@@@@@  Tau pt after ES : " << tau->GetMomentum() << std::endl;
+//        std::cout<<" @@@@@@@@  Tau pt after ES : " << tau->GetMomentum() << std::endl;
 
     TLorentzVector momentum= tau->GetMomentum();
 
@@ -329,10 +329,10 @@ analysis::CandidateV2Ptr SyncTreeProducer_etau::SelectHiggs(analysis::CandidateV
         double iso_tau1 = first_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
         double iso_tau2 = second_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 
-        std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_ele1<<"  IsoMu2 = "<<iso_ele2
-                  << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
-        std::cout << " PtMu1 = "<<first_electron.pt()<<"  PtMu2 = "<<second_electron.pt()
-                  << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
+//        std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_ele1<<"  IsoMu2 = "<<iso_ele2
+//                  << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
+//        std::cout << " PtMu1 = "<<first_electron.pt()<<"  PtMu2 = "<<second_electron.pt()
+//                  << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
 
         bool electron = (iso_ele1 < iso_ele2) ||
                         ((iso_ele1 == iso_ele2) ? first_electron.pt() > second_electron.pt() : false);

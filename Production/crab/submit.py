@@ -15,15 +15,6 @@ parser.add_argument('--output', required=True, dest='output', type=str,
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
 args = parser.parse_args()
 
-from crab_tools import JobCollection
-
-for job_file in args.job_file:
-    job_collection = JobCollection(job_file)
-    print job_file
-    print job_collection
-
-sys.exit(0)
-
 from CRABClient.UserUtilities import config, ClientException, getUsernameFromSiteDB
 from CRABAPI.RawCommand import crabCommand
 from httplib import HTTPException

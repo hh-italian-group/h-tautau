@@ -1,0 +1,164 @@
+# Produce SyncTree for all channels.
+# This file is part of https://github.com/hh-italian-group/h-tautau.
+
+import re
+import FWCore.ParameterSet.Config as cms
+from FWCore.ParameterSet.VarParsing import VarParsing
+
+options = VarParsing('analysis')
+options.register('globalTag', '76X_mcRun2_asymptotic_RunIIFall15DR76_v1', VarParsing.multiplicity.singleton,
+                 VarParsing.varType.string, "Global Tag to use.")
+options.register('isData', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "True if the sample is Data. Default: False")
+options.register('sampleType', 'Fall15MC', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Re-run Jet Energy Corrections. Default: False")
+options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "List of root files to process.")
+options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                  "Prefix to add to input file names.")
+options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "Analysis channels to run.")
+options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "Event tuple file.")
+options.parseArguments()
+
+processName = 'tupleProduction'
+process = cms.Process(processName)
+process.options   = cms.untracked.PSet()
+process.options.wantSummary = cms.untracked.bool(False)
+process.options.allowUnscheduled = cms.untracked.bool(True)
+
+process.load('FWCore.MessageLogger.MessageLogger_cfi')
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
+
+process.load('Configuration.StandardSequences.MagneticField_cff')
+process.load('Configuration.Geometry.GeometryRecoDB_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+
+process.GlobalTag.globaltag = options.globalTag
+process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring())
+process.TFileService = cms.Service('TFileService', fileName = cms.string(options.tupleOutput) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(0) )
+
+if len(options.fileList) > 0:
+    from AnalysisTools.Run.readFileList import *
+    readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
+    process.maxEvents.input = options.maxEvents
+
+process.load('RecoMET.METProducers.METSignificance_cfi')
+process.load('RecoMET.METProducers.METSignificanceParams_cfi')
+
+### re-run JEC and and use corrected jets for MET significance, if requested
+if options.ReRunJEC:
+    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import patJetCorrFactorsUpdated
+    process.patJetCorrFactorsReapplyJEC = patJetCorrFactorsUpdated.clone(
+        src = cms.InputTag('slimmedJets'),
+        levels = ['L1FastJet', 'L2Relative', 'L3Absolute'],
+        payload = 'AK4PFchs' # Make sure to choose the appropriate levels and payload here!
+    )
+    if options.isData:
+      process.patJetCorrFactorsReapplyJEC.levels.append('L2L3Residual')
+
+    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import patJetsUpdated
+    process.patJetsReapplyJEC = patJetsUpdated.clone(
+        jetSource = cms.InputTag('slimmedJets'),
+        jetCorrFactorsSource = cms.VInputTag(cms.InputTag('patJetCorrFactorsReapplyJEC'))
+    )
+
+    process.METSignificance.srcPfJets = cms.InputTag('patJetsReapplyJEC', '', processName)
+    process.METSignificance.srcMet = cms.InputTag('patpfMETT1', '', processName)
+
+    process.JECsequence = cms.Sequence(process.patJetCorrFactorsReapplyJEC * process.patJetsReapplyJEC)
+    JetCollectionName = 'patJetsReapplyJEC'
+    #JetCollectionName = cms.InputTag('patJetsReapplyJEC', '', processName)
+else:
+   process.JECsequence = cms.Sequence()
+   JetCollectionName = 'slimmedJets'
+   #JetCollectionTag = cms.InputTag('slimmedJets')
+
+from RecoMET.METPUSubtraction.MVAMETConfiguration_cff import runMVAMET
+runMVAMET( process, jetCollectionPF = JetCollectionName )
+process.MVAMET.srcLeptons  = cms.VInputTag('slimmedMuons', 'slimmedElectrons', 'slimmedTaus')
+process.MVAMET.requireOS = cms.bool(False)
+
+## Load module for Electron MVA ID
+## It will append a value maps the miniAOD, that it's accesible throught a well Handle
+## Example code here:
+##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
+## process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
+##-------------
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+# turn on VID producer, indicate data format  to be
+# DataFormat.AOD or DataFormat.MiniAOD, as appropriate
+switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
+switchOnVIDElectronIdProducer(process, DataFormat.AOD)
+
+# define which IDs we want to produce
+id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff',
+               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_Trig_V1_cff',
+               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff' ]
+
+#add them to the VID producer
+for idmod in id_modules:
+    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+#------------
+
+process.tupleProductionSequence = cms.Sequence()
+if options.anaChannels == 'all':
+    channels = [ 'etau', 'mutau', 'tautau' ]
+else:
+    channels = re.split(',', options.anaChannels)
+
+for channel in channels:
+    producerName = 'tupleProducer_{}'.format(channel)
+    producerClassName = 'SyncTreeProducer_{}'.format(channel)
+    setattr(process, producerName, cms.EDAnalyzer(producerClassName,
+        genParticles            = cms.InputTag('genParticles'),
+        electronSrc             = cms.InputTag('slimmedElectrons'),
+        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
+        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90'),
+        eleCutBasedVeto         = cms.InputTag('egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto'),
+        tauSrc                  = cms.InputTag('slimmedTaus'),
+        muonSrc                 = cms.InputTag('slimmedMuons'),
+        vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
+        jetSrc                  = cms.InputTag(JetCollectionName),
+        PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
+        pfMETSrc                = cms.InputTag('slimmedMETs'),
+        bits                    = cms.InputTag('TriggerResults', '', 'HLT'),
+        prescales               = cms.InputTag('patTrigger'),
+        objects                 = cms.InputTag('selectedPatTrigger'),
+        metCov                  = cms.InputTag('METSignificance', 'METCovariance'),
+        lheEventProducts        = cms.InputTag('externalLHEProducer'),
+        genEventInfoProduct     = cms.InputTag('generator'),
+        pruned                  = cms.InputTag('prunedGenParticles'),
+        l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
+        isMC                    = cms.bool(not options.isData),
+        sampleType              = cms.string(options.sampleType)
+    ))
+    process.tupleProductionSequence += getattr(process, producerName)
+
+process.p = cms.Path(
+    process.egmGsfElectronIDSequence *
+    process.electronMVAValueMapProducer *
+    process.JECsequence *
+    process.METSignificance *
+    process.tupleProductionSequence
+)
+
+#process.out = cms.OutputModule('PoolOutputModule',
+#    compressionLevel = cms.untracked.int32(4),
+#    compressionAlgorithm = cms.untracked.string('LZMA'),
+#    eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
+#    fileName = cms.untracked.string('microAOD.root'),
+#    SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
+#    outputCommands = cms.untracked.vstring(['drop *']),
+#    dropMetaData = cms.untracked.string('ALL'),
+#    fastCloning = cms.untracked.bool(False),
+#    overrideInputFileSplitLevels = cms.untracked.bool(True)
+#)
+
+#process.endpath= cms.EndPath(process.out)
+
+#print process.dumpPython()

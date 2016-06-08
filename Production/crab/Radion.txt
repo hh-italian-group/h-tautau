@@ -1,4 +1,4 @@
 EventAwareLumiBased SIGNAL
-sampleType=Fall15MC isData=False ReRunJEC=True computeHT=False
+sampleType=Fall15MC isData=False ReRunJEC=True computeHT=False globalTag=76X_mcRun2_asymptotic_RunIIFall15DR76_v1
 250 260 270 280 300 320 340 350 400 450 500 550 600 650 700 800 900
 GluGluToRadionToHHTo2B2Tau_M-{M} 1000 /GluGluToRadionToHHTo2B2Tau_M-{M}_narrow_13TeV-madgraph/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM

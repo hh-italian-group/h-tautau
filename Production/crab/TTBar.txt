@@ -1,3 +1,3 @@
 EventAwareLumiBased
-sampleType=Fall15MC isData=False ReRunJEC=True computeHT=False
+sampleType=Fall15MC isData=False ReRunJEC=True computeHT=False globalTag=76X_mcRun2_asymptotic_RunIIFall15DR76_v1
 TTbar 20000 /TT_TuneCUETP8M1_13TeV-powheg-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12_ext3-v1/MINIAODSIM

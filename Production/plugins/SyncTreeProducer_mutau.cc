@@ -135,7 +135,7 @@ SyncTreeProducer_mutau::ProcessEvent(const edm::Event& iEvent, const edm::EventS
          std::map<analysis::EventEnergyScale, pat::MET::METUncertainty > metUncertantyMap = {{analysis::EventEnergyScale::JetUp,pat::MET::METUncertainty::JetEnUp},
                                                                                              {analysis::EventEnergyScale::JetDown,pat::MET::METUncertainty::JetEnDown}};
          const reco::Candidate::LorentzVector shifted_p4 = ((*pfMETs)[0]).shiftedP4(metUncertantyMap[selection.eventEnergyScale]);
-         std::cout<<" MET   P4 Value:  "<< shifted_p4 <<std::endl;
+//         std::cout<<" MET   P4 Value:  "<< shifted_p4 <<std::endl;
          pfMET->ShiftMET(shifted_p4);
      }
       selection.pfMET = pfMET;
@@ -154,7 +154,7 @@ SyncTreeProducer_mutau::ProcessEvent(const edm::Event& iEvent, const edm::EventS
 //       std::sort(selection.bjets.begin(),selection.bjets.end(),jetCsvOrdering);
 
       selection.svfitResult = BaseEDAnalyzer::SVFit<pat::Muon>(higgs,pfMET);
-      std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
+//      std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
 
      //if (selection.jetsTight.size()>=2) GetKinFitResults();
 
@@ -352,20 +352,20 @@ analysis::CandidateV2Ptr SyncTreeProducer_mutau::SelectHiggs(analysis::Candidate
         double iso_tau1 = first_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
         double iso_tau2 = second_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 
-        std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_mu1<<"  IsoMu2 = "<<iso_mu2
-                  << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
-        std::cout << " PtMu1 = "<<first_muon.pt()<<"  PtMu2 = "<<second_muon.pt()
-                  << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
+//        std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_mu1<<"  IsoMu2 = "<<iso_mu2
+//                  << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
+//        std::cout << " PtMu1 = "<<first_muon.pt()<<"  PtMu2 = "<<second_muon.pt()
+//                  << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
 
         if (!iso_mu1 || !iso_mu2 ){
-            std::cout << "\t 1st Muon \t ChargedHadronPt = "<<first_muon.pfIsolationR03().sumChargedHadronPt
-                      << "\t NeutralHadronEt = "<<first_muon.pfIsolationR03().sumNeutralHadronEt
-                      << "\t PhotonEt = "<<first_muon.pfIsolationR03().sumPhotonEt
-                      << "\t PUPt = "<<first_muon.pfIsolationR03().sumPUPt<<std::endl;
-            std::cout << "\t 2nd Muon \t ChargedHadronPt = "<<second_muon.pfIsolationR03().sumChargedHadronPt
-                      << "\t NeutralHadronEt = "<<second_muon.pfIsolationR03().sumNeutralHadronEt
-                      << "\t PhotonEt = "<<second_muon.pfIsolationR03().sumPhotonEt
-                      << "\t PUPt = "<<second_muon.pfIsolationR03().sumPUPt<<std::endl;
+//            std::cout << "\t 1st Muon \t ChargedHadronPt = "<<first_muon.pfIsolationR03().sumChargedHadronPt
+//                      << "\t NeutralHadronEt = "<<first_muon.pfIsolationR03().sumNeutralHadronEt
+//                      << "\t PhotonEt = "<<first_muon.pfIsolationR03().sumPhotonEt
+//                      << "\t PUPt = "<<first_muon.pfIsolationR03().sumPUPt<<std::endl;
+//            std::cout << "\t 2nd Muon \t ChargedHadronPt = "<<second_muon.pfIsolationR03().sumChargedHadronPt
+//                      << "\t NeutralHadronEt = "<<second_muon.pfIsolationR03().sumNeutralHadronEt
+//                      << "\t PhotonEt = "<<second_muon.pfIsolationR03().sumPhotonEt
+//                      << "\t PUPt = "<<second_muon.pfIsolationR03().sumPUPt<<std::endl;
         }
         bool muon = (iso_mu1 < iso_mu2) ||
                     ((iso_mu1 == iso_mu2) ? first_muon.pt() > second_muon.pt() : false);
@@ -392,10 +392,10 @@ analysis::CandidateV2Ptr SyncTreeProducer_mutau::SelectHiggs(analysis::Candidate
 void SyncTreeProducer_mutau::GetKinFitResults()
     {
         //if(!selection.kinFit_result) {
-            std::cout<<"   KinFIT --------------,,,,,,"<<std::endl;
+//            std::cout<<"   KinFIT --------------,,,,,,"<<std::endl;
             selection.kinFit_result = std::shared_ptr<analysis::KinFitResult>(new analysis::KinFitResult());
             if(selection.jetsTight.size()>=2) {
-               std::cout<<"   ------- KinFIT --------------,,,,,,"<<std::endl;
+//               std::cout<<"   ------- KinFIT --------------,,,,,,"<<std::endl;
             
                 // if(verbosity > 1) {
 //                     std::cout << "b1: " << bjet_momentums.at(selected_bjets.first)
@@ -424,7 +424,7 @@ void SyncTreeProducer_mutau::GetKinFitResults()
                     selection.kinFit_result->mass = kin_fit.getMH();
                     selection.kinFit_result->chi2 = kin_fit.getChi2();
                     selection.kinFit_result->probability = kin_fit.getFitProb();
-                    std::cout<<"   ------- KinFIT --------------,,,,,,"<< selection.kinFit_result->mass <<std::endl;
+//                    std::cout<<"   ------- KinFIT --------------,,,,,,"<< selection.kinFit_result->mass <<std::endl;
 
                 }
             }
