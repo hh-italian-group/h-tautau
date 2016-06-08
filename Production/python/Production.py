@@ -1,15 +1,15 @@
 # Produce SyncTree for all channels.
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
+import sys
 import re
+from sets import Set
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 options = VarParsing('analysis')
 options.register('globalTag', '76X_mcRun2_asymptotic_RunIIFall15DR76_v1', VarParsing.multiplicity.singleton,
                  VarParsing.varType.string, "Global Tag to use.")
-options.register('isData', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "True if the sample is Data. Default: False")
 options.register('sampleType', 'Fall15MC', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -24,9 +24,16 @@ options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singl
                  "Event tuple file.")
 options.parseArguments()
 
+mc_sample_types = Set([ 'Spring15MC', 'Fall15MC' ])
+data_sample_types = Set([ 'Run2015B', 'Run2015C', 'Run2015D' ])
+isData = options.sampleType in data_sample_types
+if not isData and not options.sampleType in mc_sample_types:
+    print "ERROR: unknown sample type = '{}'".format(options.sampleType)
+    sys.exit(1)
+
 processName = 'tupleProduction'
 process = cms.Process(processName)
-process.options   = cms.untracked.PSet()
+process.options = cms.untracked.PSet()
 process.options.wantSummary = cms.untracked.bool(False)
 process.options.allowUnscheduled = cms.untracked.bool(True)
 
@@ -58,7 +65,7 @@ if options.ReRunJEC:
         levels = ['L1FastJet', 'L2Relative', 'L3Absolute'],
         payload = 'AK4PFchs' # Make sure to choose the appropriate levels and payload here!
     )
-    if options.isData:
+    if isData:
       process.patJetCorrFactorsReapplyJEC.levels.append('L2L3Residual')
 
     from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import patJetsUpdated
@@ -134,7 +141,7 @@ for channel in channels:
         genEventInfoProduct     = cms.InputTag('generator'),
         pruned                  = cms.InputTag('prunedGenParticles'),
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
-        isMC                    = cms.bool(not options.isData),
+        isMC                    = cms.bool(not isData),
         sampleType              = cms.string(options.sampleType)
     ))
     process.tupleProductionSequence += getattr(process, producerName)

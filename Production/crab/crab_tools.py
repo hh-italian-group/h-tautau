@@ -21,7 +21,7 @@ class Job:
     def __init__(self, line):
         items = filter(lambda s: len(s) != 0, re.split(" ", line))
         if len(items) != 3:
-            print "ERROR: invalid job description = ''.".format(line)
+            print "ERROR: invalid job description = '{}'.".format(line)
             sys.exit(1)
         self.requestName = items[0]
         self.unitsPerJob = int(items[1])
@@ -85,7 +85,7 @@ class JobCollection:
     def submit(self, config):
         config.Data.splitting = self.splitting
         config.JobType.pyCfgParams = self.pyCfgParams
-        if len(self.lumiMaks) > 0:
+        if len(self.lumiMask) > 0:
             config.Data.lumiMask = self.lumiMask
         for job in self.jobs:
             job.submit(config)
