@@ -1,11 +1,11 @@
-/*! Definition of the h->tautau sync tree.
+/*! Definition of a tuple with all event information that is required at the analysis level.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
 #include "AnalysisTools/Core/include/SmartTree.h"
 
-#define SYNC_DATA() \
+#define EVENT_DATA() \
     VAR(Int_t, run) /* Run */ \
     VAR(Int_t, lumi) /* Lumi */ \
     VAR(ULong64_t, evt) /* Evt */ \
@@ -23,8 +23,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, pt_sv) /* SV Fit using integration method */ \
     VAR(Float_t, eta_sv) /* SV Fit using integration method */ \
     VAR(Float_t, phi_sv) /* SV Fit using integration method */ \
-    VAR(Float_t, m_sv_Up) /* High Energy scale shape */ \
-    VAR(Float_t, m_sv_Down) /* Low Energy Scale Shape */ \
     /* First lepton :  muon for mu Tau, electron for e Tau, electron for e mu, Leading (in pT) Tau for Tau Tau */ \
     VAR(Float_t, pt_1) /* pT */ \
     VAR(Float_t, phi_1) /* Phi */ \
@@ -134,12 +132,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Float_t>, mva_jets) /* Jet MVA id value */ \
     VAR(std::vector<Float_t>, csv_jets) /* Jet CSV value */ \
     VAR(std::vector<Int_t>, partonFlavour_jets) \
-    /* Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau) */ \
-    /* VAR(Float_t, jpt_2)  Jet Pt after corrections */ \
-    /* VAR(Float_t, jeta_2)  Jet Eta */ \
-    /* VAR(Float_t, jphi_2)  Jet Phi */ \
-    /* VAR(Float_t, jrawf_2)  factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    /* VAR(Float_t, jmva_2)  Jet MVA id value */ \
     /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) */ \
     VAR(Int_t, nbtag) /*  */ \
     /* Candidate B Jets (in pt ordering) passing (pt > 20 + eta < 2.4) */ \
@@ -151,18 +143,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Float_t>, mva_bjets) /* Btag mva */ \
     VAR(std::vector<Float_t>, csv_bjets) /* Btag CSV */ \
     VAR(std::vector<Int_t>, partonFlavour_bjets) /* Jet CSV value */ \
-    /* Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
-    /* VAR(Float_t, bpt_2)  Corrected BTag Pt */ \
-    /* VAR(Float_t, beta_2)  Btag Eta */ \
-    /* VAR(Float_t, bphi_2)  Btag Phi */ \
-    /* VAR(Float_t, brawf_2)  Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    /* VAR(Float_t, bmva_2)  Btag mva */ \
-    /* VAR(Float_t, bcsv_2)  Btag CSV */ \
     /* KinFit Variables */ \
-    VAR(Double_t, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
-    VAR(Double_t, kinFit_chi2) /*  KinFit chi2 value*/ \
-    VAR(Double_t, kinFit_probability) /*  KinFit chi2 probability value*/ \
-    VAR(Int_t, kinFit_convergence) /* KinFit convergence code */\
+    VAR(std::vector<Double_t>, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
+    VAR(std::vector<Double_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
+    VAR(std::vector<Double_t>, kinFit_probability) /*  KinFit chi2 probability value*/ \
+    VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
     /*------*/\
     VAR(Float_t, HT) \
     VAR(Int_t, NOutPartons) \
@@ -172,18 +157,27 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
-DECLARE_TREE(ntuple, Sync, SyncTree, SYNC_DATA, "sync")
+DECLARE_TREE(ntuple, Event, EventTuple, EVENT_DATA, "events")
 #undef VAR
 
 #define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
-INITIALIZE_TREE(ntuple, SyncTree, SYNC_DATA)
+INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef VAR
-#undef SYNC_DATA
+#undef EVENT_DATA
 
-namespace Run2 {
-inline double DefaultFillValueForSyncTree() { return -10000; }
-inline float DefaultFloatFillValueForSyncTree() { return std::numeric_limits<float>::lowest(); }
+namespace ntuple {
+template<typename T>
+T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
 
-enum class HTbinning { lt100 = 0, f100to200 = 1, f200to400 = 2, f400to600 = 3, gt600 = 4 };
+enum class HTbinning { lt0 = -1, lt100 = 0, f100to200 = 1, f200to400 = 2, f400to600 = 3, gt600 = 4 };
+inline HTbinning GetHTbin(double HT)
+{
+    if(HT < 0) return HTbinning::lt0;
+    if(HT < 100) return HTbinning::lt100;
+    if(HT < 200) return HTbinning::f100to200;
+    if(HT < 400) return HTbinning::f200to400;
+    if(HT < 600) return HTbinning::f400to600;
+    return HTbinning::gt600;
+}
 
 }

@@ -120,7 +120,7 @@ else:
 
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
-    producerClassName = 'SyncTreeProducer_{}'.format(channel)
+    producerClassName = 'TupleProducer_{}'.format(channel)
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         genParticles            = cms.InputTag('genParticles'),
         electronSrc             = cms.InputTag('slimmedElectrons'),
@@ -153,19 +153,5 @@ process.p = cms.Path(
     process.METSignificance *
     process.tupleProductionSequence
 )
-
-#process.out = cms.OutputModule('PoolOutputModule',
-#    compressionLevel = cms.untracked.int32(4),
-#    compressionAlgorithm = cms.untracked.string('LZMA'),
-#    eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
-#    fileName = cms.untracked.string('microAOD.root'),
-#    SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
-#    outputCommands = cms.untracked.vstring(['drop *']),
-#    dropMetaData = cms.untracked.string('ALL'),
-#    fastCloning = cms.untracked.bool(False),
-#    overrideInputFileSplitLevels = cms.untracked.bool(True)
-#)
-
-#process.endpath= cms.EndPath(process.out)
 
 #print process.dumpPython()
