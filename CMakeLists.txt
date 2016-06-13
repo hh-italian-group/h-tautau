@@ -6,4 +6,4 @@ include("${AnalysisTools_DIR}/cmake/include/common.cmake")
 
 add_library("h-tautau" OBJECT ${HEADER_LIST})
 
-set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_Stack Print_SyncPlots Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)
+set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_Stack Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)

@@ -18,10 +18,15 @@ public:
           default_pu_weight(_default_pu_weight)
     {
 
-        isoIdScaleFactor = new htt_utilities::ScaleFactor();
-        triggerScaleFactor = new htt_utilities::ScaleFactor();
-        isoIdScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Muon/Muon_IdIso0p1_fall15.root");
-        triggerScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Muon/Muon_IsoMu18_fall15.root");
+        muon_isoIdScaleFactor = new htt_utilities::ScaleFactor();
+        muon_triggerScaleFactor = new htt_utilities::ScaleFactor();
+        electron_isoIdScaleFactor = new htt_utilities::ScaleFactor();
+        electron_triggerScaleFactor = new htt_utilities::ScaleFactor();
+
+        muon_isoIdScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Muon/Muon_IdIso0p1_fall15.root");
+        muon_triggerScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Muon/Muon_IsoMu18_fall15.root");
+        electron_isoIdScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Electron/Electron_IdIso0p10_eff.root");
+        electron_triggerScaleFactor->init_ScaleFactor("HTT-utilities/LepEffInterface/data/Electron/Electron_SingleEle_eff.root");
 
         if(is_data && apply_pu_weight)
             throw exception("Inconsistend event weight configuration: requested to apply PU weight for data sample.");
@@ -67,8 +72,12 @@ public:
         if(has_lepton_weight)
           throw exception("Lepton weights are already calculated.");
 
-        isoIdLeptonWeight   = isoIdScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1);
-        triggerLeptonWeight = triggerScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1);
+        const bool isMuon = (eventInfo.channelID == 1);
+
+        isoIdLeptonWeight   = isMuon ? muon_isoIdScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1) :
+                                       electron_isoIdScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1);
+        triggerLeptonWeight = isMuon ? muon_triggerScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1):
+                                       electron_triggerScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1);
 
         eventWeight *= isoIdLeptonWeight * triggerLeptonWeight;
         has_lepton_weight = true;
@@ -123,7 +132,8 @@ private:
     std::shared_ptr<TH1F> pu_weights;
     bool has_pu_weight, has_lepton_weight;
     double eventWeight, PUweight, isoIdLeptonWeight, triggerLeptonWeight;
-    htt_utilities::ScaleFactor * isoIdScaleFactor, *triggerScaleFactor;
+    htt_utilities::ScaleFactor * muon_isoIdScaleFactor, *muon_triggerScaleFactor;
+    htt_utilities::ScaleFactor * electron_isoIdScaleFactor, *electron_triggerScaleFactor;
 };
 
 } // namespace analysis

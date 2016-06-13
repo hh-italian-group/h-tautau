@@ -24,6 +24,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <Rtypes.h>
 #include <TError.h>
 
+#include "AnalysisTools/Run/include/program_main.h"
+
 struct EventId {
     unsigned runId;
     unsigned lumiBlock;
@@ -65,6 +67,17 @@ std::ostream& operator <<(std::ostream& s, const EventId& event)
     return s;
 }
 
+struct Arguments {
+    REQ_ARG(std::string, channelName);
+    REQ_ARG(std::string, sampleName);
+    REQ_ARG(std::string, myGroup);
+    REQ_ARG(std::string, myRootFile);
+    REQ_ARG(std::string, myTTreeName);
+    REQ_ARG(std::string, group);
+    REQ_ARG(std::string, groupRootFile);
+    REQ_ARG(std::string, groupTTreeName);
+};
+
 class Print_SyncPlots {
 public:
     typedef std::set<EventId> EventSet;
@@ -73,11 +86,11 @@ public:
     typedef std::pair<size_t, size_t> EntryPair;
     typedef std::map<EventId, EntryPair> EventToEntryPairMap;
 
-    Print_SyncPlots(const std::string& _channel, const std::string& _sample,
-                    const std::string& _myGroup, const std::string& _myRootFile, const std::string& _myTree,
-                    const std::string& _group, const std::string& _groupRootFile, const std::string& _groupTree)
-        : channel(_channel), sample(_sample), myGroup(_myGroup), myRootFile(_myRootFile), myTree(_myTree),
-          group(_group), groupRootFile(_groupRootFile), groupTree(_groupTree), isFirstPage(true), isLastDraw(false)
+    Print_SyncPlots(const Arguments& args)
+        : channel(args.channelName()), sample(args.sampleName()), myGroup(args.myGroup()),
+          myRootFile(args.myRootFile()), myTree(args.myTTreeName()),
+          group(args.group()), groupRootFile(args.groupRootFile()), groupTree(args.groupTTreeName()),
+          isFirstPage(true), isLastDraw(false)
     {
         std::cout << channel << " " << sample << std::endl;
         std::cout << myGroup << "  " << myRootFile << "  " << myTree << std::endl;
@@ -85,6 +98,7 @@ public:
 
         Tmine = LoadTree(Fmine, myRootFile, myTree);
         Tother = LoadTree(Fother, groupRootFile, groupTree);
+        my_eventES = CollectValues<Int_t>(Tmine, "eventEnergyScale");
 
         CollectEvents(Tmine, Tother);
 
@@ -333,7 +347,8 @@ private:
     void drawHistos(const std::string& var, int nbins, float xmin, float xmax)
     {
         const auto SelectAll = [](size_t entry_id) -> bool { return true; };
-        drawHistos(var, nbins, xmin, xmax, SelectAll, SelectAll, "All");
+        const auto SelectES = [&](size_t entry_id) -> bool { return my_eventES.at(entry_id) == 0; };
+        drawHistos(var, nbins, xmin, xmax, SelectES, SelectAll, "All");
     }
 
     template<typename MySelector, typename OtherSelector>
@@ -618,7 +633,7 @@ private:
         EventSetDifference(other_events_set, my_events_set, other_events_only);
 
         EventToEntryMap my_event_to_entry_map, other_event_to_entry_map;
-        FillEventToEntryMap(my_events, my_event_to_entry_map);
+        FillEventToEntryMap(my_events, my_event_to_entry_map, true);
         FillEventToEntryMap(other_events, other_event_to_entry_map);
 
         std::cout << "Mine events" << std::endl;
@@ -675,10 +690,12 @@ private:
         diff_set.insert(diff_vector.begin(), diff_vector.end());
     }
 
-    static void FillEventToEntryMap(const EventVector& events, EventToEntryMap& event_to_entry_map)
+    void FillEventToEntryMap(const EventVector& events, EventToEntryMap& event_to_entry_map, const bool filterES = false) const
     {
-        for(size_t n = 0; n < events.size(); ++n)
-            event_to_entry_map[events[n]] = n;
+        for(size_t n = 0; n < events.size(); ++n) {
+             if(filterES && my_eventES.at( n ) !=0) continue;
+             event_to_entry_map[events[n]] = n;
+        }
     }
 
     template<typename VarType>
@@ -797,6 +814,7 @@ private:
     std::string channel, sample, myGroup, myRootFile, myTree, group, groupRootFile, groupTree;
     std::shared_ptr<TFile> Fmine, Fother;
     TTree *Tmine, *Tother;
+    std::vector<Int_t> my_eventES;
 
     EventVector my_events, other_events;
     EventToEntryMap my_events_only_map, other_events_only_map;
@@ -807,52 +825,4 @@ private:
     bool isFirstPage, isLastDraw;
 };
 
-namespace make_tools {
-template<typename T>
-struct Factory;
-
-template<>
-struct Factory<Print_SyncPlots> {
-    static Print_SyncPlots* Make(int argc, char *argv[])
-    {
-        if(argc != 9) {
-            std::cerr << "Usage: channel sample myGroup myRootFile myTree group groupRootFile groupTree" << std::endl;
-            throw std::runtime_error("Invalid number of command line arguments.");
-        }
-
-        int n = 0;
-        const std::string channel = argv[++n];
-        const std::string sample = argv[++n];
-        const std::string myGroup = argv[++n];
-        const std::string myRootFile = argv[++n];
-        const std::string myTree = argv[++n];
-        const std::string group = argv[++n];
-        const std::string groupRootFile = argv[++n];
-        const std::string groupTree = argv[++n];
-
-        return new Print_SyncPlots(channel, sample, myGroup, myRootFile, myTree, group, groupRootFile, groupTree);
-    }
-};
-} // make_tools
-
-#ifdef STANDALONE
-
-#include <TROOT.h>
-#include <iostream>
-#include <memory>
-
-int main(int argc, char *argv[])
-{
-        try {
-                gROOT->ProcessLine("#include <vector>");
-                std::unique_ptr<Print_SyncPlots> a( make_tools::Factory<Print_SyncPlots>::Make(argc, argv) );
-                a->Run();
-        }
-        catch(std::exception& e) {
-                std::cerr << "ERROR: " << e.what() << std::endl;
-                return 1;
-        }
-        return 0;
-}
-
-#endif
+PROGRAM_MAIN(Print_SyncPlots, Arguments)
