@@ -70,7 +70,7 @@ else:
 
 
 ## Events to process
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(3000) )
 
 inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD280.root")
 
@@ -79,13 +79,15 @@ DYSample = cms.untracked.vstring("/store/user/ccaputo/HHbbtautau/Run2/DYSample_f
 Diboson = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIISpring15MiniAODv2/VVTo2L2Nu_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/10000/1A826380-CB6D-E511-BCFA-0025901D4D6E.root')
 SyncSignal = cms.untracked.vstring('/store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/12184969-3DB8-E511-879B-001E67504A65.root')
 
+SyncSignal_local = cms.untracked.vstring('file:Radion350_File.root')
+
 SyncSignal_fewEvents = cms.untracked.vstring(("root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/E0B9088F-3DB8-E511-AFFD-001EC9ADCD52.root",
 											  "root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/70000/EAD78CAB-33B8-E511-8E8E-20CF3027A5BF.root"))
 ##inputSignal_v2 = cms.untracked.vstring(
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = DYSample#,
+    fileNames = SyncSignal_local#,
                                  #eventsToProcess = cms.untracked.VEventRange('1:449465','1:475952')
 )
 

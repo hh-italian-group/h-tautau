@@ -35,18 +35,27 @@ SyncTreeProducer_mutau::analyze(const edm::Event& iEvent, const edm::EventSetup&
   ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::Central);
   ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::TauUp);
   ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::TauDown);
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::JetUp);
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::JetDown);
 
 }
 
 void
-SyncTreeProducer_mutau::ProcessEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const analysis::EventEnergyScale tauEnergyScale)
+SyncTreeProducer_mutau::ProcessEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const analysis::EventEnergyScale eventEnergyScale)
 {
   using namespace cuts::Htautau_2015;
   using namespace cuts::Htautau_2015::MuTau;
 
   const auto Key = analysis::stringToDataSourceTypeMap.at(BaseEDAnalyzer::GetSampleType());
   const auto& hltPaths = MuTau::trigger::hltPathMaps.at(Key);
-
+ 
+  /*  Jet Scale Up and Down   -  to be moved in BaseEDAnalyzer*/
+  edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+  iSetup.get<JetCorrectionsRecord>().get("AK5PF",JetCorParColl); 
+  JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+  jecUnc = new JetCorrectionUncertainty(JetCorPar);
+  /*--------------------------*/ 
+   
   cuts::Cutter cut(&GetAnaData().Selection("events"));
 
   //Get collection
@@ -54,7 +63,7 @@ SyncTreeProducer_mutau::ProcessEvent(const edm::Event& iEvent, const edm::EventS
 
   try{
 
-      selection.tauEnergyScale = tauEnergyScale;
+      selection.eventEnergyScale = eventEnergyScale;
       
       cut(true,"events");
 
@@ -119,17 +128,35 @@ SyncTreeProducer_mutau::ProcessEvent(const edm::Event& iEvent, const edm::EventS
            if (!(selection.GetLeg(1)->GetMomentum().DeltaR(muon->GetMomentum()) < 0.05)) selection.muonVeto = true;
       }
 
+	  
+	  /*  MET Shifted by JEC */
 	  analysis::MissingETPtr pfMET(new analysis::MissingET((*pfMETs)[0],*(BaseEDAnalyzer::GetMETCovMatrix())));
+     if ( selection.eventEnergyScale == analysis::EventEnergyScale::JetUp || selection.eventEnergyScale == analysis::EventEnergyScale::JetDown ){
+         std::map<analysis::EventEnergyScale, pat::MET::METUncertainty > metUncertantyMap = {{analysis::EventEnergyScale::JetUp,pat::MET::METUncertainty::JetEnUp},
+                                                                                             {analysis::EventEnergyScale::JetDown,pat::MET::METUncertainty::JetEnDown}};
+         const reco::Candidate::LorentzVector shifted_p4 = ((*pfMETs)[0]).shiftedP4(metUncertantyMap[selection.eventEnergyScale]);
+         std::cout<<" MET   P4 Value:  "<< shifted_p4 <<std::endl;
+         pfMET->ShiftMET(shifted_p4);
+     }
       selection.pfMET = pfMET;
 
-      selection.jets   = CollectJets();
-      selection.bjets  = CollectBJets();
+      selection.jets        = CollectJets();
+      //selection.jetsTight   = CollectJetsTight();
+      selection.bjets       = CollectBJets();
+      
+      // Sorting for KinFit
+      // -----------
+      // auto jetCsvOrdering = [&](const analysis::CandidateV2Ptr first,const analysis::CandidateV2Ptr second) -> bool { const pat::Jet& pat_jet1 = first->GetNtupleObject<pat::Jet>();
+//                                                                                                                       const pat::Jet& pat_jet2 = second->GetNtupleObject<pat::Jet>();
+//                                                                                                                       return pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > pat_jet2.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");};
+//       std::sort(selection.jets.begin(),selection.jets.end(),jetCsvOrdering);
+//       std::sort(selection.jetsTight.begin(),selection.jetsTight.end(),jetCsvOrdering);
+//       std::sort(selection.bjets.begin(),selection.bjets.end(),jetCsvOrdering);
 
-//      double svfit_mass = SVFit(higgs,pfMET);
-//          std::cout<< "\n\t CHOOSEN SVFit -->  " << svfit_mass <<std::endl;
       selection.svfitResult = BaseEDAnalyzer::SVFit<pat::Muon>(higgs,pfMET);
-          std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
+      std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
 
+     //if (selection.jetsTight.size()>=2) GetKinFitResults();
 
 	  FillSyncTree(iEvent);
 
@@ -164,18 +191,18 @@ void SyncTreeProducer_mutau::SelectSignalTau(const analysis::CandidateV2Ptr& tau
     using namespace cuts::Htautau_2015::MuTau::tauID;
     const pat::Tau& object = tau->GetNtupleObject<pat::Tau>();
     
-    std::cout<<" @@@@@@@@  Tau pt before ES : " << tau->GetMomentum() << std::endl;
+    //std::cout<<" @@@@@@@@  Tau pt before ES : " << tau->GetMomentum() << std::endl;
     
-    if(selection.tauEnergyScale == analysis::EventEnergyScale::TauUp || selection.tauEnergyScale == analysis::EventEnergyScale::TauDown) {
-            const double sign = selection.tauEnergyScale == analysis::EventEnergyScale::TauUp ? +1 : -1;
+    if(selection.eventEnergyScale == analysis::EventEnergyScale::TauUp || selection.eventEnergyScale == analysis::EventEnergyScale::TauDown) {
+            const double sign = selection.eventEnergyScale == analysis::EventEnergyScale::TauUp ? +1 : -1;
             const double sf = 1.0 + sign * cuts::Htautau_2015::tauCorrections::energyUncertainty;
             tau->ScaleMomentum(sf);
     }
-        std::cout<<" @@@@@@@@  Tau pt after ES : " << tau->GetMomentum() << std::endl;
+    //    std::cout<<" @@@@@@@@  Tau pt after ES : " << tau->GetMomentum() << std::endl;
 
     TLorentzVector momentum= tau->GetMomentum();
-    // if(selection.tauEnergyScale == analysis::EventEnergyScale::TauUp)   momentum = tau->GetScaledUpMomentum();
-//     if(selection.tauEnergyScale == analysis::EventEnergyScale::TauDown) momentum = tau->GetScaledDownMomentum();
+    // if(selection.eventEnergyScale == analysis::EventEnergyScale::TauUp)   momentum = tau->GetScaledUpMomentum();
+//     if(selection.eventEnergyScale == analysis::EventEnergyScale::TauDown) momentum = tau->GetScaledDownMomentum();
     
     pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(object.leadChargedHadrCand().get());
 
@@ -197,18 +224,41 @@ void SyncTreeProducer_mutau::SelectJets(const analysis::CandidateV2Ptr& jet, ana
         using namespace cuts::Htautau_2015;
         using namespace cuts::Htautau_2015::jetID;
         const pat::Jet& object = jet->GetNtupleObject<pat::Jet>();
-
+        
+        if(selection.eventEnergyScale == analysis::EventEnergyScale::JetUp || selection.eventEnergyScale == analysis::EventEnergyScale::JetUp) {
+            jecUnc->setJetEta(X(eta()));
+            jecUnc->setJetPt(X(pt())); // here you must use the CORRECTED jet pt
+            double unc = jecUnc->getUncertainty(true);
+            const double sign = selection.eventEnergyScale == analysis::EventEnergyScale::JetUp ? +1 : -1;
+            const double sf = (1+(sign*unc)) ; // shift = +1(up), or -1(down)
+            jet->ScaleMomentum(sf);
+        }
+         
+         TLorentzVector momentum= jet->GetMomentum();
+        //std::cout<<" \t\t\t\t Jet Pt  :   "<< X(pt()) <<"  Jet Pt Shifted  : "<<ptCor_shifted<<std::endl;
+ 
         cut(true, ">0 jet cand");
-        cut(X(pt()) > pt_loose, "pt_loose");
-        cut(std::abs( X(eta()) ) < eta, "eta");
-        const bool jetMVAID = passPFLooseId(object);
-        cut(Y(jetMVAID),"jet_id");
+        cut(Y(momentum.Pt()) > pt_loose, "pt_loose");
+        cut(std::abs( Y(momentum.Eta()) ) < eta, "eta");
+        const bool jetPFID = passPFLooseId(object);
+        cut(Y(jetPFID),"jet_id");
         const double deltaR_leg1 = jet->GetMomentum().DeltaR(selection.GetLeg(1)->GetMomentum());
         cut(Y(deltaR_leg1) > deltaR_signalObjects,"deltaR_lep1");
         const double deltaR_leg2 = jet->GetMomentum().DeltaR(selection.GetLeg(2)->GetMomentum());
         cut(Y(deltaR_leg2) > deltaR_signalObjects,"deltaR_lep2");
     }
 
+void SyncTreeProducer_mutau::SelectJetsTight(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+{
+   using namespace cuts::Htautau_2015;
+    using namespace cuts::Htautau_2015::jetID;
+    //const pat::Jet& object = jet->GetNtupleObject<pat::Jet>();
+   
+    SelectJets(jet,selectionManager, cut);
+    TLorentzVector momentum= jet->GetMomentum();
+    cut(std::abs( Y(momentum.Pt()) ) > 30, "eta");
+    cut(std::abs( Y(momentum.Eta()) ) < btag::eta, "eta");
+}
 void SyncTreeProducer_mutau::SelectBJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
 {
     using namespace cuts::Htautau_2015;
@@ -338,6 +388,48 @@ analysis::CandidateV2Ptr SyncTreeProducer_mutau::SelectHiggs(analysis::Candidate
     std::sort(higgses.begin(), higgses.end(), higgsSelector) ;
     return higgses.front();
 }
+
+void SyncTreeProducer_mutau::GetKinFitResults()
+    {
+        //if(!selection.kinFit_result) {
+            std::cout<<"   KinFIT --------------,,,,,,"<<std::endl;
+            selection.kinFit_result = std::shared_ptr<analysis::KinFitResult>(new analysis::KinFitResult());
+            if(selection.jetsTight.size()>=2) {
+               std::cout<<"   ------- KinFIT --------------,,,,,,"<<std::endl;
+            
+                // if(verbosity > 1) {
+//                     std::cout << "b1: " << bjet_momentums.at(selected_bjets.first)
+//                               << "\nb2:" << bjet_momentums.at(selected_bjets.second)
+//                               << "\ntau1:" << lepton_momentums.at(0)
+//                               << "\ntau2:" << lepton_momentums.at(1)
+//                               << "\nMET: (" << MET.X() << ", " << MET.Y() << ")"
+//                               << "\nMET cov:" << MET_covariance << std::endl;
+//                 }
+               TMatrixD covMET(2, 2);
+               covMET[0][0] = selection.pfMET->GetCovVector().at(0);
+               covMET[1][0] = selection.pfMET->GetCovVector().at(1);
+               covMET[0][1] = selection.pfMET->GetCovVector().at(2);
+               covMET[1][1] = selection.pfMET->GetCovVector().at(3);
+
+                HHKinFit2::HHKinFitMasterHeavyHiggs kin_fit(selection.jetsTight.at(0)->GetMomentum(),
+                                                            selection.jetsTight.at(1)->GetMomentum(),
+                                                            selection.GetLeg(1)->GetMomentum(), 
+                                                            selection.GetLeg(2)->GetMomentum(),
+                                                            TVector2(selection.pfMET->Px(), selection.pfMET->Py()), 
+                                                            covMET);
+                kin_fit.verbosity = 1;
+                kin_fit.fit();
+                selection.kinFit_result->convergence = kin_fit.getConvergence();
+                if(selection.kinFit_result->HasMass()) {
+                    selection.kinFit_result->mass = kin_fit.getMH();
+                    selection.kinFit_result->chi2 = kin_fit.getChi2();
+                    selection.kinFit_result->probability = kin_fit.getFitProb();
+                    std::cout<<"   ------- KinFIT --------------,,,,,,"<< selection.kinFit_result->mass <<std::endl;
+
+                }
+            }
+       // }
+    }
 
 void SyncTreeProducer_mutau::FillSyncTree(const edm::Event& iEvent)
     {

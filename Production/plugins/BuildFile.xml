@@ -11,6 +11,7 @@
 <use   name="DataFormats/HepMCCandidate"/>
 <use   name="DataFormats/GsfTrackReco"/>
 <use   name="DataFormats/Math"/>
+<use   name="CondFormats/JetMETObjects"/>
 <use   name="CommonTools/UtilAlgos"/>
 <use   name="GeneratorInterface/LHEInterface"/>
 <use   name="PhysicsTools/HepMCCandAlgos"/>
@@ -25,6 +26,7 @@
 <use   name="JetMETCorrections/Algorithms"/>
 <use   name="TauAnalysis/SVfitStandalone"/>
 <use   name="SimDataFormats/GeneratorProducts"/>
+<use   name="HHKinFit2/HHKinFit2"/>
 <use   name="boost"/>
 <use   name="rootcore"/>
 <use   name="rootrflx"/>

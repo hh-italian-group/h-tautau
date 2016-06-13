@@ -34,17 +34,24 @@ SyncTreeProducer_tautau::analyze(const edm::Event& iEvent, const edm::EventSetup
   ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::Central);
   ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::TauUp);
   ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::TauDown);
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::JetUp);
+  ProcessEvent(iEvent,iSetup,analysis::EventEnergyScale::JetDown);
 
 }
 
 void
-SyncTreeProducer_tautau::ProcessEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const analysis::EventEnergyScale tauEnergyScale)
+SyncTreeProducer_tautau::ProcessEvent(const edm::Event& iEvent, const edm::EventSetup& iSetup, const analysis::EventEnergyScale eventEnergyScale)
 {
   using namespace cuts::Htautau_2015;
   using namespace cuts::Htautau_2015::TauTau;
 
   const auto Key = analysis::stringToDataSourceTypeMap.at(BaseEDAnalyzer::GetSampleType());
   const auto& hltPaths = TauTau::trigger::hltPathMaps.at(Key);
+  
+  edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+  iSetup.get<JetCorrectionsRecord>().get("AK5PF",JetCorParColl); 
+  JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+  jecUnc = new JetCorrectionUncertainty(JetCorPar);
 
   cuts::Cutter cut(&GetAnaData().Selection("events"));
 
@@ -53,7 +60,7 @@ SyncTreeProducer_tautau::ProcessEvent(const edm::Event& iEvent, const edm::Event
 
   try{
 
-      selection.tauEnergyScale = tauEnergyScale;
+      selection.eventEnergyScale = eventEnergyScale;
 
       cut(true,"events");
 
@@ -112,6 +119,13 @@ SyncTreeProducer_tautau::ProcessEvent(const edm::Event& iEvent, const edm::Event
 
 
      analysis::MissingETPtr pfMET(new analysis::MissingET((*pfMETs)[0],*(BaseEDAnalyzer::GetMETCovMatrix())));
+     if ( selection.eventEnergyScale == analysis::EventEnergyScale::JetUp || selection.eventEnergyScale == analysis::EventEnergyScale::JetDown ){
+         std::map<analysis::EventEnergyScale, pat::MET::METUncertainty > metUncertantyMap = {{analysis::EventEnergyScale::JetUp,pat::MET::METUncertainty::JetEnUp},
+                                                                                             {analysis::EventEnergyScale::JetDown,pat::MET::METUncertainty::JetEnDown}};
+         const reco::Candidate::LorentzVector shifted_p4 = ((*pfMETs)[0]).shiftedP4(metUncertantyMap[selection.eventEnergyScale]);
+         std::cout<<" MET   P4 Value:  "<< shifted_p4 <<std::endl;
+         pfMET->ShiftMET(shifted_p4);
+     }
      selection.pfMET = pfMET;
 
      selection.jets   = CollectJets();
@@ -137,8 +151,8 @@ void SyncTreeProducer_tautau::SelectSignalTau(const analysis::CandidateV2Ptr& ta
     
     std::cout<<" @@@@@@@@  Tau pt before ES : " << tau->GetMomentum() << std::endl;
     
-    if(selection.tauEnergyScale == analysis::EventEnergyScale::TauUp || selection.tauEnergyScale == analysis::EventEnergyScale::TauDown) {
-            const double sign = selection.tauEnergyScale == analysis::EventEnergyScale::TauUp ? +1 : -1;
+    if(selection.eventEnergyScale == analysis::EventEnergyScale::TauUp || selection.eventEnergyScale == analysis::EventEnergyScale::TauDown) {
+            const double sign = selection.eventEnergyScale == analysis::EventEnergyScale::TauUp ? +1 : -1;
             const double sf = 1.0 + sign * cuts::Htautau_2015::tauCorrections::energyUncertainty;
             tau->ScaleMomentum(sf);
     }
@@ -165,11 +179,23 @@ void SyncTreeProducer_tautau::SelectJets(const analysis::CandidateV2Ptr& jet, an
         using namespace cuts::Htautau_2015::jetID;
         const pat::Jet& object = jet->GetNtupleObject<pat::Jet>();
 
+        if(selection.eventEnergyScale == analysis::EventEnergyScale::JetUp || selection.eventEnergyScale == analysis::EventEnergyScale::JetUp) {
+            jecUnc->setJetEta(X(eta()));
+            jecUnc->setJetPt(X(pt())); // here you must use the CORRECTED jet pt
+            double unc = jecUnc->getUncertainty(true);
+            const double sign = selection.eventEnergyScale == analysis::EventEnergyScale::JetUp ? +1 : -1;
+            const double sf = (1+(sign*unc)) ; // shift = +1(up), or -1(down)
+            jet->ScaleMomentum(sf);
+        }
+         
+         TLorentzVector momentum= jet->GetMomentum();
+        //std::cout<<" \t\t\t\t Jet Pt  :   "<< X(pt()) <<"  Jet Pt Shifted  : "<<ptCor_shifted<<std::endl;
+ 
         cut(true, ">0 jet cand");
-        cut(X(pt()) > pt_loose, "pt_loose");
-        cut(std::abs( X(eta()) ) < eta, "eta");
-        const bool jetMVAID = passPFLooseId(object);
-        cut(Y(jetMVAID),"jet_id");
+        cut(Y(momentum.Pt()) > pt_loose, "pt_loose");
+        cut(std::abs( Y(momentum.Eta()) ) < eta, "eta");
+        const bool jetPFID = passPFLooseId(object);
+        cut(Y(jetPFID),"jet_id");
         const double deltaR_leg1 = jet->GetMomentum().DeltaR(selection.GetLeg(1)->GetMomentum());
         cut(Y(deltaR_leg1) > deltaR_signalObjects,"deltaR_lep1");
         const double deltaR_leg2 = jet->GetMomentum().DeltaR(selection.GetLeg(2)->GetMomentum());

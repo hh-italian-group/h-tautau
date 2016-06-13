@@ -268,8 +268,9 @@ public:
         :pt(_ntupleObject.pt()), px(_ntupleObject.px()), py(_ntupleObject.py()),
          phi(_ntupleObject.phi()), isPF(_ntupleObject.isPFMET()), ntupleObject(&_ntupleObject) {
         CovVector = METCovMatrixToVector(m);
+        ptPtr = &pt; pxPtr = &px; pyPtr = &py; phiPtr = &phi;    
     }
-
+    
     //const reco::RecoCandidate& GetNtupleObject() const { return *ntupleObject; }
     const double& Pt() const  { return pt; }
     const double& Px() const  { return px; }
@@ -277,6 +278,10 @@ public:
     const double& Phi() const { return phi; }
     const bool&   isPFMET() const { return isPF; }
     const std::vector<Float_t> GetCovVector() const {return CovVector;}
+    
+    void ShiftMET (const reco::Candidate::LorentzVector _p4) const {
+      *ptPtr = _p4.Pt(); *pxPtr = _p4.Px(); *pyPtr = _p4.Py(); *phiPtr = _p4.Phi();
+    }
 
     template<typename METtype>
     const METtype& GetNtupleObject() const
@@ -292,8 +297,11 @@ public:
     }
 
 private:
+    
     double pt,px,py;
     double phi;
+    double *ptPtr,*pxPtr,*pyPtr;
+    double *phiPtr;
     bool isPF;
     const reco::RecoCandidate* ntupleObject;
     //Matrix

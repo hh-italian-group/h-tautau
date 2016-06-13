@@ -88,4 +88,5 @@ class SyncTreeProducer_etau: public BaseEDAnalyzer {
       ntuple::SyncTree& syncTree;
       analysis::SyncAnalyzerData_eTau anaData;
       analysis::SelectionResultsV2_etau selection;
+      JetCorrectionUncertainty *jecUnc;
 };
