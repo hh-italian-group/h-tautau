@@ -231,6 +231,10 @@ namespace TauTau {
                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
                                                      // MVA3 is recommended, but it does not exists any more
                                                      // for new tauID
+        //After Synctuple
+
+        const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstElectronVLooseMVA6 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1; // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
