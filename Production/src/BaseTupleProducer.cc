@@ -31,7 +31,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     svfitProducer(edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath())
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
-            edm::FileInPath("h-tautau/Production/config/histograms.cfg").fullPath());
+            edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
 }
 
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)

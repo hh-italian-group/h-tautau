@@ -236,7 +236,7 @@ protected:
     {
         const auto& h1_leg1 = h1.GetFirstDaughter();
         const auto& h2_leg1 = h2.GetFirstDaughter();
-        if(h1_leg1 != h1_leg1) {
+        if(h1_leg1 != h2_leg1) {
             if(h1_leg1.GetIsolation() != h2_leg1.GetIsolation()) return h1_leg1.GetIsolation() < h2_leg1.GetIsolation();
             if(h1_leg1->pt() != h2_leg1->pt()) return h1_leg1->pt() > h2_leg1->pt();
         }
