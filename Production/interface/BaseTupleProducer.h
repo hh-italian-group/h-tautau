@@ -68,6 +68,17 @@ struct TupleProducerData : root_ext::AnalyzerData {
     TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
 };
 
+namespace analysis {
+namespace detail {
+template<>
+inline bool CompareIsolations<pat::Electron>(double iso_1, double iso_2) { return iso_1 < iso_2; }
+template<>
+inline bool CompareIsolations<pat::Muon>(double iso_1, double iso_2) { return iso_1 < iso_2; }
+template<>
+inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso_1 > iso_2; }
+}
+}
+
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -237,14 +248,14 @@ protected:
         const auto& h1_leg1 = h1.GetFirstDaughter();
         const auto& h2_leg1 = h2.GetFirstDaughter();
         if(h1_leg1 != h2_leg1) {
-            if(h1_leg1.GetIsolation() != h2_leg1.GetIsolation()) return h1_leg1.GetIsolation() < h2_leg1.GetIsolation();
+            if(h1_leg1.GetIsolation() != h2_leg1.GetIsolation()) return h1_leg1.IsMoreIsolated(h2_leg1);
             if(h1_leg1->pt() != h2_leg1->pt()) return h1_leg1->pt() > h2_leg1->pt();
         }
 
         const TauCandidate& h1_leg2 = h1.GetSecondDaughter();
         const TauCandidate& h2_leg2 = h2.GetSecondDaughter();
         if(h1_leg2 != h2_leg2) {
-            if(h1_leg2.GetIsolation() != h2_leg2.GetIsolation()) return h1_leg2.GetIsolation() < h2_leg2.GetIsolation();
+            if(h1_leg2.GetIsolation() != h2_leg2.GetIsolation()) return h1_leg2.IsMoreIsolated(h2_leg2);
             if(h1_leg2->pt() != h2_leg2->pt()) return h1_leg2->pt() > h2_leg2->pt();
         }
 

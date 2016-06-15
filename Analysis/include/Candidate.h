@@ -53,6 +53,11 @@ private:
     PATObjectConstPtr patObjectPtr;
 };
 
+namespace detail {
+template<typename PATObject>
+bool CompareIsolations(double iso_1, double iso_2);
+}
+
 template<typename PATObject, typename PATObjectConstPtr = const PATObject*>
 class LeptonCandidate : public Candidate<PATObject, PATObjectConstPtr> {
 public:
@@ -69,6 +74,11 @@ public:
     }
 
     double GetIsolation() const { return isolation; }
+
+    bool IsMoreIsolated(const LeptonCandidate<PATObject, PATObjectConstPtr>& other) const
+    {
+        return detail::CompareIsolations<PATObject>(isolation, other.isolation);
+    }
 
 private:
     double isolation;
