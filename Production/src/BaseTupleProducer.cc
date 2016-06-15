@@ -409,20 +409,29 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 {
     using namespace analysis;
     static const float default_value = ntuple::DefaultFillValue<Float_t>();
+    static const std::set<int> selected_lhe_pdgs = { 1, 2, 3, 4, 5, 6, 11, 13, 15, 21 };
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
     eventTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
 
-    if(isMC) {
-        const auto lheInfoPair = ComputeHtValue();
-        eventTuple().HT = lheInfoPair.first;
-        eventTuple().HTBin = static_cast<int>(ntuple::GetHTbin(lheInfoPair.first));
-        eventTuple().NOutPartons = lheInfoPair.second;
-        eventTuple().weightevt = genEvt->weight();
-    } else {
-        eventTuple().weightevt = default_value;
+    eventTuple().weightevt = isMC ? genEvt->weight() : default_value;
+    if(lheEventProduct.isValid()) {
+        const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
+        const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
+        for(size_t n = 0; n < lheParticles.size(); ++n) {
+            const int pdg_id = lheEvent.IDUP.at(n);
+            const int status = lheEvent.ISTUP.at(n);
+            if(status != 1 || !selected_lhe_pdgs.count(std::abs(pdg_id))) continue;
+            const auto& momentum = lheParticles.at(n);
+            const analysis::LorentzVectorXYZ p4(momentum[0], momentum[1], momentum[2], momentum[3]);
+            eventTuple().lhe_particle_pdg.push_back(pdg_id);
+            eventTuple().lhe_particle_pt.push_back(p4.pt());
+            eventTuple().lhe_particle_eta.push_back(p4.eta());
+            eventTuple().lhe_particle_phi.push_back(p4.phi());
+            eventTuple().lhe_particle_m.push_back(p4.mass());
+        }
     }
 
     eventTuple().npv = vertices->size();

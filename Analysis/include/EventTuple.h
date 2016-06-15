@@ -148,9 +148,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Double_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
     VAR(std::vector<Double_t>, kinFit_probability) /*  KinFit chi2 probability value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
-    /*------*/\
-    VAR(Float_t, HT) \
-    VAR(Int_t, NOutPartons) \
+    /* LHE info */\
+    VAR(std::vector<Int_t>, lhe_particle_pdg) \
+    VAR(std::vector<Float_t>, lhe_particle_pt) \
+    VAR(std::vector<Float_t>, lhe_particle_eta) \
+    VAR(std::vector<Float_t>, lhe_particle_phi) \
+    VAR(std::vector<Float_t>, lhe_particle_m) \
+    /* Vetos */\
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \

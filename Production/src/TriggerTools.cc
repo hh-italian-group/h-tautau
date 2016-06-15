@@ -17,18 +17,6 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResults_to
 {
 }
 
-
-//TriggerTools::TriggerTools(const edm::ParameterSet& iConfig) :
-//    triggerResults_token(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
-//    triggerPrescales_token(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
-//    triggerObjects_token(consumes<pat::TriggerObjectStandAloneCollection>(
-//                            iConfig.getParameter<edm::InputTag>("objects"))),
-//    l1JetParticles_token(mayConsume<std::vector<l1extra::L1JetParticle>>(
-//                            iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")))
-//{
-
-//}
-
 void TriggerTools::Initialize(const edm::Event &_iEvent)
 {
     iEvent = &_iEvent;
