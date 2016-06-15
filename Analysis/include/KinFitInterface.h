@@ -37,20 +37,24 @@ public:
         const auto& met_momentum = met.GetMomentum();
         const TMatrixD met_cov = ConvertMatrix(met.GetCovMatrix());
 
-        HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(lepton_momentums.at(0)),
-                                                       ConvertVector(lepton_momentums.at(1)),
-                                                       ConvertVector(jet_momentums.at(0)),
-                                                       ConvertVector(jet_momentums.at(1)),
-                                                       TVector2(met_momentum.Px(), met_momentum.Py()), met_cov);
-        hh_kin_fit.verbosity = verbosity;
-        hh_kin_fit.fit();
         FitResults result;
-        result.convergence = hh_kin_fit.getConvergence();
-        if(result.HasValidMass()) {
-            result.mass = hh_kin_fit.getMH();
-            result.chi2 = hh_kin_fit.getChi2();
-            result.probability = hh_kin_fit.getFitProb();
-        }
+        try {
+            HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(lepton_momentums.at(0)),
+                                                           ConvertVector(lepton_momentums.at(1)),
+                                                           ConvertVector(jet_momentums.at(0)),
+                                                           ConvertVector(jet_momentums.at(1)),
+                                                           TVector2(met_momentum.Px(), met_momentum.Py()), met_cov);
+            hh_kin_fit.verbosity = verbosity;
+            hh_kin_fit.fit();
+
+            result.convergence = hh_kin_fit.getConvergence();
+            if(result.HasValidMass()) {
+                result.mass = hh_kin_fit.getMH();
+                result.chi2 = hh_kin_fit.getChi2();
+                result.probability = hh_kin_fit.getFitProb();
+            }
+        } catch(std::exception&) {}
+
         return result;
     }
 
