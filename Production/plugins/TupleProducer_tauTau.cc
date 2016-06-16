@@ -1,10 +1,10 @@
 /*! Implementation of an event tuple producer for the tau-tau channel.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
-#include "../interface/TupleProducer_tautau.h"
+#include "../interface/TupleProducer_tauTau.h"
 #include "../interface/GenTruthTools.h"
 
-void TupleProducer_tautau::ProcessEvent(Cutter& cut)
+void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::Htautau_2015;
     using namespace cuts::Htautau_2015::MuTau;
@@ -12,8 +12,6 @@ void TupleProducer_tautau::ProcessEvent(Cutter& cut)
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
-    const auto hltPathKey = analysis::stringToDataSourceTypeMap.at(sampleType);
-    const auto& hltPaths = TauTau::trigger::hltPathMaps.at(hltPathKey);
     cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
 
     const auto selectedTaus = CollectSignalTaus();
@@ -22,14 +20,17 @@ void TupleProducer_tautau::ProcessEvent(Cutter& cut)
     auto higgses = FindCompatibleObjects(selectedTaus, selectedTaus, DeltaR_betweenSignalObjects, "H_tau_tau");
     cut(higgses.size(), "tau_tau_pair");
 
-    auto triggeredHiggses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, true);
-    cut(triggeredHiggses.size(), "triggerMatch");
+    std::vector<HiggsCandidate> selected_higgses = higgses;
+    if(applyTriggerMatch) {
+        auto triggeredHiggses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, true);
+        cut(triggeredHiggses.size(), "triggerMatch");
 
-    auto l1TriggeredHiggses = triggerTools.ApplyL1TriggerTauMatch(triggeredHiggses);
-    cut(l1TriggeredHiggses.size(), "L1triggerMatch");
+        selected_higgses = triggerTools.ApplyL1TriggerTauMatch(triggeredHiggses);
+        cut(selected_higgses.size(), "L1triggerMatch");
+    }
 
-    std::sort(l1TriggeredHiggses.begin(), l1TriggeredHiggses.end(), &HiggsComparitor<HiggsCandidate>);
-    selection.SetHiggsCandidate(l1TriggeredHiggses.front());
+    std::sort(selected_higgses.begin(), selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
+    selection.SetHiggsCandidate(selected_higgses.front());
 
     //Third-Lepton Veto
     const auto electronVetoCollection = CollectVetoElectrons();
@@ -42,14 +43,14 @@ void TupleProducer_tautau::ProcessEvent(Cutter& cut)
     FillEventTuple(selection);
 }
 
-std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tautau::CollectSignalTaus()
+std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tauTau::CollectSignalTaus()
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&TupleProducer_tautau::SelectSignalTau, this, _1, _2);
+    const auto base_selector = std::bind(&TupleProducer_tauTau::SelectSignalTau, this, _1, _2);
     return CollectObjects("SignalTaus", base_selector, taus);
 }
 
-void TupleProducer_tautau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
+void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
     using namespace cuts::Htautau_2015::TauTau;
     using namespace cuts::Htautau_2015::TauTau::tauID;
@@ -65,7 +66,7 @@ void TupleProducer_tautau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
 }
 
-void TupleProducer_tautau::FillEventTuple(const SelectionResults& selection)
+void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
     static const float default_value = ntuple::DefaultFillValue<Float_t>();
@@ -114,4 +115,4 @@ void TupleProducer_tautau::FillEventTuple(const SelectionResults& selection)
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
-DEFINE_FWK_MODULE(TupleProducer_tautau);
+DEFINE_FWK_MODULE(TupleProducer_tauTau);

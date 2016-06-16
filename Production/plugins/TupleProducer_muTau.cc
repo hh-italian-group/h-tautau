@@ -1,10 +1,10 @@
 /*! Implementation of an event tuple producer for the mu-tau channel.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
-#include "../interface/TupleProducer_mutau.h"
+#include "../interface/TupleProducer_muTau.h"
 #include "../interface/GenTruthTools.h"
 
-void TupleProducer_mutau::ProcessEvent(Cutter& cut)
+void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::Htautau_2015;
     using namespace cuts::Htautau_2015::MuTau;
@@ -12,8 +12,6 @@ void TupleProducer_mutau::ProcessEvent(Cutter& cut)
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
-    const auto hltPathKey = analysis::stringToDataSourceTypeMap.at(sampleType);
-    const auto& hltPaths = MuTau::trigger::hltPathMaps.at(hltPathKey);
     cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
 
     // Di-Lepton Veto
@@ -30,11 +28,14 @@ void TupleProducer_mutau::ProcessEvent(Cutter& cut)
     auto higgses = FindCompatibleObjects(selectedMuons, selectedTaus, DeltaR_betweenSignalObjects, "H_mu_tau");
     cut(higgses.size(), "mu_tau_pair");
 
-    auto triggeredHiggses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, false);
-    cut(triggeredHiggses.size(), "triggerMatch");
+    std::vector<HiggsCandidate> selected_higgses = higgses;
+    if(applyTriggerMatch) {
+        selected_higgses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, false);
+        cut(selected_higgses.size(), "triggerMatch");
+    }
 
-    std::sort(triggeredHiggses.begin(), triggeredHiggses.end(), &HiggsComparitor<HiggsCandidate>);
-    selection.SetHiggsCandidate(triggeredHiggses.front());
+    std::sort(selected_higgses.begin(), selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
+    selection.SetHiggsCandidate(selected_higgses.front());
 
     //Third-Lepton Veto
     const auto electronVetoCollection = CollectVetoElectrons();
@@ -47,21 +48,21 @@ void TupleProducer_mutau::ProcessEvent(Cutter& cut)
     FillEventTuple(selection);
 }
 
-std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_mutau::CollectSignalMuons()
+std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muTau::CollectSignalMuons()
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&TupleProducer_mutau::SelectSignalMuon, this, _1, _2);
+    const auto base_selector = std::bind(&TupleProducer_muTau::SelectSignalMuon, this, _1, _2);
     return CollectObjects("SignalMuons", base_selector, muons);
 }
 
-std::vector<BaseTupleProducer::TauCandidate> TupleProducer_mutau::CollectSignalTaus()
+std::vector<BaseTupleProducer::TauCandidate> TupleProducer_muTau::CollectSignalTaus()
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&TupleProducer_mutau::SelectSignalTau, this, _1, _2);
+    const auto base_selector = std::bind(&TupleProducer_muTau::SelectSignalTau, this, _1, _2);
     return CollectObjects("SignalTaus", base_selector, taus);
 }
 
-void TupleProducer_mutau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const
+void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const
 {
 	using namespace cuts::Htautau_2015::MuTau;
     using namespace cuts::Htautau_2015::MuTau::muonID;
@@ -77,7 +78,7 @@ void TupleProducer_mutau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     cut(muon->isMediumMuon(), "muonID");
 }
 
-void TupleProducer_mutau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
+void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
 	using namespace cuts::Htautau_2015::MuTau;
     using namespace cuts::Htautau_2015::MuTau::tauID;
@@ -93,7 +94,7 @@ void TupleProducer_mutau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
 }
 
-void TupleProducer_mutau::FillEventTuple(const SelectionResults& selection)
+void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
     static const float default_value = ntuple::DefaultFillValue<Float_t>();
@@ -119,4 +120,4 @@ void TupleProducer_mutau::FillEventTuple(const SelectionResults& selection)
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
-DEFINE_FWK_MODULE(TupleProducer_mutau);
+DEFINE_FWK_MODULE(TupleProducer_muTau);

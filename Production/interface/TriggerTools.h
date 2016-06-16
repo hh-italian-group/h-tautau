@@ -27,14 +27,14 @@ public:
 
     void Initialize(const edm::Event& iEvent);
 
-    bool HaveTriggerFired(const std::set<std::string>& hltPaths);
+    bool HaveTriggerFired(const std::vector<std::string> &hltPaths);
     const pat::TriggerObjectStandAlone* FindMatchingTriggerObject(const std::string& pathOfInterest,
                                                                   const LorentzVector& candidateMomentum,
                                                                   double deltaR_Limit);
 
     template<typename HiggsCandidate>
     std::vector<HiggsCandidate> ApplyTriggerMatch(const std::vector<HiggsCandidate>& higgses,
-                                                  const std::set<std::string>& hltPaths, bool isCrossTrigger)
+                                                  const std::vector<std::string>& hltPaths, bool isCrossTrigger)
     {
         std::vector<HiggsCandidate> triggeredHiggses;
         for (const auto& higgs : higgses) {

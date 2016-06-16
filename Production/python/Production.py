@@ -1,9 +1,8 @@
-# Produce SyncTree for all channels.
+# Produce EventTuple for all channels.
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
-import sys
 import re
-from sets import Set
+import importlib
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
@@ -14,6 +13,8 @@ options.register('sampleType', 'Fall15MC', VarParsing.multiplicity.singleton, Va
                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Re-run Jet Energy Corrections. Default: False")
+options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Apply trigger matching for signal objects. Default: True")
 options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "List of root files to process.")
 options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
@@ -24,12 +25,8 @@ options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singl
                  "Event tuple file.")
 options.parseArguments()
 
-mc_sample_types = Set([ 'Spring15MC', 'Fall15MC' ])
-data_sample_types = Set([ 'Run2015B', 'Run2015C', 'Run2015D' ])
-isData = options.sampleType in data_sample_types
-if not isData and not options.sampleType in mc_sample_types:
-    print "ERROR: unknown sample type = '{}'".format(options.sampleType)
-    sys.exit(1)
+sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
+isData = sampleConfig.IsData(options.sampleType)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -114,13 +111,14 @@ for idmod in id_modules:
 
 process.tupleProductionSequence = cms.Sequence()
 if options.anaChannels == 'all':
-    channels = [ 'etau', 'mutau', 'tautau' ]
+    channels = [ 'eTau', 'muTau', 'tauTau' ]
 else:
     channels = re.split(',', options.anaChannels)
 
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
+    hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         genParticles            = cms.InputTag('genParticles'),
         electronSrc             = cms.InputTag('slimmedElectrons'),
@@ -142,7 +140,8 @@ for channel in channels:
         pruned                  = cms.InputTag('prunedGenParticles'),
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
-        sampleType              = cms.string(options.sampleType)
+        applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
+        hltPaths                = cms.vstring(hltPaths)
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 

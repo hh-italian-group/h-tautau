@@ -26,7 +26,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     iEvent->getByToken(l1JetParticles_token, l1JetParticles);
 }
 
-bool TriggerTools::HaveTriggerFired(const std::set<std::string>& hltPaths)
+bool TriggerTools::HaveTriggerFired(const std::vector<std::string>& hltPaths)
 {
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResults);
 

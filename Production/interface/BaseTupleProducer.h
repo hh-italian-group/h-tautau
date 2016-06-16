@@ -108,8 +108,8 @@ private:
     edm::EDGetTokenT<std::vector<reco::GenParticle> > prunedGen_token;
 
 protected:
-    const bool isMC;
-    const std::string sampleType;
+    const bool isMC, applyTriggerMatch;
+    std::vector<std::string> hltPaths;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
     analysis::sv_fit::FitProducer svfitProducer;

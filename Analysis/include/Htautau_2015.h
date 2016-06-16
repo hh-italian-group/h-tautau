@@ -11,30 +11,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/Tools.h"
 #include "AnalysisTools/Core/include/exception.h"
 
-namespace analysis{
-
-enum class DataSourceType { Spring15MC=0, Fall15MC=1, Run2015B=2, Run2015C , Run2015D };
-
-static const std::map<DataSourceType,std::string> dataSourceTypeMap = {{DataSourceType::Spring15MC , "Spring15MC"},
-                                                                       {DataSourceType::Fall15MC , "Fall15MC"},
-                                                                       {DataSourceType::Run2015B , "Run2015B"},
-                                                                       {DataSourceType::Run2015C , "Run2015C"},
-                                                                       {DataSourceType::Run2015D , "Run2015D"}};
-
-static const std::map<std::string, DataSourceType> stringToDataSourceTypeMap = {{ "Spring15MC", DataSourceType::Spring15MC},
-                                                                       { "Fall15MC", DataSourceType::Fall15MC},
-                                                                       { "Run2015B" , DataSourceType::Run2015B},
-                                                                       { "Run2015C" , DataSourceType::Run2015C},
-                                                                       { "Run2015D" , DataSourceType::Run2015D}};
-
-
-inline std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType) {
-    s << dataSourceTypeMap.at(dataSourceType);
-    return s;
-}
-
-}//namespace analysis
-
 namespace cuts {
 namespace Htautau_2015 {
 // AN-2013/178 H->etau,mutau
@@ -49,18 +25,6 @@ const double DeltaR_triggerMatch = 0.5; // <
 const double DeltaR_DileptonVeto = 0.15;
 
 namespace MuTau {
-    namespace trigger {
-        // https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2015  - Trigger Session
-        const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
-                                    {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1_v1"}},
-                                     {analysis::DataSourceType::Fall15MC,{"HLT_IsoMu18_v2"}},
-                                     {analysis::DataSourceType::Run2015B,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
-                                                                            "HLT_IsoMu24_eta2p1_v2"}},
-                                     {analysis::DataSourceType::Run2015C,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
-                                                                          "HLT_IsoMu24_eta2p1_v2"}},
-                                     {analysis::DataSourceType::Run2015D,{"HLT_IsoMu18_v"}}};
-    }
-
     namespace muonID {
         const double pt = 19; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double eta = 2.1; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
@@ -111,21 +75,6 @@ namespace MuTau {
 }
 
 namespace ETau {
-    namespace trigger {
-        // twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-//        const std::set<std::string> hltPaths =
-//            { "HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
-//              "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20" };
-
-        const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
-                                    {{analysis::DataSourceType::Spring15MC,{"HLT_Ele22_eta2p1_WP75_Gsf"}},
-                                     {analysis::DataSourceType::Fall15MC,{"HLT_Ele23_WPLoose_Gsf_v3"}},
-                                     {analysis::DataSourceType::Run2015C,{"HLT_Ele22_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_v1",
-                                                                          "HLT_Ele32_eta2p1_WPTight_Gsf_v1"}},
-                                     {analysis::DataSourceType::Run2015D,{"HLT_Ele23_WPLoose_Gsf_v"}}};
-    }
-
-
     // twiki HiggsToTauTauWorkingSummer2013
     namespace electronIDscaleFactor {
         const std::vector<double> eta = { 1.479, 2.1 };
@@ -199,26 +148,6 @@ namespace ETau {
 }
 
 namespace TauTau {
-    namespace trigger {
-//        // twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state
-//        const std::map< std::string, bool > hltPathsMap =
-//        {{"HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30",true},
-//         {"HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30",true},
-//         {"HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30",true},
-//         {"HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1", false},
-//         {"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1",false} };
-
-//        const std::set<std::string> hltPaths = analysis::tools::collect_map_keys(hltPathsMap);
-
-//        const double jet_pt = 50; // > GeV twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state
-//        const double jet_eta = 3.0; // < twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state
-
-    const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
-                                {{analysis::DataSourceType::Fall15MC,{"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v2"}},
-                                 {analysis::DataSourceType::Run2015C,{"HLT_DoubleMediumIsoPFTau40_Trk1_eta2p1_Reg_v2"}},
-                                 {analysis::DataSourceType::Run2015D,{"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v"}}};
-    }
-
     namespace tauID {
         const double pt = 40; // > AN-2013/189 H->tautau full hadronic
         const double eta = 2.1; // < AN-2013/189 H->tautau full hadronic
