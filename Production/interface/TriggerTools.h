@@ -67,7 +67,7 @@ public:
         for (const auto& higgs : higgses) {
             const auto leg1_match = L1TauMatch(higgs.GetFirstDaughter().GetMomentum());
             if(!leg1_match.size()) continue;
-            const auto leg2_match = L1TauMatch(higgs.GetFirstDaughter().GetMomentum());
+            const auto leg2_match = L1TauMatch(higgs.GetSecondDaughter().GetMomentum());
             if(!leg2_match.size()) continue;
 
             if(leg1_match.size() > 1 || leg2_match.size() > 1 || *leg1_match.begin() != *leg2_match.begin())
