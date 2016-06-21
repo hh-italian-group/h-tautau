@@ -11,7 +11,8 @@ hltPaths_eTau = {
     'Spring15MC' : [ "HLT_Ele22_eta2p1_WP75_Gsf" ],
     'Fall15MC'   : [ "HLT_Ele23_WPLoose_Gsf_v3" ],
     'Run2015C'   : [ "HLT_Ele22_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_v1", "HLT_Ele32_eta2p1_WPTight_Gsf_v1" ],
-    'Run2015D'   : [ "HLT_Ele23_WPLoose_Gsf_v" ]
+    'Run2015D'   : [ "HLT_Ele23_WPLoose_Gsf_v" ],
+    'Run2016B'   : [ "" ]
 }
 
 hltPaths_muTau = {
@@ -19,13 +20,15 @@ hltPaths_muTau = {
     'Fall15MC'   : [ "HLT_IsoMu18_v2" ],
     'Run2015B'   : [ "HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2", "HLT_IsoMu24_eta2p1_v2" ],
     'Run2015C'   : [ "HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2", "HLT_IsoMu24_eta2p1_v2" ],
-    'Run2015D'   : [ "HLT_IsoMu18_v" ]
+    'Run2015D'   : [ "HLT_IsoMu18_v" ],
+    'Run2016B'   : [ "" ]
 }
 
 hltPaths_tauTau = {
     'Fall15MC' : [ "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v2" ],
     'Run2015C' : [ "HLT_DoubleMediumIsoPFTau40_Trk1_eta2p1_Reg_v2" ],
-    'Run2015D' : [ "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v" ]
+    'Run2015D' : [ "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v" ],
+    'Run2016B' : [ "" ]
 }
 
 hltPaths = { 'eTau' : hltPaths_eTau, 'muTau' : hltPaths_muTau, 'tauTau' : hltPaths_tauTau }

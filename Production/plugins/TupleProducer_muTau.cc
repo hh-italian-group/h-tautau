@@ -12,7 +12,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
-    cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
+    if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
 
     // Di-Lepton Veto
     const auto z_muons = CollectZmuons();

@@ -12,7 +12,7 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
-    cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
+    if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
 
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");

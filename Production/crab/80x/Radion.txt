@@ -1,0 +1,4 @@
+EventAwareLumiBased SIGNAL
+applyTriggerMatch=False sampleType=Fall15MC ReRunJEC=True globalTag=80X_mcRun2_asymptotic_2016_miniAODv2
+250 260 270 280 300 320 340 450 500 550 600 650 700 750 800 900
+GluGluToRadionToHHTo2B2Tau_M-{M} 1000 /GluGluToRadionToHHTo2B2Tau_M-{M}_narrow_13TeV-madgraph/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM
