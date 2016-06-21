@@ -56,8 +56,8 @@ process.load('RecoMET.METProducers.METSignificanceParams_cfi')
 
 ### re-run JEC and and use corrected jets for MET significance, if requested
 if options.ReRunJEC:
-    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import patJetCorrFactorsUpdated
-    process.patJetCorrFactorsReapplyJEC = patJetCorrFactorsUpdated.clone(
+    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJetCorrFactors
+    process.patJetCorrFactorsReapplyJEC = updatedPatJetCorrFactors.clone(
         src = cms.InputTag('slimmedJets'),
         levels = ['L1FastJet', 'L2Relative', 'L3Absolute'],
         payload = 'AK4PFchs' # Make sure to choose the appropriate levels and payload here!
@@ -65,8 +65,8 @@ if options.ReRunJEC:
     if isData:
       process.patJetCorrFactorsReapplyJEC.levels.append('L2L3Residual')
 
-    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import patJetsUpdated
-    process.patJetsReapplyJEC = patJetsUpdated.clone(
+    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJets
+    process.patJetsReapplyJEC = updatedPatJets.clone(
         jetSource = cms.InputTag('slimmedJets'),
         jetCorrFactorsSource = cms.VInputTag(cms.InputTag('patJetCorrFactorsReapplyJEC'))
     )
