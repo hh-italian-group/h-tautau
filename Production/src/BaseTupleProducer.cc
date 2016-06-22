@@ -428,10 +428,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             const auto& momentum = lheParticles.at(n);
             const analysis::LorentzVectorXYZ p4(momentum[0], momentum[1], momentum[2], momentum[3]);
             eventTuple().lhe_particle_pdg.push_back(pdg_id);
-            eventTuple().lhe_particle_pt.push_back(p4.pt());
-            eventTuple().lhe_particle_eta.push_back(p4.eta());
-            eventTuple().lhe_particle_phi.push_back(p4.phi());
-            eventTuple().lhe_particle_m.push_back(p4.mass());
+            eventTuple().lhe_particle_p4.push_back(analysis::LorentzVectorM(p4));
         }
     }
 
@@ -439,26 +436,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().npu = GetNumberOfPileUpInteractions();
 
     // HTT candidate
-    eventTuple().m_vis = selection.GetHiggsMomentum().M();
-    eventTuple().pt_tt = selection.GetHiggsMomentum().Pt();
-    if(selection.svfitResult.has_valid_momentum) {
-        eventTuple().m_sv = selection.svfitResult.momentum.M();
-        eventTuple().pt_sv = selection.svfitResult.momentum.Pt();
-        eventTuple().eta_sv = selection.svfitResult.momentum.Eta();
-        eventTuple().phi_sv = selection.svfitResult.momentum.Phi();
-    } else {
-        eventTuple().m_sv = default_value;
-        eventTuple().pt_sv = default_value;
-        eventTuple().eta_sv = default_value;
-        eventTuple().phi_sv = default_value;
-    }
+    eventTuple().SVfit_p4 = selection.svfitResult.momentum;
 
     // Leg 2, tau
     const TauCandidate& tau = selection.GetSecondLeg();
-    eventTuple().pt_2     = tau.GetMomentum().Pt();
-    eventTuple().phi_2    = tau.GetMomentum().Phi();
-    eventTuple().eta_2    = tau.GetMomentum().Eta();
-    eventTuple().m_2      = tau.GetMomentum().M();
+    eventTuple().p4_2     = analysis::LorentzVectorM(tau.GetMomentum());
     eventTuple().q_2      = tau.GetCharge();
     eventTuple().pfmt_2   = Calculate_MT(tau.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_2     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
@@ -490,45 +472,17 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     eventTuple().decayModeFindingOldDMs_2 = tau->tauID("decayModeFinding");
 
-
     // MET
-    eventTuple().met        = met->GetMomentum().Pt();
-    eventTuple().metphi     = met->GetMomentum().Phi();
-    eventTuple().isPFMET    = (*met)->isPFMET();
-    eventTuple().metcov00   = met->GetCovMatrix()[0][0];
-    eventTuple().metcov01   = met->GetCovMatrix()[0][1];
-    eventTuple().metcov10   = met->GetCovMatrix()[1][0];
-    eventTuple().metcov11   = met->GetCovMatrix()[1][1];
+    eventTuple().pfMET_p4 = met->GetMomentum();
+    eventTuple().pfMET_cov = met->GetCovMatrix();
 
-    // Jets
-    eventTuple().njetspt20 = selection.jets.size();
-    eventTuple().nbtag     = selection.bjets.size();
-
-    Int_t numJet = 0;
     for(const JetCandidate& jet : selection.jets){
         const LorentzVector& p4 = jet.GetMomentum();
-        if(p4.Pt() > 30) numJet++;
-        eventTuple().pt_jets     .push_back(p4.Pt());
-        eventTuple().eta_jets    .push_back(p4.Eta());
-        eventTuple().phi_jets    .push_back(p4.Phi());
-        eventTuple().energy_jets .push_back(p4.E());
-        eventTuple().rawf_jets   .push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().mva_jets    .push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
-        eventTuple().csv_jets    .push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        eventTuple().partonFlavour_jets .push_back(jet->partonFlavour());
-    }
-    eventTuple().njets = numJet;
-
-    for(const JetCandidate& jet : selection.bjets) {
-        const LorentzVector& p4 = jet.GetMomentum();
-        eventTuple().pt_bjets     .push_back(p4.Pt());
-        eventTuple().eta_bjets    .push_back(p4.Eta());
-        eventTuple().phi_bjets    .push_back(p4.Phi());
-        eventTuple().energy_bjets .push_back(p4.E());
-        eventTuple().rawf_bjets   .push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().mva_bjets    .push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
-        eventTuple().csv_bjets    .push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        eventTuple().partonFlavour_bjets .push_back(jet->partonFlavour());
+        eventTuple().jets_p4.push_back(p4);
+        eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
+        eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
+        eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        eventTuple().jets_partonFlavour .push_back(jet->partonFlavour());
     }
 
     for(const kin_fit::FitResults& result : selection.kinfitResults) {

@@ -104,10 +104,7 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 
     // Leg 1, lepton
     const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
-    eventTuple().pt_1     = muon.GetMomentum().Pt();
-    eventTuple().phi_1    = muon.GetMomentum().Phi();
-    eventTuple().eta_1    = muon.GetMomentum().Eta();
-    eventTuple().m_1      = muon.GetMomentum().M();
+    eventTuple().p4_1     = analysis::LorentzVectorM(muon.GetMomentum());
     eventTuple().q_1      = muon.GetCharge();
     eventTuple().pfmt_1   = Calculate_MT(muon.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_1     = muon->muonBestTrack()->dxy(primaryVertex->position());

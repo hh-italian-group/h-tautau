@@ -76,17 +76,13 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
 
     // Leg 1, tau
     const TauCandidate& tau = selection.higgs->GetFirstDaughter();
-
-    eventTuple().pt_1     = tau.GetMomentum().Pt();
-    eventTuple().phi_1    = tau.GetMomentum().Phi();
-    eventTuple().eta_1    = tau.GetMomentum().Eta();
-    eventTuple().m_1      = tau.GetMomentum().M();
+    eventTuple().p4_1     = analysis::LorentzVectorM(tau.GetMomentum());
     eventTuple().q_1      = tau.GetCharge();
     eventTuple().pfmt_1   = Calculate_MT(tau.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_1     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
     eventTuple().dZ_1     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_1    = tau.GetIsolation();
-    eventTuple().gen_match_2 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
+    eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
 
     eventTuple().againstElectronLooseMVA6_1   = tau->tauID("againstElectronLooseMVA6");
     eventTuple().againstElectronMediumMVA6_1  = tau->tauID("againstElectronMediumMVA6");

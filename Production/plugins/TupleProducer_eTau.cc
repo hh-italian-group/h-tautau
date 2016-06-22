@@ -108,10 +108,7 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
 
     // Leg 1, lepton
     const ElectronCandidate& electron = selection.higgs->GetFirstDaughter();
-    eventTuple().pt_1     = electron.GetMomentum().Pt();
-    eventTuple().phi_1    = electron.GetMomentum().Phi();
-    eventTuple().eta_1    = electron.GetMomentum().Eta();
-    eventTuple().m_1      = electron.GetMomentum().M();
+    eventTuple().p4_1     = analysis::LorentzVectorM(electron.GetMomentum());
     eventTuple().q_1      = electron.GetCharge();
     eventTuple().pfmt_1   = Calculate_MT(electron.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_1     = electron->gsfTrack()->dxy(primaryVertex->position());
