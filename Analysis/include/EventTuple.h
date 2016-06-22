@@ -5,6 +5,48 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Core/include/SmartTree.h"
 
+#define LVAR(type, name, n) VAR(type, name ## _ ## n)
+
+#define LEG_DATA(n) \
+    LVAR(Float_t, pt, n) /* pT */ \
+    LVAR(Float_t, phi, n) /* Phi */ \
+    LVAR(Float_t, eta, n) /* Eta */ \
+    LVAR(Float_t, m, n) /* Mass */ \
+    LVAR(Int_t, q, n) /* Charge */ \
+    LVAR(Float_t, d0, n) /* d0 with respect to primary vertex */ \
+    LVAR(Float_t, dZ, n) /* dZ with respect to primary vertex */ \
+    LVAR(Float_t, mt, n) /* mT of the lepton wrt to MVA met */ \
+    LVAR(Float_t, pfmt, n) /* mT of  first lepton wrt to PF met */ \
+    LVAR(Float_t, puppimt, n) /* mT of  first lepton wrt to PUPPI met */ \
+    LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Float_t, id_e_mva_nt_loose, 1) /* Non-triggering electron ID MVA score id (when using electron) 0 otherwise */ \
+    LVAR(Int_t, gen_match, n) /*Generator matching, see Htautau Twiki*/\
+    LVAR(Float_t, againstElectronLooseMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, againstElectronMediumMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, againstElectronTightMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, againstElectronVLooseMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, againstElectronVTightMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, byIsolationMVA2raw, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, againstMuonLoose3, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, againstMuonTight3, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    LVAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits, n) /*  */ \
+    LVAR(Float_t, byIsolationMVA3newDMwoLTraw, n) /* MVA iso for Tau w/o Lifetime information New Decay Mode */ \
+    LVAR(Float_t, byIsolationMVA3oldDMwoLTraw, n) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
+    LVAR(Float_t, byIsolationMVA3newDMwLTraw, n) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
+    LVAR(Float_t, byIsolationMVA3oldDMwLTraw, n) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
+    LVAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
+    LVAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime Loose WP */ \
+    LVAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime Medium WP */ \
+    LVAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime Tight WP */ \
+    LVAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime VTight WP */ \
+    LVAR(Float_t, chargedIsoPtSum, n) \
+    LVAR(Int_t, decayModeFindingOldDMs, n) /* Old Decay Mode finding */\
+    LVAR(Float_t, neutralIsoPtSum, n) \
+    LVAR(Float_t, puCorrPtSum, n) \
+    LVAR(Float_t, trigweight, n) \
+    LVAR(Float_t, idisoweight, n) \
+    /**/
+
 #define EVENT_DATA() \
     VAR(Int_t, run) /* Run */ \
     VAR(Int_t, lumi) /* Lumi */ \
@@ -23,80 +65,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, pt_sv) /* SV Fit using integration method */ \
     VAR(Float_t, eta_sv) /* SV Fit using integration method */ \
     VAR(Float_t, phi_sv) /* SV Fit using integration method */ \
-    /* First lepton :  muon for mu Tau, electron for e Tau, electron for e mu, Leading (in pT) Tau for Tau Tau */ \
-    VAR(Float_t, pt_1) /* pT */ \
-    VAR(Float_t, phi_1) /* Phi */ \
-    VAR(Float_t, eta_1) /* Eta */ \
-    VAR(Float_t, m_1) /* Mass */ \
-    VAR(Int_t, q_1) /* Charge */ \
-    VAR(Float_t, d0_1) /* d0 with respect to primary vertex */ \
-    VAR(Float_t, dZ_1) /* dZ with respect to primary vertex */ \
-    VAR(Float_t, mt_1) /* mT of  first lepton wrt to MVA met */ \
-    VAR(Float_t, pfmt_1) /* mT of  first lepton wrt to MVA met */ \
-    VAR(Float_t, puppimt_1) /* mT of  first lepton wrt to MVA met */ \
-    VAR(Float_t, iso_1) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    VAR(Float_t, id_e_mva_nt_loose_1) /* Non-triggering electron ID MVA score id (when using electron) 0 otherwise */ \
-    VAR(Int_t, gen_match_1 ) /*Generator matching, see Htautau Twiki*/\
-    VAR(Float_t, againstElectronLooseMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronMediumMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronTightMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronVLooseMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronVTightMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, byIsolationMVA2raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstMuonLoose3_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstMuonTight3_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_1) /*  */ \
-    VAR(Float_t, byIsolationMVA3newDMwoLTraw_1) /* MVA iso for Tau w/o Lifetime information New Decay Mode */ \
-    VAR(Float_t, byIsolationMVA3oldDMwoLTraw_1) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
-    VAR(Float_t, byIsolationMVA3newDMwLTraw_1) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
-    VAR(Float_t, byIsolationMVA3oldDMwLTraw_1) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
-    VAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
-    VAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Loose WP */ \
-    VAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Medium WP */ \
-    VAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Tight WP */ \
-    VAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime VTight WP */ \
-    VAR(Float_t, chargedIsoPtSum_1) \
-    VAR(Int_t, decayModeFindingOldDMs_1) /* Old Decay Mode finding */\
-    VAR(Float_t, neutralIsoPtSum_1) \
-    VAR(Float_t, puCorrPtSum_1) \
-    VAR(Float_t, trigweight_1) \
-    VAR(Float_t, idisoweight_1) \
-    /* Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau */ \
-    VAR(Float_t, pt_2) /* pT */ \
-    VAR(Float_t, phi_2) /* Phi */ \
-    VAR(Float_t, eta_2) /* Eta */ \
-    VAR(Float_t, m_2) /* Mass */ \
-    VAR(Int_t, q_2) /* Charge */ \
-    VAR(Float_t, d0_2) /* d0 with respect to primary vertex */ \
-    VAR(Float_t, dZ_2) /* dZ with respect to primary vertex */ \
-    VAR(Float_t, mt_2) /* mT of  first lepton wrt to PF met */ \
-    VAR(Float_t, pfmt_2) /* mT of  first lepton wrt to PF met */ \
-    VAR(Float_t, puppimt_2) /* mT of  first lepton wrt to PF met */ \
-    VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    VAR(Int_t, gen_match_2 ) /*Generator matching, see Htautau Twiki*/\
-    VAR(Float_t, againstElectronLooseMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronMediumMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronTightMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronVLooseMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstElectronVTightMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, byIsolationMVA2raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstMuonLoose3_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, againstMuonTight3_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_2) /*  */ \
-    VAR(Float_t, byIsolationMVA3newDMwoLTraw_2) /* MVA iso for Tau w/o Lifetime information New Decay Mode */ \
-    VAR(Float_t, byIsolationMVA3oldDMwoLTraw_2) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
-    VAR(Float_t, byIsolationMVA3newDMwLTraw_2) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
-    VAR(Float_t, byIsolationMVA3oldDMwLTraw_2) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
-    VAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
-    VAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Loose WP */ \
-    VAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Medium WP */ \
-    VAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Tight WP */ \
-    VAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime VTight WP */ \
-    VAR(Float_t, chargedIsoPtSum_2) \
-    VAR(Int_t, decayModeFindingOldDMs_2) /* Old Decay Mode finding */\
-    VAR(Float_t, neutralIsoPtSum_2) \
-    VAR(Float_t, puCorrPtSum_2) \
-    VAR(Float_t, idisoweight_2) \
+    /* Signal leptons */ \
+    LEG_DATA(1) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
+    LEG_DATA(2) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \
     /* Di-lepton */ \
     VAR(Float_t, m_vis) /* pairs invariant mass */ \
     VAR(Float_t, pt_tt) /* pT */ \
@@ -168,6 +139,8 @@ DECLARE_TREE(ntuple, Event, EventTuple, EVENT_DATA, "events")
 INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef VAR
 #undef EVENT_DATA
+#undef LEG_DATA
+#undef LVAR
 
 namespace ntuple {
 template<typename T>

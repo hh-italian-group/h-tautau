@@ -99,6 +99,17 @@ public:
         daughterMomentums.push_back(secondDaughter.GetMomentum());
     }
 
+    template<typename FourVector>
+    CompositCandidate(const FirstDaughter& _firstDaughter, const SecondDaughter& _secondDaughter,
+                      const FourVector& _momentum)
+        : AnalysisObject(_momentum), firstDaughter(_firstDaughter), secondDaughter(_secondDaughter)
+    {
+        if(firstDaughter.HasCharge() && secondDaughter.HasCharge())
+            this->SetCharge(firstDaughter.GetCharge() + secondDaughter.GetCharge());
+        daughterMomentums.push_back(firstDaughter.GetMomentum());
+        daughterMomentums.push_back(secondDaughter.GetMomentum());
+    }
+
     const FirstDaughter& GetFirstDaughter() const { return firstDaughter; }
     const SecondDaughter& GetSecondDaughter() const { return secondDaughter; }
     const std::vector<LorentzVector>& GetDaughterMomentums() const { return daughterMomentums; }
