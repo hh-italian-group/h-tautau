@@ -44,7 +44,8 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     selection.muonVeto = muonVetoCollection.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
-    selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
+    if(runSVfit)
+        selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
 }
 

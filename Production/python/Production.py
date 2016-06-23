@@ -23,6 +23,10 @@ options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarPar
                  "Analysis channels to run.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Event tuple file.")
+options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Run SVfit algorithm on the selected tau pair.")
+options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
 options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
@@ -141,7 +145,9 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
-        hltPaths                = cms.vstring(hltPaths)
+        hltPaths                = cms.vstring(hltPaths),
+        runSVfit                = cms.bool(options.runSVfit),
+        runKinFit               = cms.bool(options.runKinFit)
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 

@@ -19,25 +19,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     LVAR(Float_t, id_e_mva_nt_loose, n) /* Non-triggering electron ID MVA score id (when using electron) 0 otherwise */ \
     LVAR(Int_t, gen_match, n) /*Generator matching, see Htautau Twiki*/\
-    LVAR(Float_t, againstElectronLooseMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, againstElectronMediumMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, againstElectronTightMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, againstElectronVLooseMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, againstElectronVTightMVA6, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, byIsolationMVA2raw, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, againstMuonLoose3, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, againstMuonTight3, n) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    LVAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits, n) /*  */ \
-    LVAR(Float_t, byIsolationMVA3newDMwoLTraw, n) /* MVA iso for Tau w/o Lifetime information New Decay Mode */ \
-    LVAR(Float_t, byIsolationMVA3oldDMwoLTraw, n) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
-    LVAR(Float_t, byIsolationMVA3newDMwLTraw, n) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
-    LVAR(Float_t, byIsolationMVA3oldDMwLTraw, n) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
-    LVAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
-    LVAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime Loose WP */ \
-    LVAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime Medium WP */ \
-    LVAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime Tight WP */ \
-    LVAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT, n) /* MVA iso for Tau w/ Lifetime VTight WP */ \
-    LVAR(Int_t, decayModeFindingOldDMs, n) /* Old Decay Mode finding */\
+    LVAR(root_ext::strmap<float>, tauIDs, n) /* tau ID variables */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -109,20 +91,7 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef MET_DATA
 #undef MVAR
 
-
 namespace ntuple {
 template<typename T>
 T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
-
-enum class HTbinning { lt0 = -1, lt100 = 0, f100to200 = 1, f200to400 = 2, f400to600 = 3, gt600 = 4 };
-inline HTbinning GetHTbin(double HT)
-{
-    if(HT < 0) return HTbinning::lt0;
-    if(HT < 100) return HTbinning::lt100;
-    if(HT < 200) return HTbinning::f100to200;
-    if(HT < 400) return HTbinning::f200to400;
-    if(HT < 600) return HTbinning::f400to600;
-    return HTbinning::gt600;
-}
-
 }

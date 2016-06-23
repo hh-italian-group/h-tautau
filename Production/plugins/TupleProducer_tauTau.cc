@@ -39,7 +39,8 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.muonVeto = muonVetoCollection.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
-    selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
+    if(runSVfit)
+        selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
 }
 
@@ -83,29 +84,7 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
     eventTuple().dZ_1     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_1    = tau.GetIsolation();
     eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
-
-    eventTuple().againstElectronLooseMVA6_1   = tau->tauID("againstElectronLooseMVA6");
-    eventTuple().againstElectronMediumMVA6_1  = tau->tauID("againstElectronMediumMVA6");
-    eventTuple().againstElectronTightMVA6_1   = tau->tauID("againstElectronTightMVA6");
-    eventTuple().againstElectronVLooseMVA6_1  = tau->tauID("againstElectronVLooseMVA6");
-    eventTuple().againstElectronVTightMVA6_1  = tau->tauID("againstElectronVTightMVA6");
-
-    eventTuple().againstMuonLoose3_1          = tau->tauID("againstMuonLoose3");
-    eventTuple().againstMuonTight3_1          = tau->tauID("againstMuonTight3");
-
-    eventTuple().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = tau->tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-    eventTuple().byIsolationMVA3newDMwLTraw_1               = tau->tauID("byIsolationMVArun2v1DBnewDMwLTraw");
-    eventTuple().byIsolationMVA3oldDMwLTraw_1               = tau->tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-    eventTuple().byIsolationMVA3newDMwoLTraw_1              = default_value;
-    eventTuple().byIsolationMVA3oldDMwoLTraw_1              = default_value;
-
-    eventTuple().byVLooseIsolationMVArun2v1DBoldDMwLT_1     = tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byLooseIsolationMVArun2v1DBoldDMwLT_1      = tau->tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byMediumIsolationMVArun2v1DBoldDMwLT_1     = tau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byTightIsolationMVArun2v1DBoldDMwLT_1      = tau->tauID("byTightIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byVTightIsolationMVArun2v1DBoldDMwLT_1     = tau->tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
-
-    eventTuple().decayModeFindingOldDMs_1 = tau->tauID("decayModeFinding");
+    eventTuple().tauIDs_1.insert(tau->tauIDs().begin(), tau->tauIDs().end());
 
     eventTuple.Fill();
 }

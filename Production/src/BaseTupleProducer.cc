@@ -22,6 +22,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     prunedGen_token(consumes<std::vector<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
     isMC(iConfig.getParameter<bool>("isMC")),
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
+    runSVfit(iConfig.getParameter<bool>("runSVfit")),
+    runKinFit(iConfig.getParameter<bool>("runKinFit")),
     hltPaths(iConfig.getParameter<std::vector<std::string>>("hltPaths")),
     eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
     triggerTools(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits")),
@@ -170,7 +172,6 @@ double BaseTupleProducer::Isolation(const pat::Tau& tau)
     return tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 }
 
-
 //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
 //  PFJetID is tuned on Uncorrected Jet values
 bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
@@ -233,6 +234,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
     selection.jets = CollectJets(signalLeptonMomentums);
     selection.bjets = CollectBJets(signalLeptonMomentums);
 
+    if(!runKinFit) return;
     for(size_t n = 0; n < selection.jets.size(); ++n) {
         for(size_t k = n + 1; k < selection.jets.size(); ++k) {
             const std::vector<LorentzVector> jet_momentums = {
@@ -449,28 +451,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().id_e_mva_nt_loose_1 = default_value;
     eventTuple().gen_match_2 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
 
-    eventTuple().againstElectronLooseMVA6_2   = tau->tauID("againstElectronLooseMVA6");
-    eventTuple().againstElectronMediumMVA6_2  = tau->tauID("againstElectronMediumMVA6");
-    eventTuple().againstElectronTightMVA6_2   = tau->tauID("againstElectronTightMVA6");
-    eventTuple().againstElectronVLooseMVA6_2  = tau->tauID("againstElectronVLooseMVA6");
-    eventTuple().againstElectronVTightMVA6_2  = tau->tauID("againstElectronVTightMVA6");
-
-    eventTuple().againstMuonLoose3_2          = tau->tauID("againstMuonLoose3");
-    eventTuple().againstMuonTight3_2          = tau->tauID("againstMuonTight3");
-
-    eventTuple().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = tau->tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-    eventTuple().byIsolationMVA3newDMwLTraw_2               = tau->tauID("byIsolationMVArun2v1DBnewDMwLTraw");
-    eventTuple().byIsolationMVA3oldDMwLTraw_2               = tau->tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-    eventTuple().byIsolationMVA3newDMwoLTraw_2              = default_value;
-    eventTuple().byIsolationMVA3oldDMwoLTraw_2              = default_value;
-
-    eventTuple().byVLooseIsolationMVArun2v1DBoldDMwLT_2     = tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byLooseIsolationMVArun2v1DBoldDMwLT_2      = tau->tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byMediumIsolationMVArun2v1DBoldDMwLT_2     = tau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byTightIsolationMVArun2v1DBoldDMwLT_2      = tau->tauID("byTightIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byVTightIsolationMVArun2v1DBoldDMwLT_2     = tau->tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
-
-    eventTuple().decayModeFindingOldDMs_2 = tau->tauID("decayModeFinding");
+    eventTuple().tauIDs_2.insert(tau->tauIDs().begin(), tau->tauIDs().end());
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
