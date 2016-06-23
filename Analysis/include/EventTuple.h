@@ -34,6 +34,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, m_filtered, col) \
     JVAR(Float_t, m_trimmed, col) \
     JVAR(Float_t, m_softDrop, col) \
+    JVAR(Float_t, n_subjettiness_tau1, col) \
+    JVAR(Float_t, n_subjettiness_tau2, col) \
+    JVAR(Float_t, n_subjettiness_tau3, col) \
     JVAR(size_t, parentIndex, col) \
     /**/
 

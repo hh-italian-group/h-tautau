@@ -454,6 +454,9 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().fatJets_m_filtered.push_back(GetUserFloat(jet, "ak8PFJetsCHSFilteredMass"));
         eventTuple().fatJets_m_trimmed.push_back(GetUserFloat(jet, "ak8PFJetsCHSTrimmedMass"));
         eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
+        eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
+        eventTuple().fatJets_n_subjettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
+        eventTuple().fatJets_n_subjettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
 
         if(!jet->hasSubjets("SoftDrop")) continue;
         const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
