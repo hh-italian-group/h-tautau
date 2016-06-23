@@ -15,6 +15,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     vtxMiniAOD_token(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
     pfMETAOD_token(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
     jetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
+    fatJetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("fatJetSrc"))),
     metCovMatrix_token(consumes<MetCovMatrix>(iConfig.getParameter<edm::InputTag>("metCov"))),
     PUInfo_token(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
     lheEventProduct_token(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
@@ -77,6 +78,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(vtxMiniAOD_token, vertices);
     iEvent.getByToken(pfMETAOD_token, pfMETs);
     iEvent.getByToken(jetsMiniAOD_token, pat_jets);
+    iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(metCovMatrix_token, metCovMatrix);
     iEvent.getByToken(PUInfo_token, PUInfo);
     if(isMC) iEvent.getByToken(genWeights_token, genEvt);
@@ -141,6 +143,10 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         }
         jets.push_back(jetCandidate);
     }
+
+    fatJets.clear();
+    for(const auto& jet : * pat_fatJets)
+        fatJets.push_back(JetCandidate(jet));
 
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], *metCovMatrix));
     if(metUncertantyMap.count(energyScale)) {
@@ -232,9 +238,8 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
                         const std::vector<LorentzVector>& signalLeptonMomentums)
 {
     selection.jets = CollectJets(signalLeptonMomentums);
-    selection.bjets = CollectBJets(signalLeptonMomentums);
-
     if(!runKinFit) return;
+
     for(size_t n = 0; n < selection.jets.size(); ++n) {
         for(size_t k = n + 1; k < selection.jets.size(); ++k) {
             const std::vector<LorentzVector> jet_momentums = {
@@ -281,18 +286,6 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
     using namespace std::placeholders;
     const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2, signalLeptonMomentums);
     return CollectObjects("jets", baseSelector, jets);
-}
-
-std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectBJets(
-        const std::vector<LorentzVector>& signalLeptonMomentums)
-{
-    using namespace std::placeholders;
-    static const std::string& btagDiscName = "pfCombinedInclusiveSecondaryVertexV2BJetTags";
-    const auto jetCsvOrdering = [&](const JetCandidate& jet1, const JetCandidate& jet2) -> bool {
-        return jet1->bDiscriminator(btagDiscName) > jet2->bDiscriminator(btagDiscName);
-    };
-    const auto baseSelector = std::bind(&BaseTupleProducer::SelectBJet, this, _1, _2, signalLeptonMomentums);
-    return CollectObjects("bjets", baseSelector, jets, jetCsvOrdering);
 }
 
 void BaseTupleProducer::SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const
@@ -395,19 +388,6 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     }
 }
 
-void BaseTupleProducer::SelectBJet(const JetCandidate& jet, Cutter& cut,
-                                   const std::vector<LorentzVector>& signalLeptonMomentums) const
-{
-    using namespace cuts::Htautau_2015;
-    using namespace cuts::Htautau_2015::jetID;
-
-    SelectJet(jet, cut, signalLeptonMomentums);
-    const LorentzVector& p4 = jet.GetMomentum();
-    cut(std::abs(p4.eta()) < btag::eta, "eta", p4.eta());
-    const double csvValue = jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-    cut(csvValue > btag::CSV, "btaggin", csvValue);
-}
-
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
@@ -457,13 +437,32 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
 
-    for(const JetCandidate& jet : selection.jets){
+    for(const JetCandidate& jet : selection.jets) {
         const LorentzVector& p4 = jet.GetMomentum();
         eventTuple().jets_p4.push_back(p4);
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
         eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
         eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
         eventTuple().jets_partonFlavour .push_back(jet->partonFlavour());
+    }
+
+    for(const JetCandidate& jet : fatJets) {
+        const LorentzVector& p4 = jet.GetMomentum();
+        eventTuple().fatJets_p4.push_back(p4);
+        eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
+        eventTuple().fatJets_m_filtered.push_back(GetUserFloat(jet, "ak8PFJetsCHSFilteredMass"));
+        eventTuple().fatJets_m_trimmed.push_back(GetUserFloat(jet, "ak8PFJetsCHSTrimmedMass"));
+        eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
+
+        if(!jet->hasSubjets("SoftDrop")) continue;
+        const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
+        const auto& sub_jets = jet->subjets("SoftDrop");
+        for(const auto& sub_jet : sub_jets) {
+            eventTuple().subJets_p4.push_back(analysis::LorentzVector(sub_jet->p4()));
+            eventTuple().subJets_csv.push_back(sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            eventTuple().subJets_parentIndex.push_back(parentIndex);
+        }
     }
 
     for(const kin_fit::FitResults& result : selection.kinfitResults) {

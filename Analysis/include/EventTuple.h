@@ -30,6 +30,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, mva, col) /* Jet MVA id value */ \
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
     JVAR(Int_t, partonFlavour, col) \
+    JVAR(Float_t, m_pruned, col) \
+    JVAR(Float_t, m_filtered, col) \
+    JVAR(Float_t, m_trimmed, col) \
+    JVAR(Float_t, m_softDrop, col) \
+    JVAR(size_t, parentIndex, col) \
     /**/
 
 #define MVAR(type, name, col) VAR(type, col##_##name)
@@ -61,7 +66,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     MET_DATA(puppiMET) \
     /* Candidate Jets: jets after applying Jet energy corrections (excluding hadronic Tau) */ \
     JET_DATA(jets) \
-    JET_DATA(fatjets) \
+    JET_DATA(fatJets) \
+    JET_DATA(subJets) \
     /* KinFit Variables */ \
     VAR(std::vector<Double_t>, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
     VAR(std::vector<Double_t>, kinFit_chi2) /*  KinFit chi2 value*/ \

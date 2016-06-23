@@ -133,6 +133,7 @@ for channel in channels:
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
         jetSrc                  = cms.InputTag(JetCollectionName),
+        fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = cms.InputTag('slimmedMETs'),
         bits                    = cms.InputTag('TriggerResults', '', 'HLT'),

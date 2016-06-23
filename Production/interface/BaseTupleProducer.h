@@ -101,6 +101,7 @@ private:
     edm::EDGetToken vtxMiniAOD_token;
     edm::EDGetToken pfMETAOD_token;
     edm::EDGetToken jetsMiniAOD_token;
+    edm::EDGetToken fatJetsMiniAOD_token;
     edm::EDGetTokenT<MetCovMatrix> metCovMatrix_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_token;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
@@ -123,6 +124,7 @@ private:
     edm::Handle<edm::View<reco::Vertex> > vertices;
     edm::Handle<edm::View<pat::MET> > pfMETs;
     edm::Handle<std::vector<pat::Jet> > pat_jets;
+    edm::Handle<std::vector<pat::Jet> > pat_fatJets;
     edm::Handle<MetCovMatrix> metCovMatrix;
     edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
     edm::Handle<LHEEventProduct> lheEventProduct;
@@ -137,7 +139,7 @@ protected:
     std::vector<ElectronCandidate> electrons;
     std::vector<MuonCandidate> muons;
     std::vector<TauCandidate> taus;
-    std::vector<JetCandidate> jets;
+    std::vector<JetCandidate> jets, fatJets;
     std::shared_ptr<MET> met;
     edm::Ptr<reco::Vertex> primaryVertex;
     edm::Handle<std::vector<reco::GenParticle>> genParticles;
@@ -171,7 +173,6 @@ protected:
     std::vector<ElectronCandidate> CollectVetoElectrons(const ElectronCandidate* signalElectron = nullptr);
     std::vector<MuonCandidate> CollectVetoMuons(const MuonCandidate* signalMuon = nullptr);
     std::vector<JetCandidate> CollectJets(const std::vector<LorentzVector>& signalLeptonMomentums);
-    std::vector<JetCandidate> CollectBJets(const std::vector<LorentzVector>& signalLeptonMomentums);
 
 
     void SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const;
@@ -181,8 +182,6 @@ protected:
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, const MuonCandidate* signalMuon) const;
     void SelectJet(const JetCandidate& jet, Cutter& cut,
                    const std::vector<LorentzVector>& signalLeptonMomentums) const;
-    void SelectBJet(const JetCandidate& jet, Cutter& cut,
-                    const std::vector<LorentzVector>& signalLeptonMomentums) const;
 
     template<typename Candidate1, typename Candidate2,
              typename ResultCandidate = analysis::CompositCandidate<Candidate1, Candidate2>>
@@ -263,4 +262,9 @@ protected:
         throw analysis::exception("not found a good criteria for best tau pair");
     }
 
+    template<typename Candidate>
+    static float GetUserFloat(const Candidate& obj, const std::string& name)
+    {
+        return obj->hasUserFloat(name) ? obj->userFloat(name) : ntuple::DefaultFillValue<float>();
+    }
 };
