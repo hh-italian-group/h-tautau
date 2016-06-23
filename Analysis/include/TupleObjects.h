@@ -17,7 +17,7 @@ public:
     using LorentzVectorM = analysis::LorentzVectorM;
     using DiscriminatorResult = float;
 
-    TupleObject(const ntuple::Event& _event) : event(_event) {}
+    TupleObject(const ntuple::Event& _event) : event(&_event) {}
 
 protected:
     const Event* event;
@@ -30,13 +30,9 @@ public:
     {
         if(leg_id < 1 || leg_id > 2)
             throw analysis::exception("Invalid leg id = %1%.") % leg_id;
-
-        momentum = leg_id == 1
-                 ? LorentzVectorM(event->pt_1, event->eta_1, event->phi_1, event->m_1)
-                 : LorentzVectorM(event->pt_2, event->eta_2, event->phi_2, event->m_2);
     }
 
-    const LorentzVectorM& p4() const { return momentum; }
+    const LorentzVectorM& p4() const { return leg_id == 1 ? event->p4_1 : event->p4_2; }
     int charge() const { return leg_id == 1 ? event->q_1 : event->q_2; }
     double d0() const { return leg_id == 1 ? event->d0_1 : event->d0_2; }
     double dZ() const { return leg_id == 1 ? event->dZ_1 : event->dZ_2; }
@@ -57,7 +53,6 @@ public:
 
 protected:
     size_t leg_id;
-    LorentzVectorM momentum;
 };
 
 class TupleElectron : public TupleLepton {
@@ -74,74 +69,118 @@ class TupleTau : public TupleLepton {
 public:
     using TupleLepton::TupleLepton;
 
-    DiscriminatorResult againstElectronMVA6(DiscriminatorWP wp) const
+    DiscriminatorResult tauID(const std::string& discriminator) const
     {
-        if(wp == DiscriminatorWP::VLoose)
-            return leg_id == 1 ? event->againstElectronVLooseMVA6_1 : event->againstElectronVLooseMVA6_2;
-        if(wp == DiscriminatorWP::Loose)
-            return leg_id == 1 ? event->againstElectronLooseMVA6_1 : event->againstElectronLooseMVA6_2;
-        if(wp == DiscriminatorWP::Medium)
-            return leg_id == 1 ? event->againstElectronMediumMVA6_1 : event->againstElectronMediumMVA6_2;
-        if(wp == DiscriminatorWP::Tight)
-            return leg_id == 1 ? event->againstElectronTightMVA6_1 : event->againstElectronTightMVA6_2;
-        if(wp == DiscriminatorWP::VTight)
-            return leg_id == 1 ? event->againstElectronVTightMVA6_1 : event->againstElectronVTightMVA6_2;
-        throw analysis::exception("againstElectronMVA6: unsupported discriminator WP.");
+        const auto& tauIDs = leg_id == 1 ? event->tauIDs_1 : event->tauIDs_2;
+        if(!tauIDs.count(discriminator))
+            throw analysis::exception("TauID discriminator '%1%' not found.") % discriminator;
+        return tauIDs.at(discriminator);
     }
 
-    DiscriminatorResult byIsolationMVA2raw() const
+    DiscriminatorResult againstElectronMVA6(DiscriminatorWP wp) const
     {
-        return leg_id == 1 ? event->byIsolationMVA2raw_1 : event->byIsolationMVA2raw_2;
+        std::ostringstream ss_name;
+        ss_name << "againstElectron" << wp << "MVA6";
+        return tauID(ss_name.str());
     }
 
     DiscriminatorResult againstMuon3(DiscriminatorWP wp) const
     {
-        if(wp == DiscriminatorWP::Loose)
-            return leg_id == 1 ? event->againstMuonLoose3_1 : event->againstMuonLoose3_2;
-        if(wp == DiscriminatorWP::Tight)
-            return leg_id == 1 ? event->againstMuonTight3_1 : event->againstMuonTight3_2;
-        throw analysis::exception("againstMuon3: unsupported discriminator WP.");
+        std::ostringstream ss_name;
+        ss_name << "againstMuon" << wp << "3";
+        return tauID(ss_name.str());
     }
 
     DiscriminatorResult byCombinedIsolationDeltaBetaCorrRaw3Hits() const
     {
-        return leg_id == 1 ? event->byCombinedIsolationDeltaBetaCorrRaw3Hits_1
-                           : event->byCombinedIsolationDeltaBetaCorrRaw3Hits_2;
+        return tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
     }
 
     DiscriminatorResult byIsolationMVA3raw(bool use_new_dm, bool use_lifetime) const
     {
-        if(use_new_dm) {
-            if(use_lifetime)
-                return leg_id == 1 ? event->byIsolationMVA3newDMwLTraw_1 : event->byIsolationMVA3newDMwLTraw_2;
-            return leg_id == 1 ? event->byIsolationMVA3newDMwoLTraw_1 : event->byIsolationMVA3newDMwoLTraw_2;
-        }
-        if(use_lifetime)
-            return leg_id == 1 ? event->byIsolationMVA3oldDMwLTraw_1 : event->byIsolationMVA3oldDMwLTraw_2;
-        return leg_id == 1 ? event->byIsolationMVA3oldDMwoLTraw_1 : event->byIsolationMVA3oldDMwoLTraw_2;
+        const std::string dm_str = use_new_dm ? "new" : "old";
+        const std::string lt_str = use_lifetime ? "w" : "wo";
+        std::ostringstream ss_name;
+        ss_name << "byIsolationMVArun2v1DB" << dm_str << "DM" << lt_str << "LTraw";
+        return tauID(ss_name.str());
     }
 };
 
 class TupleJet : public TupleObject {
 public:
     TupleJet(const ntuple::Event& _event, size_t _jet_id)
-        : TupleObject(_event), jet_id(jet_id)
+        : TupleObject(_event), jet_id(_jet_id)
     {
-        if(jet_id >= event->pt_jets.size())
+        if(jet_id >= event->jets_p4.size())
             throw analysis::exception("Jet id = %1% is out of range.") % jet_id;
-
-        momentum = LorentzVectorE(event->pt_jets.at(jet_id), event->eta_jets.at(jet_id),
-                                  event->phi_jets.at(jet_id), event->energy_jets.at(jet_id));
     }
 
-    const LorentzVectorE& p4() const { return momentum; }
-    DiscriminatorResult mva() const { return event->mva_jets.at(jet_id); }
-    DiscriminatorResult csv() const { return event->csv_jets.at(jet_id); }
-    DiscriminatorResult partonFlavour() const { return event->partonFlavour_jets.at(jet_id); }
+    const LorentzVectorE& p4() const { return event->jets_p4.at(jet_id); }
+    DiscriminatorResult mva() const { return event->jets_mva.at(jet_id); }
+    DiscriminatorResult csv() const { return event->jets_csv.at(jet_id); }
+    DiscriminatorResult partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
 
-protected:
+private:
     size_t jet_id;
-    LorentzVectorE momentum;
+};
+
+class TupleSubJet : public TupleObject {
+public:
+    TupleSubJet(const ntuple::Event& _event, size_t _jet_id)
+        : TupleObject(_event), jet_id(_jet_id)
+    {
+        if(jet_id >= event->subJets_p4.size())
+            throw analysis::exception("Fat sub-jet id = %1% is out of range.") % jet_id;
+    }
+
+    const LorentzVectorE& p4() const { return event->subJets_p4.at(jet_id); }
+    DiscriminatorResult csv() const { return event->subJets_csv.at(jet_id); }
+
+private:
+    size_t jet_id;
+};
+
+class TupleFatJet : public TupleObject {
+public:
+    enum class MassType { Pruned, Filtered, Trimmed, SoftDrop };
+
+    TupleFatJet(const ntuple::Event& _event, size_t _jet_id)
+        : TupleObject(_event), jet_id(_jet_id)
+    {
+        if(jet_id >= event->fatJets_p4.size())
+            throw analysis::exception("Fat jet id = %1% is out of range.") % jet_id;
+
+        for(size_t n = 0; n < event->subJets_p4.size(); ++n) {
+            if(event->subJets_parentIndex.at(n) == jet_id)
+                sub_jets.push_back(TupleSubJet(_event, n));
+        }
+    }
+
+    const LorentzVectorE& p4() const { return event->fatJets_p4.at(jet_id); }
+    DiscriminatorResult csv() const { return event->fatJets_csv.at(jet_id); }
+
+    double m(MassType massType) const
+    {
+        if(massType == MassType::Pruned) return event->fatJets_m_pruned.at(jet_id);
+        if(massType == MassType::Filtered) return event->fatJets_m_filtered.at(jet_id);
+        if(massType == MassType::Trimmed) return event->fatJets_m_trimmed.at(jet_id);
+        if(massType == MassType::SoftDrop) return event->fatJets_m_softDrop.at(jet_id);
+        throw analysis::exception("Unsupported fat jet mass type");
+    }
+
+    DiscriminatorResult n_subjettiness(size_t tau_index) const
+    {
+        if(tau_index == 1) return event->fatJets_n_subjettiness_tau1.at(jet_id);
+        if(tau_index == 2) return event->fatJets_n_subjettiness_tau2.at(jet_id);
+        if(tau_index == 3) return event->fatJets_n_subjettiness_tau3.at(jet_id);
+        throw analysis::exception("Unsupported tau index = %1% for fat jet subjettiness.") % tau_index;
+    }
+
+    const std::vector<TupleSubJet>& subJets() const { return sub_jets; }
+
+private:
+    size_t jet_id;
+    std::vector<TupleSubJet> sub_jets;
 };
 
 class TupleMet : public TupleObject {
@@ -153,42 +192,29 @@ public:
         static const std::set<MetType> supported_types = { MetType::PF, MetType::MVA, MetType::PUPPI };
         if(!supported_types.count(met_type))
             throw analysis::exception("Unsupported met type.");
-
-        if(met_type == MetType::PF) {
-            cov_matrix[0][0] = event->metcov00;
-            cov_matrix[0][1] = event->metcov01;
-            cov_matrix[1][0] = event->metcov10;
-            cov_matrix[1][1] = event->metcov11;
-        }
-        if(met_type == MetType::MVA) {
-            cov_matrix[0][0] = event->mvacov00;
-            cov_matrix[0][1] = event->mvacov01;
-            cov_matrix[1][0] = event->mvacov10;
-            cov_matrix[1][1] = event->mvacov11;
-        }
     }
 
     MetType type() const { return met_type; }
 
-    double pt() const
+    const LorentzVectorM& p4() const
     {
-        if(met_type == MetType::PF) return event->met;
-        if(met_type == MetType::MVA) return event->mvamet;
-        return event->puppimet;
+        if(met_type == MetType::PF) return event->pfMET_p4;
+        if(met_type == MetType::MVA) return event->mvaMET_p4;
+        return event->puppiMET_p4;
     }
 
-    double phi() const
+    const CovMatrix& cov() const
     {
-        if(met_type == MetType::PF) return event->metphi;
-        if(met_type == MetType::MVA) return event->mvametphi;
-        return event->puppimetphi;
+        if(met_type == MetType::PF) return event->pfMET_cov;
+        if(met_type == MetType::MVA) return event->mvaMET_cov;
+        return event->puppiMET_cov;
     }
 
-    const CovMatrix& cov() const { return cov_matrix; }
+    double pt() const { return p4().pt(); }
+    double phi() const { return p4().phi(); }
 
-protected:
+private:
     MetType met_type;
-    CovMatrix cov_matrix;
 };
 
 } // namespace ntuple

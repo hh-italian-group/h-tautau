@@ -4,7 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "Tools.h"
-#include "SyncTree.h"
+#include "EventTuple.h"
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 
 namespace analysis {
@@ -50,7 +50,7 @@ public:
     }
 
     /*---Run2---*/
-    void CalculatePuWeight(const ntuple::Sync& eventInfo)
+    void CalculatePuWeight(const ntuple::Event& eventInfo)
     {
         if(has_pu_weight)
             throw exception("PU weight is already calculated.");
@@ -67,17 +67,17 @@ public:
         has_pu_weight = true;
     }
 
-    void CalculateLeptonWeights (const ntuple::Sync& eventInfo){
+    void CalculateLeptonWeights (const ntuple::Event& eventInfo){
 
         if(has_lepton_weight)
           throw exception("Lepton weights are already calculated.");
 
         const bool isMuon = (eventInfo.channelID == 1);
 
-        isoIdLeptonWeight   = isMuon ? muon_isoIdScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1) :
-                                       electron_isoIdScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1);
-        triggerLeptonWeight = isMuon ? muon_triggerScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1):
-                                       electron_triggerScaleFactor->get_ScaleFactor(eventInfo.pt_1,eventInfo.eta_1);
+        isoIdLeptonWeight   = isMuon ? muon_isoIdScaleFactor->get_ScaleFactor(eventInfo.p4_1.pt(), eventInfo.p4_1.eta()) :
+                                       electron_isoIdScaleFactor->get_ScaleFactor(eventInfo.p4_1.pt(), eventInfo.p4_1.eta());
+        triggerLeptonWeight = isMuon ? muon_triggerScaleFactor->get_ScaleFactor(eventInfo.p4_1.pt(), eventInfo.p4_1.eta()):
+                                       electron_triggerScaleFactor->get_ScaleFactor(eventInfo.p4_1.pt(), eventInfo.p4_1.eta());
 
         eventWeight *= isoIdLeptonWeight * triggerLeptonWeight;
         has_lepton_weight = true;

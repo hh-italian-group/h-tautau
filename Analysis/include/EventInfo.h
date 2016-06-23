@@ -17,14 +17,34 @@ using ElectronCandidate = LeptonCandidate<ntuple::TupleElectron>;
 using MuonCandidate = LeptonCandidate<ntuple::TupleMuon>;
 using TauCandidate = LeptonCandidate<ntuple::TupleTau>;
 using JetCandidate = Candidate<ntuple::TupleJet>;
+using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
 using MET = MissingET<ntuple::TupleMet>;
+
+namespace detail {
+template<typename FirstLeg>
+constexpr Channel IdentifyChannel();
+
+template<>
+inline constexpr Channel IdentifyChannel<ElectronCandidate>() { return Channel::ETau; }
+
+template<>
+inline constexpr Channel IdentifyChannel<MuonCandidate>() { return Channel::MuTau; }
+
+template<>
+inline constexpr Channel IdentifyChannel<TauCandidate>() { return Channel::TauTau; }
+}
+
+struct ChannelInfo {
+    template<typename FirstLeg>
+    static constexpr Channel IdentifyChannel() { return detail::IdentifyChannel<FirstLeg>(); }
+};
 
 class EventInfoBase {
 public:
     using Event = ntuple::Event;
     using BjetPair = std::pair<size_t, size_t>;
     using JetCollection = std::vector<JetCandidate>;
-    using JetCollectionPtr = std::shared_ptr<JetCollection>;
+    using FatJetCollection = std::vector<FatJetCandidate>;
     using HiggsBBCandidate = CompositCandidate<JetCandidate, JetCandidate>;
 
     static size_t NumberOfCombinationPairs(size_t n_bjets)
@@ -60,8 +80,8 @@ public:
 
     EventInfoBase(const Event& _event, const BjetPair& _selected_bjet_pair)
         : event(&_event), selected_bjet_pair(_selected_bjet_pair),
-          has_bjet_pair(selected_bjet_pair.first < _event.pt_jets.size() &&
-                        selected_bjet_pair.second < _event.pt_jets.size()) {}
+          has_bjet_pair(selected_bjet_pair.first < GetNJets() &&
+                        selected_bjet_pair.second < GetNJets()) {}
     virtual ~EventInfoBase() {}
 
     const Event& operator*() const { return *event; }
@@ -72,16 +92,30 @@ public:
     virtual const AnalysisObject& GetLeg(size_t leg_id) = 0;
     virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) = 0;
 
+    size_t GetNJets() const { return event->jets_p4.size(); }
+
     const JetCollection& GetJets()
     {
         if(!jets) {
             jets = std::shared_ptr<JetCollection>(new JetCollection());
-            for(size_t n = 0; n < event->pt_jets.size(); ++n) {
+            for(size_t n = 0; n < GetNJets(); ++n) {
                 tuple_jets.push_back(ntuple::TupleJet(*event, n));
-                jets.push_back(JetCandidate(tuple_jets.back()));
+                jets->push_back(JetCandidate(tuple_jets.back()));
             }
         }
         return *jets;
+    }
+
+    const FatJetCollection& GetFatJets()
+    {
+        if(!fatJets) {
+            fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
+            for(size_t n = 0; n < GetNJets(); ++n) {
+                tuple_fatJets.push_back(ntuple::TupleFatJet(*event, n));
+                fatJets->push_back(FatJetCandidate(tuple_fatJets.back()));
+            }
+        }
+        return *fatJets;
     }
 
     bool HasBjetPair() const { return has_bjet_pair; }
@@ -111,15 +145,15 @@ public:
     {
         if(!HasBjetPair())
             throw exception("Can't retrieve KinFit results.");
-        if(!kinfit_resutls) {
-            size_t index = CombinationPairToIndex(selected_bjet_pair, event->pt_jets.size());
+        if(!kinfit_results) {
+            size_t index = CombinationPairToIndex(selected_bjet_pair, GetNJets());
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
-            kinfit_resutls->convergence = event->kinFit_convergence.at(index);
-            kinfit_results->chi2 = event->kinFit_chi2;
-            kinfit_results->probability = event->kinFit_probability;
-            kinfit_results->mass = event->kinFit_m;
+            kinfit_results->convergence = event->kinFit_convergence.at(index);
+            kinfit_results->chi2 = event->kinFit_chi2.at(index);
+            kinfit_results->probability = event->kinFit_probability.at(index);
+            kinfit_results->mass = event->kinFit_m.at(index);
         }
-        return *kinfit_resutls;
+        return *kinfit_results;
     }
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET)
@@ -141,10 +175,12 @@ private:
 
     std::list<ntuple::TupleJet> tuple_jets;
     std::shared_ptr<JetCollection> jets;
+    std::list<ntuple::TupleFatJet> tuple_fatJets;
+    std::shared_ptr<FatJetCollection> fatJets;
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
     std::shared_ptr<ntuple::TupleMet> tuple_met;
     std::shared_ptr<MET> met;
-    std::shared_ptr<kin_fit::FitResults> kinfit_resutls;
+    std::shared_ptr<kin_fit::FitResults> kinfit_results;
 };
 
 template<typename _FirstLeg>
@@ -156,20 +192,22 @@ public:
     using SecondTupleLeg = typename SecondLeg::PATObject;
     using HiggsTTCandidate = CompositCandidate<FirstLeg, SecondLeg>;
 
+    using EventInfoBase::EventInfoBase;
+
     const FirstLeg& GetFirstLeg()
     {
         if(!leg1) {
             tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, 1));
-            leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1));
+            leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1, tuple_leg1->iso()));
         }
         return *leg1;
     }
 
-    const FirstLeg& GetSecondLeg()
+    const SecondLeg& GetSecondLeg()
     {
         if(!leg2) {
             tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, 2));
-            leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2));
+            leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2, tuple_leg2->iso()));
         }
         return *leg2;
     }
@@ -185,9 +223,8 @@ public:
     {
         if(useSVfit) {
             if(!higgs_tt_sv) {
-                const LorentzVectorM p4_sv(event->pt_sv, event->eta_sv, event->phi_sv, event->m_sv);
                 higgs_tt_sv = std::shared_ptr<HiggsTTCandidate>(
-                              new HiggsTTCandidate(GetFirstLeg(), GetSecondLeg(), p4_sv));
+                              new HiggsTTCandidate(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4));
             }
             return *higgs_tt_sv;
         }
