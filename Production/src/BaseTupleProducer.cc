@@ -15,6 +15,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     vtxMiniAOD_token(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
     pfMETAOD_token(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
     jetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
+    fatJetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("fatJetSrc"))),
     metCovMatrix_token(consumes<MetCovMatrix>(iConfig.getParameter<edm::InputTag>("metCov"))),
     PUInfo_token(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
     lheEventProduct_token(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
@@ -22,6 +23,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     prunedGen_token(consumes<std::vector<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
     isMC(iConfig.getParameter<bool>("isMC")),
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
+    runSVfit(iConfig.getParameter<bool>("runSVfit")),
+    runKinFit(iConfig.getParameter<bool>("runKinFit")),
     hltPaths(iConfig.getParameter<std::vector<std::string>>("hltPaths")),
     eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
     triggerTools(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits")),
@@ -75,6 +78,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(vtxMiniAOD_token, vertices);
     iEvent.getByToken(pfMETAOD_token, pfMETs);
     iEvent.getByToken(jetsMiniAOD_token, pat_jets);
+    iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(metCovMatrix_token, metCovMatrix);
     iEvent.getByToken(PUInfo_token, PUInfo);
     if(isMC) iEvent.getByToken(genWeights_token, genEvt);
@@ -140,6 +144,10 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         jets.push_back(jetCandidate);
     }
 
+    fatJets.clear();
+    for(const auto& jet : * pat_fatJets)
+        fatJets.push_back(JetCandidate(jet));
+
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], *metCovMatrix));
     if(metUncertantyMap.count(energyScale)) {
         const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
@@ -169,7 +177,6 @@ double BaseTupleProducer::Isolation(const pat::Tau& tau)
 {
     return tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 }
-
 
 //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
 //  PFJetID is tuned on Uncorrected Jet values
@@ -231,7 +238,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
                         const std::vector<LorentzVector>& signalLeptonMomentums)
 {
     selection.jets = CollectJets(signalLeptonMomentums);
-    selection.bjets = CollectBJets(signalLeptonMomentums);
+    if(!runKinFit) return;
 
     for(size_t n = 0; n < selection.jets.size(); ++n) {
         for(size_t k = n + 1; k < selection.jets.size(); ++k) {
@@ -279,18 +286,6 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
     using namespace std::placeholders;
     const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2, signalLeptonMomentums);
     return CollectObjects("jets", baseSelector, jets);
-}
-
-std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectBJets(
-        const std::vector<LorentzVector>& signalLeptonMomentums)
-{
-    using namespace std::placeholders;
-    static const std::string& btagDiscName = "pfCombinedInclusiveSecondaryVertexV2BJetTags";
-    const auto jetCsvOrdering = [&](const JetCandidate& jet1, const JetCandidate& jet2) -> bool {
-        return jet1->bDiscriminator(btagDiscName) > jet2->bDiscriminator(btagDiscName);
-    };
-    const auto baseSelector = std::bind(&BaseTupleProducer::SelectBJet, this, _1, _2, signalLeptonMomentums);
-    return CollectObjects("bjets", baseSelector, jets, jetCsvOrdering);
 }
 
 void BaseTupleProducer::SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const
@@ -393,19 +388,6 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     }
 }
 
-void BaseTupleProducer::SelectBJet(const JetCandidate& jet, Cutter& cut,
-                                   const std::vector<LorentzVector>& signalLeptonMomentums) const
-{
-    using namespace cuts::Htautau_2015;
-    using namespace cuts::Htautau_2015::jetID;
-
-    SelectJet(jet, cut, signalLeptonMomentums);
-    const LorentzVector& p4 = jet.GetMomentum();
-    cut(std::abs(p4.eta()) < btag::eta, "eta", p4.eta());
-    const double csvValue = jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-    cut(csvValue > btag::CSV, "btaggin", csvValue);
-}
-
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
@@ -428,10 +410,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             const auto& momentum = lheParticles.at(n);
             const analysis::LorentzVectorXYZ p4(momentum[0], momentum[1], momentum[2], momentum[3]);
             eventTuple().lhe_particle_pdg.push_back(pdg_id);
-            eventTuple().lhe_particle_pt.push_back(p4.pt());
-            eventTuple().lhe_particle_eta.push_back(p4.eta());
-            eventTuple().lhe_particle_phi.push_back(p4.phi());
-            eventTuple().lhe_particle_m.push_back(p4.mass());
+            eventTuple().lhe_particle_p4.push_back(analysis::LorentzVectorM(p4));
         }
     }
 
@@ -439,26 +418,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().npu = GetNumberOfPileUpInteractions();
 
     // HTT candidate
-    eventTuple().m_vis = selection.GetHiggsMomentum().M();
-    eventTuple().pt_tt = selection.GetHiggsMomentum().Pt();
-    if(selection.svfitResult.has_valid_momentum) {
-        eventTuple().m_sv = selection.svfitResult.momentum.M();
-        eventTuple().pt_sv = selection.svfitResult.momentum.Pt();
-        eventTuple().eta_sv = selection.svfitResult.momentum.Eta();
-        eventTuple().phi_sv = selection.svfitResult.momentum.Phi();
-    } else {
-        eventTuple().m_sv = default_value;
-        eventTuple().pt_sv = default_value;
-        eventTuple().eta_sv = default_value;
-        eventTuple().phi_sv = default_value;
-    }
+    eventTuple().SVfit_p4 = selection.svfitResult.momentum;
 
     // Leg 2, tau
     const TauCandidate& tau = selection.GetSecondLeg();
-    eventTuple().pt_2     = tau.GetMomentum().Pt();
-    eventTuple().phi_2    = tau.GetMomentum().Phi();
-    eventTuple().eta_2    = tau.GetMomentum().Eta();
-    eventTuple().m_2      = tau.GetMomentum().M();
+    eventTuple().p4_2     = analysis::LorentzVectorM(tau.GetMomentum());
     eventTuple().q_2      = tau.GetCharge();
     eventTuple().pfmt_2   = Calculate_MT(tau.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_2     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
@@ -467,68 +431,41 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().id_e_mva_nt_loose_1 = default_value;
     eventTuple().gen_match_2 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
 
-    eventTuple().againstElectronLooseMVA6_2   = tau->tauID("againstElectronLooseMVA6");
-    eventTuple().againstElectronMediumMVA6_2  = tau->tauID("againstElectronMediumMVA6");
-    eventTuple().againstElectronTightMVA6_2   = tau->tauID("againstElectronTightMVA6");
-    eventTuple().againstElectronVLooseMVA6_2  = tau->tauID("againstElectronVLooseMVA6");
-    eventTuple().againstElectronVTightMVA6_2  = tau->tauID("againstElectronVTightMVA6");
-
-    eventTuple().againstMuonLoose3_2          = tau->tauID("againstMuonLoose3");
-    eventTuple().againstMuonTight3_2          = tau->tauID("againstMuonTight3");
-
-    eventTuple().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = tau->tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-    eventTuple().byIsolationMVA3newDMwLTraw_2               = tau->tauID("byIsolationMVArun2v1DBnewDMwLTraw");
-    eventTuple().byIsolationMVA3oldDMwLTraw_2               = tau->tauID("byIsolationMVArun2v1DBoldDMwLTraw");
-    eventTuple().byIsolationMVA3newDMwoLTraw_2              = default_value;
-    eventTuple().byIsolationMVA3oldDMwoLTraw_2              = default_value;
-
-    eventTuple().byVLooseIsolationMVArun2v1DBoldDMwLT_2     = tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byLooseIsolationMVArun2v1DBoldDMwLT_2      = tau->tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byMediumIsolationMVArun2v1DBoldDMwLT_2     = tau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byTightIsolationMVArun2v1DBoldDMwLT_2      = tau->tauID("byTightIsolationMVArun2v1DBoldDMwLT");
-    eventTuple().byVTightIsolationMVArun2v1DBoldDMwLT_2     = tau->tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
-
-    eventTuple().decayModeFindingOldDMs_2 = tau->tauID("decayModeFinding");
-
+    eventTuple().tauIDs_2.insert(tau->tauIDs().begin(), tau->tauIDs().end());
 
     // MET
-    eventTuple().met        = met->GetMomentum().Pt();
-    eventTuple().metphi     = met->GetMomentum().Phi();
-    eventTuple().isPFMET    = (*met)->isPFMET();
-    eventTuple().metcov00   = met->GetCovMatrix()[0][0];
-    eventTuple().metcov01   = met->GetCovMatrix()[0][1];
-    eventTuple().metcov10   = met->GetCovMatrix()[1][0];
-    eventTuple().metcov11   = met->GetCovMatrix()[1][1];
+    eventTuple().pfMET_p4 = met->GetMomentum();
+    eventTuple().pfMET_cov = met->GetCovMatrix();
 
-    // Jets
-    eventTuple().njetspt20 = selection.jets.size();
-    eventTuple().nbtag     = selection.bjets.size();
-
-    Int_t numJet = 0;
-    for(const JetCandidate& jet : selection.jets){
+    for(const JetCandidate& jet : selection.jets) {
         const LorentzVector& p4 = jet.GetMomentum();
-        if(p4.Pt() > 30) numJet++;
-        eventTuple().pt_jets     .push_back(p4.Pt());
-        eventTuple().eta_jets    .push_back(p4.Eta());
-        eventTuple().phi_jets    .push_back(p4.Phi());
-        eventTuple().energy_jets .push_back(p4.E());
-        eventTuple().rawf_jets   .push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().mva_jets    .push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
-        eventTuple().csv_jets    .push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        eventTuple().partonFlavour_jets .push_back(jet->partonFlavour());
+        eventTuple().jets_p4.push_back(p4);
+        eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
+        eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
+        eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        eventTuple().jets_partonFlavour .push_back(jet->partonFlavour());
     }
-    eventTuple().njets = numJet;
 
-    for(const JetCandidate& jet : selection.bjets) {
+    for(const JetCandidate& jet : fatJets) {
         const LorentzVector& p4 = jet.GetMomentum();
-        eventTuple().pt_bjets     .push_back(p4.Pt());
-        eventTuple().eta_bjets    .push_back(p4.Eta());
-        eventTuple().phi_bjets    .push_back(p4.Phi());
-        eventTuple().energy_bjets .push_back(p4.E());
-        eventTuple().rawf_bjets   .push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().mva_bjets    .push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
-        eventTuple().csv_bjets    .push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        eventTuple().partonFlavour_bjets .push_back(jet->partonFlavour());
+        eventTuple().fatJets_p4.push_back(p4);
+        eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
+        eventTuple().fatJets_m_filtered.push_back(GetUserFloat(jet, "ak8PFJetsCHSFilteredMass"));
+        eventTuple().fatJets_m_trimmed.push_back(GetUserFloat(jet, "ak8PFJetsCHSTrimmedMass"));
+        eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
+        eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
+        eventTuple().fatJets_n_subjettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
+        eventTuple().fatJets_n_subjettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
+
+        if(!jet->hasSubjets("SoftDrop")) continue;
+        const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
+        const auto& sub_jets = jet->subjets("SoftDrop");
+        for(const auto& sub_jet : sub_jets) {
+            eventTuple().subJets_p4.push_back(analysis::LorentzVector(sub_jet->p4()));
+            eventTuple().subJets_csv.push_back(sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            eventTuple().subJets_parentIndex.push_back(parentIndex);
+        }
     }
 
     for(const kin_fit::FitResults& result : selection.kinfitResults) {

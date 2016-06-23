@@ -1,0 +1,3 @@
+EventAwareLumiBased ../../json/Cert_271036-274443_13TeV_PromptReco_Collisions16_JSON.txt
+sampleType=Run2016B ReRunJEC=True globalTag=80X_dataRun2_Prompt_v8 anaChannels=eTau
+eTau_Run2016B 9000 /SingleElectron/Run2016B-PromptReco-v2/MINIAOD

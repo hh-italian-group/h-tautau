@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description='Submit jobs on CRAB.',
                   formatter_class = lambda prog: argparse.HelpFormatter(prog,width=90))
 parser.add_argument('--cfg', required=True, dest='cfg', type=str, help="CMSSW configuration file")
 parser.add_argument('--site', required=True, dest='site', type=str, help="Site for stage out.")
+parser.add_argument('--dryrun', action="store_true", help="Submission dryrun.")
 parser.add_argument('--output', required=True, dest='output', type=str,
                     help="output path after /store/user/USERNAME")
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
@@ -35,9 +36,9 @@ config.Site.storageSite = args.site
 config.Data.outLFNDirBase = "/store/user/{}/{}".format(getUsernameFromSiteDB(), args.output)
 
 from crab_tools import JobCollection
-
+print args.dryrunBool
 for job_file in args.job_file:
     job_collection = JobCollection(job_file)
     print job_file
     print job_collection
-    job_collection.submit(config)
+    job_collection.submit(config,args.dryrun)

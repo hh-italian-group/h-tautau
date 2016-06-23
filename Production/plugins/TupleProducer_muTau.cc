@@ -12,7 +12,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
-    cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
+    if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
 
     // Di-Lepton Veto
     const auto z_muons = CollectZmuons();
@@ -44,7 +44,8 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     selection.muonVeto = muonVetoCollection.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
-    selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
+    if(runSVfit)
+        selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
 }
 
@@ -104,10 +105,7 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 
     // Leg 1, lepton
     const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
-    eventTuple().pt_1     = muon.GetMomentum().Pt();
-    eventTuple().phi_1    = muon.GetMomentum().Phi();
-    eventTuple().eta_1    = muon.GetMomentum().Eta();
-    eventTuple().m_1      = muon.GetMomentum().M();
+    eventTuple().p4_1     = analysis::LorentzVectorM(muon.GetMomentum());
     eventTuple().q_1      = muon.GetCharge();
     eventTuple().pfmt_1   = Calculate_MT(muon.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_1     = muon->muonBestTrack()->dxy(primaryVertex->position());
