@@ -29,4 +29,6 @@ private:
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
     void FillEventTuple(const SelectionResults& selection);
+    void FillSyncTuple(const SelectionResults& selection);
+
 };

@@ -27,6 +27,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     runKinFit(iConfig.getParameter<bool>("runKinFit")),
     hltPaths(iConfig.getParameter<std::vector<std::string>>("hltPaths")),
     eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
+    syncTuple("syncTree_"+treeName, &edm::Service<TFileService>()->file(),false),
     triggerTools(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
@@ -41,6 +42,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     using analysis::EventEnergyScale;
+   // static const std::set<EventEnergyScale> energyScales = {EventEnergyScale::Central};
     static const std::set<EventEnergyScale> energyScales = {
         EventEnergyScale::Central, EventEnergyScale::TauUp, EventEnergyScale::TauDown,
         EventEnergyScale::JetUp, EventEnergyScale::JetDown
@@ -63,6 +65,7 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 void BaseTupleProducer::endJob()
 {
     eventTuple.Write();
+    syncTuple.Write();
 }
 
 void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -388,6 +391,71 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     }
 }
 
+void BaseTupleProducer::FillSyncTuple(const analysis::SelectionResultsBase& selection)
+{
+    using namespace analysis;
+    static const float default_value = ntuple::DefaultFillValue<Float_t>();
+
+    syncTuple().RunNumber  = 1;//edmEvent->id().run();
+    //std::cout << "RunNumber " << edmEvent->id().run() << std::endl;
+    syncTuple().lumi = edmEvent->id().luminosityBlock();
+    syncTuple().EventNumber  = edmEvent->id().event();
+    syncTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
+
+    syncTuple().npv = vertices->size();
+    syncTuple().npu = GetNumberOfPileUpInteractions();
+
+  //  syncTuple().channelID = static_cast<int>(analysis::Channel::MuTau);
+
+    // Leg 2, lepton
+    const TauCandidate& tau = selection.GetSecondLeg();
+    syncTuple().dau2_pt  = tau.GetMomentum().Pt();
+    syncTuple().dau2_eta  = tau.GetMomentum().Eta();
+    syncTuple().dau2_phi  = tau.GetMomentum().Phi();
+    syncTuple().dau2_iso   = tau.GetIsolation();
+
+    syncTuple().met_phi = met->GetMomentum().Phi();
+    syncTuple().met_et  = met->GetMomentum().Et();
+
+    std::vector<std::pair<size_t,double>> csvPosition;
+        //std::vector<size_t> selected_jet_ids;
+        for(size_t n = 0; n < selection.jets.size(); ++n) {
+            std::pair<size_t,double> csvIndex(n,selection.jets.at(n)->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            csvPosition.push_back(csvIndex);
+        }
+
+    auto pairCompare = [&](const std::pair<size_t,double> firstElem, const std::pair<size_t,double> secondElem) -> bool
+                            {  return firstElem.second > secondElem.second; } ;
+
+    std::sort(csvPosition.begin(),csvPosition.end(),pairCompare);
+
+
+    if(csvPosition.size()) {
+
+        const JetCandidate& jet = selection.jets.at(csvPosition.at(0).first);
+        const LorentzVector& p4 = jet.GetMomentum();
+        syncTuple().bjet1_pt  = p4.Pt();
+        syncTuple().bjet1_eta = p4.Eta();
+        syncTuple().bjet1_phi = p4.Phi();
+        syncTuple().bjet1_e   = p4.E();
+        syncTuple().bjet1_pt_raw  = jet->correctedJet("Uncorrected").pt();
+        syncTuple().bjet1_bID = jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        syncTuple().bjet1_flav = jet->hadronFlavour();
+
+        if(csvPosition.size()>1){
+          const JetCandidate& jet2 = selection.jets.at(csvPosition.at(1).first);
+          const LorentzVector& p4_2 = jet2.GetMomentum();
+          syncTuple().bjet2_pt  = p4_2.Pt();
+          syncTuple().bjet2_eta = p4_2.Eta();
+          syncTuple().bjet2_phi = p4_2.Phi();
+          syncTuple().bjet2_e   = p4_2.E();
+          syncTuple().bjet2_pt_raw  = jet2->correctedJet("Uncorrected").pt() ;
+          syncTuple().bjet2_bID = jet2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+          syncTuple().bjet2_flav = jet2->hadronFlavour();
+        }
+    }
+}
+
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
@@ -443,7 +511,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
         eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
         eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        eventTuple().jets_partonFlavour .push_back(jet->partonFlavour());
+        //eventTuple().jets_partonFlavour .push_back(jet->partonFlavour());
+        eventTuple().jets_partonFlavour .push_back(jet->hadronFlavour());
     }
 
     for(const JetCandidate& jet : fatJets) {

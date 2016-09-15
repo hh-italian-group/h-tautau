@@ -1,0 +1,1 @@
+/store/mc/RunIISpring16MiniAODv2/GluGluToRadionToHHTo2B2Tau_M-500_narrow_13TeV-madgraph/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/50000/0A6CF4FE-1327-E611-AD16-A0000420FE80.root

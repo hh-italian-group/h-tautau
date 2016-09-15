@@ -25,4 +25,6 @@ private:
     std::vector<TauCandidate> CollectSignalTaus();
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
     void FillEventTuple(const SelectionResults& selection);
+    void FillSyncTuple(const SelectionResults& selection);
+
 };
