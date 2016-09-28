@@ -79,6 +79,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /* LHE info */\
     VAR(std::vector<Int_t>, lhe_particle_pdg) \
     VAR(std::vector<analysis::LorentzVectorM>, lhe_particle_p4) \
+    VAR(UInt_t, lhe_n_partons) \
+    VAR(double, lhe_HT) \
     /* Vetos */\
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
