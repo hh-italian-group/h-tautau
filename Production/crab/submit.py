@@ -36,7 +36,6 @@ config.Site.storageSite = args.site
 config.Data.outLFNDirBase = "/store/user/{}/{}".format(getUsernameFromSiteDB(), args.output)
 
 from crab_tools import JobCollection
-print args.dryrunBool
 for job_file in args.job_file:
     job_collection = JobCollection(job_file)
     print job_file
