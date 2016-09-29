@@ -66,7 +66,7 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_muTau::CollectSignalT
 
 void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const
 {
-	using namespace cuts::Htautau_2015::MuTau;
+    using namespace cuts::Htautau_2015::MuTau;
     using namespace cuts::Htautau_2015::MuTau::muonID;
 
     cut(true, "gt0_mu_cand");
@@ -82,7 +82,7 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
-	using namespace cuts::Htautau_2015::MuTau;
+    using namespace cuts::Htautau_2015::MuTau;
     using namespace cuts::Htautau_2015::MuTau::tauID;
 
     cut(true, "gt0_tau_cand");
@@ -100,7 +100,7 @@ void TupleProducer_muTau::FillSyncTuple(const SelectionResults& selection)
 {
 
   using namespace analysis;
-  static const float default_value = ntuple::DefaultFillValue<Float_t>();
+//  static const float default_value = ntuple::DefaultFillValue<Float_t>();
   syncTuple().pairType = static_cast<int>(analysis::Channel::MuTau);
   BaseTupleProducer::FillSyncTuple(selection);
 
@@ -117,7 +117,7 @@ void TupleProducer_muTau::FillSyncTuple(const SelectionResults& selection)
 void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
-    static const float default_value = ntuple::DefaultFillValue<Float_t>();
+    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelID = static_cast<int>(analysis::Channel::MuTau);

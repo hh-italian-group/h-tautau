@@ -43,6 +43,7 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 {
     using analysis::EventEnergyScale;
    // static const std::set<EventEnergyScale> energyScales = {EventEnergyScale::Central};
+    (void)analysis::AllEventEnergyScales;
     static const std::set<EventEnergyScale> energyScales = {
         EventEnergyScale::Central, EventEnergyScale::TauUp, EventEnergyScale::TauDown,
         EventEnergyScale::JetUp, EventEnergyScale::JetDown
@@ -394,7 +395,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 void BaseTupleProducer::FillSyncTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
-    static const float default_value = ntuple::DefaultFillValue<Float_t>();
+    //static const float default_value = ntuple::DefaultFillValue<Float_t>();
 
     syncTuple().RunNumber  = 1;//edmEvent->id().run();
     //std::cout << "RunNumber " << edmEvent->id().run() << std::endl;
@@ -459,7 +460,7 @@ void BaseTupleProducer::FillSyncTuple(const analysis::SelectionResultsBase& sele
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
-    static const float default_value = ntuple::DefaultFillValue<Float_t>();
+    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
     static const std::set<int> selected_lhe_pdgs = { 1, 2, 3, 4, 5, 6, 11, 13, 15, 21 };
 
     eventTuple().run  = edmEvent->id().run();

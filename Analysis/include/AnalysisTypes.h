@@ -26,7 +26,7 @@ ENUM_NAMES(EventEnergyScale) = {
 };
 
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
-static const auto& AllEventEnergyScales = __EventEnergyScale_names.GetEnumEntries();
+static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
 
 enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight };
 ENUM_NAMES(DiscriminatorWP) = {

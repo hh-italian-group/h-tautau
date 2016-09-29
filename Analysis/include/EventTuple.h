@@ -104,5 +104,5 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 
 namespace ntuple {
 template<typename T>
-T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
+constexpr T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
 }

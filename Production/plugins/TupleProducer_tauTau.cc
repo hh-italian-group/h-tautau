@@ -72,7 +72,7 @@ void TupleProducer_tauTau::FillSyncTuple(const SelectionResults& selection)
 {
 
   using namespace analysis;
-  static const float default_value = ntuple::DefaultFillValue<Float_t>();
+//  static const float default_value = ntuple::DefaultFillValue<Float_t>();
 
   BaseTupleProducer::FillSyncTuple(selection);
   syncTuple().pairType = static_cast<int>(analysis::Channel::ETau);
@@ -90,7 +90,7 @@ void TupleProducer_tauTau::FillSyncTuple(const SelectionResults& selection)
 void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
-    static const float default_value = ntuple::DefaultFillValue<Float_t>();
+    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelID = static_cast<int>(analysis::Channel::TauTau);
