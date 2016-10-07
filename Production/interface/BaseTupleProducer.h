@@ -52,7 +52,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/Candidate.h"
 #include "h-tautau/Analysis/include/CandidateUtilities.h"
 #include "h-tautau/Analysis/include/EventTuple.h"
-#include "h-tautau/Analysis/include/SyncTuple.h"
 #include "h-tautau/Analysis/include/Htautau_2015.h"
 
 //SVFit
@@ -113,7 +112,6 @@ protected:
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit;
     std::vector<std::string> hltPaths;
     ntuple::EventTuple eventTuple;
-    ntuple::SyncTuple  syncTuple;
     analysis::TriggerTools triggerTools;
     analysis::sv_fit::FitProducer svfitProducer;
     analysis::kin_fit::FitProducer kinfitProducer;
@@ -169,7 +167,6 @@ protected:
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                             const std::vector<LorentzVector>& signalLeptonMomentums);
     void FillEventTuple(const analysis::SelectionResultsBase& selection);
-    void FillSyncTuple(const analysis::SelectionResultsBase& selection);
 
     std::vector<ElectronCandidate> CollectZelectrons();
     std::vector<MuonCandidate> CollectZmuons();

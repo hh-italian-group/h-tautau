@@ -47,7 +47,6 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     if(runSVfit)
         selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
-    FillSyncTuple(selection);
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> TupleProducer_eTau::CollectSignalElectrons()
@@ -100,24 +99,6 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
 }
 
-void TupleProducer_eTau::FillSyncTuple(const SelectionResults& selection)
-{
-
-  using namespace analysis;
-//  static const float default_value = ntuple::DefaultFillValue<Float_t>();
-
-  BaseTupleProducer::FillSyncTuple(selection);
-  syncTuple().pairType = static_cast<int>(analysis::Channel::ETau);
-
-  // Leg 1, lepton
-  const ElectronCandidate& electron = selection.higgs->GetFirstDaughter();
-  syncTuple().dau1_pt  = electron.GetMomentum().Pt();
-  syncTuple().dau1_eta  = electron.GetMomentum().Eta();
-  syncTuple().dau1_phi  = electron.GetMomentum().Phi();
-  syncTuple().dau1_iso   = electron.GetIsolation();
-
-  syncTuple.Fill();
-}
 
 void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
 {
