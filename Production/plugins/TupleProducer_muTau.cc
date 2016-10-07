@@ -47,7 +47,6 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     if(runSVfit)
         selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
-    FillSyncTuple(selection);
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muTau::CollectSignalMuons()
@@ -96,23 +95,6 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
 }
 
-void TupleProducer_muTau::FillSyncTuple(const SelectionResults& selection)
-{
-
-  using namespace analysis;
-//  static const float default_value = ntuple::DefaultFillValue<Float_t>();
-  syncTuple().pairType = static_cast<int>(analysis::Channel::MuTau);
-  BaseTupleProducer::FillSyncTuple(selection);
-
-  // Leg 2, lepton
-  const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
-  syncTuple().dau1_pt  = muon.GetMomentum().Pt();
-  syncTuple().dau1_eta  = muon.GetMomentum().Eta();
-  syncTuple().dau1_phi  = muon.GetMomentum().Phi();
-  syncTuple().dau1_iso   = muon.GetIsolation();
-
-  syncTuple.Fill();
-}
 
 void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 {

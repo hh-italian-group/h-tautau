@@ -146,8 +146,8 @@ public:
 //        drawHistos("decayModeWeight_2", 30, 0, 2.0);
 
         //SV Fit variables
-        drawHistos("m_vis", 20, 0, 200);
-        drawHistos("m_sv", 30, 0, 300);
+//        drawHistos("m_vis", 20, 0, 200);
+//        drawHistos("m_sv", 30, 0, 300);
         //drawHistos("pt_sv", 100, 0, 100);
         //drawHistos("eta_sv", 60, -3, 3);
         //drawHistos("phi_sv", 30, -3.5, 3.5);
@@ -163,16 +163,17 @@ public:
 ////        if (channel == "etau" || channel == "mutau")
         drawHistos("iso_1", 40, 0., 0.12);
 ////        if (channel == "tautau")
-////            drawHistos("iso_1", 100, 0., 1);
+        isLastDraw = true;
+	drawHistos("iso_1", 100, 0., 1);
 //        drawHistos("m_1", 20, 0, 0.4);
-        drawHistos("q_1", 4, -2, 2);
+//        drawHistos("q_1", 4, -2, 2);
 ////        if (channel == "etau")
 ////            drawHistos("mva_1", 30, 0.8, 1.1);
 //        drawHistos("d0_1", 40, -0.1, 0.1);
 //        drawHistos("dZ_1", 40, -0.5, 0.5);
 ////        drawHistos("passid_1", 2, -0.5, 1.5);
 ////        drawHistos("passiso_1", 2, -0.5, 1.5);
-        drawHistos("pfmt_1", 50, 0, 200);
+//        drawHistos("pfmt_1", 50, 0, 200);
 ////        drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_1", 40, 0, 20);
 ////        drawHistos("againstElectronMVA3raw_1", 2, -0.5, 1.5);
 ////        drawHistos("byIsolationMVA2raw_1", 300, -1, 1);
@@ -181,20 +182,20 @@ public:
 ////        drawHistos("againstMuonTight2_1", 2, -0.5, 1.5);
 
 //        //Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau
-        drawHistos("pt_2", 15, 0, 150);
-        drawHistos("eta_2", 60, -3, 3);
-        drawHistos("phi_2", 30, -3.5, 3.5);
-        drawHistos("iso_2", 50, -1, 1);
+//        drawHistos("pt_2", 15, 0, 150);
+//        drawHistos("eta_2", 60, -3, 3);
+//        drawHistos("phi_2", 30, -3.5, 3.5);
+//        drawHistos("iso_2", 50, -1, 1);
 //        drawHistos("m_2", 40, 0, 2);
-        drawHistos("q_2", 4, -2, 2);
+//        drawHistos("q_2", 4, -2, 2);
 ////        drawHistos("d0_2", 40, -0.1, 0.1);
 ////        drawHistos("dZ_2", 40, -0.5, 0.5);
 ////        drawHistos("mva_2", 20, -0.5, 1.5);
 ////        drawHistos("passid_2", 2, -0.5, 1.5);
 ////        drawHistos("passiso_2", 2, -0.5, 1.5);
-        drawHistos("pfmt_2", 50, 0, 200);
+//        drawHistos("pfmt_2", 50, 0, 200);
 
-        drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_2", 40, 0, 2);
+//        drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_2", 40, 0, 2);
 ////        drawHistos("againstElectronMVA3raw_2", 2, -0.5, 1.5);
 ////        drawHistos("byIsolationMVA2raw_2", 40, 0.5, 1.2);
 ////        drawHistos("againstMuonLoose2_2", 2, -0.5, 1.5);
@@ -206,12 +207,12 @@ public:
 
 //        //Met related variables
 
-        drawHistos("met", 20, 0, 200);
-        drawHistos("metphi", 30, -3.5, 3.5);
-        drawHistos("metcov00", 40, 0, 1000);
-        drawHistos("metcov01", 40, 0, 1000);
-        drawHistos("metcov10", 40, 0, 1000);
-        drawHistos("metcov11", 40, 0, 1000);
+//        drawHistos("met", 20, 0, 200);
+//        drawHistos("metphi", 30, -3.5, 3.5);
+//        drawHistos("metcov00", 40, 0, 1000);
+//        drawHistos("metcov01", 40, 0, 1000);
+//        drawHistos("metcov10", 40, 0, 1000);
+//        drawHistos("metcov11", 40, 0, 1000);
 
 ////        drawHistos("mvamet", 20, 0, 200);
 ////        drawHistos("mvametphi", 30, -3.5, 3.5);
@@ -271,8 +272,8 @@ public:
 
 
 //            //number of jets passing jet id ( pt > 30 )
-        drawHistos("njets", 7, -0.5, 6.5);
-        drawHistos("njetspt20", 7, -0.5, 6.5);
+//        drawHistos("njets", 7, -0.5, 6.5);
+//        drawHistos("njetspt20", 7, -0.5, 6.5);
 
 
 //        // b-jets
@@ -321,11 +322,11 @@ public:
 //        drawHistos("bcsv_3", 50, 0.5, 1.1, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
 
 //            //number of btags passing btag id (medium CSV WP) ( pt > 20 )
-        drawHistos("dilepton_veto", 2, 0, 2);
-        drawHistos("extraelec_veto", 2, 0, 2);
-        drawHistos("extramuon_veto", 2, 0, 2);
+//        drawHistos("dilepton_veto", 2, 0, 2);
+//        drawHistos("extraelec_veto", 2, 0, 2);
+//        drawHistos("extramuon_veto", 2, 0, 2);
         isLastDraw = true;
-        drawHistos("nbtag", 5, -0.5, 4.5);
+//        drawHistos("nbtag", 5, -0.5, 4.5);
   //drawHistos("dilepton_veto", 2, 0, 2);
     }
 
@@ -413,6 +414,9 @@ private:
                                              *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
             else if(myType == kDouble_t && otherType == kInt_t)
                 FillAllHistograms<Double_t, Int_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kULong64_t && otherType == kULong64_t)
+                FillAllHistograms<ULong64_t, ULong64_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
                                              *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
             else if(myType == kBool_t && otherType == kBool_t)
                 FillAllHistograms<Bool_t, Bool_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
@@ -808,6 +812,7 @@ private:
             output_name << ")";
         isFirstPage = false;
         canvas.Print(output_name.str().c_str(), print_options.str().c_str());
+        //canvas.SaveAs("Test.pdf");
     }
 
 private:
