@@ -47,20 +47,20 @@ public:
         }
     }
 
-    double PileUpWeight(const Event& event) const { return pileUp ? pileUp->Get(event) : 1.; }
-    double LeptonIdIsoWeight(const Event& event) const { return lepton ? lepton->GetIdIsoWeight(event) : 1.; }
-    double LeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
-    double LeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
-    double BtagWeight(const Event& event, double csv_cut) const { return bTag ? bTag->Compute(event, csv_cut) : 1.; }
+    double GetPileUpWeight(const Event& event) const { return pileUp ? pileUp->Get(event) : 1.; }
+    double GetLeptonIdIsoWeight(const Event& event) const { return lepton ? lepton->GetIdIsoWeight(event) : 1.; }
+    double GetLeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
+    double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
+    double GetBtagWeight(const Event& event, double csv_cut) const { return bTag ? bTag->Compute(event, csv_cut) : 1.; }
 
-    double TotalWeight(const Event& event, bool apply_btag_weight = false,
+    double GetTotalWeight(const Event& event, bool apply_btag_weight = false,
                        double csv_cut = std::numeric_limits<double>::quiet_NaN())
     {
-        double weight = PileUpWeight(event) * LeptonTotalWeight(event);
+        double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event);
         if(apply_btag_weight) {
             if(std::isnan(csv_cut))
                 throw exception("CSV cut needs to be specified in order to calculate b tag weight.");
-            weight *= BtagWeight(event, csv_cut);
+            weight *= GetBtagWeight(event, csv_cut);
         }
         return weight;
     }
