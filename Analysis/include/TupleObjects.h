@@ -36,18 +36,6 @@ public:
     int charge() const { return leg_id == 1 ? event->q_1 : event->q_2; }
     double d0() const { return leg_id == 1 ? event->d0_1 : event->d0_2; }
     double dZ() const { return leg_id == 1 ? event->dZ_1 : event->dZ_2; }
-
-    double mt(MetType metType = MetType::PF) const
-    {
-        if(metType == MetType::PF)
-            return leg_id == 1 ? event->pfmt_1 : event->pfmt_2;
-        if(metType == MetType::MVA)
-            return leg_id == 1 ? event->mt_1 : event->mt_2;
-        if(metType == MetType::PUPPI)
-            return leg_id == 1 ? event->puppimt_1 : event->puppimt_2;
-        throw analysis::exception("Unsupported MET type.");
-    }
-
     double iso() const { return leg_id == 1 ? event->iso_1 : event->iso_2; }
     int gen_match() const { return leg_id == 1 ? event->gen_match_1 : event->gen_match_2; }
 
@@ -119,6 +107,7 @@ public:
     DiscriminatorResult mva() const { return event->jets_mva.at(jet_id); }
     DiscriminatorResult csv() const { return event->jets_csv.at(jet_id); }
     DiscriminatorResult partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
+    double rawf() const { return event->jets_rawf.at(jet_id); }
 
 private:
     size_t jet_id;

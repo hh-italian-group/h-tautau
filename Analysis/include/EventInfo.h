@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include <list>
+#include <algorithm>
 #include "EventTuple.h"
 #include "AnalysisTypes.h"
 #include "RootExt.h"
@@ -38,6 +39,8 @@ struct ChannelInfo {
     template<typename FirstLeg>
     static constexpr Channel IdentifyChannel() { return detail::IdentifyChannel<FirstLeg>(); }
 };
+
+enum class JetOrdering { NoOrdering, Pt, CSV };
 
 class EventInfoBase {
 public:
@@ -76,9 +79,41 @@ public:
         }
     }
 
+    static BjetPair UndefinedBjetPair()
+    {
+        static BjetPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
+        return pair;
+    }
+
+    static BjetPair SelectBjetPair(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
+                                   double eta_cut = std::numeric_limits<double>::lowest(),
+                                   JetOrdering jet_ordering = JetOrdering::CSV)
+    {
+        const auto orderer = [&](size_t j1, size_t j2) -> bool {
+            if(jet_ordering == JetOrdering::Pt)
+                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
+            if(jet_ordering == JetOrdering::CSV)
+                return event.jets_csv.at(j1) > event.jets_csv.at(j2);
+            throw exception("Unsupported jet ordering for b-jet pair selection.");
+        };
+
+        std::vector<size_t> indexes;
+        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+            if(event.jets_p4.at(n).Pt() > pt_cut && std::abs(event.jets_p4.at(n).eta()) > eta_cut)
+                indexes.push_back(n);
+        }
+        std::sort(indexes.begin(), indexes.end(), orderer);
+        BjetPair selected_pair = UndefinedBjetPair();
+        if(indexes.size() >= 1)
+            selected_pair.first = indexes.at(0);
+        if(indexes.size() >= 2)
+            selected_pair.second = indexes.at(1);
+        return selected_pair;
+    }
+
     static constexpr int verbosity = 0;
 
-    EventInfoBase(const Event& _event, const BjetPair& _selected_bjet_pair)
+    explicit EventInfoBase(const Event& _event, const BjetPair& _selected_bjet_pair = UndefinedBjetPair())
         : event(&_event), selected_bjet_pair(_selected_bjet_pair),
           has_bjet_pair(selected_bjet_pair.first < GetNJets() &&
                         selected_bjet_pair.second < GetNJets()) {}
@@ -89,8 +124,8 @@ public:
 
     EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
 
-    virtual const AnalysisObject& GetLeg(size_t leg_id) = 0;
-    virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) = 0;
+    virtual const AnalysisObject& GetLeg(size_t leg_id) { throw exception("Method not supported."); }
+    virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) { throw exception("Method not supported."); }
 
     size_t GetNJets() const { return event->jets_p4.size(); }
 
@@ -104,6 +139,30 @@ public:
             }
         }
         return *jets;
+    }
+
+    JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
+                             double eta_cut = std::numeric_limits<double>::lowest(),
+                             double csv_cut = std::numeric_limits<double>::lowest(),
+                             JetOrdering jet_ordering = JetOrdering::CSV)
+    {
+        const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
+            if(jet_ordering == JetOrdering::Pt)
+                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
+            return j1->csv() > j2->csv();
+        };
+
+        const JetCollection& all_jets = GetJets();
+        JetCollection selected_jets;
+        for(const JetCandidate& jet : all_jets) {
+            if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) > eta_cut
+                    && jet->csv() > csv_cut)
+                selected_jets.push_back(jet);
+        }
+
+        if(jet_ordering != JetOrdering::NoOrdering)
+            std::sort(selected_jets.begin(), selected_jets.end(), orderer);
+        return selected_jets;
     }
 
     const FatJetCollection& GetFatJets()

@@ -13,9 +13,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     LVAR(Int_t, q, n) /* Charge */ \
     LVAR(Float_t, d0, n) /* d0 with respect to primary vertex */ \
     LVAR(Float_t, dZ, n) /* dZ with respect to primary vertex */ \
-    LVAR(Float_t, mt, n) /* mT of the lepton wrt to MVA met */ \
-    LVAR(Float_t, pfmt, n) /* mT of  first lepton wrt to PF met */ \
-    LVAR(Float_t, puppimt, n) /* mT of  first lepton wrt to PUPPI met */ \
     LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     LVAR(Float_t, id_e_mva_nt_loose, n) /* Non-triggering electron ID MVA score id (when using electron) 0 otherwise */ \
     LVAR(Int_t, gen_match, n) /*Generator matching, see Htautau Twiki*/\
@@ -24,12 +21,20 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 
-#define JET_DATA(col) \
+#define JET_COMMON_DATA(col) \
     JVAR(analysis::LorentzVectorE, p4, col) /* Jet 4-momentum */ \
+    JVAR(Float_t, csv, col) /* Jet CSV value */ \
+    /**/
+
+#define JET_DATA(col) \
+    JET_COMMON_DATA(col) \
     JVAR(Float_t, rawf, col) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     JVAR(Float_t, mva, col) /* Jet MVA id value */ \
-    JVAR(Float_t, csv, col) /* Jet CSV value */ \
     JVAR(Int_t, partonFlavour, col) \
+    /**/
+
+#define FATJET_DATA(col) \
+    JET_COMMON_DATA(col) \
     JVAR(Float_t, m_pruned, col) \
     JVAR(Float_t, m_filtered, col) \
     JVAR(Float_t, m_trimmed, col) \
@@ -37,6 +42,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, n_subjettiness_tau1, col) \
     JVAR(Float_t, n_subjettiness_tau2, col) \
     JVAR(Float_t, n_subjettiness_tau3, col) \
+    /**/
+
+#define SUBJET_DATA(col) \
+    JET_COMMON_DATA(col) \
     JVAR(size_t, parentIndex, col) \
     /**/
 
@@ -48,8 +57,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /**/
 
 #define EVENT_DATA() \
-    VAR(Int_t, run) /* Run */ \
-    VAR(Int_t, lumi) /* Lumi */ \
+    VAR(UInt_t, run) /* Run */ \
+    VAR(UInt_t, lumi) /* Lumi */ \
     VAR(ULong64_t, evt) /* Evt */ \
     VAR(Int_t, channelID) /* Channel: MuTau, ETau, TauTau */ \
     VAR(Int_t, eventEnergyScale) /* event type category */ \
@@ -69,8 +78,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     MET_DATA(puppiMET) \
     /* Candidate Jets: jets after applying Jet energy corrections (excluding hadronic Tau) */ \
     JET_DATA(jets) \
-    JET_DATA(fatJets) \
-    JET_DATA(subJets) \
+    FATJET_DATA(fatJets) \
+    SUBJET_DATA(subJets) \
     /* KinFit Variables */ \
     VAR(std::vector<Double_t>, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
     VAR(std::vector<Double_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
@@ -98,6 +107,9 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef LEG_DATA
 #undef LVAR
 #undef JET_DATA
+#undef FATJET_DATA
+#undef SUBJET_DATA
+#undef JET_COMMON_DATA
 #undef JVAR
 #undef MET_DATA
 #undef MVAR

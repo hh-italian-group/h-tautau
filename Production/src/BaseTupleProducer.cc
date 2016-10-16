@@ -446,8 +446,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
         eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
         eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        //eventTuple().jets_partonFlavour .push_back(jet->partonFlavour());
-        eventTuple().jets_partonFlavour .push_back(jet->hadronFlavour());
+        //eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
+        eventTuple().jets_partonFlavour.push_back(jet->hadronFlavour());
     }
 
     for(const JetCandidate& jet : fatJets) {
