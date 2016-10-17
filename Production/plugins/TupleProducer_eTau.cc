@@ -9,6 +9,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     using namespace cuts::Htautau_2015;
     using namespace cuts::Htautau_2015::ETau;
 
+    (void)analysis::AllEventEnergyScales;
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
@@ -112,7 +113,6 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
     const ElectronCandidate& electron = selection.higgs->GetFirstDaughter();
     eventTuple().p4_1     = analysis::LorentzVectorM(electron.GetMomentum());
     eventTuple().q_1      = electron.GetCharge();
-    eventTuple().pfmt_1   = Calculate_MT(electron.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_1     = electron->gsfTrack()->dxy(primaryVertex->position());
     eventTuple().dZ_1     = electron->gsfTrack()->dz(primaryVertex->position());
     eventTuple().iso_1    = electron.GetIsolation();

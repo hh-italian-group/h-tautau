@@ -9,6 +9,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     using namespace cuts::Htautau_2015;
     using namespace cuts::Htautau_2015::MuTau;
 
+    (void)analysis::AllEventEnergyScales;
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 
@@ -76,7 +77,7 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     cut(muonDB < muonID::dB, "dxy", muonDB);
     const double muonDZ = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muonDZ < muonID::dz, "dz", muonDZ);
-    cut(muon->isMediumMuon(), "muonID");
+    cut(muon->isTightMuon(*primaryVertex), "muonID");
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
@@ -108,7 +109,6 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
     const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
     eventTuple().p4_1     = analysis::LorentzVectorM(muon.GetMomentum());
     eventTuple().q_1      = muon.GetCharge();
-    eventTuple().pfmt_1   = Calculate_MT(muon.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_1     = muon->muonBestTrack()->dxy(primaryVertex->position());
     eventTuple().dZ_1     = muon->muonBestTrack()->dz(primaryVertex->position());
     eventTuple().iso_1    = muon.GetIsolation();

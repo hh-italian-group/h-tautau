@@ -168,10 +168,10 @@ double BaseTupleProducer::Isolation(const pat::Electron& electron)
 
 double BaseTupleProducer::Isolation(const pat::Muon& muon)
 {
-    const double sum_neutral = muon.pfIsolationR03().sumNeutralHadronEt
-                             + muon.pfIsolationR03().sumPhotonEt
-                             - 0.5 * muon.pfIsolationR03().sumPUPt;
-    const double abs_iso = muon.pfIsolationR03().sumChargedHadronPt + std::max(sum_neutral, 0.0);
+    const double sum_neutral = muon.pfIsolationR04().sumNeutralHadronEt
+                             + muon.pfIsolationR04().sumPhotonEt
+                             - 0.5 * muon.pfIsolationR04().sumPUPt;
+    const double abs_iso = muon.pfIsolationR04().sumChargedHadronPt + std::max(sum_neutral, 0.0);
     return abs_iso / muon.pt();
 }
 
@@ -427,7 +427,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     const TauCandidate& tau = selection.GetSecondLeg();
     eventTuple().p4_2     = analysis::LorentzVectorM(tau.GetMomentum());
     eventTuple().q_2      = tau.GetCharge();
-    eventTuple().pfmt_2   = Calculate_MT(tau.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
     eventTuple().d0_2     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
     eventTuple().dZ_2     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_2    = tau.GetIsolation();
