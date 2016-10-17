@@ -99,7 +99,7 @@ public:
 
         std::vector<size_t> indexes;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(event.jets_p4.at(n).Pt() > pt_cut && std::abs(event.jets_p4.at(n).eta()) > eta_cut)
+            if(event.jets_p4.at(n).Pt() > pt_cut && std::abs(event.jets_p4.at(n).eta()) < eta_cut)
                 indexes.push_back(n);
         }
         std::sort(indexes.begin(), indexes.end(), orderer);
@@ -155,7 +155,7 @@ public:
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
         for(const JetCandidate& jet : all_jets) {
-            if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) > eta_cut
+            if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) < eta_cut
                     && jet->csv() > csv_cut)
                 selected_jets.push_back(jet);
         }

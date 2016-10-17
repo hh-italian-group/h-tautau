@@ -96,6 +96,7 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
     cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+    cut(tau->tauID("againstMuonTight3") > againstMuonTight3, "againstMuon");
 }
 
 

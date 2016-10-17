@@ -112,6 +112,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     VAR(Float_t, m_kinfit) \
+    VAR(Int_t, kinfit_convergence) \
+    VAR(Float_t, deltaR_ll) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

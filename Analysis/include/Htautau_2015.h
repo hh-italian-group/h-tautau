@@ -15,7 +15,7 @@ namespace cuts {
 namespace Htautau_2015 {
 // AN-2013/178 H->etau,mutau
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/analyzers/DiLeptonAnalyzer.py
-const double DeltaR_betweenSignalObjects = 0.5; // >
+const double DeltaR_betweenSignalObjects = 0.0001; // >
 
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauMuAnalyzer.py#L272
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L665

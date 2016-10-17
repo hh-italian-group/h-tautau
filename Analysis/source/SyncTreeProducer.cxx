@@ -42,6 +42,7 @@ public:
     void Run()
     {
         static const float default_value = std::numeric_limits<float>::lowest();
+        static const int default_int_value = std::numeric_limits<int>::lowest();
 
         std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.'.\n")
                    % args.input_file() % args.output_file() % args.mode();
@@ -140,7 +141,7 @@ public:
             //sync().mt_sv = ;
 
             sync().met = event->pfMET_p4.Pt();
-            sync().metphi = event->pfMET_p4.Phi();
+            sync().metphi = TVector2::Phi_0_2pi(event->pfMET_p4.Phi());
             sync().puppimet = event->puppiMET_p4.Pt();
             sync().puppimetphi = event->puppiMET_p4.Phi();
             sync().mvamet = event->mvaMET_p4.Pt();
@@ -159,7 +160,7 @@ public:
             const auto jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto bjets_pt = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
-            const auto bjets_csv = event.SelectJets(30, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::CSV);
+            const auto bjets_csv = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::CSV);
 //            const auto bjets_csv_medium = event.SelectJets(20, 2.4, cuts::Htautau_2015::btag::CSVM, JetOrdering::CSV);
 
             if(jets_pt20.size() >= 2) {
@@ -267,7 +268,7 @@ public:
                 sync().bjet_mva_2 = bjets_csv.at(1)->mva();
                 sync().bjet_csv_2 = bjets_csv.at(1)->csv();
 
-//                sync().m_kinfit = event.GetKinFitResults().mass;
+
             } else {
                 sync().bjet_pt_2 = default_value;
                 sync().bjet_eta_2 = default_value;
@@ -276,8 +277,20 @@ public:
                 sync().bjet_mva_2 = default_value;
                 sync().bjet_csv_2 = default_value;
 
-//                sync().m_kinfit = default_value;
+
             }
+
+            if(bjets_csv.size() >= 2)
+                sync().kinfit_convergence = event.GetKinFitResults().convergence;
+            else
+                sync().kinfit_convergence = default_int_value;
+
+            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+                sync().m_kinfit = event.GetKinFitResults().mass;
+            else
+                sync().m_kinfit = default_value;
+
+            sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
             sync.Fill();
         }

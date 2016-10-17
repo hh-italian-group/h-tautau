@@ -340,9 +340,9 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     cut(electronDZ < electronVeto::dz, "dz", electronDZ);
     const bool isMedium  = (*medium_id_decisions)[electron.getPtr()];
     cut(isMedium, "electronMVAMediumID");
-    const int eleMissingHits = electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
-    cut(eleMissingHits <= electronVeto::missingHits, "missingHits", eleMissingHits);
-    cut(electron->passConversionVeto(),"conversionVeto");
+//    const int eleMissingHits = electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+//    cut(eleMissingHits <= electronVeto::missingHits, "missingHits", eleMissingHits);
+//    cut(electron->passConversionVeto(),"conversionVeto");
     cut(electron.GetIsolation() < electronVeto::pFRelIso, "iso", electron.GetIsolation());
     if(signalElectron) {
         const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalElectron->GetMomentum());
@@ -380,8 +380,8 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     const LorentzVector& p4 = jet.GetMomentum();
     cut(p4.Pt() > pt_loose, "pt_loose", p4.Pt());
     cut(std::abs( p4.Eta() ) < eta, "eta", p4.Eta());
-    const bool jetPFID = PassPFLooseId(*jet);
-    cut(jetPFID, "jet_id");
+//    const bool jetPFID = PassPFLooseId(*jet);
+//    cut(jetPFID, "jet_id");
     for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
         std::ostringstream cut_name;
         cut_name << "deltaR_lep" << n + 1;
