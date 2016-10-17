@@ -33,7 +33,11 @@ public:
     using SyncEvent = htt_sync::SyncEvent;
     using SyncTuple = htt_sync::SyncTuple;
 
-    SyncTreeProducer(const Arguments& _args) : args(_args) {}
+    SyncTreeProducer(const Arguments& _args) : args(_args)
+    {
+        std::istringstream ss_mode(args.mode());
+        ss_mode >> syncMode;
+    }
 
     void Run()
     {
@@ -151,7 +155,8 @@ public:
             const auto jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto bjets_pt = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
-            const auto bjets_csv_medium = event.SelectJets(20, 2.4, cuts::Htautau_2015::btag::CSVM, JetOrdering::CSV);
+            const auto bjets_csv = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::CSV);
+//            const auto bjets_csv_medium = event.SelectJets(20, 2.4, cuts::Htautau_2015::btag::CSVM, JetOrdering::CSV);
 
             if(jets_pt20.size() >= 2) {
                 sync().mjj = (jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M();
@@ -168,7 +173,7 @@ public:
                 sync().jdphi = default_value;
             }
 
-            sync().nbtag = bjets_csv_medium.size();
+            sync().nbtag = bjets_pt.size();
             sync().njets = jets_pt30.size();
             sync().njetspt20 = jets_pt20.size();
             if(jets_pt20.size() >= 1) {
@@ -233,14 +238,52 @@ public:
             sync().extraelec_veto = event->extraelec_veto;
 //            sync().puweight = ;
 
+            // hh->bbtautau part
+
+            if(bjets_csv.size() >= 1) {
+                sync().bjet_pt_1 = bjets_csv.at(0).GetMomentum().Pt();
+                sync().bjet_eta_1 = bjets_csv.at(0).GetMomentum().Eta();
+                sync().bjet_phi_1 = bjets_csv.at(0).GetMomentum().Phi();
+                sync().bjet_rawf_1 = bjets_csv.at(0)->rawf();
+                sync().bjet_mva_1 = bjets_csv.at(0)->mva();
+                sync().bjet_csv_1 = bjets_csv.at(0)->csv();
+            } else {
+                sync().bjet_pt_1 = default_value;
+                sync().bjet_eta_1 = default_value;
+                sync().bjet_phi_1 = default_value;
+                sync().bjet_rawf_1 = default_value;
+                sync().bjet_mva_1 = default_value;
+                sync().bjet_csv_1 = default_value;
+            }
+            if(bjets_csv.size() >= 2) {
+                sync().bjet_pt_2 = bjets_csv.at(1).GetMomentum().Pt();
+                sync().bjet_eta_2 = bjets_csv.at(1).GetMomentum().Eta();
+                sync().bjet_phi_2 = bjets_csv.at(1).GetMomentum().Phi();
+                sync().bjet_rawf_2 = bjets_csv.at(1)->rawf();
+                sync().bjet_mva_2 = bjets_csv.at(1)->mva();
+                sync().bjet_csv_2 = bjets_csv.at(1)->csv();
+
+                sync().m_kinfit = event.GetKinFitResults().mass;
+            } else {
+                sync().bjet_pt_2 = default_value;
+                sync().bjet_eta_2 = default_value;
+                sync().bjet_phi_2 = default_value;
+                sync().bjet_rawf_2 = default_value;
+                sync().bjet_mva_2 = default_value;
+                sync().bjet_csv_2 = default_value;
+
+                sync().m_kinfit = default_value;
+            }
+
             sync.Fill();
         }
         sync.Write();
     }
-  private:
+private:
     Arguments args;
+    SyncMode syncMode;
 };
 
 } // namespace analysis
 
-PROGRAM_MAIN(analysis::SyncTreeProducer, Arguments) // definition of the main program function
+PROGRAM_MAIN(analysis::SyncTreeProducer, Arguments)
