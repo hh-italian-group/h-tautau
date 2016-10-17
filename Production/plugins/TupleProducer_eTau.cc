@@ -82,6 +82,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     const int eleMissingHits = electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
     cut(eleMissingHits <= electronID::missingHits, "missingHits", eleMissingHits);
     cut(electron->passConversionVeto(), "conversionVeto");
+    cut(electron.GetIsolation() < electronID::pFRelIso, "iso");
 }
 
 void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const

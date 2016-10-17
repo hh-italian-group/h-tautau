@@ -78,6 +78,7 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     const double muonDZ = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muonDZ < muonID::dz, "dz", muonDZ);
     cut(muon->isTightMuon(*primaryVertex), "muonID");
+    cut(muon.GetIsolation() < muonID::pFRelIso, "iso");
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
@@ -94,6 +95,7 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
+    cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
 }
 
 

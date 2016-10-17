@@ -58,6 +58,10 @@ public:
             EventInfoBase event(originalTuple.data(), bjet_pair);
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
 
+            if(syncMode == SyncMode::HH) {
+                if(event->dilepton_veto || event->extraelec_veto || event->extramuon_veto) continue;
+            }
+
             sync().run = event->run;
             sync().lumi = event->lumi;
             sync().evt = event->evt;

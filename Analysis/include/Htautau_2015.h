@@ -26,7 +26,7 @@ const double DeltaR_DileptonVeto = 0.15;
 
 namespace MuTau {
     namespace muonID {
-        const double pt = 20; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double pt = 23; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double eta = 2.1; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double dz = 0.2; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double dB = 0.045; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
