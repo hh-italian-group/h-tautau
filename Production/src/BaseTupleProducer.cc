@@ -184,22 +184,27 @@ double BaseTupleProducer::Isolation(const pat::Tau& tau)
 //  PFJetID is tuned on Uncorrected Jet values
 bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
 {
-    //TLorentzVector momentum = jet->GetMomentum();
     const pat::Jet& patJet = pat_jet.correctedJet("Uncorrected");
-    //momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
-    if(std::abs(patJet.eta())<3.0) {
-        //if(momentum.E() == 0)                                  return false;
-        if(patJet.neutralHadronEnergyFraction() > 0.99)   return false;
-        if(patJet.neutralEmEnergyFraction()     > 0.99)   return false;
-        if(patJet.nConstituents() <  1)                   return false;
-        if(patJet.chargedHadronEnergyFraction() <= 0 && std::abs(patJet.eta()) < 2.4 ) return false;
-        if(patJet.chargedEmEnergyFraction() >  0.99  && std::abs(patJet.eta()) < 2.4 ) return false;
-        if(patJet.chargedMultiplicity()     <= 0      && std::abs(patJet.eta()) < 2.4 ) return false;
-    }
-    if(std::abs(patJet.eta())>3.0) {
-        if(patJet.neutralEmEnergyFraction()     > 0.90)   return false;
-        if(patJet.neutralMultiplicity() < 10 )            return false;
-    }
+    const double abs_eta = std::abs(patJet.eta());
+
+    if(abs_eta < 2.7 && (
+        patJet.neutralHadronEnergyFraction() >= 0.99 ||
+        patJet.neutralEmEnergyFraction() >= 0.99 ||
+        patJet.nConstituents() <= 1)) return false;
+
+    if(abs_eta <= 2.4 && (
+        patJet.chargedHadronEnergyFraction() <= 0 ||
+        patJet.chargedMultiplicity() <= 0 ||
+        patJet.chargedEmEnergyFraction() >= 0.99)) return false;
+
+    if(abs_eta > 2.7 && abs_eta <= 3.0 && (
+        patJet.neutralEmEnergyFraction() >= 0.90 ||
+        patJet.neutralMultiplicity() <= 2)) return false;
+
+    if(abs_eta > 3.0 && (
+        patJet.neutralEmEnergyFraction() >= 0.90 ||
+        patJet.neutralMultiplicity() <= 10)) return false;
+
     return true;
 }
 
@@ -243,11 +248,11 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
     if(!runKinFit) return;
 
     for(size_t n = 0; n < selection.jets.size(); ++n) {
-        for(size_t k = n + 1; k < selection.jets.size(); ++k) {
-            const std::vector<LorentzVector> jet_momentums = {
-                selection.jets.at(n).GetMomentum(), selection.jets.at(k).GetMomentum()
-            };
-            const auto& result = kinfitProducer.Fit(signalLeptonMomentums, jet_momentums, *met);
+        for(size_t k = 0; k < selection.jets.size(); ++k) {
+            if(k == n) continue;
+            const auto& result = kinfitProducer.Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
+                                                    selection.jets.at(n).GetMomentum(),
+                                                    selection.jets.at(k).GetMomentum(), *met);
             selection.kinfitResults.push_back(result);
         }
     }
@@ -380,8 +385,8 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     const LorentzVector& p4 = jet.GetMomentum();
     cut(p4.Pt() > pt_loose, "pt_loose", p4.Pt());
     cut(std::abs( p4.Eta() ) < eta, "eta", p4.Eta());
-//    const bool jetPFID = PassPFLooseId(*jet);
-//    cut(jetPFID, "jet_id");
+    const bool jetPFID = PassPFLooseId(*jet);
+    cut(jetPFID, "jet_id");
     for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
         std::ostringstream cut_name;
         cut_name << "deltaR_lep" << n + 1;
