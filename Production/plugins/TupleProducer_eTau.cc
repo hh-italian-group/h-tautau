@@ -99,6 +99,8 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
+    cut(tau->tauID("againstElectronTightMVA6") > againstElectronTightMVA6, "againstElectron");
+    cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
 }
 
 

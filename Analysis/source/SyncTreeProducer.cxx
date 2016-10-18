@@ -33,9 +33,6 @@ public:
     using SyncEvent = htt_sync::SyncEvent;
     using SyncTuple = htt_sync::SyncTuple;
 
-    static constexpr float default_value = std::numeric_limits<float>::lowest();
-    static constexpr int default_int_value = std::numeric_limits<int>::lowest();
-
     SyncTreeProducer(const Arguments& _args) : args(_args)
     {
         std::istringstream ss_mode(args.mode());
@@ -44,7 +41,10 @@ public:
 
     void Run()
     {
-        std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.\n")
+        static const float default_value = std::numeric_limits<float>::lowest();
+        static const int default_int_value = std::numeric_limits<int>::lowest();
+
+        std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.'.\n")
                    % args.input_file() % args.output_file() % args.mode();
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
@@ -83,20 +83,20 @@ public:
             sync().iso_1 =  event->iso_1;
             sync().id_e_mva_nt_loose_1 = event->id_e_mva_nt_loose_1;
             sync().gen_match_1 = event->gen_match_1;
-            sync().againstElectronLooseMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronLooseMVA6");
-            sync().againstElectronMediumMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronMediumMVA6");
-            sync().againstElectronTightMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronTightMVA6");
-            sync().againstElectronVLooseMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronVLooseMVA6");
-            sync().againstElectronVTightMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronVTightMVA6");
-            sync().againstMuonLoose3_1 = GetTauID(event->tauIDs_1, "againstMuonLoose3");
-            sync().againstMuonTight3_1 = GetTauID(event->tauIDs_1, "againstMuonTight3");
-            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = GetTauID(event->tauIDs_1, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
-            sync().byIsolationMVA3newDMwoLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3newDMwoLTraw");
-            sync().byIsolationMVA3oldDMwoLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3oldDMwoLTraw");
-            sync().byIsolationMVA3newDMwLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3newDMwLTraw");
-            sync().byIsolationMVA3oldDMwLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3oldDMwLTraw");
+//            sync().againstElectronLooseMVA6_1 = event->tauIDs_1.at("againstElectronLooseMVA6");
+//            sync().againstElectronMediumMVA6_1 = event->tauIDs_1.at("againstElectronMediumMVA6");
+//            sync().againstElectronTightMVA6_1 = event->tauIDs_1.at("againstElectronTightMVA6");
+//            sync().againstElectronVLooseMVA6_1 = event->tauIDs_1.at("againstElectronVLooseMVA6");
+//            sync().againstElectronVTightMVA6_1 = event->tauIDs_1.at("againstElectronVTightMVA6");
+//            sync().againstMuonLoose3_1 = event->tauIDs_1.at("againstMuonLoose3");
+//            sync().againstMuonTight3_1 = event->tauIDs_1.at("againstMuonTight3");
+//            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = event->tauIDs_1.at("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+//            sync().byIsolationMVA3newDMwoLTraw_1 = event->tauIDs_1.at("byIsolationMVA3newDMwoLTraw");
+//            sync().byIsolationMVA3oldDMwoLTraw_1 = event->tauIDs_1.at("byIsolationMVA3oldDMwoLTraw");
+//            sync().byIsolationMVA3newDMwLTraw_1 = event->tauIDs_1.at("byIsolationMVA3newDMwLTraw");
+//            sync().byIsolationMVA3oldDMwLTraw_1 = event->tauIDs_1.at("byIsolationMVA3oldDMwLTraw");
             //sync().chargedIsoPtSum_1 = ;
-            sync().decayModeFindingOldDMs_1 = GetTauID(event->tauIDs_1, "decayModeFindingOldDMs");
+//            sync().decayModeFindingOldDMs_1 = event->tauIDs_1.at("decayModeFindingOldDMs");
             // sync().neutralIsoPtSum_1 = ;
             // sync().puCorrPtSum_1 = ;
             // sync().trigweight_1 = ;
@@ -115,20 +115,20 @@ public:
             sync().iso_2 =  event->iso_2;
             sync().id_e_mva_nt_loose_2 = event->id_e_mva_nt_loose_2;
             sync().gen_match_2 = event->gen_match_2;
-            sync().againstElectronLooseMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronLooseMVA6");
-            sync().againstElectronMediumMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronMediumMVA6");
-            sync().againstElectronTightMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronTightMVA6");
-            sync().againstElectronVLooseMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronVLooseMVA6");
-            sync().againstElectronVTightMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronVTightMVA6");
-            sync().againstMuonLoose3_2 = GetTauID(event->tauIDs_2, "againstMuonLoose3");
-            sync().againstMuonTight3_2 = GetTauID(event->tauIDs_2, "againstMuonTight3");
-            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = GetTauID(event->tauIDs_2, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
-            sync().byIsolationMVA3newDMwoLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3newDMwoLTraw");
-            sync().byIsolationMVA3oldDMwoLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3oldDMwoLTraw");
-            sync().byIsolationMVA3newDMwLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3newDMwLTraw");
-            sync().byIsolationMVA3oldDMwLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3oldDMwLTraw");
+//            sync().againstElectronLooseMVA6_2 = event->tauIDs_2.at("againstElectronLooseMVA6");
+//            sync().againstElectronMediumMVA6_2 = event->tauIDs_2.at("againstElectronMediumMVA6");
+//            sync().againstElectronTightMVA6_2 = event->tauIDs_2.at("againstElectronTightMVA6");
+//            sync().againstElectronVLooseMVA6_2 = event->tauIDs_2.at("againstElectronVLooseMVA6");
+//            sync().againstElectronVTightMVA6_2 = event->tauIDs_2.at("againstElectronVTightMVA6");
+//            sync().againstMuonLoose3_2 = event->tauIDs_2.at("againstMuonLoose3");
+//            sync().againstMuonTight3_2 = event->tauIDs_2.at("againstMuonTight3");
+//            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = event->tauIDs_2.at("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+//            sync().byIsolationMVA3newDMwoLTraw_2 = event->tauIDs_2.at("byIsolationMVA3newDMwoLTraw");
+//            sync().byIsolationMVA3oldDMwoLTraw_2 = event->tauIDs_2.at("byIsolationMVA3oldDMwoLTraw");
+//            sync().byIsolationMVA3newDMwLTraw_2 = event->tauIDs_2.at("byIsolationMVA3newDMwLTraw");
+//            sync().byIsolationMVA3oldDMwLTraw_2 = event->tauIDs_2.at("byIsolationMVA3oldDMwLTraw");
             //sync().chargedIsoPtSum_2 = ;
-            sync().decayModeFindingOldDMs_2 = GetTauID(event->tauIDs_2, "decayModeFindingOldDMs");
+//            sync().decayModeFindingOldDMs_2 = event->tauIDs_2.at("decayModeFindingOldDMs");
             // sync().neutralIsoPtSum_2 = ;
             // sync().puCorrPtSum_2 = ;
             // sync().trigweight_2 = ;
@@ -161,6 +161,7 @@ public:
             const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto bjets_pt = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto bjets_csv = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::CSV);
+//            const auto bjets_csv_medium = event.SelectJets(20, 2.4, cuts::Htautau_2015::btag::CSVM, JetOrdering::CSV);
 
             if(jets_pt20.size() >= 2) {
                 sync().mjj = (jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M();
@@ -266,6 +267,8 @@ public:
                 sync().bjet_rawf_2 = bjets_csv.at(1)->rawf();
                 sync().bjet_mva_2 = bjets_csv.at(1)->mva();
                 sync().bjet_csv_2 = bjets_csv.at(1)->csv();
+
+
             } else {
                 sync().bjet_pt_2 = default_value;
                 sync().bjet_eta_2 = default_value;
@@ -273,17 +276,19 @@ public:
                 sync().bjet_rawf_2 = default_value;
                 sync().bjet_mva_2 = default_value;
                 sync().bjet_csv_2 = default_value;
+
+
             }
 
-            if(bjets_csv.size() >= 2)
-                sync().kinfit_convergence = event.GetKinFitResults().convergence;
-            else
-                sync().kinfit_convergence = default_int_value;
-
-            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
-                sync().m_kinfit = event.GetKinFitResults().mass;
-            else
-                sync().m_kinfit = default_value;
+            // if(bjets_csv.size() >= 2)
+            //     sync().kinfit_convergence = event.GetKinFitResults().convergence;
+            // else
+            //     sync().kinfit_convergence = default_int_value;
+            //
+            // if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+            //     sync().m_kinfit = event.GetKinFitResults().mass;
+            // else
+            //     sync().m_kinfit = default_value;
 
             sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
@@ -291,13 +296,6 @@ public:
         }
         sync.Write();
     }
-
-private:
-    float GetTauID(const std::map<std::string, float>& id_map, const std::string& id_name) const
-    {
-        return id_map.count(id_name) ? id_map.at(id_name) : default_value;
-    }
-
 private:
     Arguments args;
     SyncMode syncMode;
