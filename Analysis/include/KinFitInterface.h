@@ -25,31 +25,28 @@ public:
     {
     }
 
-    template<typename LorentzVector1, typename LorentzVector2, typename Met>
-    FitResults Fit(const std::vector<LorentzVector1>& lepton_momentums,
-                   const std::vector<LorentzVector2>& jet_momentums, const Met& met)
+    template<typename LVector1, typename LVector2, typename LVector3, typename LVector4, typename Met>
+    FitResults Fit(const LVector1& lepton1_p4, const LVector2& lepton2_p4,
+                   const LVector3& jet1_p4, const LVector4& jet2_p4, const Met& met)
     {
-        if(lepton_momentums.size() != 2)
-            throw exception("Invalid number of leptons to fit.");
-        if(jet_momentums.size() != 2)
-            throw exception("Invalid number of jets to fit.");
-
-        const auto& met_momentum = met.GetMomentum();
+        const auto& met_p4 = met.GetMomentum();
         const TMatrixD met_cov = ConvertMatrix(met.GetCovMatrix());
 
         FitResults result;
         try {
-            if(verbosity > 100) {
-                std::cout << "l1_p4 = " << lepton_momentums.at(0) << "l2_p4 = " << lepton_momentums.at(1) << std::endl;
-                std::cout << "b1_p4 = " << jet_momentums.at(0) << "b2_4 = " << jet_momentums.at(1) << std::endl;
-                std::cout << "met_p4 = " << met_momentum << std::endl;
+            if(verbosity >= 100) {
+                std::cout << std::setprecision(6);
+                std::cout << "lepton1_p4 = " << lepton1_p4 << std::endl;
+                std::cout << "lepton2_p4 = " << lepton2_p4 << std::endl;
+                std::cout << "jet1_p4 = " << jet1_p4 << std::endl;
+                std::cout << "jet2_4 = " << jet2_p4 << std::endl;
+                std::cout << "met_p4 = " << met_p4 << std::endl;
+                std::cout << "met_cov:" << met_cov << std::endl;
             }
 
-            HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(jet_momentums.at(0)),
-                                                           ConvertVector(jet_momentums.at(1)),
-                                                           ConvertVector(lepton_momentums.at(0)),
-                                                           ConvertVector(lepton_momentums.at(1)),
-                                                           TVector2(met_momentum.Px(), met_momentum.Py()), met_cov);
+            HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(jet1_p4), ConvertVector(jet2_p4),
+                                                           ConvertVector(lepton1_p4), ConvertVector(lepton2_p4),
+                                                           TVector2(met_p4.Px(), met_p4.Py()), met_cov);
             hh_kin_fit.verbosity = verbosity;
             hh_kin_fit.fit();
 
@@ -58,6 +55,16 @@ public:
                 result.mass = hh_kin_fit.getMH();
                 result.chi2 = hh_kin_fit.getChi2();
                 result.probability = hh_kin_fit.getFitProb();
+            }
+
+            if(verbosity >= 100) {
+                std::cout << "Convergence = " << result.convergence << std::endl;
+                if(result.HasValidMass()) {
+                    std::cout << std::setprecision(6);
+                    std::cout << "Mass = " << result.mass << std::endl;
+                    std::cout << "chi2 = " << result.chi2 << std::endl;
+                    std::cout << "probability = " << result.probability << std::endl;
+                }
             }
         } catch(std::exception&) {}
 

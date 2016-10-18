@@ -53,31 +53,31 @@ public:
 
     static size_t NumberOfCombinationPairs(size_t n_bjets)
     {
-        return n_bjets * (n_bjets - 1) / 2;
+        return n_bjets * (n_bjets - 1);
     }
 
     static size_t CombinationPairToIndex(const BjetPair& pair, size_t n_bjets)
     {
         const size_t min = std::min(pair.first, pair.second);
         const size_t max = std::max(pair.first, pair.second);
-        if(n_bjets < 2 || min == max || min >= n_bjets || max >= n_bjets)
+        if(n_bjets < 2 || min == max || max >= n_bjets)
             throw exception("bad combination pair (%1%, %2%) for n b-jets = %3%.")
                 % pair.first % pair.second % n_bjets;
-        return max - 1 + min * (2 * n_bjets - 3 - min) / 2;
+        const size_t corr = pair.first < pair.second ? -1 : 0;
+        return pair.first * (n_bjets - 1) + pair.second + corr;
     }
 
     static BjetPair CombinationIndexToPair(size_t index, size_t n_bjets)
     {
-        if(n_bjets < 2 || index >= n_bjets * (n_bjets - 1) / 2)
+        if(n_bjets < 2 || index >= NumberOfCombinationPairs(n_bjets))
             throw exception("bad combination index = %1% for n b-jets = %2%.") % index % n_bjets;
 
-        for(size_t min = 0;; ++min) {
-            const size_t l = CombinationPairToIndex(BjetPair(min, n_bjets - 1), n_bjets);
-            if(l >= index) {
-                const size_t max = index + n_bjets - 1 - l;
-                return BjetPair(min, max);
-            }
-        }
+        BjetPair pair;
+        pair.second = index % (n_bjets - 1);
+        pair.first = (index - pair.second) / (n_bjets - 1);
+        if(pair.first <= pair.second)
+            ++pair.second;
+        return pair;
     }
 
     static BjetPair UndefinedBjetPair()
