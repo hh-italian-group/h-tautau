@@ -60,7 +60,7 @@ public:
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
 
             if(syncMode == SyncMode::HH) {
-                if(event->dilepton_veto || event->extraelec_veto || event->extramuon_veto) continue;
+                if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
             }
 
             sync().run = event->run;
@@ -275,15 +275,15 @@ public:
                 sync().bjet_csv_2 = default_value;
             }
 
-//            if(bjets_csv.size() >= 2)
-//                sync().kinfit_convergence = event.GetKinFitResults().convergence;
-//            else
-//                sync().kinfit_convergence = default_int_value;
+            if(bjets_csv.size() >= 2)
+                sync().kinfit_convergence = event.GetKinFitResults().convergence;
+            else
+                sync().kinfit_convergence = default_int_value;
 
-//            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
-//                sync().m_kinfit = event.GetKinFitResults().mass;
-//            else
-//                sync().m_kinfit = default_value;
+            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+                sync().m_kinfit = event.GetKinFitResults().mass;
+            else
+                sync().m_kinfit = default_value;
 
             sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 

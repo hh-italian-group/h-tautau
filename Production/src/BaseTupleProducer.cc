@@ -368,7 +368,7 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, c
     const double muonDZ = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muonDZ < muonVeto::dz, "dz", muonDZ);
     cut(muon.GetIsolation() < muonVeto::pfRelIso, "iso", muon.GetIsolation());
-    cut(muon->isMediumMuon(), "muonID");
+    cut(muon->isLooseMuon(), "muonID");
     if(signalMuon) {
         const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalMuon->GetMomentum());
         cut(deltaR > 0.05, "deltaR_signal", deltaR);

@@ -78,7 +78,7 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     const double muonDZ = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muonDZ < muonID::dz, "dz", muonDZ);
     cut(muon->isTightMuon(*primaryVertex), "muonID");
-    cut(muon.GetIsolation() < muonID::pFRelIso, "iso");
+    cut(muon.GetIsolation() < muonID::pFRelIso, "iso", muon.GetIsolation());
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
