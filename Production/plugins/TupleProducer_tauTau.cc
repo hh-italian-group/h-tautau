@@ -31,7 +31,12 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     }
 
     std::sort(selected_higgses.begin(), selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
-    selection.SetHiggsCandidate(selected_higgses.front());
+    if (selected_higgses.front().GetFirstDaughter().GetMomentum().Pt() < selected_higgses.front().GetSecondDaughter().GetMomentum().Pt()){
+        HiggsCandidate selected_higgs(selected_higgses.front().GetSecondDaughter(),selected_higgses.front().GetFirstDaughter());
+        selection.SetHiggsCandidate(selected_higgs);
+    }
+    else selection.SetHiggsCandidate(selected_higgses.front());
+
 
     //Third-Lepton Veto
     const auto electronVetoCollection = CollectVetoElectrons();
@@ -66,6 +71,8 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
+    cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+    cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
 }
 
 

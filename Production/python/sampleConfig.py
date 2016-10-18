@@ -40,7 +40,7 @@ def IsData(sampleType):
     if not isData and not sampleType in mcSampleTypes:
         print "ERROR: unknown sample type = '{}'".format(sampleType)
         sys.exit(1)
-    return IsData
+    return isData
 
 def GetHltPaths(channelName, sampleType):
     if not channelName in hltPaths or not sampleType in hltPaths[channelName]:

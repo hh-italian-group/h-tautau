@@ -162,7 +162,7 @@ namespace TauTau {
                                                      // for new tauID
         //After Synctuple
 
-        const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstMuonLoose3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double againstElectronVLooseMVA6 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
