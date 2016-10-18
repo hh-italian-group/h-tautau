@@ -38,4 +38,11 @@ enum class MetType { PF, MVA, PUPPI };
 ENUM_NAMES(MetType) = {
     { MetType::PF, "PF" }, { MetType::MVA, "MVA" }, { MetType::PUPPI, "PUPPI" }
 };
+
+enum class Period { Run2015, Run2016 };
+ENUM_NAMES(Period) = {
+    { Period::Run2015, "Run2015" },
+    { Period::Run2016, "Run2016" }
+};
+
 } // namespace analysis
