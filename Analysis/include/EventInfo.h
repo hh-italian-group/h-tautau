@@ -11,6 +11,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "KinFitInterface.h"
 #include "Candidate.h"
 #include "TupleObjects.h"
+#include "AnalysisTools/Core/include/EventIdentifier.h"
 
 namespace analysis {
 
@@ -114,7 +115,7 @@ public:
     static constexpr int verbosity = 0;
 
     explicit EventInfoBase(const Event& _event, const BjetPair& _selected_bjet_pair = UndefinedBjetPair())
-        : event(&_event), selected_bjet_pair(_selected_bjet_pair),
+        : event(&_event), eventIdentifier(_event.run, _event.lumi, _event.evt), selected_bjet_pair(_selected_bjet_pair),
           has_bjet_pair(selected_bjet_pair.first < GetNJets() &&
                         selected_bjet_pair.second < GetNJets()) {}
     virtual ~EventInfoBase() {}
@@ -122,6 +123,7 @@ public:
     const Event& operator*() const { return *event; }
     const Event* operator->() const { return event; }
 
+    const EventIdentifier& GetEventId() const { return eventIdentifier; }
     EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
 
     virtual const AnalysisObject& GetLeg(size_t leg_id) { throw exception("Method not supported."); }
@@ -229,6 +231,7 @@ protected:
     const Event* event;
 
 private:
+    EventIdentifier eventIdentifier;
     BjetPair selected_bjet_pair;
     bool has_bjet_pair;
 
