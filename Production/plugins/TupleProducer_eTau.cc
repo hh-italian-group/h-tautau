@@ -80,8 +80,8 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     const bool isTight = (*tight_id_decisions)[electron.getPtr()];
     cut(isTight, "electronMVATightID");
     const int eleMissingHits = electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
-    cut(eleMissingHits <= electronID::missingHits, "missingHits", eleMissingHits);
-    cut(electron->passConversionVeto(), "conversionVeto");
+    // cut(eleMissingHits <= electronID::missingHits, "missingHits", eleMissingHits);
+    // cut(electron->passConversionVeto(), "conversionVeto");
     cut(electron.GetIsolation() < electronID::pFRelIso, "iso");
 }
 

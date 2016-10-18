@@ -93,7 +93,7 @@ namespace ETau {
 
     // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2015#Baseline_e_tau_h_AN1
     namespace electronID{
-        const double pt = 24; // >
+        const double pt = 27; // >
         const double eta = 2.1; // <
         const double dz = 0.2; // <
         const double d0 = 0.045; // <
