@@ -25,9 +25,9 @@ public:
     {
     }
 
-    template<typename Met>
-    FitResults Fit(const std::vector<LorentzVector>& lepton_momentums,
-                   const std::vector<LorentzVector>& jet_momentums, const Met& met)
+    template<typename LorentzVector1, typename LorentzVector2, typename Met>
+    FitResults Fit(const std::vector<LorentzVector1>& lepton_momentums,
+                   const std::vector<LorentzVector2>& jet_momentums, const Met& met)
     {
         if(lepton_momentums.size() != 2)
             throw exception("Invalid number of leptons to fit.");
@@ -39,10 +39,16 @@ public:
 
         FitResults result;
         try {
-            HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(lepton_momentums.at(0)),
-                                                           ConvertVector(lepton_momentums.at(1)),
-                                                           ConvertVector(jet_momentums.at(0)),
+            if(verbosity > 100) {
+                std::cout << "l1_p4 = " << lepton_momentums.at(0) << "l2_p4 = " << lepton_momentums.at(1) << std::endl;
+                std::cout << "b1_p4 = " << jet_momentums.at(0) << "b2_4 = " << jet_momentums.at(1) << std::endl;
+                std::cout << "met_p4 = " << met_momentum << std::endl;
+            }
+
+            HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(jet_momentums.at(0)),
                                                            ConvertVector(jet_momentums.at(1)),
+                                                           ConvertVector(lepton_momentums.at(0)),
+                                                           ConvertVector(lepton_momentums.at(1)),
                                                            TVector2(met_momentum.Px(), met_momentum.Py()), met_cov);
             hh_kin_fit.verbosity = verbosity;
             hh_kin_fit.fit();
