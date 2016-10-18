@@ -148,7 +148,8 @@ for channel in channels:
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         hltPaths                = cms.vstring(hltPaths),
         runSVfit                = cms.bool(options.runSVfit),
-        runKinFit               = cms.bool(options.runKinFit)
+        runKinFit               = cms.bool(options.runKinFit),
+        productionMode          = cms.string("hh")
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 

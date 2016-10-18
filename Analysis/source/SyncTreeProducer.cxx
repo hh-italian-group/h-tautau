@@ -161,7 +161,6 @@ public:
             const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto bjets_pt = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto bjets_csv = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::CSV);
-//            const auto bjets_csv_medium = event.SelectJets(20, 2.4, cuts::Htautau_2015::btag::CSVM, JetOrdering::CSV);
 
             if(jets_pt20.size() >= 2) {
                 sync().mjj = (jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M();
@@ -267,8 +266,6 @@ public:
                 sync().bjet_rawf_2 = bjets_csv.at(1)->rawf();
                 sync().bjet_mva_2 = bjets_csv.at(1)->mva();
                 sync().bjet_csv_2 = bjets_csv.at(1)->csv();
-
-
             } else {
                 sync().bjet_pt_2 = default_value;
                 sync().bjet_eta_2 = default_value;
@@ -276,8 +273,6 @@ public:
                 sync().bjet_rawf_2 = default_value;
                 sync().bjet_mva_2 = default_value;
                 sync().bjet_csv_2 = default_value;
-
-
             }
 
             if(bjets_csv.size() >= 2)
