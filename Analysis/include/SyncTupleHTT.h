@@ -115,7 +115,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
     VAR(Int_t, nFatJets) \
-    VAR(Bool_t, hasFatJet) \
+    VAR(Int_t, hasFatJet) \
     VAR(Float_t, fatJet_pt) \
     VAR(Float_t, fatJet_eta) \
     VAR(Float_t, fatJet_phi) \

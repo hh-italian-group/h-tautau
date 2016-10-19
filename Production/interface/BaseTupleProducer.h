@@ -172,11 +172,12 @@ protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
     static bool PassPFLooseId(const pat::Jet& pat_jet);
-    std::pair<double,int> ComputeHtValue();
+
     double GetNumberOfPileUpInteractions() const;
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                             const std::vector<LorentzVector>& signalLeptonMomentums);
     void FillEventTuple(const analysis::SelectionResultsBase& selection);
+    void FillLheInfo();
 
     std::vector<ElectronCandidate> CollectZelectrons();
     std::vector<MuonCandidate> CollectZmuons();

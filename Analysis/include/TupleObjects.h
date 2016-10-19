@@ -106,7 +106,7 @@ public:
     const LorentzVectorE& p4() const { return event->jets_p4.at(jet_id); }
     DiscriminatorResult mva() const { return event->jets_mva.at(jet_id); }
     DiscriminatorResult csv() const { return event->jets_csv.at(jet_id); }
-    DiscriminatorResult partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
+    DiscriminatorResult hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
     double rawf() const { return event->jets_rawf.at(jet_id); }
 
 private:

@@ -30,7 +30,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_COMMON_DATA(col) \
     JVAR(Float_t, rawf, col) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     JVAR(Float_t, mva, col) /* Jet MVA id value */ \
-    JVAR(Int_t, partonFlavour, col) \
+    JVAR(Int_t, hadronFlavour, col) \
     /**/
 
 #define FATJET_DATA(col) \
@@ -89,7 +89,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<Int_t>, lhe_particle_pdg) \
     VAR(std::vector<analysis::LorentzVectorM>, lhe_particle_p4) \
     VAR(UInt_t, lhe_n_partons) \
-    VAR(double, lhe_HT) \
+    VAR(UInt_t, lhe_n_b_partons) \
+    VAR(Float_t, lhe_HT) \
     /* Vetos */\
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \

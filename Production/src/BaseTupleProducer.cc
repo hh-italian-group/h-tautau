@@ -209,26 +209,32 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
     return true;
 }
 
-std::pair<double,int> BaseTupleProducer::ComputeHtValue()
+void BaseTupleProducer::FillLheInfo()
 {
-    if(!lheEventProduct.isValid())
-        return std::make_pair(-999.99,-1);
+    static constexpr int b_quark = 5;
+    static const std::set<int> quarks_and_gluons = { 1, 2, 3, 4, 5, 6, 21 };
+
+    if(!lheEventProduct.isValid()) {
+        eventTuple().lhe_n_partons = ntuple::DefaultFillValue<UInt_t>();
+        eventTuple().lhe_n_b_partons = ntuple::DefaultFillValue<UInt_t>();
+        eventTuple().lhe_HT = ntuple::DefaultFillValue<Float_t>();
+        return;
+    }
 
     const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
-    std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
-    double lheHt = 0.;
-    int lheNOutPartons = 0;
-    size_t numParticles = lheParticles.size();
-    for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
-        int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
-        int status = lheEvent.ISTUP[idxParticle];
-        if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
-            lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.)
-                    + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
-            ++lheNOutPartons;
-        }
+    const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
+    eventTuple().lhe_n_partons = 0;
+    eventTuple().lhe_n_b_partons = 0;
+    double HT2 = 0;
+    for(size_t n = 0; n < lheParticles.size(); ++n) {
+        const int absPdgId = std::abs(lheEvent.IDUP[n]);
+        const int status = lheEvent.ISTUP[n];
+        if(status != 1 || !quarks_and_gluons.count(absPdgId)) continue;
+        eventTuple().lhe_n_partons++;
+        if(absPdgId == b_quark) eventTuple().lhe_n_b_partons++;
+        HT2 += std::pow(lheParticles[n][0], 2) + std::pow(lheParticles[n][1], 2);
     }
-    return std::make_pair(lheHt,lheNOutPartons);
+    eventTuple().lhe_HT = std::sqrt(HT2);
 }
 
 double BaseTupleProducer::GetNumberOfPileUpInteractions() const
@@ -351,8 +357,8 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
 //    cut(electron->passConversionVeto(),"conversionVeto");
     cut(electron.GetIsolation() < electronVeto::pFRelIso, "iso", electron.GetIsolation());
     if(signalElectron) {
-        const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalElectron->GetMomentum());
-        cut(deltaR > 0.05, "deltaR_signal", deltaR);
+        const bool isNotSignal =  &(*electron) != &(*(*signalElectron));
+        cut(isNotSignal, "isNotSignal");
     }
 }
 
@@ -371,8 +377,8 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, c
     cut(muon.GetIsolation() < muonVeto::pfRelIso, "iso", muon.GetIsolation());
     cut(muon->isLooseMuon(), "muonID");
     if(signalMuon) {
-        const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalMuon->GetMomentum());
-        cut(deltaR > 0.05, "deltaR_signal", deltaR);
+        const bool isNotSignal =  &(*muon) != &(*(*signalMuon));
+        cut(isNotSignal, "isNotSignal");
     }
 }
 
@@ -401,7 +407,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 {
     using namespace analysis;
     static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
-    static const std::set<int> selected_lhe_pdgs = { 1, 2, 3, 4, 5, 6, 11, 13, 15, 21 };
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
@@ -409,19 +414,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
 
     eventTuple().weightevt = isMC ? genEvt->weight() : default_value;
-    if(lheEventProduct.isValid()) {
-        const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
-        const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
-        for(size_t n = 0; n < lheParticles.size(); ++n) {
-            const int pdg_id = lheEvent.IDUP.at(n);
-            const int status = lheEvent.ISTUP.at(n);
-            if(status != 1 || !selected_lhe_pdgs.count(std::abs(pdg_id))) continue;
-            const auto& momentum = lheParticles.at(n);
-            const analysis::LorentzVectorXYZ p4(momentum[0], momentum[1], momentum[2], momentum[3]);
-            eventTuple().lhe_particle_pdg.push_back(pdg_id);
-            eventTuple().lhe_particle_p4.push_back(analysis::LorentzVectorM(p4));
-        }
-    }
+    FillLheInfo();
 
     eventTuple().npv = vertices->size();
     eventTuple().npu = GetNumberOfPileUpInteractions();
@@ -452,7 +445,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
         eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
         //eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
-        eventTuple().jets_partonFlavour.push_back(jet->hadronFlavour());
+        eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
     }
 
     for(const JetCandidate& jet : fatJets) {

@@ -49,7 +49,7 @@ public:
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         auto outputFile = root_ext::CreateRootFile(args.output_file());
-        EventTuple originalTuple(args.tree_name(), originalFile.get(), true, { "lhe_n_partons", "lhe_HT" });
+        EventTuple originalTuple(args.tree_name(), originalFile.get(), true);
         SyncTuple sync(args.tree_name(), outputFile.get(), false );
         const Long64_t n_entries = originalTuple.GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
@@ -275,21 +275,21 @@ public:
                 sync().bjet_csv_2 = default_value;
             }
 
-            if(bjets_csv.size() >= 2)
-                sync().kinfit_convergence = event.GetKinFitResults().convergence;
-            else
-                sync().kinfit_convergence = default_int_value;
+//            if(bjets_csv.size() >= 2)
+//                sync().kinfit_convergence = event.GetKinFitResults().convergence;
+//            else
+//                sync().kinfit_convergence = default_int_value;
 
-            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
-                sync().m_kinfit = event.GetKinFitResults().mass;
-            else
-                sync().m_kinfit = default_value;
+//            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+//                sync().m_kinfit = event.GetKinFitResults().mass;
+//            else
+//                sync().m_kinfit = default_value;
 
             sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
             sync().nFatJets = event.GetFatJets().size();
             const FatJetCandidate* fatJetPtr = event.SelectFatJet(30, 0.4);
-            sync().hasFatJet = fatJetPtr;
+            sync().hasFatJet = bjets_csv.size() >= 2 ? fatJetPtr != nullptr : -1;
             if(fatJetPtr) {
                 const FatJetCandidate& fatJet = *fatJetPtr;
                 sync().fatJet_pt = fatJet.GetMomentum().Pt();
