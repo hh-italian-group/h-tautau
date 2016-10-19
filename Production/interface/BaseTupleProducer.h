@@ -79,6 +79,13 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
+enum class ProductionMode { hh, h_tt };
+
+ENUM_NAMES(ProductionMode) = {
+    { ProductionMode::hh, "hh" },
+    { ProductionMode::h_tt, "h_tt" }
+};
+
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -109,6 +116,7 @@ private:
     edm::EDGetTokenT<std::vector<reco::GenParticle> > prunedGen_token;
 
 protected:
+    const ProductionMode productionMode;
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit;
     std::vector<std::string> hltPaths;
     ntuple::EventTuple eventTuple;
@@ -133,6 +141,8 @@ private:
 
     edm::ESHandle<JetCorrectorParametersCollection> jetCorParColl;
     std::shared_ptr<JetCorrectionUncertainty> jecUnc;
+
+    std::vector<analysis::EventEnergyScale> eventEnergyScales;
 
 protected:
     analysis::EventEnergyScale eventEnergyScale;

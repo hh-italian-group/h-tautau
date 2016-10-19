@@ -14,19 +14,15 @@ const EnumNameMap<Channel> __Channel_names_latex("ChannelLatex", {
     { Channel::ETau, "e#tau_{h}" }, { Channel::MuTau, "#mu#tau_{h}" }, { Channel::TauTau, "#tau_{h}#tau_{h}" }
 });
 
-enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, BtagEfficiencyUp = 5,
-                              BtagEfficiencyDown = 6 , BtagFakeUp = 7, BtagFakeDown = 8};
+enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4 };
 ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::Central, "Central" },
     { EventEnergyScale::TauUp, "TauUp" }, { EventEnergyScale::TauDown, "TauDown" },
     { EventEnergyScale::JetUp, "JetUp" }, { EventEnergyScale::JetDown, "JetDown" },
-    { EventEnergyScale::BtagEfficiencyUp, "BtagEfficiencyUp" },
-    { EventEnergyScale::BtagEfficiencyDown, "BtagEfficiencyDown" },
-    { EventEnergyScale::BtagFakeUp, "BtagFakeUp" }, { EventEnergyScale::BtagFakeDown, "BtagFakeDown" }
 };
 
-using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
-static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
+//using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
+//static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
 
 enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight };
 ENUM_NAMES(DiscriminatorWP) = {

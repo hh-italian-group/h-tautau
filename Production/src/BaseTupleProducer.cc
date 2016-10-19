@@ -21,6 +21,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     lheEventProduct_token(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
     genWeights_token(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
     prunedGen_token(consumes<std::vector<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
+    productionMode(analysis::EnumNameMap<ProductionMode>::GetDefault().Parse(
+                       iConfig.getParameter<std::string>("productionMode"))),
     isMC(iConfig.getParameter<bool>("isMC")),
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
@@ -36,21 +38,20 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
+    const std::vector<std::string> energyScaleStrings = iConfig.getParameter<std::vector<std::string>>("energyScales");
+    for(const auto& scaleString : energyScaleStrings) {
+        std::istringstream ss(scaleString);
+        analysis::EventEnergyScale es;
+        ss >> es;
+        eventEnergyScales.push_back(es);
+    }
 }
 
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    using analysis::EventEnergyScale;
-    static const std::set<EventEnergyScale> energyScales = {EventEnergyScale::Central};
-    (void)analysis::AllEventEnergyScales;
-   // static const std::set<EventEnergyScale> energyScales = {
-   //     EventEnergyScale::Central, EventEnergyScale::TauUp, EventEnergyScale::TauDown,
-   //     EventEnergyScale::JetUp, EventEnergyScale::JetDown
-   // };
-
     InitializeAODCollections(iEvent, iSetup);
     primaryVertex = vertices->ptrAt(0);
-    for(auto energyScale : energyScales) {
+    for(auto energyScale : eventEnergyScales) {
         InitializeCandidateCollections(energyScale);
         try {
             Cutter cut(&GetAnaData().Selection("events"));

@@ -21,6 +21,10 @@ options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarPar
                   "Prefix to add to input file names.")
 options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Analysis channels to run.")
+options.register('energyScales', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "Event energy scales to run.")
+options.register('productionMode', 'hh', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "Selections that should be used for the production.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Event tuple file.")
 options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -119,6 +123,11 @@ if options.anaChannels == 'all':
 else:
     channels = re.split(',', options.anaChannels)
 
+if options.energyScales == 'all':
+    energyScales = [ 'Central', 'TauUp', 'TauDown', 'JetUp', 'JetDown' ]
+else:
+    energyScales = re.split(',', options.energyScales)
+
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
@@ -149,7 +158,8 @@ for channel in channels:
         hltPaths                = cms.vstring(hltPaths),
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
-        productionMode          = cms.string("hh")
+        energyScales            = cms.vstring(energyScales),
+        productionMode          = cms.string(options.productionMode)
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 

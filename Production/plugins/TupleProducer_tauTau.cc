@@ -9,7 +9,6 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     using namespace cuts::Htautau_2015;
     using namespace cuts::Htautau_2015::MuTau;
 
-    (void)analysis::AllEventEnergyScales;
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
 

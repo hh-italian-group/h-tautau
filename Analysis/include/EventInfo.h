@@ -130,6 +130,7 @@ public:
     virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) { throw exception("Method not supported."); }
 
     size_t GetNJets() const { return event->jets_p4.size(); }
+    size_t GetNFatJets() const { return event->fatJets_p4.size(); }
 
     const JetCollection& GetJets()
     {
@@ -171,7 +172,7 @@ public:
     {
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
-            for(size_t n = 0; n < GetNJets(); ++n) {
+            for(size_t n = 0; n < GetNFatJets(); ++n) {
                 tuple_fatJets.push_back(ntuple::TupleFatJet(*event, n));
                 fatJets->push_back(FatJetCandidate(tuple_fatJets.back()));
             }
@@ -225,6 +226,32 @@ public:
         if(addMET)
             p4 += GetMET().GetMomentum();
         return p4;
+    }
+
+    const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut)
+    {
+        using FatJet = ntuple::TupleFatJet;
+        using SubJet = ntuple::TupleSubJet;
+        if(!HasBjetPair()) return nullptr;
+        for(const FatJetCandidate& fatJet : GetFatJets()) {
+            if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
+            if(fatJet->subJets().size() < 2) continue;
+            std::vector<SubJet> subJets = fatJet->subJets();
+            std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
+                return j1.p4().Pt() > j2.p4().Pt(); });
+            std::vector<double> deltaR;
+            for(size_t n = 0; n < 2; ++n) {
+                for(size_t k = 0; k < 2; ++k) {
+                    const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
+                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
+                    deltaR.push_back(dR);
+                }
+            }
+            if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
+                    || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
+                return &fatJet;
+        }
+        return nullptr;
     }
 
 protected:

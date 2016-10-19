@@ -114,6 +114,20 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, m_kinfit) \
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
+    VAR(Int_t, nFatJets) \
+    VAR(Bool_t, hasFatJet) \
+    VAR(Float_t, fatJet_pt) \
+    VAR(Float_t, fatJet_eta) \
+    VAR(Float_t, fatJet_phi) \
+    VAR(Float_t, fatJet_energy) \
+    VAR(Float_t, fatJet_m_pruned) \
+    VAR(Float_t, fatJet_m_filtered) \
+    VAR(Float_t, fatJet_m_trimmed) \
+    VAR(Float_t, fatJet_m_softDrop) \
+    VAR(Int_t, fatJet_n_subjets) \
+    VAR(Float_t, fatJet_n_subjettiness_tau1) \
+    VAR(Float_t, fatJet_n_subjettiness_tau2) \
+    VAR(Float_t, fatJet_n_subjettiness_tau3) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
