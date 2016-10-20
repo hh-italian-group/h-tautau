@@ -31,6 +31,8 @@ options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing
                  "Run SVfit algorithm on the selected tau pair.")
 options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
+options.register('lumiFile', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "JSON file with lumi mask.")
 options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
@@ -58,6 +60,10 @@ if len(options.fileList) > 0:
     from AnalysisTools.Run.readFileList import *
     readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
     process.maxEvents.input = options.maxEvents
+
+if len(options.lumiFile) > 0:
+    import FWCore.PythonUtilities.LumiList as LumiList
+    process.source.lumisToProcess = LumiList.LumiList(filename = options.lumiFile).getVLuminosityBlockRange()
 
 process.load('RecoMET.METProducers.METSignificance_cfi')
 process.load('RecoMET.METProducers.METSignificanceParams_cfi')
