@@ -21,15 +21,17 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     cut(higgses.size(), "tau_tau_pair");
 
     std::vector<HiggsCandidate> selected_higgses = higgses;
-    if(applyTriggerMatch) {
-        auto triggeredHiggses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, true);
-        cut(triggeredHiggses.size(), "triggerMatch");
 
-        selected_higgses = triggerTools.ApplyL1TriggerTauMatch(triggeredHiggses);
-        cut(selected_higgses.size(), "L1triggerMatch");
+    if(applyTriggerMatch) {
+        //auto triggeredHiggses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, true);
+        selected_higgses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, true);
+        cut(selected_higgses.size(), "triggerMatch");
+
+        //selected_higgses = triggerTools.ApplyL1TriggerTauMatch(triggeredHiggses);
+        //cut(selected_higgses.size(), "L1triggerMatch");
     }
 
-    std::sort(selected_higgses.begin(), selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
+    std::sort(selected_higgses.begin(),selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
     if (selected_higgses.front().GetFirstDaughter().GetMomentum().Pt() < selected_higgses.front().GetSecondDaughter().GetMomentum().Pt()){
         HiggsCandidate selected_higgs(selected_higgses.front().GetSecondDaughter(),selected_higgses.front().GetFirstDaughter());
         selection.SetHiggsCandidate(selected_higgs);
