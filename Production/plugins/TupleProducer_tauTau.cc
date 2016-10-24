@@ -6,8 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
-    using namespace cuts::Htautau_2015;
-    using namespace cuts::Htautau_2015::MuTau;
+    using namespace cuts::H_tautau_2016::TauTau;
 
     SelectionResults selection;
     cut(primaryVertex.isNonnull(), "vertex");
@@ -17,6 +16,9 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");
 
+    const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
+            ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
+            : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
     auto higgses = FindCompatibleObjects(selectedTaus, selectedTaus, DeltaR_betweenSignalObjects, "H_tau_tau");
     cut(higgses.size(), "tau_tau_pair");
 
@@ -58,27 +60,28 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tauTau::CollectSignal
 
 void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
-    using namespace cuts::Htautau_2015::TauTau;
-    using namespace cuts::Htautau_2015::TauTau::tauID;
+    using namespace cuts::H_tautau_2016::TauTau::tauID;
 
     cut(true, "gt0_tau_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     cut(p4.Pt() > pt, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
-    const int dmFinding = tau->tauID("decayModeFinding");
-    cut(dmFinding > tauID::decayModeFinding, "oldDecayMode", dmFinding);
+    const auto dmFinding = tau->tauID("decayModeFinding");
+    cut(dmFinding > decayModeFinding, "oldDecayMode", dmFinding);
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
-    cut(std::abs(tau->charge()) == 1, "charge", tau->charge());
-    cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
-    cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
+    cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
+    if(productionMode == ProductionMode::hh) {
+        cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+        cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
+    }
 }
-
 
 void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
     static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
+    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelID = static_cast<int>(analysis::Channel::TauTau);
@@ -90,7 +93,8 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
     eventTuple().d0_1     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
     eventTuple().dZ_1     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_1    = tau.GetIsolation();
-    eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
+    eventTuple().id_e_mva_nt_loose_1 = default_value;
+    eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_int_value;
     eventTuple().tauIDs_1.insert(tau->tauIDs().begin(), tau->tauIDs().end());
 
     eventTuple.Fill();

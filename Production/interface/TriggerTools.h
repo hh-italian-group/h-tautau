@@ -9,7 +9,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
-#include "h-tautau/Analysis/include/Htautau_2015.h"
+#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
 
 namespace analysis {
 
@@ -39,7 +40,7 @@ public:
         std::vector<HiggsCandidate> triggeredHiggses;
         for (const auto& higgs : higgses) {
             for (const std::string& hltPath : hltPaths) {
-                if(HaveTriggerMatched(hltPath, higgs, cuts::Htautau_2015::DeltaR_triggerMatch, isCrossTrigger)) {
+                if(HaveTriggerMatched(hltPath, higgs, cuts::H_tautau_2016::DeltaR_triggerMatch, isCrossTrigger)) {
                     triggeredHiggses.push_back(higgs);
                     break;
                 }

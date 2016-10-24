@@ -52,7 +52,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/Candidate.h"
 #include "h-tautau/Analysis/include/CandidateUtilities.h"
 #include "h-tautau/Analysis/include/EventTuple.h"
-#include "h-tautau/Analysis/include/Htautau_2015.h"
+#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"

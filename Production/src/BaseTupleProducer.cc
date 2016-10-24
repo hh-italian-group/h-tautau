@@ -1,4 +1,5 @@
 #include "h-tautau/Production/interface/BaseTupleProducer.h"
+#include "h-tautau/McCorrections/include/TauUncertainties.h"
 #include "../interface/GenTruthTools.h"
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
@@ -125,7 +126,7 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         TauCandidate tauCandidate(tau, Isolation(tau));
         if(tauEnergyScales.count(energyScale)) {
             const int sign = tauEnergyScales.at(energyScale);
-            const double sf = 1.0 + sign * cuts::Htautau_2015::tauCorrections::energyUncertainty;
+            const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
             const auto shiftedMomentum = tau.p4() * sf;
             tauCandidate.SetMomentum(shiftedMomentum);
         }
@@ -304,58 +305,61 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
 
 void BaseTupleProducer::SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const
 {
-    using namespace cuts::Htautau_2015::ETau;
+    using namespace cuts::H_tautau_2016::ETau::ZeeVeto;
 
     cut(true, "gt0_ele_cand");
     const LorentzVector& p4 = electron.GetMomentum();
-    cut(p4.pt() > ZeeVeto::pt, "pt", p4.pt());
-    cut(std::abs(p4.eta()) < ZeeVeto::eta, "eta", p4.eta());
-    const double electronD0 = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
-    cut(electronD0 < ZeeVeto::d0, "dxy", electronD0);
-    const double electronDZ = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
-    cut(electronDZ < ZeeVeto::dz, "dz", electronDZ);
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double electron_dxy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
+    cut(electron_dxy < dxy, "dxy", electron_dxy);
+    const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
+    cut(electron_dz < dz, "dz", electron_dz);
     const bool veto  = (*ele_cutBased_veto)[electron.getPtr()];
     cut(veto, "cut_based_veto");
-    cut(electron.GetIsolation() < ZeeVeto::pfRelIso, "iso", electron.GetIsolation());
+    cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
 }
 
 void BaseTupleProducer::SelectZMuon(const MuonCandidate& muon, Cutter& cut) const
 {
-    using namespace cuts::Htautau_2015::MuTau;
+    using namespace cuts::H_tautau_2016::MuTau::ZmumuVeto;
 
     cut(true, "gt0_mu_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    cut(p4.pt() > ZmumuVeto::pt, "pt", p4.pt());
-    cut(std::abs(p4.eta()) < ZmumuVeto::eta, "eta", p4.eta());
-    const double muonDZ = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
-    cut(muonDZ < muonID::dz, "dz", muonDZ);
-    const double muonDB = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
-    cut(muonDB < muonID::dB, "dxy", muonDB);
-    cut(muon->isTrackerMuon(), "trackerMuon");
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
+    cut(muon_dz < dz, "dz", muon_dz);
+    const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
+    cut(muon_dxy < dxy, "dxy", muon_dxy);
     cut(muon->isGlobalMuon(), "GlobalMuon");
+    cut(muon->isTrackerMuon(), "trackerMuon");
     cut(muon->isPFMuon(), "PFMuon");
-    cut(muon.GetIsolation() < 0.3, "pFRelIso", muon.GetIsolation());
+    cut(muon.GetIsolation() < pfRelIso04, "pfRelIso", muon.GetIsolation());
 }
 
 void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
                                            const ElectronCandidate* signalElectron) const
 {
-    using namespace cuts::Htautau_2015;
+    using namespace cuts::H_tautau_2016::electronVeto;
 
     cut(true, "gt0_ele_cand");
     const LorentzVector& p4 = electron.GetMomentum();
-    cut(p4.pt() > electronVeto::pt, "pt", p4.pt());
-    cut(std::abs(p4.eta()) < electronVeto::eta_high, "eta", p4.eta());
-    const double electronD0 = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
-    cut(electronD0 < electronVeto::d0, "dxy", electronD0);
-    const double electronDZ = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
-    cut(electronDZ < electronVeto::dz, "dz", electronDZ);
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double electron_dxy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
+    cut(electron_dxy < dxy, "dxy", electron_dxy);
+    const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
+    cut(electron_dz < dz, "dz", electron_dz);
     const bool isMedium  = (*medium_id_decisions)[electron.getPtr()];
     cut(isMedium, "electronMVAMediumID");
-//    const int eleMissingHits = electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
-//    cut(eleMissingHits <= electronVeto::missingHits, "missingHits", eleMissingHits);
-//    cut(electron->passConversionVeto(),"conversionVeto");
-    cut(electron.GetIsolation() < electronVeto::pFRelIso, "iso", electron.GetIsolation());
+    if(productionMode != ProductionMode::hh) {
+        const auto eleMissingHits =
+                electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+        cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
+        cut(electron->passConversionVeto(), "conversionVeto");
+    }
+    cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
     if(signalElectron) {
         const bool isNotSignal =  &(*electron) != &(*(*signalElectron));
         cut(isNotSignal, "isNotSignal");
@@ -364,18 +368,20 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
 
 void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, const MuonCandidate* signalMuon) const
 {
-    using namespace cuts::Htautau_2015;
+    using namespace cuts::H_tautau_2016::muonVeto;
 
     cut(true, "gt0_mu_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    cut(p4.pt() > muonVeto::pt, "pt", p4.pt());
-    cut(std::abs(p4.eta()) < muonVeto::eta, "eta", p4.eta());
-    const double muonDB = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
-    cut(muonDB < muonVeto::dB, "dxy", muonDB);
-    const double muonDZ = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
-    cut(muonDZ < muonVeto::dz, "dz", muonDZ);
-    cut(muon.GetIsolation() < muonVeto::pfRelIso, "iso", muon.GetIsolation());
-    cut(muon->isLooseMuon(), "muonID");
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
+    cut(muon_dxy < dxy, "dxy", muon_dxy);
+    const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
+    cut(muon_dz < dz, "dz", muon_dz);
+    cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+
+    const bool passMuonId = productionMode == ProductionMode::hh ? muon->isLooseMuon() : muon->isMediumMuon();
+    cut(passMuonId, "muonID");
     if(signalMuon) {
         const bool isNotSignal =  &(*muon) != &(*(*signalMuon));
         cut(isNotSignal, "isNotSignal");
@@ -385,15 +391,13 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, c
 void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
                                   const std::vector<LorentzVector>& signalLeptonMomentums) const
 {
-    using namespace cuts::Htautau_2015;
-    using namespace cuts::Htautau_2015::jetID;
+    using namespace cuts::H_tautau_2016::jetID;
 
     cut(true, "gt0_jet_cand");
     const LorentzVector& p4 = jet.GetMomentum();
-    cut(p4.Pt() > pt_loose, "pt_loose", p4.Pt());
-    cut(std::abs( p4.Eta() ) < eta, "eta", p4.Eta());
-    const bool jetPFID = PassPFLooseId(*jet);
-    cut(jetPFID, "jet_id");
+    cut(p4.Pt() > pt, "pt", p4.Pt());
+    cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
+    cut(PassPFLooseId(*jet), "jet_id");
     for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
         std::ostringstream cut_name;
         cut_name << "deltaR_lep" << n + 1;
@@ -402,18 +406,18 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     }
 }
 
-
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
     static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
+    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
     eventTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
 
-    eventTuple().weightevt = isMC ? genEvt->weight() : default_value;
+    eventTuple().weightevt = isMC ? genEvt->weight() : 1;
     FillLheInfo();
 
     eventTuple().npv = vertices->size();
@@ -430,7 +434,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().dZ_2     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_2    = tau.GetIsolation();
     eventTuple().id_e_mva_nt_loose_1 = default_value;
-    eventTuple().gen_match_2 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_value;
+    eventTuple().gen_match_2 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_int_value;
 
     eventTuple().tauIDs_2.insert(tau->tauIDs().begin(), tau->tauIDs().end());
 
