@@ -52,9 +52,12 @@ const pat::TriggerObjectStandAlone* TriggerTools::FindMatchingTriggerObject(cons
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
-        const auto& matchedPaths = unpackedTriggerObject.pathNames(true, true);
+        const auto& matchedPaths = unpackedTriggerObject.pathNames(true,true); // pathNames(LastFilter, L3Filter)
         for(const auto& matchedPath : matchedPaths) {
-            if(matchedPath.find(pathOfInterest) != std::string::npos)
+            const bool LF = unpackedTriggerObject.hasPathName(matchedPath, true, false);
+            const bool L3 = unpackedTriggerObject.hasPathName(matchedPath, false, true);
+            const bool all = unpackedTriggerObject.hasPathName(matchedPath, true, true);
+            if( matchedPath.find(pathOfInterest) != std::string::npos )
                 return &triggerObject;
         }
     }
