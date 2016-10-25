@@ -83,7 +83,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /* KinFit Variables */ \
     VAR(std::vector<Double_t>, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
     VAR(std::vector<Double_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
-    VAR(std::vector<Double_t>, kinFit_probability) /*  KinFit chi2 probability value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
     /* LHE info */\
     VAR(std::vector<Int_t>, lhe_particle_pdg) \
