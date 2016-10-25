@@ -48,7 +48,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, eta, suff, pref) \
     JVAR(Float_t, phi, suff, pref) \
     JVAR(Float_t, rawf, suff, pref) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    JVAR(Int_t, mva, suff, pref) /* pu Jet id score */ \
+    JVAR(Float_t, mva, suff, pref) /* pu Jet id score */ \
     JVAR(Float_t, csv, suff, pref) \
     /**/
 
