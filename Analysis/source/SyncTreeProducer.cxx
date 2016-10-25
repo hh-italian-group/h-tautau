@@ -8,7 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/SyncTupleHTT.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
-#include "h-tautau/Analysis/include/Htautau_2015.h"
+#include "h-tautau/Cuts/include/Btag_2016.h"
 
 struct Arguments {
     REQ_ARG(std::string, mode);
@@ -54,8 +54,8 @@ public:
         const Long64_t n_entries = originalTuple.GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple.GetEntry(current_entry);
-            const auto bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::Htautau_2015::btag::pt,
-                                                                 cuts::Htautau_2015::btag::eta, JetOrdering::CSV);
+            const auto bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
+                                                                 cuts::btag_2016::eta, JetOrdering::CSV);
             EventInfoBase event(originalTuple.data(), bjet_pair);
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
 
