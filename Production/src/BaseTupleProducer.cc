@@ -1,5 +1,6 @@
 #include "h-tautau/Production/interface/BaseTupleProducer.h"
 #include "h-tautau/McCorrections/include/TauUncertainties.h"
+#include "AnalysisTools/Core/include/TextIO.h"
 #include "../interface/GenTruthTools.h"
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
@@ -41,9 +42,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
     const std::vector<std::string> energyScaleStrings = iConfig.getParameter<std::vector<std::string>>("energyScales");
     for(const auto& scaleString : energyScaleStrings) {
-        std::istringstream ss(scaleString);
-        analysis::EventEnergyScale es;
-        ss >> es;
+        const auto es = analysis::Parse<analysis::EventEnergyScale>(scaleString);
         eventEnergyScales.push_back(es);
     }
 }
@@ -214,6 +213,7 @@ void BaseTupleProducer::FillLheInfo()
 {
     static constexpr int b_quark = 5;
     static const std::set<int> quarks_and_gluons = { 1, 2, 3, 4, 5, 6, 21 };
+    static const std::set<int> interesting_particles = { 5, 6, 23, 24};
 
     if(!lheEventProduct.isValid()) {
         eventTuple().lhe_n_partons = ntuple::DefaultFillValue<UInt_t>();
