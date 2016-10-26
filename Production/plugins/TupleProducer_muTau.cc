@@ -80,9 +80,13 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     cut(muon_dxy < dxy, "dxy", muon_dxy);
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
-    cut(muon->isTightMuon(*primaryVertex), "muonID");
-    if(productionMode == ProductionMode::hh)
-        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+    if(productionMode == ProductionMode::hh){
+	cut(muon->isTightMuon(*primaryVertex), "muonID");
+	cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+    }
+    else{
+	cut(muon->isMediumMuon(), "muonID");
+    }
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const

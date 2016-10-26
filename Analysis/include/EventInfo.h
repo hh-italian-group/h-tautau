@@ -212,7 +212,7 @@ public:
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
             kinfit_results->convergence = event->kinFit_convergence.at(index);
             kinfit_results->chi2 = event->kinFit_chi2.at(index);
-            kinfit_results->probability = event->kinFit_probability.at(index);
+            //kinfit_results->probability = event->kinFit_probability.at(index);
             kinfit_results->mass = event->kinFit_m.at(index);
         }
         return *kinfit_results;

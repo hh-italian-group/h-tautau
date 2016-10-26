@@ -12,6 +12,7 @@ constexpr double DeltaR_betweenSignalObjects = 0.0001; // > Decreased to not loo
 namespace MuTau {
     namespace muonID {
         constexpr double pt = 23; // > Increased to be away from the trigger threshold.
+        constexpr bool isTightMuon = true; // = to be checked
 
         // pfRelIso should be applied at the tuple production level.
     }
