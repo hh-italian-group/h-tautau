@@ -477,7 +477,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     for(const kin_fit::FitResults& result : selection.kinfitResults) {
         eventTuple().kinFit_m.push_back(result.mass);
         eventTuple().kinFit_chi2.push_back(result.chi2);
-        eventTuple().kinFit_probability.push_back(result.probability);
         eventTuple().kinFit_convergence.push_back(result.convergence);
     }
 
