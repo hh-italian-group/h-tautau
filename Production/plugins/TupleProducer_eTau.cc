@@ -71,7 +71,9 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
 
     cut(true, "gt0_ele_cand");
     const LorentzVector& p4 = electron.GetMomentum();
-    const double pt_cut = productionMode == ProductionMode::hh ? cuts::hh_bbtautau_2016::ETau::electronID::pt : pt;
+    double pt_cut = pt;
+    if( productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::ETau::electronID::pt;
+    else if(productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::electronID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double electron_xy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
@@ -96,7 +98,8 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 
     cut(true, "gt0_tau_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    cut(p4.Pt() > pt, "pt", p4.Pt());
+    const double pt_cut = productionMode == ProductionMode::h_tt_mssm ?  cuts::H_tautau_2016_mssm::ETau::tauID::pt : pt;
+    cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     const auto dmFinding = tau->tauID("decayModeFinding");
     cut(dmFinding > decayModeFinding, "decayMode", dmFinding);

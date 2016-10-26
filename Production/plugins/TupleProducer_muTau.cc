@@ -71,16 +71,22 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 
     cut(true, "gt0_mu_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    const double pt_cut = productionMode == ProductionMode::hh ? cuts::hh_bbtautau_2016::MuTau::muonID::pt : pt;
+    double pt_cut = pt;
+    if(productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::MuTau::muonID::pt;
+    else if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::muonID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
     cut(muon_dxy < dxy, "dxy", muon_dxy);
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
-    cut(muon->isTightMuon(*primaryVertex), "muonID");
-    if(productionMode == ProductionMode::hh)
-        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+    if(productionMode == ProductionMode::hh){
+	cut(muon->isTightMuon(*primaryVertex), "muonID");
+	cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+    }
+    else{
+	cut(muon->isMediumMuon(), "muonID");
+    }
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
@@ -89,7 +95,8 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
 
     cut(true, "gt0_tau_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    cut(p4.Pt() > pt, "pt", p4.Pt());
+    const double pt_cut= productionMode == ProductionMode::h_tt_mssm ? cuts::H_tautau_2016_mssm::MuTau::tauID::pt : pt;
+    cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     const auto dmFinding = tau->tauID("decayModeFinding");
     cut(dmFinding > decayModeFinding, "decayMode", dmFinding);
