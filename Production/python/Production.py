@@ -33,6 +33,9 @@ options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsin
                  "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
 options.register('lumiFile', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "JSON file with lumi mask.")
+options.register('eventList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "List of events to process.")
+
 options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
@@ -64,6 +67,9 @@ if len(options.fileList) > 0:
 if len(options.lumiFile) > 0:
     import FWCore.PythonUtilities.LumiList as LumiList
     process.source.lumisToProcess = LumiList.LumiList(filename = options.lumiFile).getVLuminosityBlockRange()
+
+if options.eventList != '':
+    process.source.eventsToProcess = cms.untracked.VEventRange(re.split(',', options.eventList))
 
 process.load('RecoMET.METProducers.METSignificance_cfi')
 process.load('RecoMET.METProducers.METSignificanceParams_cfi')
