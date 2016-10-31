@@ -141,7 +141,8 @@ public:
             //sync().mt_sv = ;
 
             sync().met = event->pfMET_p4.Pt();
-            sync().metphi = TVector2::Phi_0_2pi(event->pfMET_p4.Phi());
+            if(syncMode == SyncMode::HH) sync().metphi = TVector2::Phi_0_2pi(event->pfMET_p4.Phi());
+            else sync().metphi = TVector2::Phi_mpi_pi(event->pfMET_p4.Phi());
             sync().puppimet = event->puppiMET_p4.Pt();
             sync().puppimetphi = event->puppiMET_p4.Phi();
             sync().mvamet = event->mvaMET_p4.Pt();
@@ -159,8 +160,8 @@ public:
 
             const auto jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
-            const auto bjets_pt = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
-            const auto bjets_csv = event.SelectJets(20, 2.4, std::numeric_limits<double>::lowest(), JetOrdering::CSV);
+            const auto bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, JetOrdering::Pt);
+            const auto bjets_csv = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), JetOrdering::CSV);
 
             if(jets_pt20.size() >= 2) {
                 sync().mjj = (jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M();
