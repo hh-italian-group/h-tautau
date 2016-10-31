@@ -99,7 +99,7 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
     const TauCandidate& tau = selection.higgs->GetFirstDaughter();
     eventTuple().p4_1     = analysis::LorentzVectorM(tau.GetMomentum());
     eventTuple().q_1      = tau.GetCharge();
-    eventTuple().pfmt_1   = Calculate_MT(tau.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
+    eventTuple().pfmt_1   = Calculate_MT(tau.GetMomentum(), met->GetMomentum());
     eventTuple().d0_1     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
     eventTuple().dZ_1     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_1    = tau.GetIsolation();

@@ -43,7 +43,6 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 {
     using analysis::EventEnergyScale;
    // static const std::set<EventEnergyScale> energyScales = {EventEnergyScale::Central};
-    (void)analysis::AllEventEnergyScales;
     static const std::set<EventEnergyScale> energyScales = {
         EventEnergyScale::Central, EventEnergyScale::TauUp, EventEnergyScale::TauDown,
         EventEnergyScale::JetUp, EventEnergyScale::JetDown
@@ -493,7 +492,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     const TauCandidate& tau = selection.GetSecondLeg();
     eventTuple().p4_2     = analysis::LorentzVectorM(tau.GetMomentum());
     eventTuple().q_2      = tau.GetCharge();
-    eventTuple().pfmt_2   = Calculate_MT(tau.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
+    eventTuple().pfmt_2   = Calculate_MT(tau.GetMomentum(), met->GetMomentum());
     eventTuple().d0_2     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
     eventTuple().dZ_2     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
     eventTuple().iso_2    = tau.GetIsolation();

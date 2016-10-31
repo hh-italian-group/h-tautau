@@ -126,7 +126,7 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
     const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
     eventTuple().p4_1     = analysis::LorentzVectorM(muon.GetMomentum());
     eventTuple().q_1      = muon.GetCharge();
-    eventTuple().pfmt_1   = Calculate_MT(muon.GetMomentum(), met->GetMomentum().Pt(), met->GetMomentum().Phi());
+    eventTuple().pfmt_1   = Calculate_MT(muon.GetMomentum(), met->GetMomentum());
     eventTuple().d0_1     = muon->muonBestTrack()->dxy(primaryVertex->position());
     eventTuple().dZ_1     = muon->muonBestTrack()->dz(primaryVertex->position());
     eventTuple().iso_1    = muon.GetIsolation();

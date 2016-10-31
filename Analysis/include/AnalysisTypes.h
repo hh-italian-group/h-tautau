@@ -25,8 +25,8 @@ ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::BtagFakeUp, "BtagFakeUp" }, { EventEnergyScale::BtagFakeDown, "BtagFakeDown" }
 };
 
-using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
-static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
+//using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
+//static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
 
 enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight };
 ENUM_NAMES(DiscriminatorWP) = {
