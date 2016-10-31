@@ -74,6 +74,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     double pt_cut = pt;
     if( productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::ETau::electronID::pt;
     else if(productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::electronID::pt;
+    else if(productionMode == ProductionMode::h_tt_sm) pt_cut = cuts::H_tautau_2016_sm::ETau::electronID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double electron_xy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
