@@ -20,6 +20,7 @@ FitResults FitProducer::RunAlgorithm(const std::vector<svFitStandalone::Measured
     FitResults result;
     if(algo.isValidSolution()) {
         result.momentum = LorentzVectorM(algo.pt(), algo.eta(), algo.phi(), algo.mass());
+        result.transverseMass = algo.transverseMass();
         result.has_valid_momentum = true;
     }
     return result;

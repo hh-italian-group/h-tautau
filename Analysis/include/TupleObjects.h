@@ -13,9 +13,9 @@ class TupleObject {
 public:
     using MetType = analysis::MetType;
     using DiscriminatorWP = analysis::DiscriminatorWP;
-    using LorentzVectorE = analysis::LorentzVector;
-    using LorentzVectorM = analysis::LorentzVectorM;
     using DiscriminatorResult = float;
+    using Integer = int;
+    using RealNumber = float;
 
     TupleObject(const ntuple::Event& _event) : event(&_event) {}
 
@@ -24,7 +24,7 @@ protected:
 };
 
 class TupleLepton : public TupleObject {
-public:
+public:    
     TupleLepton(const ntuple::Event& _event, size_t _leg_id)
         : TupleObject(_event), leg_id(_leg_id)
     {
@@ -33,11 +33,11 @@ public:
     }
 
     const LorentzVectorM& p4() const { return leg_id == 1 ? event->p4_1 : event->p4_2; }
-    int charge() const { return leg_id == 1 ? event->q_1 : event->q_2; }
-    double d0() const { return leg_id == 1 ? event->d0_1 : event->d0_2; }
-    double dZ() const { return leg_id == 1 ? event->dZ_1 : event->dZ_2; }
-    double iso() const { return leg_id == 1 ? event->iso_1 : event->iso_2; }
-    int gen_match() const { return leg_id == 1 ? event->gen_match_1 : event->gen_match_2; }
+    Integer charge() const { return leg_id == 1 ? event->q_1 : event->q_2; }
+    RealNumber dxy() const { return leg_id == 1 ? event->dxy_1 : event->dxy_2; }
+    RealNumber dz() const { return leg_id == 1 ? event->dz_1 : event->dz_2; }
+    RealNumber iso() const { return leg_id == 1 ? event->iso_1 : event->iso_2; }
+    Integer gen_match() const { return leg_id == 1 ? event->gen_match_1 : event->gen_match_2; }
 
 protected:
     size_t leg_id;
@@ -55,14 +55,23 @@ public:
 
 class TupleTau : public TupleLepton {
 public:
+    using IdKey = uint32_t;
     using TupleLepton::TupleLepton;
 
     DiscriminatorResult tauID(const std::string& discriminator) const
     {
-        const auto& tauIDs = leg_id == 1 ? event->tauIDs_1 : event->tauIDs_2;
-        if(!tauIDs.count(discriminator))
+        if(!tauIds.size()) {
+            const auto& keys = leg_id == 1 ? event->tauId_keys_1 :event->tauId_keys_2;
+            const auto& values = leg_id == 1 ? event->tauId_values_1 :event->tauId_values_2;
+            if(keys.size() != values.size())
+                throw analysis::exception("Invalid tauID data");
+            for(size_t n = 0; n < keys.size(); ++n)
+                tauIds[keys.at(n)] = values.at(n);
+        }
+        const IdKey key = analysis::tools::hash(discriminator);
+        if(!tauIds.count(key))
             throw analysis::exception("TauID discriminator '%1%' not found.") % discriminator;
-        return tauIDs.at(discriminator);
+        return tauIds.at(key);
     }
 
     DiscriminatorResult againstElectronMVA6(DiscriminatorWP wp) const
@@ -92,6 +101,9 @@ public:
         ss_name << "byIsolationMVArun2v1DB" << dm_str << "DM" << lt_str << "LTraw";
         return tauID(ss_name.str());
     }
+
+private:
+    mutable std::map<IdKey, DiscriminatorResult> tauIds;
 };
 
 class TupleJet : public TupleObject {
@@ -106,8 +118,9 @@ public:
     const LorentzVectorE& p4() const { return event->jets_p4.at(jet_id); }
     DiscriminatorResult mva() const { return event->jets_mva.at(jet_id); }
     DiscriminatorResult csv() const { return event->jets_csv.at(jet_id); }
-    DiscriminatorResult hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
-    double rawf() const { return event->jets_rawf.at(jet_id); }
+    Integer partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
+    Integer hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
+    RealNumber rawf() const { return event->jets_rawf.at(jet_id); }
 
 private:
     size_t jet_id;
@@ -148,11 +161,9 @@ public:
     const LorentzVectorE& p4() const { return event->fatJets_p4.at(jet_id); }
     DiscriminatorResult csv() const { return event->fatJets_csv.at(jet_id); }
 
-    double m(MassType massType) const
+    float m(MassType massType) const
     {
         if(massType == MassType::Pruned) return event->fatJets_m_pruned.at(jet_id);
-        if(massType == MassType::Filtered) return event->fatJets_m_filtered.at(jet_id);
-        if(massType == MassType::Trimmed) return event->fatJets_m_trimmed.at(jet_id);
         if(massType == MassType::SoftDrop) return event->fatJets_m_softDrop.at(jet_id);
         throw analysis::exception("Unsupported fat jet mass type");
     }
@@ -187,20 +198,16 @@ public:
 
     const LorentzVectorM& p4() const
     {
-        if(met_type == MetType::PF) return event->pfMET_p4;
-        if(met_type == MetType::MVA) return event->mvaMET_p4;
-        return event->puppiMET_p4;
+        return event->pfMET_p4;
     }
 
     const CovMatrix& cov() const
     {
-        if(met_type == MetType::PF) return event->pfMET_cov;
-        if(met_type == MetType::MVA) return event->mvaMET_cov;
-        return event->puppiMET_cov;
+        return event->pfMET_cov;
     }
 
-    double pt() const { return p4().pt(); }
-    double phi() const { return p4().phi(); }
+    RealNumber pt() const { return p4().pt(); }
+    RealNumber phi() const { return p4().phi(); }
 
 private:
     MetType met_type;

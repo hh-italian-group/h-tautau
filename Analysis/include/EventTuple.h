@@ -6,23 +6,31 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 
+namespace ntuple {
+using LorentzVectorE = analysis::LorentzVectorE_Float;
+using LorentzVectorM = analysis::LorentzVectorM_Float;
+using MetCovMatrix = analysis::SquareMatrix<2>;
+}
+
+
 #define LVAR(type, name, n) VAR(type, name##_##n)
 
 #define LEG_DATA(n) \
-    LVAR(analysis::LorentzVectorM, p4, n) /* 4-momentum */ \
+    LVAR(LorentzVectorM, p4, n) /* 4-momentum */ \
     LVAR(Int_t, q, n) /* Charge */ \
-    LVAR(Float_t, d0, n) /* d0 with respect to primary vertex */ \
-    LVAR(Float_t, dZ, n) /* dZ with respect to primary vertex */ \
+    LVAR(Float_t, dxy, n) /* dxy with respect to primary vertex */ \
+    LVAR(Float_t, dz, n) /* dz with respect to primary vertex */ \
     LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    LVAR(Float_t, id_e_mva_nt_loose, n) /* Non-triggering electron ID MVA score id (when using electron) 0 otherwise */ \
-    LVAR(Int_t, gen_match, n) /*Generator matching, see Htautau Twiki*/\
-    LVAR(root_ext::strmap<float>, tauIDs, n) /* tau ID variables */ \
+    LVAR(Int_t, gen_match, n) /* Generator matching, see Htautau Twiki*/\
+    LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
+    LVAR(std::vector<uint32_t>, tauId_keys, n) /* keys for tau ID variables */ \
+    LVAR(std::vector<float>, tauId_values, n) /* values of tau ID variables */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 
 #define JET_COMMON_DATA(col) \
-    JVAR(analysis::LorentzVectorE, p4, col) /* Jet 4-momentum */ \
+    JVAR(LorentzVectorE, p4, col) /* Jet 4-momentum */ \
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
     /**/
 
@@ -30,14 +38,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_COMMON_DATA(col) \
     JVAR(Float_t, rawf, col) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     JVAR(Float_t, mva, col) /* Jet MVA id value */ \
+    JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
     /**/
 
 #define FATJET_DATA(col) \
     JET_COMMON_DATA(col) \
     JVAR(Float_t, m_pruned, col) \
-    JVAR(Float_t, m_filtered, col) \
-    JVAR(Float_t, m_trimmed, col) \
     JVAR(Float_t, m_softDrop, col) \
     JVAR(Float_t, n_subjettiness_tau1, col) \
     JVAR(Float_t, n_subjettiness_tau2, col) \
@@ -52,44 +59,47 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #define MVAR(type, name, col) VAR(type, col##_##name)
 
 #define MET_DATA(col) \
-    MVAR(analysis::LorentzVectorM, p4, col) /* MET 4-momentum */ \
-    MVAR(analysis::SquareMatrix<2>, cov, col) /* pf met covariance matrix */ \
+    MVAR(LorentzVectorM, p4, col) /* MET 4-momentum */ \
+    MVAR(MetCovMatrix, cov, col) /* pf met covariance matrix */ \
     /**/
 
 #define EVENT_DATA() \
-    VAR(UInt_t, run) /* Run */ \
-    VAR(UInt_t, lumi) /* Lumi */ \
-    VAR(ULong64_t, evt) /* Evt */ \
-    VAR(Int_t, channelID) /* Channel: MuTau, ETau, TauTau */ \
+    VAR(UInt_t, run) /* run */ \
+    VAR(UInt_t, lumi) /* lumi section */ \
+    VAR(ULong64_t, evt) /* event number */ \
+    VAR(Int_t, channelId) /* Channel: eTau, muTau or tauTau */ \
     VAR(Int_t, eventEnergyScale) /* event type category */ \
-    VAR(Int_t, eventType) /* event type category */ \
-    VAR(Double_t, weightevt) /*Gen Event Weight*/ \
+    VAR(Float_t, genEventWeight) /* gen event weight */ \
+    VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
     /* SV Fit variables */ \
-    VAR(analysis::LorentzVectorM, SVfit_p4) /* SV Fit using integration method */ \
+    VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
+    VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
     /* Signal leptons */ \
     LEG_DATA(1) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
     LEG_DATA(2) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \
     /* Met related variables */ \
     MET_DATA(pfMET) \
-    MET_DATA(mvaMET) \
-    MET_DATA(puppiMET) \
+    VAR(UInt_t, metFilters) \
     /* Candidate Jets: jets after applying Jet energy corrections (excluding hadronic Tau) */ \
     JET_DATA(jets) \
     FATJET_DATA(fatJets) \
     SUBJET_DATA(subJets) \
     /* KinFit Variables */ \
-    VAR(std::vector<Double_t>, kinFit_m) /* KinFit m_bbtt mass compute the first 2 jets, ordered by CSV*/\
-    VAR(std::vector<Double_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
+    VAR(std::vector<UInt_t>, kinFit_jetPairId) /* indices of jet pairs for which KinFit is calculated */\
+    VAR(std::vector<Float_t>, kinFit_m) /* KinFit m_bbtt mass */\
+    VAR(std::vector<Float_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
-    /* LHE info */\
-    VAR(std::vector<Int_t>, lhe_particle_pdg) \
-    VAR(std::vector<analysis::LorentzVectorM>, lhe_particle_p4) \
+    /* Generator level information */\
     VAR(UInt_t, lhe_n_partons) \
     VAR(UInt_t, lhe_n_b_partons) \
     VAR(Float_t, lhe_HT) \
+    VAR(std::vector<Int_t>, genParticles_pdg) \
+    VAR(std::vector<LorentzVectorM>, genParticles_p4) \
+    VAR(UInt_t, genJets_nTotal) \
+    VAR(std::vector<LorentzVectorE>, genJets_p4) \
     /* Vetos */\
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
@@ -117,4 +127,40 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 namespace ntuple {
 template<typename T>
 constexpr T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
+
+using JetPair = std::pair<size_t, size_t>;
+
+inline size_t NumberOfCombinationPairs(size_t n_jets) { return n_jets * (n_jets - 1); }
+
+inline size_t CombinationPairToIndex(const JetPair& pair, size_t n_jets)
+{
+    const size_t min = std::min(pair.first, pair.second);
+    const size_t max = std::max(pair.first, pair.second);
+    if(n_jets < 2 || min == max || max >= n_jets)
+        throw analysis::exception("bad combination pair (%1%, %2%) for n b-jets = %3%.")
+            % pair.first % pair.second % n_jets;
+    const size_t corr = pair.first < pair.second ? -1 : 0;
+    return pair.first * (n_jets - 1) + pair.second + corr;
 }
+
+inline JetPair CombinationIndexToPair(size_t index, size_t n_jets)
+{
+    if(n_jets < 2 || index >= NumberOfCombinationPairs(n_jets))
+        throw analysis::exception("bad combination index = %1% for n b-jets = %2%.") % index % n_jets;
+
+    JetPair pair;
+    pair.second = index % (n_jets - 1);
+    pair.first = (index - pair.second) / (n_jets - 1);
+    if(pair.first <= pair.second)
+        ++pair.second;
+    return pair;
+}
+
+inline JetPair UndefinedJetPair()
+{
+    static JetPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
+    return pair;
+}
+
+
+} // namespace ntuple

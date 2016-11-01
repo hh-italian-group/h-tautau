@@ -17,8 +17,9 @@ namespace sv_fit {
 struct FitResults {
     bool has_valid_momentum;
     LorentzVectorM momentum;
+    double transverseMass;
 
-    FitResults() : has_valid_momentum(false) {}
+    FitResults() : has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()) {}
 };
 
 namespace detail {

@@ -14,6 +14,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 class TupleProducer_muTau: public BaseTupleProducer {
 public:
     using SelectionResults = analysis::SelectionResults<MuonCandidate>;
+    using SelectionResultsPtr = std::shared_ptr<SelectionResults>;
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
 public:
@@ -22,13 +23,17 @@ public:
 private:
     virtual void ProcessEvent(Cutter& cut) override;
 
+    std::vector<MuonCandidate> CollectZmuons();
     std::vector<MuonCandidate> CollectSignalMuons();
     std::vector<TauCandidate> CollectSignalTaus();
 
+    void SelectZMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
     void FillEventTuple(const SelectionResults& selection);
     void FillSyncTuple(const SelectionResults& selection);
 
+private:
+    SelectionResultsPtr previous_selection;
 };

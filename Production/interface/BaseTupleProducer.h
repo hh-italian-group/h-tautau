@@ -44,18 +44,19 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 // import LHEEventProduction definition
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
 
 //HHbbTauTau Framework
 #include "AnalysisTools/Core/include/AnalyzerData.h"
 #include "AnalysisTools/Core/include/CutTools.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "h-tautau/Analysis/include/Candidate.h"
-#include "h-tautau/Analysis/include/CandidateUtilities.h"
 #include "h-tautau/Analysis/include/EventTuple.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_mssm.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
+#include "h-tautau/Analysis/include/EventLoader.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -118,11 +119,15 @@ private:
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_token;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
     edm::EDGetTokenT<GenEventInfoProduct> genWeights_token;
-    edm::EDGetTokenT<std::vector<reco::GenParticle> > prunedGen_token;
+    edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
+    edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticles_token;
+    edm::EDGetTokenT<edm::View<reco::GenJet>> genJets_token;
+    edm::EDGetTokenT<bool> badPFMuonFilter_token, badChCandidateFilter_token;
 
 protected:
     const ProductionMode productionMode;
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit;
+    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
     std::vector<std::string> hltPaths;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
@@ -141,8 +146,8 @@ private:
     edm::Handle<MetCovMatrix> metCovMatrix;
     edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
     edm::Handle<LHEEventProduct> lheEventProduct;
-
     edm::Handle<GenEventInfoProduct> genEvt;
+    edm::Handle<TtGenEvent> topGenEvent;
 
     edm::ESHandle<JetCorrectorParametersCollection> jetCorParColl;
     std::shared_ptr<JetCorrectionUncertainty> jecUnc;
@@ -150,6 +155,7 @@ private:
     std::vector<analysis::EventEnergyScale> eventEnergyScales;
 
 protected:
+    edm::EventID eventId;
     analysis::EventEnergyScale eventEnergyScale;
     std::vector<ElectronCandidate> electrons;
     std::vector<MuonCandidate> muons;
@@ -158,6 +164,7 @@ protected:
     std::shared_ptr<MET> met;
     edm::Ptr<reco::Vertex> primaryVertex;
     edm::Handle<std::vector<reco::GenParticle>> genParticles;
+    edm::Handle<edm::View<reco::GenJet>> genJets;
     edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions, ele_cutBased_veto;
 
 private:
@@ -182,18 +189,19 @@ protected:
     double GetNumberOfPileUpInteractions() const;
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                             const std::vector<LorentzVector>& signalLeptonMomentums);
-    void FillEventTuple(const analysis::SelectionResultsBase& selection);
-    void FillLheInfo();
+    void FillEventTuple(const analysis::SelectionResultsBase& selection,
+                        const analysis::SelectionResultsBase* reference = nullptr);
+    void FillLheInfo(bool haveReference);
+    void FillGenParticleInfo();
+    void FillGenJetInfo();
+    void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
+    void FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds);
+    void FillMetFilters();
 
-    std::vector<ElectronCandidate> CollectZelectrons();
-    std::vector<MuonCandidate> CollectZmuons();
     std::vector<ElectronCandidate> CollectVetoElectrons(const ElectronCandidate* signalElectron = nullptr);
     std::vector<MuonCandidate> CollectVetoMuons(const MuonCandidate* signalMuon = nullptr);
     std::vector<JetCandidate> CollectJets(const std::vector<LorentzVector>& signalLeptonMomentums);
 
-
-    void SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const;
-    void SelectZMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
                             const ElectronCandidate* signalElectron) const;
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, const MuonCandidate* signalMuon) const;

@@ -41,4 +41,14 @@ ENUM_NAMES(Period) = {
     { Period::Run2016, "Run2016" }
 };
 
+enum class GenMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };
+ENUM_NAMES(GenMatch) = {
+    { GenMatch::Electron, "gen_electron" },
+    { GenMatch::Muon, "gen_muon" },
+    { GenMatch::TauElectron, "gen_electron_from_tau" },
+    { GenMatch::TauMuon, "gen_muon_from_tau" },
+    { GenMatch::Tau, "gen_tau" },
+    { GenMatch::NoMatch, "no_gen_match" }
+};
+
 } // namespace analysis

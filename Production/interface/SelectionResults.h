@@ -42,16 +42,45 @@ struct SelectionResultsBase {
     using JetCandidateVector = std::vector<JetCandidate>;
     using Vertex = reco::Vertex;
 
+    edm::EventID eventId;
+    EventEnergyScale energyScale;
+
     bool Zveto, electronVeto, muonVeto;
     sv_fit::FitResults svfitResult;
-    std::vector<kin_fit::FitResults> kinfitResults;
+    std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;
-    JetCandidateVector bjets;
     const Vertex* primaryVertex;
 
+    SelectionResultsBase(const edm::EventID& _eventId, EventEnergyScale _energyScale) :
+        eventId(_eventId), energyScale(_energyScale) {}
+
+    virtual ~SelectionResultsBase() {}
     virtual const TauCandidate& GetSecondLeg() const = 0;
     virtual const LorentzVector& GetHiggsMomentum() const = 0;
-    virtual ~SelectionResultsBase() {}
+
+
+    bool HaveSameJets(const SelectionResultsBase& other) const
+    {
+        static const std::set<EventEnergyScale> jetEnergyScales =
+            { EventEnergyScale::JetUp, EventEnergyScale::JetDown };
+
+        if(eventId != other.eventId) return false;
+        if(energyScale != other.energyScale
+            && (jetEnergyScales.count(energyScale) || jetEnergyScales.count(other.energyScale))) return false;
+        if(jets.size() != other.jets.size()) return false;
+
+        for(size_t n = 0; n < jets.size(); ++n) {
+            if(&(*jets.at(n)) != &(*other.jets.at(n)))
+                return false;
+        }
+        return true;
+    }
+
+    bool HaveSameSecondLegOrigin(const SelectionResultsBase& other) const
+    {
+        if(eventId != other.eventId) return false;
+        return &(*GetSecondLeg()) == &(*other.GetSecondLeg());
+    }
 };
 
 template<typename _FirstLeg>
@@ -63,9 +92,18 @@ struct SelectionResults : SelectionResultsBase {
 
     HiggsCandidatePtr higgs;
 
+    using SelectionResultsBase::SelectionResultsBase;
+
     void SetHiggsCandidate(const HiggsCandidate& h) { higgs = HiggsCandidatePtr(new HiggsCandidate(h)); }
     virtual const TauCandidate& GetSecondLeg() const override { return higgs->GetSecondDaughter(); }
     virtual const LorentzVector& GetHiggsMomentum() const override { return higgs->GetMomentum(); }
+
+    bool HaveSameFirstLegOrigin(const SelectionResults<FirstLeg>& other) const
+    {
+        if(eventId != other.eventId) return false;
+        return &(*higgs->GetFirstDaughter()) == &(*other.higgs->GetFirstDaughter());
+    }
+
 };
 
 } // namespace analysis

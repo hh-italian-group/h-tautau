@@ -11,6 +11,12 @@ options.register('inputFile', '', VarParsing.multiplicity.singleton, VarParsing.
                  "Input root files to process.")
 options.register('eventList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "List of events to process.")
+options.register('printTree', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Print particle decay tree.")
+options.register('printLHE', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Print Les Houches table.")
+options.register('printPDT', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Print particle data table.")
 options.parseArguments()
 
 process = cms.Process("PrintGenTruth")
@@ -24,7 +30,10 @@ if options.eventList != '':
 
 process.printTree = cms.EDAnalyzer("PrintGenTruth",
     genParticles = cms.InputTag("prunedGenParticles"),
-    lheEventProduct = cms.InputTag('externalLHEProducer')
+    lheEventProduct = cms.InputTag('externalLHEProducer'),
+    printTree = cms.untracked.bool(options.printTree),
+    printLHE = cms.untracked.bool(options.printLHE),
+    printPDT = cms.untracked.bool(options.printPDT)
 )
 
 process.p = cms.Path(process.printTree)
