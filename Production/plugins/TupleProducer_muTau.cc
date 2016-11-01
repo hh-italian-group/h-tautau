@@ -86,9 +86,10 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 	cut(muon->isTightMuon(*primaryVertex), "muonID");
 	cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
     }
-    else{
-	cut(muon->isMediumMuon(), "muonID");
-    }
+    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) 
+            cut(PassICHEPMuonMediumId(*muon),"muonID");  
+    else cut(muon->isMediumMuon(), "muonID");
+    
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
