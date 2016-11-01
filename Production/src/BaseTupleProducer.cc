@@ -226,6 +226,18 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
     return true;
 }
 
+bool BaseTupleProducer::PassICHEPMuonMediumId(const pat::Muon& pat_muon){
+    if(pat_muon.globalTrack().isNull() || pat_muon.innerTrack().isNull()) return false;
+    bool goodGlob = pat_muon.isGlobalMuon() && 
+	            pat_muon.globalTrack()->normalizedChi2() < 3 && 
+                    pat_muon.combinedQuality().chi2LocalPosition < 12 && 
+                    pat_muon.combinedQuality().trkKink < 20; 
+    bool isMedium = muon::isLooseMuon(pat_muon) &&
+                    pat_muon.innerTrack()->validFraction() > 0.49 &&
+                    muon::segmentCompatibility(pat_muon) > (goodGlob ? 0.303 : 0.451); 
+    return isMedium; 
+}
+
 void BaseTupleProducer::FillLheInfo(bool haveReference)
 {
     static constexpr int b_quark = 5;
