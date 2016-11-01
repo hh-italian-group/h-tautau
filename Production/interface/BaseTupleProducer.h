@@ -184,6 +184,7 @@ protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
     static bool PassPFLooseId(const pat::Jet& pat_jet);
+    static bool PassICHEPMuonMediumId(const pat::Muon& pat_muon);
 
     double GetNumberOfPileUpInteractions() const;
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
