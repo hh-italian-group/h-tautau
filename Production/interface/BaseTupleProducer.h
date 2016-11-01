@@ -54,6 +54,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/EventTuple.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_mssm.h"
+#include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Analysis/include/EventLoader.h"
 
@@ -82,12 +83,13 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
-enum class ProductionMode { hh, h_tt, h_tt_mssm };
+enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm };
 
 ENUM_NAMES(ProductionMode) = {
     { ProductionMode::hh, "hh" },
     { ProductionMode::h_tt, "h_tt" },
     { ProductionMode::h_tt_mssm, "h_tt_mssm" },
+    { ProductionMode::h_tt_sm, "h_tt_sm" },
 };
 
 class BaseTupleProducer : public edm::EDAnalyzer {
