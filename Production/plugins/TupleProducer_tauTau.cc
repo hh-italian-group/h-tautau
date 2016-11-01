@@ -8,7 +8,7 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::TauTau;
 
-    SelectionResults selection;
+    SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
@@ -51,6 +51,9 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     if(runSVfit)
         selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
+
+    if(eventEnergyScale == analysis::EventEnergyScale::Central)
+        previous_selection = SelectionResultsPtr(new SelectionResults(selection));
 }
 
 std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tauTau::CollectSignalTaus()
@@ -70,7 +73,7 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     const auto dmFinding = tau->tauID("decayModeFinding");
     cut(dmFinding > decayModeFinding, "oldDecayMode", dmFinding);
-    auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
+    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
     if(productionMode == ProductionMode::hh) {
@@ -82,22 +85,27 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
-    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
-    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
+    using EventPart = ntuple::StorageMode::EventPart;
 
-    BaseTupleProducer::FillEventTuple(selection);
-    eventTuple().channelID = static_cast<int>(analysis::Channel::TauTau);
+    BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
+    eventTuple().channelId = static_cast<int>(Channel::TauTau);
 
     // Leg 1, tau
     const TauCandidate& tau = selection.higgs->GetFirstDaughter();
-    eventTuple().p4_1     = analysis::LorentzVectorM(tau.GetMomentum());
-    eventTuple().q_1      = tau.GetCharge();
-    eventTuple().d0_1     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
-    eventTuple().dZ_1     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
-    eventTuple().iso_1    = tau.GetIsolation();
-    eventTuple().id_e_mva_nt_loose_1 = default_value;
-    eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_int_value;
-    eventTuple().tauIDs_1.insert(tau->tauIDs().begin(), tau->tauIDs().end());
+    eventTuple().p4_1 = LorentzVectorM(tau.GetMomentum());
+    eventTuple().q_1 = tau.GetCharge();
+    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
+    eventTuple().dxy_1 = packedLeadTauCand->dxy();
+    eventTuple().dz_1 = packedLeadTauCand->dz();
+    eventTuple().iso_1 = tau.GetIsolation();
+    FillLegGenMatch(1, tau->p4());
+
+    ntuple::StorageMode storageMode(eventTuple().storageMode);
+    if(!previous_selection || !selection.HaveSameFirstLegOrigin(*previous_selection))
+        FillTauIds(1, tau->tauIDs());
+    else
+        storageMode.SetPresence(EventPart::FirstTauIds, false);
+    eventTuple().storageMode = storageMode.Mode();
 
     eventTuple.Fill();
 }

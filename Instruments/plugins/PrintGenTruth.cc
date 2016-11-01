@@ -25,7 +25,10 @@ public:
 
     PrintGenTruth(const edm::ParameterSet& cfg) :
         particles_token(consumes<GenParticleVector>(cfg.getParameter<edm::InputTag>("genParticles"))),
-        lheEventProduct_token(mayConsume<LHEEventProduct>(cfg.getParameter<edm::InputTag>("lheEventProduct")))
+        lheEventProduct_token(mayConsume<LHEEventProduct>(cfg.getParameter<edm::InputTag>("lheEventProduct"))),
+        printTree(cfg.getUntrackedParameter<bool>("printTree", true)),
+        printLHE(cfg.getUntrackedParameter<bool>("printLHE", true)),
+        printPDT(cfg.getUntrackedParameter<bool>("printPDT", false))
     {
         const auto v_status = cfg.getUntrackedParameter<std::vector<int>>( "status", std::vector<int>());
         statusToAccept.insert(v_status.begin(), v_status.end());
@@ -43,20 +46,32 @@ private:
         os << std::boolalpha;
         es.getData(pdt);
 
-        edm::Handle<GenParticleVector> particles_handle;
-        event.getByToken(particles_token, particles_handle);
-        particles = &*particles_handle;
-        for(const auto& p : *particles) {
-            if(!Accept(p) || p.mother() != 0) continue;
-            os << "Gen particles decay tree:" << std::endl;
-            PrintDecay(p, "", os);
-            os << std::endl;
+
+        if(printTree) {
+            edm::Handle<GenParticleVector> particles_handle;
+            event.getByToken(particles_token, particles_handle);
+            particles = &*particles_handle;
+            for(const auto& p : *particles) {
+                if(!Accept(p) || p.mother() != 0) continue;
+                os << "Gen particles decay tree:" << std::endl;
+                PrintDecay(p, "", os);
+                os << std::endl;
+            }
         }
 
-        edm::Handle<LHEEventProduct> lheEventProduct;
-        if(event.getByToken(lheEventProduct_token, lheEventProduct)) {
-            os << "Les Houches table:" << std::endl;
-            PrintLesHouches(lheEventProduct->hepeup(), os);
+        if(printLHE) {
+            edm::Handle<LHEEventProduct> lheEventProduct;
+            if(event.getByToken(lheEventProduct_token, lheEventProduct)) {
+                os << "Les Houches table:" << std::endl;
+                PrintLesHouches(lheEventProduct->hepeup(), os);
+                os << std::endl;
+            }
+        }
+
+        if(printPDT) {
+            os << "Particle data table:" << std::endl;
+            PrintParticleTable(os);
+            os << std::endl;
         }
     }
 
@@ -179,14 +194,56 @@ private:
             w(os) << lheEvent.MOTHUP.at(n).second - 1;
             os << std::endl;
         }
+    }
 
+    void PrintParticleTable(std::ostream& os) const
+    {
+        static const std::vector<std::pair<std::string, size_t>> columns = {
+            { "pdgId", 12 }, { "name", 20 }, { "charge", 10 }, { "color", 10 }, { "tot_spin", 10 }, { "mass", 10 },
+            { "width", 12 }, { "lifetime", 12 }, { "Type", 10 }
+        };
+
+        os << std::left << std::setprecision(3);
+        for(const auto& column : columns)
+            os << std::setw(column.second) << column.first;
+        os << std::endl;
+
+        static const auto type = [](const HepPDT::ParticleData& d) -> std::string {
+            if(d.isMeson()) return "meson";
+            if(d.isBaryon()) return "baryon";
+            if(d.isDiQuark()) return "diquark";
+            if(d.isHadron()) return "hadron";
+            if(d.isLepton()) return "lepton";
+            if(d.isNucleus()) return "nucleus";
+            return "";
+        };
+
+        for(const auto& entry : *pdt) {
+            const auto& data = entry.second;
+
+            size_t k = 0;
+            const auto w = [&](std::ostream& s) -> std::ostream& { s << std::setw(columns.at(k++).second); return s; };
+
+            w(os) << data.pid();
+            w(os) << data.name();
+            w(os) << data.charge();
+            w(os) << data.color();
+            w(os) << data.spin().totalSpin();
+            w(os) << data.mass();
+            w(os) << data.totalWidth();
+            w(os) << data.lifetime();
+            w(os) << type(data);
+            os << std::endl;
+        }
     }
 
 private:
     edm::EDGetTokenT<GenParticleVector> particles_token;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
+    edm::EDGetTokenT<bool> printParticleTable_token;
     edm::ESHandle<ParticleDataTable> pdt;
     std::set<int> statusToAccept;
+    const bool printTree, printLHE, printPDT;
     const GenParticleVector* particles;
 };
 

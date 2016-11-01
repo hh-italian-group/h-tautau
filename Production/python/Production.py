@@ -35,7 +35,14 @@ options.register('lumiFile', '', VarParsing.multiplicity.singleton, VarParsing.v
                  "JSON file with lumi mask.")
 options.register('eventList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "List of events to process.")
-
+options.register('saveGenTopInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Save generator-level information for top quarks.")
+options.register('saveGenBosonInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                  "Save generator-level information for bosons.")
+options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Save generator-level information for jets.")
+options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Dump full config into stdout.")
 options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
@@ -107,6 +114,15 @@ runMVAMET( process, jetCollectionPF = JetCollectionName )
 process.MVAMET.srcLeptons  = cms.VInputTag('slimmedMuons', 'slimmedElectrons', 'slimmedTaus')
 process.MVAMET.requireOS = cms.bool(False)
 
+### MET filters
+process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+
+process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
+process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
+process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+
 ## Load module for Electron MVA ID
 ## It will append a value maps the miniAOD, that it's accesible throught a well Handle
 ## Example code here:
@@ -129,7 +145,26 @@ for idmod in id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 #------------
 
-process.tupleProductionSequence = cms.Sequence()
+### Top gen level info
+process.topGenSequence = cms.Sequence()
+if options.saveGenTopInfo:
+    process.load("TopQuarkAnalysis.TopEventProducers.sequences.ttGenEvent_cff")
+    process.decaySubset.fillMode = cms.string("kME")
+    process.initSubset.src = cms.InputTag('prunedGenParticles')
+    process.decaySubset.src = cms.InputTag('prunedGenParticles')
+    process.decaySubset.runMode = cms.string("Run2")
+    process.topGenSequence += process.makeGenEvt
+
+### Tuple production sequence
+
+process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
+    isMC     = cms.bool(not isData),
+    genEvent = cms.InputTag('generator'),
+    taus     = cms.InputTag('slimmedTaus')
+)
+
+process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
+
 if options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau' ]
 else:
@@ -145,7 +180,6 @@ for channel in channels:
     producerClassName = 'TupleProducer_{}'.format(channel)
     hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
-        genParticles            = cms.InputTag('genParticles'),
         electronSrc             = cms.InputTag('slimmedElectrons'),
         eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
         eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90'),
@@ -157,13 +191,16 @@ for channel in channels:
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = cms.InputTag('slimmedMETs'),
-        bits                    = cms.InputTag('TriggerResults', '', 'HLT'),
         prescales               = cms.InputTag('patTrigger'),
         objects                 = cms.InputTag('selectedPatTrigger'),
         metCov                  = cms.InputTag('METSignificance', 'METCovariance'),
+        badPFMuonFilter         = cms.InputTag('BadPFMuonFilter'),
+        badChCandidateFilter    = cms.InputTag('BadChargedCandidateFilter'),
         lheEventProducts        = cms.InputTag('externalLHEProducer'),
         genEventInfoProduct     = cms.InputTag('generator'),
-        pruned                  = cms.InputTag('prunedGenParticles'),
+        topGenEvent             = cms.InputTag('genEvt'),
+        genParticles            = cms.InputTag('prunedGenParticles'),
+        genJets                 = cms.InputTag('slimmedGenJets'),
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
@@ -171,7 +208,10 @@ for channel in channels:
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         energyScales            = cms.vstring(energyScales),
-        productionMode          = cms.string(options.productionMode)
+        productionMode          = cms.string(options.productionMode),
+        saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
+        saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
+        saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 
@@ -180,7 +220,11 @@ process.p = cms.Path(
     process.electronMVAValueMapProducer *
     process.JECsequence *
     process.METSignificance *
+    process.BadPFMuonFilter *
+    process.BadChargedCandidateFilter *
+    process.topGenSequence *
     process.tupleProductionSequence
 )
 
-#print process.dumpPython()
+if options.dumpPython:
+    print process.dumpPython()

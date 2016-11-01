@@ -8,7 +8,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::ETau;
 
-    SelectionResults selection;
+    SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
@@ -49,6 +49,15 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     if(runSVfit)
         selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
+    if(eventEnergyScale == analysis::EventEnergyScale::Central)
+        previous_selection = SelectionResultsPtr(new SelectionResults(selection));
+}
+
+std::vector<BaseTupleProducer::ElectronCandidate> TupleProducer_eTau::CollectZelectrons()
+{
+    using namespace std::placeholders;
+    const auto base_selector = std::bind(&TupleProducer_eTau::SelectZElectron, this, _1, _2);
+    return CollectObjects("Zelectrons", base_selector, electrons);
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> TupleProducer_eTau::CollectSignalElectrons()
@@ -64,6 +73,24 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_eTau::CollectSignalTa
     const auto base_selector = std::bind(&TupleProducer_eTau::SelectSignalTau, this, _1, _2);
     return CollectObjects("SignalTaus", base_selector, taus);
 }
+
+void TupleProducer_eTau::SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const
+{
+    using namespace cuts::H_tautau_2016::ETau::ZeeVeto;
+
+    cut(true, "gt0_ele_cand");
+    const LorentzVector& p4 = electron.GetMomentum();
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double electron_dxy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
+    cut(electron_dxy < dxy, "dxy", electron_dxy);
+    const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
+    cut(electron_dz < dz, "dz", electron_dz);
+    const bool veto  = (*ele_cutBased_veto)[electron.getPtr()];
+    cut(veto, "cut_based_veto");
+    cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
+}
+
 
 void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const
 {
@@ -116,21 +143,18 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
-    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
-    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
-    BaseTupleProducer::FillEventTuple(selection);
-    eventTuple().channelID = static_cast<int>(analysis::Channel::ETau);
+    BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
+    eventTuple().channelId = static_cast<int>(Channel::ETau);
 
     // Leg 1, lepton
     const ElectronCandidate& electron = selection.higgs->GetFirstDaughter();
-    eventTuple().p4_1     = LorentzVectorM(electron.GetMomentum());
-    eventTuple().q_1      = electron.GetCharge();
-    eventTuple().d0_1     = electron->gsfTrack()->dxy(primaryVertex->position());
-    eventTuple().dZ_1     = electron->gsfTrack()->dz(primaryVertex->position());
-    eventTuple().iso_1    = electron.GetIsolation();
-    eventTuple().id_e_mva_nt_loose_1 = default_value;
-    eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(electron->p4(), *genParticles) : default_int_value;
+    eventTuple().p4_1 = LorentzVectorM(electron.GetMomentum());
+    eventTuple().q_1 = electron.GetCharge();
+    eventTuple().dxy_1 = electron->gsfTrack()->dxy(primaryVertex->position());
+    eventTuple().dz_1 = electron->gsfTrack()->dz(primaryVertex->position());
+    eventTuple().iso_1 = electron.GetIsolation();
+    FillLegGenMatch(1, electron->p4());
 
     eventTuple.Fill();
 }

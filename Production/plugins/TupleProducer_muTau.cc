@@ -8,7 +8,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::MuTau;
 
-    SelectionResults selection;
+    SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
@@ -49,6 +49,16 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     if(runSVfit)
         selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
     FillEventTuple(selection);
+
+    if(eventEnergyScale == analysis::EventEnergyScale::Central)
+        previous_selection = SelectionResultsPtr(new SelectionResults(selection));
+}
+
+std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muTau::CollectZmuons()
+{
+    using namespace std::placeholders;
+    const auto base_selector = std::bind(&TupleProducer_muTau::SelectZMuon, this, _1, _2);
+    return CollectObjects("Zmuons", base_selector, muons);
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muTau::CollectSignalMuons()
@@ -63,6 +73,24 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_muTau::CollectSignalT
     using namespace std::placeholders;
     const auto base_selector = std::bind(&TupleProducer_muTau::SelectSignalTau, this, _1, _2);
     return CollectObjects("SignalTaus", base_selector, taus);
+}
+
+void TupleProducer_muTau::SelectZMuon(const MuonCandidate& muon, Cutter& cut) const
+{
+    using namespace cuts::H_tautau_2016::MuTau::ZmumuVeto;
+
+    cut(true, "gt0_mu_cand");
+    const LorentzVector& p4 = muon.GetMomentum();
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
+    cut(muon_dz < dz, "dz", muon_dz);
+    const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
+    cut(muon_dxy < dxy, "dxy", muon_dxy);
+    cut(muon->isGlobalMuon(), "GlobalMuon");
+    cut(muon->isTrackerMuon(), "trackerMuon");
+    cut(muon->isPFMuon(), "PFMuon");
+    cut(muon.GetIsolation() < pfRelIso04, "pfRelIso", muon.GetIsolation());
 }
 
 void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const
@@ -81,11 +109,10 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
     if(productionMode == ProductionMode::hh){
-	cut(muon->isTightMuon(*primaryVertex), "muonID");
-	cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
-    }
-    else{
-	cut(muon->isMediumMuon(), "muonID");
+        cut(muon->isTightMuon(*primaryVertex), "muonID");
+        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+    } else {
+        cut(muon->isMediumMuon(), "muonID");
     }
 }
 
@@ -112,21 +139,18 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
 void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 {
     using namespace analysis;
-    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
-    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
-    BaseTupleProducer::FillEventTuple(selection);
-    eventTuple().channelID = static_cast<int>(analysis::Channel::MuTau);
+    BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
+    eventTuple().channelId = static_cast<int>(Channel::MuTau);
 
     // Leg 1, lepton
     const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
-    eventTuple().p4_1     = LorentzVectorM(muon.GetMomentum());
-    eventTuple().q_1      = muon.GetCharge();
-    eventTuple().d0_1     = muon->muonBestTrack()->dxy(primaryVertex->position());
-    eventTuple().dZ_1     = muon->muonBestTrack()->dz(primaryVertex->position());
-    eventTuple().iso_1    = muon.GetIsolation();
-    eventTuple().id_e_mva_nt_loose_1 = default_value;
-    eventTuple().gen_match_1 = isMC ? gen_truth::genMatch(muon->p4(), *genParticles) : default_int_value;
+    eventTuple().p4_1 = LorentzVectorM(muon.GetMomentum());
+    eventTuple().q_1 = muon.GetCharge();
+    eventTuple().dxy_1 = muon->muonBestTrack()->dxy(primaryVertex->position());
+    eventTuple().dz_1 = muon->muonBestTrack()->dz(primaryVertex->position());
+    eventTuple().iso_1 = muon.GetIsolation();
+    FillLegGenMatch(1, muon->p4());
 
     eventTuple.Fill();
 }

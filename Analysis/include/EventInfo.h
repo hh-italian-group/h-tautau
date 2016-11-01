@@ -46,47 +46,12 @@ enum class JetOrdering { NoOrdering, Pt, CSV };
 class EventInfoBase {
 public:
     using Event = ntuple::Event;
-    using BjetPair = std::pair<size_t, size_t>;
+    using JetPair = ntuple::JetPair;
     using JetCollection = std::vector<JetCandidate>;
     using FatJetCollection = std::vector<FatJetCandidate>;
     using HiggsBBCandidate = CompositCandidate<JetCandidate, JetCandidate>;
 
-    static size_t NumberOfCombinationPairs(size_t n_bjets)
-    {
-        return n_bjets * (n_bjets - 1);
-    }
-
-    static size_t CombinationPairToIndex(const BjetPair& pair, size_t n_bjets)
-    {
-        const size_t min = std::min(pair.first, pair.second);
-        const size_t max = std::max(pair.first, pair.second);
-        if(n_bjets < 2 || min == max || max >= n_bjets)
-            throw exception("bad combination pair (%1%, %2%) for n b-jets = %3%.")
-                % pair.first % pair.second % n_bjets;
-        const size_t corr = pair.first < pair.second ? -1 : 0;
-        return pair.first * (n_bjets - 1) + pair.second + corr;
-    }
-
-    static BjetPair CombinationIndexToPair(size_t index, size_t n_bjets)
-    {
-        if(n_bjets < 2 || index >= NumberOfCombinationPairs(n_bjets))
-            throw exception("bad combination index = %1% for n b-jets = %2%.") % index % n_bjets;
-
-        BjetPair pair;
-        pair.second = index % (n_bjets - 1);
-        pair.first = (index - pair.second) / (n_bjets - 1);
-        if(pair.first <= pair.second)
-            ++pair.second;
-        return pair;
-    }
-
-    static BjetPair UndefinedBjetPair()
-    {
-        static BjetPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
-        return pair;
-    }
-
-    static BjetPair SelectBjetPair(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
+    static JetPair SelectBjetPair(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
                                    double eta_cut = std::numeric_limits<double>::lowest(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
@@ -104,7 +69,7 @@ public:
                 indexes.push_back(n);
         }
         std::sort(indexes.begin(), indexes.end(), orderer);
-        BjetPair selected_pair = UndefinedBjetPair();
+        JetPair selected_pair = ntuple::UndefinedJetPair();
         if(indexes.size() >= 1)
             selected_pair.first = indexes.at(0);
         if(indexes.size() >= 2)
@@ -114,7 +79,7 @@ public:
 
     static constexpr int verbosity = 0;
 
-    explicit EventInfoBase(const Event& _event, const BjetPair& _selected_bjet_pair = UndefinedBjetPair())
+    explicit EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair = ntuple::UndefinedJetPair())
         : event(&_event), eventIdentifier(_event.run, _event.lumi, _event.evt), selected_bjet_pair(_selected_bjet_pair),
           has_bjet_pair(selected_bjet_pair.first < GetNJets() &&
                         selected_bjet_pair.second < GetNJets()) {}
@@ -208,10 +173,16 @@ public:
         if(!HasBjetPair())
             throw exception("Can't retrieve KinFit results.");
         if(!kinfit_results) {
-            size_t index = CombinationPairToIndex(selected_bjet_pair, GetNJets());
+            const size_t pairId = ntuple::CombinationPairToIndex(selected_bjet_pair, GetNJets());
+            const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
+            if(iter == event->kinFit_jetPairId.end())
+                throw exception("Kinfit information for jet pair (%1%, %2%) is not stored for event %3%.")
+                    % selected_bjet_pair.first % selected_bjet_pair.second % eventIdentifier;
+            const auto index = std::distance(event->kinFit_jetPairId.begin(), iter);
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
             kinfit_results->convergence = event->kinFit_convergence.at(index);
             kinfit_results->chi2 = event->kinFit_chi2.at(index);
+            kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
             kinfit_results->mass = event->kinFit_m.at(index);
         }
         return *kinfit_results;
@@ -258,7 +229,7 @@ protected:
 
 private:
     EventIdentifier eventIdentifier;
-    BjetPair selected_bjet_pair;
+    JetPair selected_bjet_pair;
     bool has_bjet_pair;
 
     std::list<ntuple::TupleJet> tuple_jets;

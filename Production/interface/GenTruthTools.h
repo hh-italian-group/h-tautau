@@ -3,62 +3,93 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "h-tautau/Analysis/include/AnalysisTypes.h"
 
 namespace analysis {
 
 namespace gen_truth {
 
-inline int genMatch(const reco::Candidate::LorentzVector& p4, const std::vector<reco::GenParticle>& genParticles)
+using MatchResult = std::pair<GenMatch, const reco::GenParticle*>;
+
+inline void FindFinalStateDaughters(const reco::GenParticle& particle, std::vector<const reco::GenParticle*>& daughters,
+                                    const std::set<int>& pdg_to_exclude = {})
 {
-  int match = 6;
-  float dr = 0.2;
-  float dr_new = 0.2;
-
-  for ( std::vector<reco::GenParticle>::const_iterator genp = genParticles.begin();
-    genp != genParticles.end(); ++genp )
-    {
-    dr_new = ROOT::Math::VectorUtil::DeltaR( p4, genp->p4());
-
-    if (dr_new < dr){
-      if (TMath::Abs(genp->pdgId()) == 11) {
-          if (genp->pt() > 8) {
-             if (genp->statusFlags().isPrompt()) {
-                match = 1;
-                dr = dr_new;
-             }
-             else if (genp->statusFlags().isDirectPromptTauDecayProduct()) {
-                match = 3;
-                dr = dr_new;
-             }
-          }
-      }
-      else if (TMath::Abs(genp->pdgId()) == 13) {
-          if (genp->pt() > 8) {
-             if (genp->isPromptFinalState()){
-                match = 2;
-                dr = dr_new;
-             }
-             if (genp->isDirectPromptTauDecayProductFinalState()){
-                match = 4;
-                dr = dr_new;
-             }
-          }
-      }
-      else if (TMath::Abs(genp->pdgId()) == 15) {
-          if (genp->statusFlags().isPrompt()) {
-             reco::Candidate::LorentzVector tau_p4 = utils_genMatch::getVisMomentumNoLep(&(*genp));
-            if (tau_p4.pt() > 15) {
-                 match = 5;
-                dr = dr_new;
-             }
-          }
-      }
+    if(!particle.daughterRefVector().size()) {
+        const int abs_pdg = std::abs(particle.pdgId());
+        if(!pdg_to_exclude.count(abs_pdg))
+            daughters.push_back(&particle);
+    } else {
+        for(const auto& daughter : particle.daughterRefVector())
+            FindFinalStateDaughters(*daughter, daughters, pdg_to_exclude);
     }
-  } //GenParticle Loop
+}
 
-  return match;
+inline LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle, bool excludeInvisible,
+                                              bool excludeLightLeptons)
+{
+    using set = std::set<int>;
+    using pair = std::pair<bool, bool>;
+    static const set empty = {};
+    static const set light_leptons = { 11, 13 };
+    static const set invisible_particles = { 12, 14, 16 };
+    static const set light_and_invisible = tools::union_sets({light_leptons, invisible_particles});
+
+    static const std::map<pair, const set*> to_exclude {
+        { pair(false, false), &empty }, { pair(true, false), &invisible_particles },
+        { pair(false, true), &light_leptons }, { pair(true, true), &light_and_invisible },
+    };
+
+    std::vector<const reco::GenParticle*> daughters;
+    FindFinalStateDaughters(particle, daughters, *to_exclude.at(pair(excludeInvisible, excludeLightLeptons)));
+
+    LorentzVectorXYZ p4;
+    for(auto daughter : daughters)
+        p4 += daughter->p4();
+
+    return p4;
+}
+
+template<typename LVector>
+MatchResult LeptonGenMatch(const LVector& p4, const std::vector<reco::GenParticle>& genParticles)
+{
+    static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
+    static constexpr double dR2_threshold = std::pow(0.2, 2);
+
+    static const std::map<int, double> pt_thresholds = {
+        { electronPdgId, 8 }, { muonPdgId, 8 }, { tauPdgId, 15 }
+    };
+
+    using pair = std::pair<int, bool>;
+    static const std::map<pair, GenMatch> genMatches = {
+        { { electronPdgId, false }, GenMatch::Electron }, { { electronPdgId, true }, GenMatch::TauElectron },
+        { { muonPdgId, false }, GenMatch::Muon }, { { muonPdgId, true }, GenMatch::TauMuon },
+        { { tauPdgId, false }, GenMatch::Tau }, { { tauPdgId, true }, GenMatch::Tau }
+    };
+
+    MatchResult result(GenMatch::NoMatch, nullptr);
+    double match_dr2 = dR2_threshold;
+
+    for(const reco::GenParticle& particle : genParticles) {
+        const bool isTauProduct = particle.statusFlags().isDirectPromptTauDecayProduct();
+        if(!particle.statusFlags().isPrompt() && !isTauProduct) continue;
+
+        const int abs_pdg = std::abs(particle.pdgId());
+        if(!pt_thresholds.count(abs_pdg)) continue;
+
+        const auto particle_p4 = abs_pdg == tauPdgId ? GetFinalStateMomentum(particle, true, true) : particle.p4();
+        if(particle_p4.pt() <= pt_thresholds.at(abs_pdg)) continue;
+
+        const double dr2 = ROOT::Math::VectorUtil::DeltaR2(p4, particle_p4);
+        if(dr2 >= match_dr2) continue;
+
+        match_dr2 = dr2;
+        result.first = genMatches.at(pair(abs_pdg, isTauProduct));
+        result.second = &particle;
+    }
+
+    return result;
 }
 
 } // namespace gen_truth

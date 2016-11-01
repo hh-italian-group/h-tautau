@@ -2,6 +2,8 @@
 #include "h-tautau/McCorrections/include/TauUncertainties.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "../interface/GenTruthTools.h"
+#include "h-tautau/Analysis/include/MetFilters.h"
+#include "h-tautau/Cuts/include/Btag_2016.h"
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
@@ -22,16 +24,26 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     PUInfo_token(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
     lheEventProduct_token(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
     genWeights_token(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
-    prunedGen_token(consumes<std::vector<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
+    topGenEvent_token(mayConsume<TtGenEvent>(iConfig.getParameter<edm::InputTag>("topGenEvent"))),
+    genParticles_token(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
+    genJets_token(mayConsume<edm::View<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
+    badPFMuonFilter_token(consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"))),
+    badChCandidateFilter_token(consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"))),
     productionMode(analysis::EnumNameMap<ProductionMode>::GetDefault().Parse(
                        iConfig.getParameter<std::string>("productionMode"))),
     isMC(iConfig.getParameter<bool>("isMC")),
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
     runKinFit(iConfig.getParameter<bool>("runKinFit")),
+    saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
+    saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
+    saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     hltPaths(iConfig.getParameter<std::vector<std::string>>("hltPaths")),
     eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
-    triggerTools(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits")),
+    triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
+                 mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
+                 mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
+                 mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "PAT")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
@@ -71,6 +83,7 @@ void BaseTupleProducer::endJob()
 void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     edmEvent = &iEvent;
+    eventId = iEvent.id();
     triggerTools.Initialize(iEvent);
     iEvent.getByToken(electronsMiniAOD_token, pat_electrons);
     iEvent.getByToken(eleTightIdMap_token, tight_id_decisions);
@@ -84,9 +97,14 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(metCovMatrix_token, metCovMatrix);
     iEvent.getByToken(PUInfo_token, PUInfo);
-    if(isMC) iEvent.getByToken(genWeights_token, genEvt);
-    iEvent.getByToken(prunedGen_token, genParticles);
-    try {iEvent.getByToken(lheEventProduct_token, lheEventProduct);} catch(...){;};
+    if(isMC) {
+        iEvent.getByToken(genWeights_token, genEvt);
+        iEvent.getByToken(genParticles_token, genParticles);
+        iEvent.getByToken(lheEventProduct_token, lheEventProduct);
+        iEvent.getByToken(genJets_token, genJets);
+        if(saveGenTopInfo)
+            iEvent.getByToken(topGenEvent_token, topGenEvent);
+    }
 
     iSetup.get<JetCorrectionsRecord>().get("AK5PF", jetCorParColl);
     jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
@@ -187,7 +205,6 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
 {
     const pat::Jet& patJet = pat_jet.correctedJet("Uncorrected");
     const double abs_eta = std::abs(patJet.eta());
-
     if(abs_eta < 2.7 && (
         patJet.neutralHadronEnergyFraction() >= 0.99 ||
         patJet.neutralEmEnergyFraction() >= 0.99 ||
@@ -209,13 +226,12 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
     return true;
 }
 
-void BaseTupleProducer::FillLheInfo()
+void BaseTupleProducer::FillLheInfo(bool haveReference)
 {
     static constexpr int b_quark = 5;
     static const std::set<int> quarks_and_gluons = { 1, 2, 3, 4, 5, 6, 21 };
-    static const std::set<int> interesting_particles = { 5, 6, 23, 24};
 
-    if(!lheEventProduct.isValid()) {
+    if(haveReference || !lheEventProduct.isValid()) {
         eventTuple().lhe_n_partons = ntuple::DefaultFillValue<UInt_t>();
         eventTuple().lhe_n_b_partons = ntuple::DefaultFillValue<UInt_t>();
         eventTuple().lhe_HT = ntuple::DefaultFillValue<Float_t>();
@@ -238,6 +254,102 @@ void BaseTupleProducer::FillLheInfo()
     eventTuple().lhe_HT = std::sqrt(HT2);
 }
 
+void BaseTupleProducer::FillGenParticleInfo()
+{
+    static const std::set<int> bosons = { 23, 24, 25, 35 };
+
+    std::vector<const reco::GenParticle*> particles_to_store;
+
+    if(saveGenBosonInfo) {
+        for(const auto& particle : *genParticles) {
+            const auto& flag = particle.statusFlags();
+            if(!flag.isPrompt() || !flag.isLastCopy()) continue;
+            const int abs_pdg = std::abs(particle.pdgId());
+            if(!bosons.count(abs_pdg)) continue;
+            particles_to_store.push_back(&particle);
+        }
+    }
+
+    if(saveGenTopInfo) {
+        auto top = topGenEvent->top();
+        if(top)
+            particles_to_store.push_back(top);
+        auto top_bar = topGenEvent->topBar();
+        if(top_bar)
+            particles_to_store.push_back(top_bar);
+    }
+
+    for(auto particle : particles_to_store) {
+        eventTuple().genParticles_pdg.push_back(particle->pdgId());
+        eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+    }
+}
+
+void BaseTupleProducer::FillGenJetInfo()
+{
+    eventTuple().genJets_nTotal = genJets->size();
+    if(!saveGenJetInfo) return;
+    for(const auto& jet : *genJets)
+        eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(jet.p4()));
+}
+
+void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4)
+{
+    using namespace analysis;
+    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
+
+    auto& gen_match = leg_id == 1 ? eventTuple().gen_match_1 : eventTuple().gen_match_2;
+    auto& gen_p4 = leg_id == 1 ? eventTuple().gen_p4_1 : eventTuple().gen_p4_2;
+
+    if(isMC) {
+        const auto match = gen_truth::LeptonGenMatch(p4, *genParticles);
+        gen_match = static_cast<int>(match.first);
+        const auto metched_p4 = match.second ? match.second->p4() : LorentzVectorXYZ();
+        gen_p4 = ntuple::LorentzVectorM(metched_p4);
+    } else {
+        gen_match = default_int_value;
+        gen_p4 = ntuple::LorentzVectorM();
+    }
+}
+
+void BaseTupleProducer::FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds)
+{
+    using namespace analysis;
+
+    std::vector<uint32_t>& keys = leg_id == 1 ? eventTuple().tauId_keys_1 : eventTuple().tauId_keys_2;
+    std::vector<float>& values = leg_id == 1 ? eventTuple().tauId_values_1 : eventTuple().tauId_values_2;
+
+    for(const auto& tauId : tauIds) {
+        const uint32_t key = tools::hash(tauId.first);
+        keys.push_back(key);
+        values.push_back(tauId.second);
+    }
+}
+
+void BaseTupleProducer::FillMetFilters()
+{
+    using MetFilters = ntuple::MetFilters;
+    using Filter = MetFilters::Filter;
+
+    MetFilters filters;
+    filters.SetResult(Filter::PrimaryVertex, triggerTools.GetAnyTriggerResult("Flag_goodVertices"));
+    filters.SetResult(Filter::BeamHalo, triggerTools.GetAnyTriggerResult("Flag_globalTightHalo2016Filter"));
+    filters.SetResult(Filter::HBHE_noise, triggerTools.GetAnyTriggerResult("Flag_HBHENoiseFilter"));
+    filters.SetResult(Filter::HBHEiso_noise, triggerTools.GetAnyTriggerResult("Flag_HBHENoiseIsoFilter"));
+    filters.SetResult(Filter::ECAL_TP, triggerTools.GetAnyTriggerResult("Flag_EcalDeadCellTriggerPrimitiveFilter"));
+    filters.SetResult(Filter::ee_badSC_noise, triggerTools.GetAnyTriggerResult("Flag_eeBadScFilter"));
+
+    edm::Handle<bool> badPFMuon;
+    edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);
+    filters.SetResult(Filter::badMuon, *badPFMuon);
+
+    edm::Handle<bool> badChCandidate;
+    edmEvent->getByToken(badChCandidateFilter_token, badChCandidate);
+    filters.SetResult(Filter::badChargedHadron,*badChCandidate);
+
+    eventTuple().metFilters = filters.FilterResults();
+}
+
 double BaseTupleProducer::GetNumberOfPileUpInteractions() const
 {
     if(PUInfo.isValid()) {
@@ -252,32 +364,31 @@ double BaseTupleProducer::GetNumberOfPileUpInteractions() const
 void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                         const std::vector<LorentzVector>& signalLeptonMomentums)
 {
+    static constexpr bool RunKinfitForAllPairs = false;
+
     selection.jets = CollectJets(signalLeptonMomentums);
-    if(!runKinFit) return;
+    const size_t n_jets = selection.jets.size();
+    if(!runKinFit || n_jets < 2) return;
 
-    for(size_t n = 0; n < selection.jets.size(); ++n) {
-        for(size_t k = 0; k < selection.jets.size(); ++k) {
-            if(k == n) continue;
-            const auto& result = kinfitProducer.Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
-                                                    selection.jets.at(n).GetMomentum(),
-                                                    selection.jets.at(k).GetMomentum(), *met);
-            selection.kinfitResults.push_back(result);
+    const auto runKinfit = [&](size_t first, size_t second) {
+        const ntuple::JetPair pair(first, second);
+        const size_t pair_index = ntuple::CombinationPairToIndex(pair, n_jets);
+        const auto& result = kinfitProducer.Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
+                                                selection.jets.at(pair.first).GetMomentum(),
+                                                selection.jets.at(pair.second).GetMomentum(), *met);
+        selection.kinfitResults[pair_index] = result;
+    };
+
+    if(RunKinfitForAllPairs) {
+        for(size_t n = 0; n < n_jets; ++n) {
+            for(size_t k = 0; k < n_jets; ++k) {
+                if(k == n) continue;
+                runKinfit(n, k);
+            }
         }
+    } else {
+        runKinfit(0, 1);
     }
-}
-
-std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectZelectrons()
-{
-    using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectZElectron, this, _1, _2);
-    return CollectObjects("Zelectrons", base_selector, electrons);
-}
-
-std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectZmuons()
-{
-    using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectZMuon, this, _1, _2);
-    return CollectObjects("Zmuons", base_selector, muons);
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectVetoElectrons(
@@ -298,44 +409,22 @@ std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectVetoMuon
 std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
         const std::vector<LorentzVector>& signalLeptonMomentums)
 {
+    using namespace cuts::btag_2016;
     using namespace std::placeholders;
     const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2, signalLeptonMomentums);
-    return CollectObjects("jets", baseSelector, jets);
-}
 
-void BaseTupleProducer::SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const
-{
-    using namespace cuts::H_tautau_2016::ETau::ZeeVeto;
+    const auto comparitor = [](const JetCandidate& j1, const JetCandidate& j2) {
+        const auto eta1 = std::abs(j1.GetMomentum().eta());
+        const auto eta2 = std::abs(j2.GetMomentum().eta());
+        if(eta1 < eta && eta2 >= eta) return true;
+        if(eta1 >= eta && eta2 < eta) return false;
+        const auto csv1 = j1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        const auto csv2 = j2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        if(csv1 != csv2) return csv1 > csv2;
+        return j1.GetMomentum().pt() > j2.GetMomentum().pt();
+    };
 
-    cut(true, "gt0_ele_cand");
-    const LorentzVector& p4 = electron.GetMomentum();
-    cut(p4.pt() > pt, "pt", p4.pt());
-    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
-    const double electron_dxy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
-    cut(electron_dxy < dxy, "dxy", electron_dxy);
-    const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
-    cut(electron_dz < dz, "dz", electron_dz);
-    const bool veto  = (*ele_cutBased_veto)[electron.getPtr()];
-    cut(veto, "cut_based_veto");
-    cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
-}
-
-void BaseTupleProducer::SelectZMuon(const MuonCandidate& muon, Cutter& cut) const
-{
-    using namespace cuts::H_tautau_2016::MuTau::ZmumuVeto;
-
-    cut(true, "gt0_mu_cand");
-    const LorentzVector& p4 = muon.GetMomentum();
-    cut(p4.pt() > pt, "pt", p4.pt());
-    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
-    const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
-    cut(muon_dz < dz, "dz", muon_dz);
-    const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
-    cut(muon_dxy < dxy, "dxy", muon_dxy);
-    cut(muon->isGlobalMuon(), "GlobalMuon");
-    cut(muon->isTrackerMuon(), "trackerMuon");
-    cut(muon->isPFMuon(), "PFMuon");
-    cut(muon.GetIsolation() < pfRelIso04, "pfRelIso", muon.GetIsolation());
+    return CollectObjects("jets", baseSelector, jets, comparitor);
 }
 
 void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
@@ -406,78 +495,99 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     }
 }
 
-void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
+void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection,
+                                       const analysis::SelectionResultsBase* reference)
 {
     using namespace analysis;
-    static constexpr float default_value = ntuple::DefaultFillValue<Float_t>();
-    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
+    using EventPart = ntuple::StorageMode::EventPart;
+
+    ntuple::StorageMode storageMode;
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
     eventTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
-
-    eventTuple().weightevt = isMC ? genEvt->weight() : 1;
-    FillLheInfo();
+    eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
     eventTuple().npv = vertices->size();
     eventTuple().npu = GetNumberOfPileUpInteractions();
 
     // HTT candidate
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
+    eventTuple().SVfit_mt = selection.svfitResult.transverseMass;
 
     // Leg 2, tau
     const TauCandidate& tau = selection.GetSecondLeg();
-    eventTuple().p4_2     = analysis::LorentzVectorM(tau.GetMomentum());
-    eventTuple().q_2      = tau.GetCharge();
-    eventTuple().d0_2     = Calculate_dxy(tau->vertex(), primaryVertex->position(), tau.GetMomentum());
-    eventTuple().dZ_2     = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get())->dz();
-    eventTuple().iso_2    = tau.GetIsolation();
-    eventTuple().id_e_mva_nt_loose_1 = default_value;
-    eventTuple().gen_match_2 = isMC ? gen_truth::genMatch(tau->p4(), *genParticles) : default_int_value;
+    eventTuple().p4_2 = LorentzVectorM(tau.GetMomentum());
+    eventTuple().q_2 = tau.GetCharge();
+    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
+    eventTuple().dxy_2 = packedLeadTauCand->dxy();
+    eventTuple().dz_2 = packedLeadTauCand->dz();
+    eventTuple().iso_2 = tau.GetIsolation();
+    FillLegGenMatch(2, tau->p4());
 
-    eventTuple().tauIDs_2.insert(tau->tauIDs().begin(), tau->tauIDs().end());
+    if(!reference || !selection.HaveSameSecondLegOrigin(*reference))
+        FillTauIds(2, tau->tauIDs());
+    else
+        storageMode.SetPresence(EventPart::SecondTauIds, false);
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
+    FillMetFilters();
 
-    for(const JetCandidate& jet : selection.jets) {
-        const LorentzVector& p4 = jet.GetMomentum();
-        eventTuple().jets_p4.push_back(p4);
-        eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
-        eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        //eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
-        eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
-    }
+    if(!reference || !selection.HaveSameJets(*reference)) {
+        for(const JetCandidate& jet : selection.jets) {
+            const LorentzVector& p4 = jet.GetMomentum();
+            eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
+            eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
+            eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
+            eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
+            eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
+        }
+    } else
+        storageMode.SetPresence(EventPart::Jets, false);
 
-    for(const JetCandidate& jet : fatJets) {
-        const LorentzVector& p4 = jet.GetMomentum();
-        eventTuple().fatJets_p4.push_back(p4);
-        eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
-        eventTuple().fatJets_m_filtered.push_back(GetUserFloat(jet, "ak8PFJetsCHSFilteredMass"));
-        eventTuple().fatJets_m_trimmed.push_back(GetUserFloat(jet, "ak8PFJetsCHSTrimmedMass"));
-        eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
-        eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
-        eventTuple().fatJets_n_subjettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
-        eventTuple().fatJets_n_subjettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
+    const bool haveReference = reference && selection.eventId == reference->eventId;
+    storageMode.SetPresence(EventPart::FatJets, !haveReference);
+    storageMode.SetPresence(EventPart::GenInfo, !haveReference);
+    eventTuple().storageMode = storageMode.Mode();
 
-        if(!jet->hasSubjets("SoftDrop")) continue;
-        const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
-        const auto& sub_jets = jet->subjets("SoftDrop");
-        for(const auto& sub_jet : sub_jets) {
-            eventTuple().subJets_p4.push_back(analysis::LorentzVector(sub_jet->p4()));
-            eventTuple().subJets_csv.push_back(sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-            eventTuple().subJets_parentIndex.push_back(parentIndex);
+    if(!haveReference) {
+        for(const JetCandidate& jet : fatJets) {
+            const LorentzVector& p4 = jet.GetMomentum();
+            eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(p4));
+            eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
+            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
+            eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
+            eventTuple().fatJets_n_subjettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
+            eventTuple().fatJets_n_subjettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
+
+            if(!jet->hasSubjets("SoftDrop")) continue;
+            const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
+            const auto& sub_jets = jet->subjets("SoftDrop");
+            for(const auto& sub_jet : sub_jets) {
+                eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
+                eventTuple().subJets_csv.push_back(
+                            sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                eventTuple().subJets_parentIndex.push_back(parentIndex);
+            }
         }
     }
 
-    for(const kin_fit::FitResults& result : selection.kinfitResults) {
-        eventTuple().kinFit_m.push_back(result.mass);
-        eventTuple().kinFit_chi2.push_back(result.chi2);
-        eventTuple().kinFit_convergence.push_back(result.convergence);
+    for(const auto& result : selection.kinfitResults) {
+        eventTuple().kinFit_jetPairId.push_back(result.first);
+        eventTuple().kinFit_m.push_back(result.second.mass);
+        eventTuple().kinFit_chi2.push_back(result.second.chi2);
+        eventTuple().kinFit_convergence.push_back(result.second.convergence);
+    }
+
+    FillLheInfo(haveReference);
+    if(isMC && !haveReference) {
+        FillGenParticleInfo();
+        FillGenJetInfo();
     }
 
     eventTuple().dilepton_veto  = selection.Zveto;

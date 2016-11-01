@@ -14,6 +14,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 class TupleProducer_tauTau: public BaseTupleProducer {
 public:
     using SelectionResults = analysis::SelectionResults<TauCandidate>;
+    using SelectionResultsPtr = std::shared_ptr<SelectionResults>;
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
 public:
@@ -27,4 +28,6 @@ private:
     void FillEventTuple(const SelectionResults& selection);
     void FillSyncTuple(const SelectionResults& selection);
 
+private:
+    SelectionResultsPtr previous_selection;
 };

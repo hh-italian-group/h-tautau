@@ -11,15 +11,28 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "AnalysisTools/Core/include/EnumNameMap.h"
 
 namespace analysis {
+
+enum class CMSSW_Process { SIM, HLT, RECO, PAT };
+ENUM_NAMES(CMSSW_Process) = {
+    { CMSSW_Process::SIM, "SIM" },
+    { CMSSW_Process::HLT, "HLT" },
+    { CMSSW_Process::RECO, "RECO" },
+    { CMSSW_Process::PAT, "PAT" }
+};
 
 class TriggerTools {
 public:
     using L1ParticlePtrSet = std::set<const l1extra::L1JetParticle*>;
     template<typename T> using EDGetTokenT = edm::EDGetTokenT<T>;
+    template<typename T> using Handle = edm::Handle<T>;
 
-    TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResults_token,
+    TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
+                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
+                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
+                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token);
@@ -77,14 +90,18 @@ public:
         return L1Higgses;
     }
 
+    bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;
+    bool GetTriggerResult(CMSSW_Process process, const std::string& name) const;
+    bool GetAnyTriggerResult(const std::string& name) const;
+
 private:
-    edm::EDGetTokenT<edm::TriggerResults> triggerResults_token;
-    edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_token;
-    edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_token;
-    edm::EDGetTokenT<std::vector<l1extra::L1JetParticle>> l1JetParticles_token;
+    std::map<CMSSW_Process, EDGetTokenT<edm::TriggerResults>> triggerResults_tokens;
+    EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_token;
+    EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_token;
+    EDGetTokenT<std::vector<l1extra::L1JetParticle>> l1JetParticles_token;
 
     const edm::Event* iEvent;
-    edm::Handle<edm::TriggerResults> triggerResults;
+    std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
     edm::Handle<std::vector<l1extra::L1JetParticle>> l1JetParticles;

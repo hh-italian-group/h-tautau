@@ -63,6 +63,17 @@ public:
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
             }
 
+            const auto GetTauID = [&](size_t leg_id, const std::string& id_name) -> float {
+                const auto& id_keys = leg_id == 1 ? event->tauId_keys_1 : event->tauId_keys_2;
+                const auto& id_values = leg_id == 1 ? event->tauId_values_1 : event->tauId_values_2;
+                const uint32_t key = tools::hash(id_name);
+                const auto iter = std::find(id_keys.begin(), id_keys.end(), key);
+                if(iter == id_keys.end()) return default_value;
+                const auto index = std::distance(id_keys.begin(), iter);
+                return id_values.at(index);
+            };
+
+
             sync().run = event->run;
             sync().lumi = event->lumi;
             sync().evt = event->evt;
@@ -75,28 +86,28 @@ public:
             sync().eta_1 = event->p4_1.Eta();
             sync().m_1 = event->p4_1.mass();
             sync().q_1 = event->q_1;
-            sync().d0_1 = event->d0_1;
-            sync().dZ_1 = event->dZ_1;
-            sync().mt_1 = Calculate_MT(event->p4_1, event->mvaMET_p4);
+            sync().d0_1 = event->dxy_1;
+            sync().dZ_1 = event->dz_1;
+//            sync().mt_1 = Calculate_MT(event->p4_1, event->mvaMET_p4);
             sync().pfmt_1 = Calculate_MT(event->p4_1, event->pfMET_p4);
-            sync().puppimt_1 = Calculate_MT(event->p4_1, event->pfMET_p4);
+//            sync().puppimt_1 = Calculate_MT(event->p4_1, event->pfMET_p4);
             sync().iso_1 =  event->iso_1;
-            sync().id_e_mva_nt_loose_1 = event->id_e_mva_nt_loose_1;
+//            sync().id_e_mva_nt_loose_1 = event->id_e_mva_nt_loose_1;
             sync().gen_match_1 = event->gen_match_1;
-            sync().againstElectronLooseMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronLooseMVA6");
-            sync().againstElectronMediumMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronMediumMVA6");
-            sync().againstElectronTightMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronTightMVA6");
-            sync().againstElectronVLooseMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronVLooseMVA6");
-            sync().againstElectronVTightMVA6_1 = GetTauID(event->tauIDs_1, "againstElectronVTightMVA6");
-            sync().againstMuonLoose3_1 = GetTauID(event->tauIDs_1, "againstMuonLoose3");
-            sync().againstMuonTight3_1 = GetTauID(event->tauIDs_1, "againstMuonTight3");
-            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = GetTauID(event->tauIDs_1, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
-            sync().byIsolationMVA3newDMwoLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3newDMwoLTraw");
-            sync().byIsolationMVA3oldDMwoLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3oldDMwoLTraw");
-            sync().byIsolationMVA3newDMwLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3newDMwLTraw");
-            sync().byIsolationMVA3oldDMwLTraw_1 = GetTauID(event->tauIDs_1, "byIsolationMVA3oldDMwLTraw");
+            sync().againstElectronLooseMVA6_1 = GetTauID(1, "againstElectronLooseMVA6");
+            sync().againstElectronMediumMVA6_1 = GetTauID(1, "againstElectronMediumMVA6");
+            sync().againstElectronTightMVA6_1 = GetTauID(1, "againstElectronTightMVA6");
+            sync().againstElectronVLooseMVA6_1 = GetTauID(1, "againstElectronVLooseMVA6");
+            sync().againstElectronVTightMVA6_1 = GetTauID(1, "againstElectronVTightMVA6");
+            sync().againstMuonLoose3_1 = GetTauID(1, "againstMuonLoose3");
+            sync().againstMuonTight3_1 = GetTauID(1, "againstMuonTight3");
+            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = GetTauID(1, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
+            sync().byIsolationMVA3newDMwoLTraw_1 = GetTauID(1, "byIsolationMVA3newDMwoLTraw");
+            sync().byIsolationMVA3oldDMwoLTraw_1 = GetTauID(1, "byIsolationMVA3oldDMwoLTraw");
+            sync().byIsolationMVA3newDMwLTraw_1 = GetTauID(1, "byIsolationMVA3newDMwLTraw");
+            sync().byIsolationMVA3oldDMwLTraw_1 = GetTauID(1, "byIsolationMVA3oldDMwLTraw");
             //sync().chargedIsoPtSum_1 = ;
-            sync().decayModeFindingOldDMs_1 = GetTauID(event->tauIDs_1, "decayModeFindingOldDMs");
+            sync().decayModeFindingOldDMs_1 = GetTauID(1, "decayModeFindingOldDMs");
             // sync().neutralIsoPtSum_1 = ;
             // sync().puCorrPtSum_1 = ;
             // sync().trigweight_1 = ;
@@ -107,51 +118,51 @@ public:
             sync().eta_2 = event->p4_2.Eta();
             sync().m_2 = event->p4_2.mass();
             sync().q_2 = event->q_2;
-            sync().d0_2 = event->d0_2;
-            sync().dZ_2 = event->dZ_2;
-            sync().mt_2 = Calculate_MT(event->p4_2, event->mvaMET_p4);
+            sync().d0_2 = event->dxy_2;
+            sync().dZ_2 = event->dz_2;
+//            sync().mt_2 = Calculate_MT(event->p4_2, event->mvaMET_p4);
             sync().pfmt_2 = Calculate_MT(event->p4_2, event->pfMET_p4);
-            sync().puppimt_2 = Calculate_MT(event->p4_2, event->pfMET_p4);
+//            sync().puppimt_2 = Calculate_MT(event->p4_2, event->pfMET_p4);
             sync().iso_2 =  event->iso_2;
-            sync().id_e_mva_nt_loose_2 = event->id_e_mva_nt_loose_2;
+//            sync().id_e_mva_nt_loose_2 = event->id_e_mva_nt_loose_2;
             sync().gen_match_2 = event->gen_match_2;
-            sync().againstElectronLooseMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronLooseMVA6");
-            sync().againstElectronMediumMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronMediumMVA6");
-            sync().againstElectronTightMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronTightMVA6");
-            sync().againstElectronVLooseMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronVLooseMVA6");
-            sync().againstElectronVTightMVA6_2 = GetTauID(event->tauIDs_2, "againstElectronVTightMVA6");
-            sync().againstMuonLoose3_2 = GetTauID(event->tauIDs_2, "againstMuonLoose3");
-            sync().againstMuonTight3_2 = GetTauID(event->tauIDs_2, "againstMuonTight3");
-            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = GetTauID(event->tauIDs_2, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
-            sync().byIsolationMVA3newDMwoLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3newDMwoLTraw");
-            sync().byIsolationMVA3oldDMwoLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3oldDMwoLTraw");
-            sync().byIsolationMVA3newDMwLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3newDMwLTraw");
-            sync().byIsolationMVA3oldDMwLTraw_2 = GetTauID(event->tauIDs_2, "byIsolationMVA3oldDMwLTraw");
+            sync().againstElectronLooseMVA6_2 = GetTauID(2, "againstElectronLooseMVA6");
+            sync().againstElectronMediumMVA6_2 = GetTauID(2, "againstElectronMediumMVA6");
+            sync().againstElectronTightMVA6_2 = GetTauID(2, "againstElectronTightMVA6");
+            sync().againstElectronVLooseMVA6_2 = GetTauID(2, "againstElectronVLooseMVA6");
+            sync().againstElectronVTightMVA6_2 = GetTauID(2, "againstElectronVTightMVA6");
+            sync().againstMuonLoose3_2 = GetTauID(2, "againstMuonLoose3");
+            sync().againstMuonTight3_2 = GetTauID(2, "againstMuonTight3");
+            sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = GetTauID(2, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
+            sync().byIsolationMVA3newDMwoLTraw_2 = GetTauID(2, "byIsolationMVA3newDMwoLTraw");
+            sync().byIsolationMVA3oldDMwoLTraw_2 = GetTauID(2, "byIsolationMVA3oldDMwoLTraw");
+            sync().byIsolationMVA3newDMwLTraw_2 = GetTauID(2, "byIsolationMVA3newDMwLTraw");
+            sync().byIsolationMVA3oldDMwLTraw_2 = GetTauID(2, "byIsolationMVA3oldDMwLTraw");
             //sync().chargedIsoPtSum_2 = ;
-            sync().decayModeFindingOldDMs_2 = GetTauID(event->tauIDs_2, "decayModeFindingOldDMs");
+            sync().decayModeFindingOldDMs_2 = GetTauID(2, "decayModeFindingOldDMs");
             // sync().neutralIsoPtSum_2 = ;
             // sync().puCorrPtSum_2 = ;
             // sync().trigweight_2 = ;
             // sync().idisoweight_2 = ;
 
             sync().pt_tt = (event->p4_1 + event->p4_2 + event->pfMET_p4).Pt();
-            sync().mt_tot = Calculate_TotalMT(event->p4_1, event->p4_2, event->mvaMET_p4);
+//            sync().mt_tot = Calculate_TotalMT(event->p4_1, event->p4_2, event->mvaMET_p4);
             sync().m_vis = (event->p4_1 + event->p4_2).M();
             sync().m_sv = event->SVfit_p4.M();
-            //sync().mt_sv = ;
+            sync().mt_sv = event->SVfit_mt;
 
             sync().met = event->pfMET_p4.Pt();
             sync().metphi = TVector2::Phi_0_2pi(event->pfMET_p4.Phi());
-            sync().puppimet = event->puppiMET_p4.Pt();
-            sync().puppimetphi = event->puppiMET_p4.Phi();
-            sync().mvamet = event->mvaMET_p4.Pt();
-            sync().mvametphi = event->mvaMET_p4.Phi();
+//            sync().puppimet = event->puppiMET_p4.Pt();
+//            sync().puppimetphi = event->puppiMET_p4.Phi();
+//            sync().mvamet = event->mvaMET_p4.Pt();
+//            sync().mvametphi = event->mvaMET_p4.Phi();
             sync().pzetavis = Calculate_visiblePzeta(event->p4_1, event->p4_2);
-            sync().pzetamiss = Calculate_Pzeta(event->p4_1, event->p4_2, event->mvaMET_p4);
-            sync().mvacov00 = event->mvaMET_cov[0][0];
-            sync().mvacov01 = event->mvaMET_cov[0][1];
-            sync().mvacov10 = event->mvaMET_cov[1][0];
-            sync().mvacov11 = event->mvaMET_cov[1][1];
+//            sync().pzetamiss = Calculate_Pzeta(event->p4_1, event->p4_2, event->mvaMET_p4);
+//            sync().mvacov00 = event->mvaMET_cov[0][0];
+//            sync().mvacov01 = event->mvaMET_cov[0][1];
+//            sync().mvacov10 = event->mvaMET_cov[1][0];
+//            sync().mvacov11 = event->mvaMET_cov[1][1];
             sync().metcov00 = event->pfMET_cov[0][0];
             sync().metcov01 = event->pfMET_cov[0][1];
             sync().metcov10 = event->pfMET_cov[1][0];
@@ -275,15 +286,15 @@ public:
                 sync().bjet_csv_2 = default_value;
             }
 
-//            if(bjets_csv.size() >= 2)
-//                sync().kinfit_convergence = event.GetKinFitResults().convergence;
-//            else
-//                sync().kinfit_convergence = default_int_value;
+            if(bjets_csv.size() >= 2)
+                sync().kinfit_convergence = event.GetKinFitResults().convergence;
+            else
+                sync().kinfit_convergence = default_int_value;
 
-//            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
-//                sync().m_kinfit = event.GetKinFitResults().mass;
-//            else
-//                sync().m_kinfit = default_value;
+            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+                sync().m_kinfit = event.GetKinFitResults().mass;
+            else
+                sync().m_kinfit = default_value;
 
             sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
@@ -297,8 +308,8 @@ public:
                 sync().fatJet_phi = fatJet.GetMomentum().Phi();
                 sync().fatJet_energy = fatJet.GetMomentum().E();
                 sync().fatJet_m_pruned = fatJet->m(ntuple::TupleFatJet::MassType::Pruned);
-                sync().fatJet_m_filtered = fatJet->m(ntuple::TupleFatJet::MassType::Filtered);
-                sync().fatJet_m_trimmed = fatJet->m(ntuple::TupleFatJet::MassType::Trimmed);
+//                sync().fatJet_m_filtered = fatJet->m(ntuple::TupleFatJet::MassType::Filtered);
+//                sync().fatJet_m_trimmed = fatJet->m(ntuple::TupleFatJet::MassType::Trimmed);
                 sync().fatJet_m_softDrop = fatJet->m(ntuple::TupleFatJet::MassType::SoftDrop);
                 sync().fatJet_n_subjets = fatJet->subJets().size();
                 sync().fatJet_n_subjettiness_tau1 = fatJet->n_subjettiness(1);
@@ -325,10 +336,6 @@ public:
     }
 
 private:
-    float GetTauID(const std::map<std::string, float>& id_map, const std::string& id_name) const
-    {
-        return id_map.count(id_name) ? id_map.at(id_name) : default_value;
-    }
 
 private:
     Arguments args;
