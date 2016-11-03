@@ -42,12 +42,13 @@ inline LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle,
     };
 
     std::vector<const reco::GenParticle*> daughters;
-    FindFinalStateDaughters(particle, daughters, *to_exclude.at(pair(excludeInvisible, excludeLightLeptons)));
+    FindFinalStateDaughters(particle, daughters, *to_exclude.at(pair(excludeInvisible, false)));
 
     LorentzVectorXYZ p4;
-    for(auto daughter : daughters)
-        p4 += daughter->p4();
-
+    for(auto daughter : daughters){
+	if(excludeLightLeptons && light_leptons.count(std::abs(daughter->pdgId())) && daughter->statusFlags().isDirectTauDecayProduct()) continue;     
+	p4 += daughter->p4();
+    }
     return p4;
 }
 
@@ -70,25 +71,26 @@ MatchResult LeptonGenMatch(const LVector& p4, const std::vector<reco::GenParticl
 
     MatchResult result(GenMatch::NoMatch, nullptr);
     double match_dr2 = dR2_threshold;
+ 
+
 
     for(const reco::GenParticle& particle : genParticles) {
         const bool isTauProduct = particle.statusFlags().isDirectPromptTauDecayProduct();
-        if(!particle.statusFlags().isPrompt() && !isTauProduct) continue;
+        if((!particle.statusFlags().isPrompt() && !isTauProduct) || !particle.statusFlags().isLastCopy()) continue;
 
         const int abs_pdg = std::abs(particle.pdgId());
         if(!pt_thresholds.count(abs_pdg)) continue;
 
         const auto particle_p4 = abs_pdg == tauPdgId ? GetFinalStateMomentum(particle, true, true) : particle.p4();
-        if(particle_p4.pt() <= pt_thresholds.at(abs_pdg)) continue;
 
         const double dr2 = ROOT::Math::VectorUtil::DeltaR2(p4, particle_p4);
         if(dr2 >= match_dr2) continue;
+        if(particle_p4.pt() <= pt_thresholds.at(abs_pdg)) continue;
 
         match_dr2 = dr2;
         result.first = genMatches.at(pair(abs_pdg, isTauProduct));
         result.second = &particle;
     }
-
     return result;
 }
 
