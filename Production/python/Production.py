@@ -98,21 +98,23 @@ if options.ReRunJEC:
         jetCorrFactorsSource = cms.VInputTag(cms.InputTag('patJetCorrFactorsReapplyJEC'))
     )
 
-    process.METSignificance.srcPfJets = cms.InputTag('patJetsReapplyJEC', '', processName)
-    process.METSignificance.srcMet = cms.InputTag('patpfMETT1', '', processName)
-
     process.JECsequence = cms.Sequence(process.patJetCorrFactorsReapplyJEC * process.patJetsReapplyJEC)
-    JetCollectionName = 'patJetsReapplyJEC'
-    #JetCollectionName = cms.InputTag('patJetsReapplyJEC', '', processName)
+
+    from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+    # workaround for a bug in runMetCorAndUncFromMiniAOD in 80X (bug is fixed in 81X)
+    __builtins__.METSignificanceParams_Data = process.METSignificanceParams_Data
+    runMetCorAndUncFromMiniAOD(process, isData = isData)
+
+    JetsInputTag = cms.InputTag('patJetsReapplyJEC', '', processName)
+    MetInputTag = cms.InputTag('slimmedMETs', '', processName)
+
+    process.METSignificance.srcPfJets = JetsInputTag
+    process.METSignificance.srcMet = MetInputTag
+
 else:
    process.JECsequence = cms.Sequence()
-   JetCollectionName = 'slimmedJets'
-   #JetCollectionTag = cms.InputTag('slimmedJets')
-
-from RecoMET.METPUSubtraction.MVAMETConfiguration_cff import runMVAMET
-runMVAMET( process, jetCollectionPF = JetCollectionName )
-process.MVAMET.srcLeptons  = cms.VInputTag('slimmedMuons', 'slimmedElectrons', 'slimmedTaus')
-process.MVAMET.requireOS = cms.bool(False)
+   JetsInputTag = cms.InputTag('slimmedJets')
+   MetInputTag = cms.InputTag('slimmedMETs')
 
 ### MET filters
 process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
@@ -187,10 +189,10 @@ for channel in channels:
         tauSrc                  = cms.InputTag('slimmedTaus'),
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        jetSrc                  = cms.InputTag(JetCollectionName),
+        jetSrc                  = JetsInputTag,
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
-        pfMETSrc                = cms.InputTag('slimmedMETs'),
+        pfMETSrc                = MetInputTag,
         prescales               = cms.InputTag('patTrigger'),
         objects                 = cms.InputTag('selectedPatTrigger'),
         metCov                  = cms.InputTag('METSignificance', 'METCovariance'),
