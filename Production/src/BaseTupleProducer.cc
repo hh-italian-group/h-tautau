@@ -227,9 +227,10 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
 }
 
 bool BaseTupleProducer::PassICHEPMuonMediumId(const pat::Muon& pat_muon){
-    if(pat_muon.globalTrack().isNull() || pat_muon.innerTrack().isNull()) return false;
+    if(pat_muon.innerTrack().isNull()) return false;
+    const double normalizedChi2 = pat_muon.globalTrack().isNull() ? 0 : pat_muon.globalTrack()->normalizedChi2();
     bool goodGlob = pat_muon.isGlobalMuon() && 
-	            pat_muon.globalTrack()->normalizedChi2() < 3 && 
+	            normalizedChi2 < 3 && 
                     pat_muon.combinedQuality().chi2LocalPosition < 12 && 
                     pat_muon.combinedQuality().trkKink < 20; 
     bool isMedium = muon::isLooseMuon(pat_muon) &&
@@ -481,7 +482,9 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, c
     cut(muon_dz < dz, "dz", muon_dz);
     cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
 
-    const bool passMuonId = productionMode == ProductionMode::hh ? muon->isLooseMuon() : muon->isMediumMuon();
+    bool passMuonId =  muon->isMediumMuon();
+    if( productionMode == ProductionMode::hh) passMuonId = muon->isLooseMuon() ;
+    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) passMuonId = PassICHEPMuonMediumId(*muon);
     cut(passMuonId, "muonID");
     if(signalMuon) {
         const bool isNotSignal =  &(*muon) != &(*(*signalMuon));

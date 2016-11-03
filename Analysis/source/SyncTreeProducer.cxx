@@ -285,51 +285,52 @@ public:
                 sync().bjet_rawf_2 = default_value;
                 sync().bjet_mva_2 = default_value;
                 sync().bjet_csv_2 = default_value;
-            }
+	    }
+	    if(syncMode == SyncMode::HH){
+		if(bjets_csv.size() >= 2)
+		    sync().kinfit_convergence = event.GetKinFitResults().convergence;
+		else
+		    sync().kinfit_convergence = default_int_value;
 
-            if(bjets_csv.size() >= 2)
-                sync().kinfit_convergence = event.GetKinFitResults().convergence;
-            else
-                sync().kinfit_convergence = default_int_value;
+		if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+		    sync().m_kinfit = event.GetKinFitResults().mass;
+		else
+		    sync().m_kinfit = default_value;
 
-            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
-                sync().m_kinfit = event.GetKinFitResults().mass;
-            else
-                sync().m_kinfit = default_value;
+		sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
-            sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
-
-            sync().nFatJets = event.GetFatJets().size();
-            const FatJetCandidate* fatJetPtr = event.SelectFatJet(30, 0.4);
-            sync().hasFatJet = bjets_csv.size() >= 2 ? fatJetPtr != nullptr : -1;
-            if(fatJetPtr) {
-                const FatJetCandidate& fatJet = *fatJetPtr;
-                sync().fatJet_pt = fatJet.GetMomentum().Pt();
-                sync().fatJet_eta = fatJet.GetMomentum().Eta();
-                sync().fatJet_phi = fatJet.GetMomentum().Phi();
-                sync().fatJet_energy = fatJet.GetMomentum().E();
-                sync().fatJet_m_pruned = fatJet->m(ntuple::TupleFatJet::MassType::Pruned);
-//                sync().fatJet_m_filtered = fatJet->m(ntuple::TupleFatJet::MassType::Filtered);
-//                sync().fatJet_m_trimmed = fatJet->m(ntuple::TupleFatJet::MassType::Trimmed);
-                sync().fatJet_m_softDrop = fatJet->m(ntuple::TupleFatJet::MassType::SoftDrop);
-                sync().fatJet_n_subjets = fatJet->subJets().size();
-                sync().fatJet_n_subjettiness_tau1 = fatJet->n_subjettiness(1);
-                sync().fatJet_n_subjettiness_tau2 = fatJet->n_subjettiness(2);
-                sync().fatJet_n_subjettiness_tau3 = fatJet->n_subjettiness(3);
-            } else {
-                sync().fatJet_pt = default_value;
-                sync().fatJet_eta = default_value;
-                sync().fatJet_phi = default_value;
-                sync().fatJet_energy = default_value;
-                sync().fatJet_m_pruned = default_value;
-                sync().fatJet_m_filtered = default_value;
-                sync().fatJet_m_trimmed = default_value;
-                sync().fatJet_m_softDrop = default_value;
-                sync().fatJet_n_subjets = default_int_value;
-                sync().fatJet_n_subjettiness_tau1 = default_value;
-                sync().fatJet_n_subjettiness_tau2 = default_value;
-                sync().fatJet_n_subjettiness_tau3 = default_value;
-            }
+		sync().nFatJets = event.GetFatJets().size();
+		const FatJetCandidate* fatJetPtr = event.SelectFatJet(30, 0.4);
+		sync().hasFatJet = bjets_csv.size() >= 2 ? fatJetPtr != nullptr : -1;
+		if(fatJetPtr) {
+		    const FatJetCandidate& fatJet = *fatJetPtr;
+		    sync().fatJet_pt = fatJet.GetMomentum().Pt();
+		    sync().fatJet_eta = fatJet.GetMomentum().Eta();
+		    sync().fatJet_phi = fatJet.GetMomentum().Phi();
+		    sync().fatJet_energy = fatJet.GetMomentum().E();
+		    sync().fatJet_m_pruned = fatJet->m(ntuple::TupleFatJet::MassType::Pruned);
+		    //                sync().fatJet_m_filtered = fatJet->m(ntuple::TupleFatJet::MassType::Filtered);
+		    //                sync().fatJet_m_trimmed = fatJet->m(ntuple::TupleFatJet::MassType::Trimmed);
+		    sync().fatJet_m_softDrop = fatJet->m(ntuple::TupleFatJet::MassType::SoftDrop);
+		    sync().fatJet_n_subjets = fatJet->subJets().size();
+		    sync().fatJet_n_subjettiness_tau1 = fatJet->n_subjettiness(1);
+		    sync().fatJet_n_subjettiness_tau2 = fatJet->n_subjettiness(2);
+		    sync().fatJet_n_subjettiness_tau3 = fatJet->n_subjettiness(3);
+		} else {
+		    sync().fatJet_pt = default_value;
+		    sync().fatJet_eta = default_value;
+		    sync().fatJet_phi = default_value;
+		    sync().fatJet_energy = default_value;
+		    sync().fatJet_m_pruned = default_value;
+		    sync().fatJet_m_filtered = default_value;
+		    sync().fatJet_m_trimmed = default_value;
+		    sync().fatJet_m_softDrop = default_value;
+		    sync().fatJet_n_subjets = default_int_value;
+		    sync().fatJet_n_subjettiness_tau1 = default_value;
+		    sync().fatJet_n_subjettiness_tau2 = default_value;
+		    sync().fatJet_n_subjettiness_tau3 = default_value;
+		}
+	    }
 
             sync.Fill();
         }
