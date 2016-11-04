@@ -28,21 +28,27 @@ ENUM_NAMES(CMSSW_Process) = {
 
 namespace detail {
 template<typename PatObject>
-trigger::TriggerObjectType GetTriggerObjectType(const PatObject&);
+const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes(const PatObject&);
 
 template<>
-inline trigger::TriggerObjectType GetTriggerObjectType<pat::Electron>(const pat::Electron&) {
-    return trigger::TriggerElectron;
+inline const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
+{
+    static const std::set<trigger::TriggerObjectType> types = { trigger::TriggerElectron, trigger::TriggerCluster };
+    return types;
 }
 
 template<>
-inline trigger::TriggerObjectType GetTriggerObjectType<pat::Muon>(const pat::Muon&) {
-    return trigger::TriggerMuon;
+inline const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
+{
+    static const std::set<trigger::TriggerObjectType> types = { trigger::TriggerMuon };
+    return types;
 }
 
 template<>
-inline trigger::TriggerObjectType GetTriggerObjectType<pat::Tau>(const pat::Tau&) {
-    return trigger::TriggerTau;
+inline const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
+{
+    static const std::set<trigger::TriggerObjectType> types = { trigger::TriggerTau };
+    return types;
 }
 
 } // namespace detail
@@ -67,14 +73,14 @@ public:
 
     bool HaveTriggerFired(const std::vector<std::string> &hltPaths);
     std::set<const pat::TriggerObjectStandAlone*> FindMatchingTriggerObjects(
-            const std::string& pathOfInterest, trigger::TriggerObjectType objectType,
+            const std::string& pathOfInterest, const std::set<trigger::TriggerObjectType>& objectTypes,
             const LorentzVector& candidateMomentum, double deltaR_Limit);
 
     template<typename Candidate>
     std::set<const pat::TriggerObjectStandAlone*> FindMatchingTriggerObjects(
             const std::string& pathOfInterest, const Candidate& candidate, double deltaR_Limit)
     {
-        return FindMatchingTriggerObjects(pathOfInterest, detail::GetTriggerObjectType(*candidate),
+        return FindMatchingTriggerObjects(pathOfInterest, detail::GetTriggerObjectTypes(*candidate),
                                           candidate.GetMomentum(), deltaR_Limit);
     }
 
