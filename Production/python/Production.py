@@ -104,9 +104,7 @@ if options.ReRunJEC:
     MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-    # workaround for a bug in runMetCorAndUncFromMiniAOD in 80X (bug is fixed in 81X)
-    __builtins__.METSignificanceParams_Data = process.METSignificanceParams_Data
-    runMetCorAndUncFromMiniAOD(process, isData = isData, jetCollUnskimmed=JetsInputTag)
+    runMetCorAndUncFromMiniAOD(process, isData = isData)
 
 #    process.METSignificance.srcPfJets = JetsInputTag
 #    process.METSignificance.srcMet = MetInputTag
