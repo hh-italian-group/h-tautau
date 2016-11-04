@@ -4,7 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "../interface/TriggerTools.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
+#include "AnalysisTools/Core/include/RootExt.h"
 
 namespace analysis {
 
@@ -51,27 +51,42 @@ bool TriggerTools::HaveTriggerFired(const std::vector<std::string>& hltPaths)
     return false;
 }
 
-const pat::TriggerObjectStandAlone* TriggerTools::FindMatchingTriggerObject(const std::string& pathOfInterest,
-                                                                            const LorentzVector& candidateMomentum,
-                                                                            double deltaR_Limit)
+std::set<const pat::TriggerObjectStandAlone*> TriggerTools::FindMatchingTriggerObjects(
+        const std::string& pathOfInterest, trigger::TriggerObjectType objectType,
+        const LorentzVector& candidateMomentum, double deltaR_Limit)
 {
+    std::set<const pat::TriggerObjectStandAlone*> matches;
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
+        if(!triggerObject.type(objectType)) continue;
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
-        const auto& matchedPaths = unpackedTriggerObject.pathNames(true,true); // pathNames(LastFilter, L3Filter)
+        const auto& matchedPaths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& matchedPath : matchedPaths) {
-            const bool LF = unpackedTriggerObject.hasPathName(matchedPath, true, false);
-            const bool L3 = unpackedTriggerObject.hasPathName(matchedPath, false, true);
-            const bool all = unpackedTriggerObject.hasPathName(matchedPath, true, true);
-            if( matchedPath.find(pathOfInterest) != std::string::npos )
-                return &triggerObject;
+            if( matchedPath.find(pathOfInterest) == std::string::npos ) continue;
+//            const bool LF = unpackedTriggerObject.hasPathName(matchedPath, true, false);
+//            const bool L3 = unpackedTriggerObject.hasPathName(matchedPath, false, true);
+//            const bool all = unpackedTriggerObject.hasPathName(matchedPath, true, true);
+//            std::cout << "RECO p4 = " << ConvertVector(candidateMomentum)
+//                      << ", trig obj p4 = " << ConvertVector(triggerObject.polarP4())
+//                      << ", deltaR = " << ROOT::Math::VectorUtil::DeltaR(triggerObject.polarP4(), candidateMomentum)
+//                      << ", matchedPath = " << matchedPath
+//                      << ", LF = " << LF
+//                      << ", L3 = " << L3
+//                      << ", all = " << all
+//                      << ", obj types = ( ";
+//            for(int type : triggerObject.triggerObjectTypes())
+//                std::cout << type << " ";
+//            std::cout << ")" << std::endl;
+
+            matches.insert(&triggerObject);
+            break;
         }
     }
-    return nullptr;
+    return matches;
 }
 
 TriggerTools::L1ParticlePtrSet TriggerTools::L1TauMatch(const LorentzVector& tauMomentum)
