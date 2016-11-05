@@ -4,7 +4,6 @@
 #include "../interface/GenTruthTools.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
-//#include "PhysicsTools/CandUtils/interface/pdgIdUtils.h"
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
@@ -311,8 +310,6 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
 	    pfmetcorr_ex, // corrected type I pf met px (float)
 	    pfmetcorr_ey  // corrected type I pf met py (float)
 	    );
-   std::cout<<"Not Corrected Pt = "<<std::sqrt(std::pow(pfmet_ex,2)+std::pow(pfmet_ey,2))<<std::endl;
-   std::cout<<"Corrected Pt = "<<std::sqrt(std::pow(pfmetcorr_ex,2)+std::pow(pfmetcorr_ey,2))<<std::endl;
    
    const TVector2 met_vect(pfmetcorr_ex,pfmetcorr_ey);
    met->SetMomentum(analysis::LorentzVectorM(met_vect.Mod(),0,met_vect.Phi(),0));
