@@ -29,6 +29,7 @@
 <use name="JetMETCorrections/Objects"/>
 <use name="JetMETCorrections/Algorithms"/>
 <use name="AnalysisDataFormats/TopObjects"/>
+<use name="HTT-utilities/RecoilCorrections"/>
 <export>
     <lib   name="1"/>
 </export>
