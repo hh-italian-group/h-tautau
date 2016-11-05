@@ -121,6 +121,27 @@ namespace TauTau {
     }
 }
 
+namespace MuMu {
+    namespace muonID {
+        constexpr double pt_leading = 23; // >
+        constexpr double pt_trailing = 10; // >
+        constexpr double eta = 2.4; // <
+        constexpr double dz = 0.2; // <
+        constexpr double dxy = 0.045; // <
+
+        // Defined in https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Short_Term_Medium_Muon_Definitio
+        constexpr bool isMediumMuon = true; // =
+
+        // Post-sync ntuple cuts
+
+        constexpr double pfRelIso04 = 0.15; // <
+        constexpr double m_vis_low = 60; // >
+        constexpr double m_vis_high = 120; // <
+    }
+
+    constexpr double DeltaR_betweenSignalObjects = 0.3; // >
+}
+
 namespace electronVeto {
     constexpr double pt = 10; // >
     constexpr double eta = 2.5; // <

@@ -405,17 +405,18 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectVetoElectrons(
-        const ElectronCandidate* signalElectron)
+        const std::vector<const ElectronCandidate*>& signalElectrons)
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectron);
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons);
     return CollectObjects("vetoElectrons", base_selector, electrons);
 }
 
-std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectVetoMuons(const MuonCandidate* signalMuon)
+std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectVetoMuons(
+        const std::vector<const MuonCandidate*>& signalMuons)
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoMuon, this, _1, _2, signalMuon);
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoMuon, this, _1, _2, signalMuons);
     return CollectObjects("vetoMuons", base_selector, muons);
 }
 
@@ -441,7 +442,7 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
 }
 
 void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
-                                           const ElectronCandidate* signalElectron) const
+                                           const std::vector<const ElectronCandidate*>& signalElectrons) const
 {
     using namespace cuts::H_tautau_2016::electronVeto;
 
@@ -462,13 +463,16 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
         cut(electron->passConversionVeto(), "conversionVeto");
     }
     cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
-    if(signalElectron) {
-        const bool isNotSignal =  &(*electron) != &(*(*signalElectron));
-        cut(isNotSignal, "isNotSignal");
+    for(size_t n = 0; n < signalElectrons.size(); ++n) {
+        std::ostringstream ss_name;
+        ss_name << "isNotSignal_" << n + 1;
+        const bool isNotSignal =  &(*electron) != &(*(*signalElectrons.at(n)));
+        cut(isNotSignal, ss_name.str());
     }
 }
 
-void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, const MuonCandidate* signalMuon) const
+void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
+                                       const std::vector<const MuonCandidate*>& signalMuons) const
 {
     using namespace cuts::H_tautau_2016::muonVeto;
 
@@ -486,9 +490,11 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, c
     if( productionMode == ProductionMode::hh) passMuonId = muon->isLooseMuon() ;
     else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) passMuonId = PassICHEPMuonMediumId(*muon);
     cut(passMuonId, "muonID");
-    if(signalMuon) {
-        const bool isNotSignal =  &(*muon) != &(*(*signalMuon));
-        cut(isNotSignal, "isNotSignal");
+    for(size_t n = 0; n < signalMuons.size(); ++n) {
+        std::ostringstream ss_name;
+        ss_name << "isNotSignal_" << n + 1;
+        const bool isNotSignal =  &(*muon) != &(*(*signalMuons.at(n)));
+        cut(isNotSignal, ss_name.str());
     }
 }
 
@@ -510,6 +516,43 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     }
 }
 
+#define GET_LEG(x) (leg_id == 1 ? eventTuple().x##_1 : eventTuple().x##_2)
+
+void BaseTupleProducer::FillElectronLeg(size_t leg_id, const ElectronCandidate& electron)
+{
+    GET_LEG(p4) = ntuple::LorentzVectorM(electron.GetMomentum());
+    GET_LEG(q) = electron.GetCharge();
+    GET_LEG(dxy) = electron->gsfTrack()->dxy(primaryVertex->position());
+    GET_LEG(dz) = electron->gsfTrack()->dz(primaryVertex->position());
+    GET_LEG(iso) = electron.GetIsolation();
+    FillLegGenMatch(leg_id, electron->p4());
+}
+
+void BaseTupleProducer::FillMuonLeg(size_t leg_id, const MuonCandidate& muon)
+{
+    GET_LEG(p4) = ntuple::LorentzVectorM(muon.GetMomentum());
+    GET_LEG(q) = muon.GetCharge();
+    GET_LEG(dxy) = muon->muonBestTrack()->dxy(primaryVertex->position());
+    GET_LEG(dz) = muon->muonBestTrack()->dz(primaryVertex->position());
+    GET_LEG(iso) = muon.GetIsolation();
+    FillLegGenMatch(leg_id, muon->p4());
+}
+
+void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool fill_tauIds)
+{
+    GET_LEG(p4) = ntuple::LorentzVectorM(tau.GetMomentum());
+    GET_LEG(q) = tau.GetCharge();
+    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
+    GET_LEG(dxy) = packedLeadTauCand->dxy();
+    GET_LEG(dz) = packedLeadTauCand->dz();
+    GET_LEG(iso) = tau.GetIsolation();
+    FillLegGenMatch(leg_id, tau->p4());
+    if(fill_tauIds)
+        FillTauIds(leg_id, tau->tauIDs());
+}
+
+#undef GET_LEG
+
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection,
                                        const analysis::SelectionResultsBase* reference)
 {
@@ -530,21 +573,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     // HTT candidate
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
     eventTuple().SVfit_mt = selection.svfitResult.transverseMass;
-
-    // Leg 2, tau
-    const TauCandidate& tau = selection.GetSecondLeg();
-    eventTuple().p4_2 = LorentzVectorM(tau.GetMomentum());
-    eventTuple().q_2 = tau.GetCharge();
-    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-    eventTuple().dxy_2 = packedLeadTauCand->dxy();
-    eventTuple().dz_2 = packedLeadTauCand->dz();
-    eventTuple().iso_2 = tau.GetIsolation();
-    FillLegGenMatch(2, tau->p4());
-
-    if(!reference || !selection.HaveSameSecondLegOrigin(*reference))
-        FillTauIds(2, tau->tauIDs());
-    else
-        storageMode.SetPresence(EventPart::SecondTauIds, false);
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();

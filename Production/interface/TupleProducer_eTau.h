@@ -13,7 +13,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 class TupleProducer_eTau: public BaseTupleProducer {
 public:
-    using SelectionResults = analysis::SelectionResults<ElectronCandidate>;
+    using SelectionResults = analysis::SelectionResults<ElectronCandidate, TauCandidate>;
     using SelectionResultsPtr = std::shared_ptr<SelectionResults>;
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
@@ -22,6 +22,7 @@ public:
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
+    void FillEventTuple(const SelectionResults& selection);
 
     std::vector<ElectronCandidate> CollectZelectrons();
     std::vector<ElectronCandidate> CollectSignalElectrons();
@@ -30,8 +31,6 @@ private:
     void SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
-
-    void FillEventTuple(const SelectionResults& selection);
 
 private:
     SelectionResultsPtr previous_selection;

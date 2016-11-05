@@ -103,6 +103,8 @@ public:
     using SelectionManager = analysis::SelectionManager;
     using Cutter = cuts::Cutter<SelectionManager>;
     using LorentzVector = analysis::LorentzVector;
+    using LorentzVectorM = analysis::LorentzVectorM;
+    using LorentzVectorE = analysis::LorentzVectorE;
 
 private:
     TupleProducerData anaData;
@@ -191,6 +193,9 @@ protected:
                             const std::vector<LorentzVector>& signalLeptonMomentums);
     void FillEventTuple(const analysis::SelectionResultsBase& selection,
                         const analysis::SelectionResultsBase* reference = nullptr);
+    void FillElectronLeg(size_t leg_id, const ElectronCandidate& electron);
+    void FillMuonLeg(size_t leg_id, const MuonCandidate& muon);
+    void FillTauLeg(size_t leg_id, const TauCandidate& tau, bool fill_tauIds);
     void FillLheInfo(bool haveReference);
     void FillGenParticleInfo();
     void FillGenJetInfo();
@@ -198,13 +203,15 @@ protected:
     void FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds);
     void FillMetFilters();
 
-    std::vector<ElectronCandidate> CollectVetoElectrons(const ElectronCandidate* signalElectron = nullptr);
-    std::vector<MuonCandidate> CollectVetoMuons(const MuonCandidate* signalMuon = nullptr);
+    std::vector<ElectronCandidate> CollectVetoElectrons(
+            const std::vector<const ElectronCandidate*>& signalElectrons = {});
+    std::vector<MuonCandidate> CollectVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
     std::vector<JetCandidate> CollectJets(const std::vector<LorentzVector>& signalLeptonMomentums);
 
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
-                            const ElectronCandidate* signalElectron) const;
-    void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut, const MuonCandidate* signalMuon) const;
+                            const std::vector<const ElectronCandidate*>& signalElectrons) const;
+    void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
+                        const std::vector<const MuonCandidate*>& signalMuons) const;
     void SelectJet(const JetCandidate& jet, Cutter& cut,
                    const std::vector<LorentzVector>& signalLeptonMomentums) const;
 
@@ -276,8 +283,8 @@ protected:
             if(h1_leg1->pt() != h2_leg1->pt()) return h1_leg1->pt() > h2_leg1->pt();
         }
 
-        const TauCandidate& h1_leg2 = h1.GetSecondDaughter();
-        const TauCandidate& h2_leg2 = h2.GetSecondDaughter();
+        const auto& h1_leg2 = h1.GetSecondDaughter();
+        const auto& h2_leg2 = h2.GetSecondDaughter();
         if(h1_leg2 != h2_leg2) {
             if(h1_leg2.GetIsolation() != h2_leg2.GetIsolation()) return h1_leg2.IsMoreIsolated(h2_leg2);
             if(h1_leg2->pt() != h2_leg2->pt()) return h1_leg2->pt() > h2_leg2->pt();

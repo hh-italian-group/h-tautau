@@ -41,7 +41,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
     //Third-Lepton Veto
     const auto electronVetoCollection = CollectVetoElectrons();
-    const auto muonVetoCollection = CollectVetoMuons(&selection.higgs->GetFirstDaughter());
+    const auto muonVetoCollection = CollectVetoMuons({ &selection.higgs->GetFirstDaughter() });
     selection.electronVeto = electronVetoCollection.size();
     selection.muonVeto = muonVetoCollection.size();
 
@@ -142,19 +142,19 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
 
 void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 {
-    using namespace analysis;
+    using Channel = analysis::Channel;
+    using EventPart = ntuple::StorageMode::EventPart;
 
     BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
     eventTuple().channelId = static_cast<int>(Channel::MuTau);
 
-    // Leg 1, lepton
-    const MuonCandidate& muon = selection.higgs->GetFirstDaughter();
-    eventTuple().p4_1 = LorentzVectorM(muon.GetMomentum());
-    eventTuple().q_1 = muon.GetCharge();
-    eventTuple().dxy_1 = muon->muonBestTrack()->dxy(primaryVertex->position());
-    eventTuple().dz_1 = muon->muonBestTrack()->dz(primaryVertex->position());
-    eventTuple().iso_1 = muon.GetIsolation();
-    FillLegGenMatch(1, muon->p4());
+    ntuple::StorageMode storageMode(eventTuple().storageMode);
+    const bool store_tauIds = !previous_selection || !selection.HaveSameSecondLegOrigin(*previous_selection);
+    storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds);
+    eventTuple().storageMode = storageMode.Mode();
+
+    FillMuonLeg(1, selection.higgs->GetFirstDaughter());
+    FillTauLeg(2, selection.higgs->GetSecondDaughter(), store_tauIds);
 
     eventTuple.Fill();
 }

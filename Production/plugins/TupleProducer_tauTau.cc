@@ -83,28 +83,21 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 
 void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
 {
-    using namespace analysis;
+    using Channel = analysis::Channel;
     using EventPart = ntuple::StorageMode::EventPart;
 
     BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
     eventTuple().channelId = static_cast<int>(Channel::TauTau);
 
-    // Leg 1, tau
-    const TauCandidate& tau = selection.higgs->GetFirstDaughter();
-    eventTuple().p4_1 = LorentzVectorM(tau.GetMomentum());
-    eventTuple().q_1 = tau.GetCharge();
-    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-    eventTuple().dxy_1 = packedLeadTauCand->dxy();
-    eventTuple().dz_1 = packedLeadTauCand->dz();
-    eventTuple().iso_1 = tau.GetIsolation();
-    FillLegGenMatch(1, tau->p4());
-
     ntuple::StorageMode storageMode(eventTuple().storageMode);
-    if(!previous_selection || !selection.HaveSameFirstLegOrigin(*previous_selection))
-        FillTauIds(1, tau->tauIDs());
-    else
-        storageMode.SetPresence(EventPart::FirstTauIds, false);
+    const bool store_tauIds_1 = !previous_selection || !selection.HaveSameFirstLegOrigin(*previous_selection);
+    const bool store_tauIds_2 = !previous_selection || !selection.HaveSameSecondLegOrigin(*previous_selection);
+    storageMode.SetPresence(EventPart::FirstTauIds, store_tauIds_1);
+    storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds_2);
     eventTuple().storageMode = storageMode.Mode();
+
+    FillTauLeg(1, selection.higgs->GetFirstDaughter(), store_tauIds_1);
+    FillTauLeg(2, selection.higgs->GetSecondDaughter(), store_tauIds_2);
 
     eventTuple.Fill();
 }

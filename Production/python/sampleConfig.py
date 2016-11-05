@@ -33,7 +33,13 @@ hltPaths_tauTau = {
     'Run2016B' : [ "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v" ]
 }
 
-hltPaths = { 'eTau' : hltPaths_eTau, 'muTau' : hltPaths_muTau, 'tauTau' : hltPaths_tauTau }
+hltPaths_muMu = {
+    'Spring16MC' : [ "HLT_IsoMu22_v3" ],
+    'Run2016B'   : [ "HLT_IsoMu22_v" ]
+}
+
+
+hltPaths = { 'eTau' : hltPaths_eTau, 'muTau' : hltPaths_muTau, 'tauTau' : hltPaths_tauTau, 'muMu' : hltPaths_muMu }
 
 def IsData(sampleType):
     isData = sampleType in dataSampleTypes

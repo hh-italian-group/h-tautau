@@ -55,9 +55,7 @@ struct SelectionResultsBase {
         eventId(_eventId), energyScale(_energyScale) {}
 
     virtual ~SelectionResultsBase() {}
-    virtual const TauCandidate& GetSecondLeg() const = 0;
     virtual const LorentzVector& GetHiggsMomentum() const = 0;
-
 
     bool HaveSameJets(const SelectionResultsBase& other) const
     {
@@ -75,18 +73,12 @@ struct SelectionResultsBase {
         }
         return true;
     }
-
-    bool HaveSameSecondLegOrigin(const SelectionResultsBase& other) const
-    {
-        if(eventId != other.eventId) return false;
-        return &(*GetSecondLeg()) == &(*other.GetSecondLeg());
-    }
 };
 
-template<typename _FirstLeg>
+template<typename _FirstLeg, typename _SecondLeg>
 struct SelectionResults : SelectionResultsBase {
     using FirstLeg = _FirstLeg;
-    using SecondLeg = TauCandidate;
+    using SecondLeg = _SecondLeg;
     using HiggsCandidate = CompositCandidate<FirstLeg, SecondLeg>;
     using HiggsCandidatePtr = std::shared_ptr<HiggsCandidate>;
 
@@ -95,15 +87,19 @@ struct SelectionResults : SelectionResultsBase {
     using SelectionResultsBase::SelectionResultsBase;
 
     void SetHiggsCandidate(const HiggsCandidate& h) { higgs = HiggsCandidatePtr(new HiggsCandidate(h)); }
-    virtual const TauCandidate& GetSecondLeg() const override { return higgs->GetSecondDaughter(); }
     virtual const LorentzVector& GetHiggsMomentum() const override { return higgs->GetMomentum(); }
 
-    bool HaveSameFirstLegOrigin(const SelectionResults<FirstLeg>& other) const
+    bool HaveSameFirstLegOrigin(const SelectionResults<FirstLeg, SecondLeg>& other) const
     {
         if(eventId != other.eventId) return false;
         return &(*higgs->GetFirstDaughter()) == &(*other.higgs->GetFirstDaughter());
     }
 
+    bool HaveSameSecondLegOrigin(const SelectionResults<FirstLeg, SecondLeg>& other) const
+    {
+        if(eventId != other.eventId) return false;
+        return &(*higgs->GetSecondDaughter()) == &(*other.higgs->GetSecondDaughter());
+    }
 };
 
 } // namespace analysis

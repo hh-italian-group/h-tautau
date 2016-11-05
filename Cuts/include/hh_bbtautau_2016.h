@@ -12,7 +12,7 @@ constexpr double DeltaR_betweenSignalObjects = 0.1; // > Decreased to not loose 
 namespace MuTau {
     namespace muonID {
         constexpr double pt = 23; // > Increased to be away from the trigger threshold.
-        constexpr bool isTightMuon = true; // = to be checked
+        constexpr bool isTightMuon = true; // = Should be ok, since the HIP problem is solved.
 
         // pfRelIso should be applied at the tuple production level.
     }
@@ -39,6 +39,14 @@ namespace ETau {
     }
 
     // ZeeVeto should not be applied.
+}
+
+namespace MuMu {
+    namespace muonID {
+        constexpr bool isTightMuon = true; // = Same as for muTau channel
+    }
+
+    constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects; // >
 }
 
 namespace electronVeto {
