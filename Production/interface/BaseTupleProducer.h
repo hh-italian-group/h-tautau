@@ -62,6 +62,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "SelectionResults.h"
 
+//Recoil Correction
+#include "HTT-utilities/RecoilCorrections/interface/RecoilCorrector.h"
+
 #include "TriggerTools.h"
 
 struct TupleProducerData : root_ext::AnalyzerData {
@@ -128,13 +131,15 @@ private:
 
 protected:
     const ProductionMode productionMode;
-    const bool isMC, applyTriggerMatch, runSVfit, runKinFit;
+    const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
+    const int nJetsRecoilCorr;    
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
     std::vector<std::string> hltPaths;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
     analysis::sv_fit::FitProducer svfitProducer;
     analysis::kin_fit::FitProducer kinfitProducer;
+    RecoilCorrector recoilPFMetCorrector; 
 
 private:
     const edm::Event *edmEvent;
@@ -202,6 +207,7 @@ protected:
     void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
     void FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds);
     void FillMetFilters();
+    void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
 
     std::vector<ElectronCandidate> CollectVetoElectrons(
             const std::vector<const ElectronCandidate*>& signalElectrons = {});
