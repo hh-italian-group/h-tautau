@@ -31,6 +31,10 @@ options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing
                  "Run SVfit algorithm on the selected tau pair.")
 options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
+options.register('applyRecoilCorr', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Apply Met Recoil Corrections")
+options.register('nJetsRecoilCorr', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int,
+                 "Number of Additional Jets for Recoil Correction")
 options.register('lumiFile', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "JSON file with lumi mask.")
 options.register('eventList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
@@ -209,6 +213,8 @@ for channel in channels:
         hltPaths                = cms.vstring(hltPaths),
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
+        applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
+        nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),

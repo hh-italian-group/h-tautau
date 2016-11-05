@@ -4,6 +4,7 @@
 #include "../interface/GenTruthTools.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+//#include "PhysicsTools/CandUtils/interface/pdgIdUtils.h"
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
@@ -35,6 +36,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
     runKinFit(iConfig.getParameter<bool>("runKinFit")),
+    applyRecoilCorr(iConfig.getParameter<bool>("applyRecoilCorr")),
+    nJetsRecoilCorr(iConfig.getParameter<int>("nJetsRecoilCorr")),
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
@@ -48,7 +51,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
                                                     iConfig.getParameter<edm::InputTag>("l1JetParticleProduct"))),
-    svfitProducer(edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath())
+    svfitProducer(edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()),
+    recoilPFMetCorrector("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root")
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
@@ -267,6 +271,53 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     eventTuple().lhe_HT = std::sqrt(HT2);
 }
 
+void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& jets)
+{
+    analysis::LorentzVectorXYZ total_p4, vis_p4;
+    for(const auto& particle : *genParticles) {
+        if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()|| reco::isNeutrino(particle)))
+              ||particle.isDirectHardProcessTauDecayProductFinalState()) 
+            total_p4 += particle.p4();
+        if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()))
+	            || (particle.isDirectHardProcessTauDecayProductFinalState() && !reco::isNeutrino(particle)) )
+            vis_p4 += particle.p4(); 
+    }
+ 
+  
+    const double genPx = total_p4.px();
+    const double genPy = total_p4.py();
+
+    const double visPx = vis_p4.px();  
+    const double visPy = vis_p4.py(); 
+ 
+    float pfmetcorr_ex, pfmetcorr_ey;
+
+    const double pfmet_ex = met->GetMomentum().px();
+    const double pfmet_ey = met->GetMomentum().py();
+    
+    int njets= nJetsRecoilCorr;
+    for(const auto& jet : jets)
+    {
+        if(jet.GetMomentum().pt() > 30) njets++;
+    }
+    recoilPFMetCorrector.CorrectByMeanResolution(
+	    pfmet_ex, // uncorrected type I pf met px (float)
+	    pfmet_ey, // uncorrected type I pf met py (float)
+	    genPx, // generator Z/W/Higgs px (float)
+	    genPy, // generator Z/W/Higgs py (float)
+	    visPx, // generator visible Z/W/Higgs px (float)
+	    visPy, // generator visible Z/W/Higgs py (float)
+	    njets,  // number of jets (hadronic jet multiplicity) (int)
+	    pfmetcorr_ex, // corrected type I pf met px (float)
+	    pfmetcorr_ey  // corrected type I pf met py (float)
+	    );
+   std::cout<<"Not Corrected Pt = "<<std::sqrt(std::pow(pfmet_ex,2)+std::pow(pfmet_ey,2))<<std::endl;
+   std::cout<<"Corrected Pt = "<<std::sqrt(std::pow(pfmetcorr_ex,2)+std::pow(pfmetcorr_ey,2))<<std::endl;
+   
+   const TVector2 met_vect(pfmetcorr_ex,pfmetcorr_ey);
+   met->SetMomentum(analysis::LorentzVectorM(met_vect.Mod(),0,met_vect.Phi(),0));
+}
+
 void BaseTupleProducer::FillGenParticleInfo()
 {
     static const std::set<int> bosons = { 23, 24, 25, 35 };
@@ -381,6 +432,8 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
 
     selection.jets = CollectJets(signalLeptonMomentums);
     const size_t n_jets = selection.jets.size();
+    if(applyRecoilCorr)
+        ApplyRecoilCorrection(selection.jets); 
     if(!runKinFit || n_jets < 2) return;
 
     const auto runKinfit = [&](size_t first, size_t second) {
