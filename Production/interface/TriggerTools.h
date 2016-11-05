@@ -12,6 +12,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTools/Core/include/EnumNameMap.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Tau.h"
 
 namespace analysis {
 
@@ -22,6 +25,33 @@ ENUM_NAMES(CMSSW_Process) = {
     { CMSSW_Process::RECO, "RECO" },
     { CMSSW_Process::PAT, "PAT" }
 };
+
+namespace detail {
+template<typename PatObject>
+const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes(const PatObject&);
+
+template<>
+inline const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
+{
+    static const std::set<trigger::TriggerObjectType> types = { trigger::TriggerElectron, trigger::TriggerCluster };
+    return types;
+}
+
+template<>
+inline const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
+{
+    static const std::set<trigger::TriggerObjectType> types = { trigger::TriggerMuon };
+    return types;
+}
+
+template<>
+inline const std::set<trigger::TriggerObjectType>& GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
+{
+    static const std::set<trigger::TriggerObjectType> types = { trigger::TriggerTau };
+    return types;
+}
+
+} // namespace detail
 
 class TriggerTools {
 public:
@@ -42,9 +72,18 @@ public:
     void Initialize(const edm::Event& iEvent);
 
     bool HaveTriggerFired(const std::vector<std::string> &hltPaths);
-    const pat::TriggerObjectStandAlone* FindMatchingTriggerObject(const std::string& pathOfInterest,
-                                                                  const LorentzVector& candidateMomentum,
-                                                                  double deltaR_Limit);
+    std::set<const pat::TriggerObjectStandAlone*> FindMatchingTriggerObjects(
+            const std::string& pathOfInterest, const std::set<trigger::TriggerObjectType>& objectTypes,
+            const LorentzVector& candidateMomentum, double deltaR_Limit);
+
+    template<typename Candidate>
+    std::set<const pat::TriggerObjectStandAlone*> FindMatchingTriggerObjects(
+            const std::string& pathOfInterest, const Candidate& candidate, double deltaR_Limit)
+    {
+        return FindMatchingTriggerObjects(pathOfInterest, detail::GetTriggerObjectTypes(*candidate),
+                                          candidate.GetMomentum(), deltaR_Limit);
+    }
+
 
     template<typename HiggsCandidate>
     std::vector<HiggsCandidate> ApplyTriggerMatch(const std::vector<HiggsCandidate>& higgses,
@@ -66,10 +105,14 @@ public:
     bool HaveTriggerMatched(const std::string& pathOfInterest, const HiggsCandidate& candidate,
                             double deltaR_Limit, bool isCrossTrigger)
     {
-        if(!FindMatchingTriggerObject(pathOfInterest, candidate.GetFirstDaughter().GetMomentum(), deltaR_Limit))
-            return false;
-        return !isCrossTrigger
-                || FindMatchingTriggerObject(pathOfInterest, candidate.GetSecondDaughter().GetMomentum(), deltaR_Limit);
+        const auto match1 = FindMatchingTriggerObjects(pathOfInterest, candidate.GetFirstDaughter(), deltaR_Limit);
+        const auto match2 = FindMatchingTriggerObjects(pathOfInterest, candidate.GetSecondDaughter(), deltaR_Limit);
+        if(!isCrossTrigger)
+            return match1.size() || match2.size();
+
+        std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+        std::set_union(match1.begin(), match1.end(), match2.begin(), match2.end(), std::back_inserter(comb_match));
+        return match1.size() >= 1 && match2.size() >= 1 && comb_match.size() >= 2;
     }
 
     L1ParticlePtrSet L1TauMatch(const LorentzVector& tauMomentum);

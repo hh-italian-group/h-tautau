@@ -4,7 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "../interface/TriggerTools.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
+#include "AnalysisTools/Core/include/RootExt.h"
 
 namespace analysis {
 
@@ -51,27 +51,69 @@ bool TriggerTools::HaveTriggerFired(const std::vector<std::string>& hltPaths)
     return false;
 }
 
-const pat::TriggerObjectStandAlone* TriggerTools::FindMatchingTriggerObject(const std::string& pathOfInterest,
-                                                                            const LorentzVector& candidateMomentum,
-                                                                            double deltaR_Limit)
+std::set<const pat::TriggerObjectStandAlone*> TriggerTools::FindMatchingTriggerObjects(
+        const std::string& pathOfInterest, const std::set<trigger::TriggerObjectType>& objectTypes,
+        const LorentzVector& candidateMomentum, double deltaR_Limit)
 {
+    const auto haveExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
+        for(auto type : objectTypes)
+            if(triggerObject.type(type)) return true;
+        return false;
+    };
+
+    std::set<const pat::TriggerObjectStandAlone*> matches;
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
+        if(!haveExpectedType(triggerObject)) continue;
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
-        const auto& matchedPaths = unpackedTriggerObject.pathNames(true,true); // pathNames(LastFilter, L3Filter)
+        const auto& matchedPaths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& matchedPath : matchedPaths) {
-            const bool LF = unpackedTriggerObject.hasPathName(matchedPath, true, false);
-            const bool L3 = unpackedTriggerObject.hasPathName(matchedPath, false, true);
-            const bool all = unpackedTriggerObject.hasPathName(matchedPath, true, true);
-            if( matchedPath.find(pathOfInterest) != std::string::npos )
-                return &triggerObject;
+            if( matchedPath.find(pathOfInterest) != std::string::npos ) {
+                matches.insert(&triggerObject);
+                break;
+            }
         }
     }
-    return nullptr;
+
+    static constexpr int verbosity = 0;
+    if(verbosity > 0) {
+        for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
+            pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
+            unpackedTriggerObject.unpackPathNames(triggerNames);
+            const auto& matchedPaths = unpackedTriggerObject.pathNames(true, true);
+            for(const auto& matchedPath : matchedPaths) {
+                if( matchedPath.find(pathOfInterest) == std::string::npos ) continue;
+                const bool LF = unpackedTriggerObject.hasPathName(matchedPath, true, false);
+                const bool L3 = unpackedTriggerObject.hasPathName(matchedPath, false, true);
+                const bool all = unpackedTriggerObject.hasPathName(matchedPath, true, true);
+
+                const double dR = ROOT::Math::VectorUtil::DeltaR(triggerObject.polarP4(), candidateMomentum);
+                const bool match = dR < deltaR_Limit && haveExpectedType(triggerObject);
+
+                std::cout << std::boolalpha << "RECO p4 = " << ConvertVector(candidateMomentum)
+                          << ", exp_types = ( ";
+                for(auto type : objectTypes)
+                    std::cout << static_cast<int>(type) << " ";
+                std::cout << "), trig obj p4 = " << ConvertVector(triggerObject.polarP4())
+                          << ", deltaR = " << dR
+                          << ", matchedPath = " << matchedPath
+                          << ", LF = " << LF
+                          << ", L3 = " << L3
+                          << ", all = " << all
+                          << ", obj types = ( ";
+                for(int type : triggerObject.triggerObjectTypes())
+                    std::cout << type << " ";
+                std::cout << "), match = " << match << std::endl;
+                break;
+            }
+        }
+    }
+
+    return matches;
 }
 
 TriggerTools::L1ParticlePtrSet TriggerTools::L1TauMatch(const LorentzVector& tauMomentum)

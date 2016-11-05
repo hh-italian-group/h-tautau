@@ -7,7 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace cuts {
 namespace hh_bbtautau_2016 {
 
-constexpr double DeltaR_betweenSignalObjects = 0.0001; // > Decreased to not loose efficiency for high mX.
+constexpr double DeltaR_betweenSignalObjects = 0.1; // > Decreased to not loose efficiency for high mX.
 
 namespace MuTau {
     namespace muonID {
