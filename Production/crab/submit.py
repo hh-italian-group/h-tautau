@@ -8,6 +8,7 @@ import re
 
 parser = argparse.ArgumentParser(description='Submit jobs on CRAB.',
                   formatter_class = lambda prog: argparse.HelpFormatter(prog,width=90))
+parser.add_argument('--work-area', required=False, dest='workArea', type=str, default="work_area", help="CMSSW configuration file")
 parser.add_argument('--cfg', required=True, dest='cfg', type=str, help="CMSSW configuration file")
 parser.add_argument('--site', required=True, dest='site', type=str, help="Site for stage out.")
 parser.add_argument('--dryrun', action="store_true", help="Submission dryrun.")
@@ -22,7 +23,7 @@ from httplib import HTTPException
 
 config = config()
 
-config.General.workArea = 'work_area'
+config.General.workArea = args.workArea
 
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = args.cfg
