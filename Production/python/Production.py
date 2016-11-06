@@ -197,7 +197,7 @@ for channel in channels:
         pfMETSrc                = MetInputTag,
         prescales               = cms.InputTag('patTrigger'),
         objects                 = cms.InputTag('selectedPatTrigger'),
-        metCov                  = cms.InputTag('METSignificance', 'METCovariance'),
+        metCov                  = cms.InputTag('METSignificance', 'METCovariance', processName),
         badPFMuonFilter         = cms.InputTag('BadPFMuonFilter'),
         badChCandidateFilter    = cms.InputTag('BadChargedCandidateFilter'),
         lheEventProducts        = cms.InputTag('externalLHEProducer'),

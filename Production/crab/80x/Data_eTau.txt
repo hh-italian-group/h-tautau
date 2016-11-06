@@ -1,0 +1,6 @@
+EventAwareLumiBased ../json/Cert_271036-280385_13TeV_PromptReco_Collisions16_JSON.txt
+globalTag=80X_dataRun2_Prompt_ICHEP16JEC_v0 sampleType=Run2016BCD ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
+
+Data_singleElectron_Run2016B 17000 /SingleElectron/Run2016B-PromptReco-v2/MINIAOD
+Data_singleElectron_Run2016C 17000 /SingleElectron/Run2016C-PromptReco-v2/MINIAOD
+Data_singleElectron_Run2016D 17000 /SingleElectron/Run2016D-PromptReco-v2/MINIAOD

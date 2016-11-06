@@ -137,9 +137,9 @@ protected:
     std::vector<std::string> hltPaths;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
-    analysis::sv_fit::FitProducer svfitProducer;
-    analysis::kin_fit::FitProducer kinfitProducer;
-    RecoilCorrector recoilPFMetCorrector; 
+    std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
+    std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
+    std::shared_ptr<RecoilCorrector> recoilPFMetCorrector;
 
 private:
     const edm::Event *edmEvent;

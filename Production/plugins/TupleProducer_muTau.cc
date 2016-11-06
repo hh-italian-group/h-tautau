@@ -47,7 +47,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
     if(runSVfit)
-        selection.svfitResult = svfitProducer.Fit(*selection.higgs, *met);
+        selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
     FillEventTuple(selection);
 
     if(eventEnergyScale == analysis::EventEnergyScale::Central)

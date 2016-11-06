@@ -49,9 +49,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
-                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct"))),
-    svfitProducer(edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()),
-    recoilPFMetCorrector("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root")
+                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")))
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
@@ -60,6 +58,15 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
         const auto es = analysis::Parse<analysis::EventEnergyScale>(scaleString);
         eventEnergyScales.push_back(es);
     }
+
+    if(runSVfit)
+        svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
+            edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
+    if(runKinFit)
+        kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
+    if(applyRecoilCorr)
+        recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
+            edm::FileInPath("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root").fullPath()));
 }
 
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -299,7 +306,7 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
     {
         if(jet.GetMomentum().pt() > 30) njets++;
     }
-    recoilPFMetCorrector.CorrectByMeanResolution(
+    recoilPFMetCorrector->CorrectByMeanResolution(
 	    pfmet_ex, // uncorrected type I pf met px (float)
 	    pfmet_ey, // uncorrected type I pf met py (float)
 	    genPx, // generator Z/W/Higgs px (float)
@@ -436,9 +443,9 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
     const auto runKinfit = [&](size_t first, size_t second) {
         const ntuple::JetPair pair(first, second);
         const size_t pair_index = ntuple::CombinationPairToIndex(pair, n_jets);
-        const auto& result = kinfitProducer.Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
-                                                selection.jets.at(pair.first).GetMomentum(),
-                                                selection.jets.at(pair.second).GetMomentum(), *met);
+        const auto& result = kinfitProducer->Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
+                                                 selection.jets.at(pair.first).GetMomentum(),
+                                                 selection.jets.at(pair.second).GetMomentum(), *met);
         selection.kinfitResults[pair_index] = result;
     };
 
