@@ -400,12 +400,19 @@ void BaseTupleProducer::FillMetFilters()
     using Filter = MetFilters::Filter;
 
     MetFilters filters;
-    filters.SetResult(Filter::PrimaryVertex, triggerTools.GetAnyTriggerResult("Flag_goodVertices"));
-    filters.SetResult(Filter::BeamHalo, triggerTools.GetAnyTriggerResult("Flag_globalTightHalo2016Filter"));
-    filters.SetResult(Filter::HBHE_noise, triggerTools.GetAnyTriggerResult("Flag_HBHENoiseFilter"));
-    filters.SetResult(Filter::HBHEiso_noise, triggerTools.GetAnyTriggerResult("Flag_HBHENoiseIsoFilter"));
-    filters.SetResult(Filter::ECAL_TP, triggerTools.GetAnyTriggerResult("Flag_EcalDeadCellTriggerPrimitiveFilter"));
-    filters.SetResult(Filter::ee_badSC_noise, triggerTools.GetAnyTriggerResult("Flag_eeBadScFilter"));
+    const auto setResult = [&](Filter filter, const std::string& name) {
+        bool result;
+        if(!triggerTools.TryGetAnyTriggerResult(name, result))
+            result = true;
+        filters.SetResult(filter, result);
+    };
+
+    setResult(Filter::PrimaryVertex, "Flag_goodVertices");
+    setResult(Filter::BeamHalo, "Flag_globalTightHalo2016Filter");
+    setResult(Filter::HBHE_noise, "Flag_HBHENoiseFilter");
+    setResult(Filter::HBHEiso_noise, "Flag_HBHENoiseIsoFilter");
+    setResult(Filter::ECAL_TP, "Flag_EcalDeadCellTriggerPrimitiveFilter");
+    setResult(Filter::ee_badSC_noise, "Flag_eeBadScFilter");
 
     edm::Handle<bool> badPFMuon;
     edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);

@@ -135,6 +135,7 @@ public:
 
     bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;
     bool GetTriggerResult(CMSSW_Process process, const std::string& name) const;
+    bool TryGetAnyTriggerResult(const std::string& name, bool& result) const;
     bool GetAnyTriggerResult(const std::string& name) const;
 
 private:

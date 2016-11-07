@@ -161,14 +161,21 @@ bool TriggerTools::GetTriggerResult(CMSSW_Process process, const std::string& na
     return result;
 }
 
+bool TriggerTools::TryGetAnyTriggerResult(const std::string& name, bool& result) const
+{
+    static const auto& all_processes = __CMSSW_Process_names<>::names.GetEnumEntries();
+    for(auto process : all_processes) {
+        if(TryGetTriggerResult(process, name, result))
+            return true;
+    }
+    return false;
+}
+
 bool TriggerTools::GetAnyTriggerResult(const std::string& name) const
 {
-    static const auto all_processes = __CMSSW_Process_names<>::names.GetEnumEntries();
-    for(const auto& process : all_processes) {
-        bool result;
-        if(TryGetTriggerResult(process, name, result))
-            return result;
-    }
+    bool result;
+    if(TryGetAnyTriggerResult(name, result))
+        return result;
     throw analysis::exception("Unable to find trigger '%1%'") % name;
 }
 
