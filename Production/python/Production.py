@@ -82,9 +82,6 @@ if len(options.lumiFile) > 0:
 if options.eventList != '':
     process.source.eventsToProcess = cms.untracked.VEventRange(re.split(',', options.eventList))
 
-process.load('RecoMET.METProducers.METSignificance_cfi')
-process.load('RecoMET.METProducers.METSignificanceParams_cfi')
-
 ### re-run JEC and and use corrected jets for MET significance, if requested
 if options.ReRunJEC:
     from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJetCorrFactors
@@ -109,9 +106,6 @@ if options.ReRunJEC:
 
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
     runMetCorAndUncFromMiniAOD(process, isData = isData)
-
-#    process.METSignificance.srcPfJets = JetsInputTag
-#    process.METSignificance.srcMet = MetInputTag
 
 else:
    process.JECsequence = cms.Sequence()
@@ -197,7 +191,6 @@ for channel in channels:
         pfMETSrc                = MetInputTag,
         prescales               = cms.InputTag('patTrigger'),
         objects                 = cms.InputTag('selectedPatTrigger'),
-        metCov                  = cms.InputTag('METSignificance', 'METCovariance', processName),
         badPFMuonFilter         = cms.InputTag('BadPFMuonFilter'),
         badChCandidateFilter    = cms.InputTag('BadChargedCandidateFilter'),
         lheEventProducts        = cms.InputTag('externalLHEProducer'),

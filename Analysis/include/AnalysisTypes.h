@@ -54,4 +54,12 @@ ENUM_NAMES(GenMatch) = {
     { GenMatch::NoMatch, "no_gen_match" }
 };
 
+enum class GenEventType { Other = 0, TTbar_Hadronic = 1, TTbar_SemiLeptonic = 2, TTbar_Leptonic = 3 };
+ENUM_NAMES(GenEventType) = {
+    { GenEventType::Other, "other" },
+    { GenEventType::TTbar_Hadronic, "TTbar_Hadronic" },
+    { GenEventType::TTbar_SemiLeptonic, "TTbar_SemiLeptonic" },
+    { GenEventType::TTbar_Leptonic, "TTbar_Leptonic" },
+};
+
 } // namespace analysis

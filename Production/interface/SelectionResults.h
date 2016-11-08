@@ -45,7 +45,7 @@ struct SelectionResultsBase {
     edm::EventID eventId;
     EventEnergyScale energyScale;
 
-    bool Zveto, electronVeto, muonVeto;
+    bool Zveto, electronVeto, muonVeto, triggerMatch;
     sv_fit::FitResults svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;

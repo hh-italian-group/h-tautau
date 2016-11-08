@@ -79,40 +79,6 @@ std::set<const pat::TriggerObjectStandAlone*> TriggerTools::FindMatchingTriggerO
         }
     }
 
-    static constexpr int verbosity = 0;
-    if(verbosity > 0) {
-        for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-            pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
-            unpackedTriggerObject.unpackPathNames(triggerNames);
-            const auto& matchedPaths = unpackedTriggerObject.pathNames(true, true);
-            for(const auto& matchedPath : matchedPaths) {
-                if( matchedPath.find(pathOfInterest) == std::string::npos ) continue;
-                const bool LF = unpackedTriggerObject.hasPathName(matchedPath, true, false);
-                const bool L3 = unpackedTriggerObject.hasPathName(matchedPath, false, true);
-                const bool all = unpackedTriggerObject.hasPathName(matchedPath, true, true);
-
-                const double dR = ROOT::Math::VectorUtil::DeltaR(triggerObject.polarP4(), candidateMomentum);
-                const bool match = dR < deltaR_Limit && haveExpectedType(triggerObject);
-
-                std::cout << std::boolalpha << "RECO p4 = " << ConvertVector(candidateMomentum)
-                          << ", exp_types = ( ";
-                for(auto type : objectTypes)
-                    std::cout << static_cast<int>(type) << " ";
-                std::cout << "), trig obj p4 = " << ConvertVector(triggerObject.polarP4())
-                          << ", deltaR = " << dR
-                          << ", matchedPath = " << matchedPath
-                          << ", LF = " << LF
-                          << ", L3 = " << L3
-                          << ", all = " << all
-                          << ", obj types = ( ";
-                for(int type : triggerObject.triggerObjectTypes())
-                    std::cout << type << " ";
-                std::cout << "), match = " << match << std::endl;
-                break;
-            }
-        }
-    }
-
     return matches;
 }
 

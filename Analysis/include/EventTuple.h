@@ -69,6 +69,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(ULong64_t, evt) /* event number */ \
     VAR(Int_t, channelId) /* Channel: eTau, muTau or tauTau */ \
     VAR(Int_t, eventEnergyScale) /* event type category */ \
+    VAR(Int_t, genEventType) /* gen event type */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
     /* Event Variables */ \
@@ -101,6 +102,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, genJets_nTotal) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
     /* Vetos */\
+    VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \

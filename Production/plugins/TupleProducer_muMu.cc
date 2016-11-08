@@ -29,16 +29,17 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     auto higgses = FindCompatibleObjects(leading_muons, trailing_muons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses.size(), "mu_mu_pair");
 
-    std::vector<HiggsCandidate> selected_higgses = higgses;
-    if(applyTriggerMatch) {
-        selected_higgses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, false);
-        cut(selected_higgses.size(), "triggerMatch");
-    }
-
-    std::sort(selected_higgses.begin(), selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
-    auto selected_higgs = selected_higgses.front();
+    std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
+    auto selected_higgs = higgses.front();
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
+
+    selection.triggerMatch = true;
+    if(applyTriggerMatch) {
+        auto triggered_higgses = triggerTools.ApplyTriggerMatch<HiggsCandidate>({ selected_higgs }, hltPaths, false);
+        selection.triggerMatch = triggered_higgses.size();
+    }
+
     selection.SetHiggsCandidate(selected_higgs);
 
     //Third-Lepton Veto

@@ -20,7 +20,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     pfMETAOD_token(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
     jetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
     fatJetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("fatJetSrc"))),
-    metCovMatrix_token(consumes<MetCovMatrix>(iConfig.getParameter<edm::InputTag>("metCov"))),
     PUInfo_token(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
     lheEventProduct_token(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
     genWeights_token(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
@@ -105,7 +104,6 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(pfMETAOD_token, pfMETs);
     iEvent.getByToken(jetsMiniAOD_token, pat_jets);
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
-    iEvent.getByToken(metCovMatrix_token, metCovMatrix);
     iEvent.getByToken(PUInfo_token, PUInfo);
     if(isMC) {
         iEvent.getByToken(genWeights_token, genEvt);
@@ -179,7 +177,7 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& jet : * pat_fatJets)
         fatJets.push_back(JetCandidate(jet));
 
-    met = std::shared_ptr<MET>(new MET((*pfMETs)[0], *metCovMatrix));
+    met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
     if(metUncertantyMap.count(energyScale)) {
         const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
         met->SetMomentum(shiftedMomentum);
@@ -324,7 +322,9 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
 
 void BaseTupleProducer::FillGenParticleInfo()
 {
+    using analysis::GenEventType;
     static const std::set<int> bosons = { 23, 24, 25, 35 };
+
 
     std::vector<const reco::GenParticle*> particles_to_store;
 
@@ -339,6 +339,15 @@ void BaseTupleProducer::FillGenParticleInfo()
     }
 
     if(saveGenTopInfo) {
+        GenEventType genEventType = GenEventType::Other;
+        if(topGenEvent->isFullHadronic())
+                    genEventType = GenEventType::TTbar_Hadronic;
+        else if(topGenEvent->isSemiLeptonic())
+            genEventType = GenEventType::TTbar_SemiLeptonic;
+        else if(topGenEvent->isFullLeptonic())
+            genEventType = GenEventType::TTbar_Leptonic;
+        eventTuple().genEventType = static_cast<int>(genEventType);
+
         auto top = topGenEvent->top();
         if(top)
             particles_to_store.push_back(top);
@@ -552,7 +561,8 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
 
     bool passMuonId =  muon->isMediumMuon();
     if( productionMode == ProductionMode::hh) passMuonId = muon->isLooseMuon() ;
-    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) passMuonId = PassICHEPMuonMediumId(*muon);
+    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm)
+        passMuonId = PassICHEPMuonMediumId(*muon);
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;
@@ -629,6 +639,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
     eventTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
+    eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
     eventTuple().npv = vertices->size();
@@ -697,6 +708,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         FillGenJetInfo();
     }
 
+    eventTuple().trigger_match = selection.triggerMatch;
     eventTuple().dilepton_veto  = selection.Zveto;
     eventTuple().extraelec_veto = selection.electronVeto;
     eventTuple().extramuon_veto = selection.muonVeto;

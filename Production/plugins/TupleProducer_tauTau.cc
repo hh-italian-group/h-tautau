@@ -22,22 +22,17 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     auto higgses = FindCompatibleObjects(selectedTaus, selectedTaus, DeltaR_betweenSignalObjects, "H_tau_tau");
     cut(higgses.size(), "tau_tau_pair");
 
-//    for(const auto& higgs : higgses) {
-//        std::cout << "H_cand: " << analysis::ConvertVector(higgs.GetFirstDaughter().GetMomentum())
-//                  << ", " << analysis::ConvertVector(higgs.GetSecondDaughter().GetMomentum()) << std::endl;
-//    }
-
-    std::vector<HiggsCandidate> selected_higgses = higgses;
-
-    if(applyTriggerMatch) {
-        selected_higgses = triggerTools.ApplyTriggerMatch(higgses, hltPaths, true);
-        cut(selected_higgses.size(), "triggerMatch");
-    }
-
-    std::sort(selected_higgses.begin(), selected_higgses.end(), &HiggsComparitor<HiggsCandidate>);
-    auto selected_higgs = selected_higgses.front();
+    std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
+    auto selected_higgs = higgses.front();
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
+
+    selection.triggerMatch = true;
+    if(applyTriggerMatch) {
+        auto triggered_higgses = triggerTools.ApplyTriggerMatch<HiggsCandidate>({ selected_higgs }, hltPaths, true);
+        selection.triggerMatch = triggered_higgses.size();
+    }
+
     selection.SetHiggsCandidate(selected_higgs);
 
     //Third-Lepton Veto

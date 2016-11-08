@@ -120,7 +120,6 @@ private:
     edm::EDGetToken pfMETAOD_token;
     edm::EDGetToken jetsMiniAOD_token;
     edm::EDGetToken fatJetsMiniAOD_token;
-    edm::EDGetTokenT<MetCovMatrix> metCovMatrix_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_token;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
     edm::EDGetTokenT<GenEventInfoProduct> genWeights_token;
@@ -150,7 +149,6 @@ private:
     edm::Handle<edm::View<pat::MET> > pfMETs;
     edm::Handle<std::vector<pat::Jet> > pat_jets;
     edm::Handle<std::vector<pat::Jet> > pat_fatJets;
-    edm::Handle<MetCovMatrix> metCovMatrix;
     edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
     edm::Handle<LHEEventProduct> lheEventProduct;
     edm::Handle<GenEventInfoProduct> genEvt;
@@ -299,6 +297,7 @@ protected:
         if(h1_leg1 == h2_leg1 && h1_leg2 == h2_leg2) return false;
         throw analysis::exception("not found a good criteria for best tau pair");
     }
+
 
     template<typename Candidate>
     static float GetUserFloat(const Candidate& obj, const std::string& name)
