@@ -87,12 +87,14 @@ public:
 
     template<typename HiggsCandidate>
     std::vector<HiggsCandidate> ApplyTriggerMatch(const std::vector<HiggsCandidate>& higgses,
-                                                  const std::vector<std::string>& hltPaths, bool isCrossTrigger)
+                                                  const std::vector<std::string>& hltPaths, bool isCrossTrigger,
+                                                  bool considerSecondLeg = true)
     {
         std::vector<HiggsCandidate> triggeredHiggses;
         for (const auto& higgs : higgses) {
             for (const std::string& hltPath : hltPaths) {
-                if(HaveTriggerMatched(hltPath, higgs, cuts::H_tautau_2016::DeltaR_triggerMatch, isCrossTrigger)) {
+                if(HaveTriggerMatched(hltPath, higgs, cuts::H_tautau_2016::DeltaR_triggerMatch, isCrossTrigger,
+                                      considerSecondLeg)) {
                     triggeredHiggses.push_back(higgs);
                     break;
                 }
@@ -103,12 +105,12 @@ public:
 
     template<typename HiggsCandidate>
     bool HaveTriggerMatched(const std::string& pathOfInterest, const HiggsCandidate& candidate,
-                            double deltaR_Limit, bool isCrossTrigger)
+                            double deltaR_Limit, bool isCrossTrigger, bool considerSecondLeg)
     {
         const auto match1 = FindMatchingTriggerObjects(pathOfInterest, candidate.GetFirstDaughter(), deltaR_Limit);
         const auto match2 = FindMatchingTriggerObjects(pathOfInterest, candidate.GetSecondDaughter(), deltaR_Limit);
         if(!isCrossTrigger)
-            return match1.size() || match2.size();
+            return match1.size() || (considerSecondLeg && match2.size());
 
         std::vector<const pat::TriggerObjectStandAlone*> comb_match;
         std::set_union(match1.begin(), match1.end(), match2.begin(), match2.end(), std::back_inserter(comb_match));

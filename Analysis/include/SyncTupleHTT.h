@@ -109,7 +109,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, puweight) \
     /* hh->bbtautau part */ \
     VAR(Float_t, shapeWeight) /* genWeight * puWeight * genEventSpec */ \
-    VAR(Float_t, topWeight) /* genTopWeight */ \
+    VAR(Float_t, topWeight) /* gen top pt weight for TTbar */ \
+    VAR(Float_t, btagWeight) /* b tag weight */ \
     VAR(Int_t, lhe_n_partons) \
     VAR(Int_t, lhe_n_b_partons) \
     VAR(Float_t, lhe_HT) \
@@ -119,7 +120,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, m_kinfit) \
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
-    VAR(Int_t, nFatJets) \
+    VAR(UInt_t, nFatJets) \
     VAR(Int_t, hasFatJet) \
     VAR(Float_t, fatJet_pt) \
     VAR(Float_t, fatJet_eta) \
@@ -133,6 +134,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, fatJet_n_subjettiness_tau1) \
     VAR(Float_t, fatJet_n_subjettiness_tau2) \
     VAR(Float_t, fatJet_n_subjettiness_tau3) \
+    VAR(UInt_t, genJets_nTotal) \
+    VAR(UInt_t, genJets_nStored) \
+    VAR(UInt_t, genJets_nStored_hadronFlavour_b) \
+    VAR(UInt_t, genJets_nStored_hadronFlavour_c) \
+    VAR(UInt_t, jets_nTotal_hadronFlavour_b) \
+    VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
+    VAR(UInt_t, jets_nSelected_hadronFlavour_b) \
+    VAR(UInt_t, jets_nSelected_hadronFlavour_c) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

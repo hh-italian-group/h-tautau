@@ -99,8 +99,17 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, lhe_HT) \
     VAR(std::vector<Int_t>, genParticles_pdg) \
     VAR(std::vector<LorentzVectorM>, genParticles_p4) \
+    VAR(UInt_t, genParticles_nPromptElectrons) \
+    VAR(UInt_t, genParticles_nPromptMuons) \
+    VAR(UInt_t, genParticles_nPromptTaus) \
     VAR(UInt_t, genJets_nTotal) \
+    VAR(UInt_t, jets_nTotal_partonFlavour_b) \
+    VAR(UInt_t, jets_nTotal_partonFlavour_c) \
+    VAR(UInt_t, jets_nTotal_hadronFlavour_b) \
+    VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
+    VAR(std::vector<Int_t>, genJets_partonFlavour) \
+    VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
     VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \

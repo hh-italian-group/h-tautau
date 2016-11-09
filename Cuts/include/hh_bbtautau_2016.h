@@ -44,6 +44,9 @@ namespace ETau {
 namespace MuMu {
     namespace muonID {
         constexpr bool isTightMuon = true; // = Same as for muTau channel
+        constexpr double eta_leading = 2.1; // < Same as for muTau channel
+
+        // pfRelIso should be applied at the tuple production level.
     }
 
     constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects; // >

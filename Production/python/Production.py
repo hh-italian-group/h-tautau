@@ -157,6 +157,7 @@ if options.saveGenTopInfo:
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     isMC     = cms.bool(not isData),
+    lheEventProduct = cms.InputTag('externalLHEProducer'),
     genEvent = cms.InputTag('generator'),
     taus     = cms.InputTag('slimmedTaus')
 )

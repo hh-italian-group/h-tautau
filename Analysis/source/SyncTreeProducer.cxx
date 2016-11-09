@@ -347,9 +347,24 @@ public:
                 }
                 sync().topWeight = topWeight;
                 sync().shapeWeight = eventWeights.GetPileUpWeight(*event) * event->genEventWeight;
+                sync().btagWeight = eventWeights.GetBtagWeight(*event);
+
                 sync().lhe_n_b_partons = event->lhe_n_b_partons;
                 sync().lhe_n_partons = event->lhe_n_partons;
                 sync().lhe_HT = event->lhe_HT;
+
+                sync().genJets_nTotal = event->genJets_nTotal;
+                sync().genJets_nStored = event->genJets_p4.size();
+                sync().genJets_nStored_hadronFlavour_b = std::count(event->genJets_hadronFlavour.begin(),
+                                                                    event->genJets_hadronFlavour.end(), 5);
+                sync().genJets_nStored_hadronFlavour_c = std::count(event->genJets_hadronFlavour.begin(),
+                                                                    event->genJets_hadronFlavour.end(), 4);
+                sync().jets_nTotal_hadronFlavour_b = event->jets_nTotal_hadronFlavour_b;
+                sync().jets_nTotal_hadronFlavour_c = event->jets_nTotal_hadronFlavour_c;
+                sync().jets_nSelected_hadronFlavour_b = std::count(event->jets_hadronFlavour.begin(),
+                                                                   event->jets_hadronFlavour.end(), 5);
+                sync().jets_nSelected_hadronFlavour_c = std::count(event->jets_hadronFlavour.begin(),
+                                                                   event->jets_hadronFlavour.end(), 4);
             }
 
             sync.Fill();

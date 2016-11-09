@@ -323,20 +323,24 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
 void BaseTupleProducer::FillGenParticleInfo()
 {
     using analysis::GenEventType;
+    static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
     static const std::set<int> bosons = { 23, 24, 25, 35 };
-
 
     std::vector<const reco::GenParticle*> particles_to_store;
 
-    if(saveGenBosonInfo) {
-        for(const auto& particle : *genParticles) {
-            const auto& flag = particle.statusFlags();
-            if(!flag.isPrompt() || !flag.isLastCopy()) continue;
-            const int abs_pdg = std::abs(particle.pdgId());
-            if(!bosons.count(abs_pdg)) continue;
+    std::map<int, size_t> particle_counts;
+    for(const auto& particle : *genParticles) {
+        const auto& flag = particle.statusFlags();
+        if(!flag.isPrompt() || !flag.isLastCopy()) continue;
+        const int abs_pdg = std::abs(particle.pdgId());
+        ++particle_counts[abs_pdg];
+        if(saveGenBosonInfo && bosons.count(abs_pdg))
             particles_to_store.push_back(&particle);
-        }
     }
+
+    eventTuple().genParticles_nPromptElectrons = particle_counts[electronPdgId];
+    eventTuple().genParticles_nPromptMuons = particle_counts[muonPdgId];
+    eventTuple().genParticles_nPromptTaus = particle_counts[tauPdgId];
 
     if(saveGenTopInfo) {
         GenEventType genEventType = GenEventType::Other;
@@ -360,15 +364,44 @@ void BaseTupleProducer::FillGenParticleInfo()
         eventTuple().genParticles_pdg.push_back(particle->pdgId());
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
     }
+
 }
 
 void BaseTupleProducer::FillGenJetInfo()
 {
+    static constexpr int b_flavour = 5, c_flavour = 4;
+    static constexpr double pt_cut = 20, eta_cut = 2.5;
     eventTuple().genJets_nTotal = genJets->size();
+
+    std::map<int, size_t> pf_counts, hf_counts;
+
+    for(const JetCandidate& jet : jets) {
+        ++pf_counts[std::abs(jet->partonFlavour())];
+        ++hf_counts[std::abs(jet->hadronFlavour())];
+    }
+    eventTuple().jets_nTotal_partonFlavour_b = pf_counts[b_flavour];
+    eventTuple().jets_nTotal_partonFlavour_c = pf_counts[c_flavour];
+    eventTuple().jets_nTotal_hadronFlavour_b = hf_counts[b_flavour];
+    eventTuple().jets_nTotal_hadronFlavour_c = hf_counts[c_flavour];
+
     if(!saveGenJetInfo) return;
 
-    for(const auto& jet : *genJets)
-        eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(jet.p4()));
+    for(const reco::GenJet& gen_jet : *genJets) {
+        if(gen_jet.pt() <= pt_cut || std::abs(gen_jet.eta()) >= eta_cut) continue;
+        eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
+
+        const auto findRecoJetFlavours = [&]() -> std::pair<int, int> {
+            for(const JetCandidate& reco_jet : jets) {
+                if(reco_jet->genJet() == &gen_jet)
+                    return std::make_pair(reco_jet->partonFlavour(), reco_jet->hadronFlavour());
+            }
+            return std::make_pair(ntuple::DefaultFillValue<int>(), ntuple::DefaultFillValue<int>());
+        };
+
+        const auto flavours = findRecoJetFlavours();
+        eventTuple().genJets_partonFlavour.push_back(flavours.first);
+        eventTuple().genJets_hadronFlavour.push_back(flavours.second);
+    }
 }
 
 void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4)

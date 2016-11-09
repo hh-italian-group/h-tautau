@@ -44,6 +44,11 @@ public:
                 FullLeptonName("Muon/Run2016BCD/Muon_IdIso0p15_eff.root"),
                 FullLeptonName("Muon/Run2016BCD/Muon_IsoMu22_eff.root")));
 
+            bTag = BTagWeightPtr(new class BTagWeight(
+                FullName("bTagEfficiencies_80X.root"),
+                FullName("CSVv2_ichep.csv"),
+                btag_wp));
+
         } else {
             throw exception("Period %1% is not supported.") % period;
         }
@@ -53,17 +58,13 @@ public:
     double GetLeptonIdIsoWeight(const Event& event) const { return lepton ? lepton->GetIdIsoWeight(event) : 1.; }
     double GetLeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
     double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
-    double GetBtagWeight(const Event& event, double csv_cut) const { return bTag ? bTag->Compute(event, csv_cut) : 1.; }
+    double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
 
-    double GetTotalWeight(const Event& event, bool apply_btag_weight = false,
-                       double csv_cut = std::numeric_limits<double>::quiet_NaN())
+    double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
     {
         double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event);
-        if(apply_btag_weight) {
-            if(std::isnan(csv_cut))
-                throw exception("CSV cut needs to be specified in order to calculate b tag weight.");
-            weight *= GetBtagWeight(event, csv_cut);
-        }
+        if(apply_btag_weight)
+            weight *= GetBtagWeight(event);
         return weight;
     }
 

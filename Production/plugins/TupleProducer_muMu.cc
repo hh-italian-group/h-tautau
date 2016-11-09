@@ -18,7 +18,8 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     std::vector<MuonCandidate> leading_muons;
     for(const auto& muon : trailing_muons) {
-        if(muon.GetMomentum().pt() > muonID::pt_leading)
+        if(muon.GetMomentum().pt() > muonID::pt_leading
+                && std::abs(muon.GetMomentum().eta()) < cuts::hh_bbtautau_2016::MuMu::muonID::eta_leading)
             leading_muons.push_back(muon);
     }
     cut(leading_muons.size(), "leading_muons");
@@ -36,7 +37,8 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     selection.triggerMatch = true;
     if(applyTriggerMatch) {
-        auto triggered_higgses = triggerTools.ApplyTriggerMatch<HiggsCandidate>({ selected_higgs }, hltPaths, false);
+        auto triggered_higgses =
+                triggerTools.ApplyTriggerMatch<HiggsCandidate>({ selected_higgs }, hltPaths, false, false);
         selection.triggerMatch = triggered_higgses.size();
     }
 
@@ -84,6 +86,9 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
     else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) 
         passMuonId = PassICHEPMuonMediumId(*muon);
     cut(passMuonId, "muonID");
+
+    if(productionMode == ProductionMode::hh)
+        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
 }
 
 void TupleProducer_muMu::FillEventTuple(const SelectionResults& selection)
