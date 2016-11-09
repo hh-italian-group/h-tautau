@@ -33,9 +33,11 @@ public:
                 btag_wp));
         }
         else if(period == Period::Run2016) {
-            pileUp = PileUpWeightPtr(new class PileUpWeight(
-                FullName("Data_Pileup_2016_271036-276811_13TeVSpring16_PromptReco_69p2mbMinBiasXS.root"),
-                "pileup", 40, 0));
+//            pileUp = PileUpWeightPtr(new class PileUpWeight(
+//                FullName("Data_Pileup_2016_271036-276811_13TeVSpring16_PromptReco_69p2mbMinBiasXS.root"),
+//                "pileup", 40, 0));
+            pileUp = PileUpWeightPtr(new PileUpWeight(FullName("purewHisto.root"), "pileup", 60, 0));
+
             lepton = LeptonWeightsPtr(new LeptonWeights(
                 FullLeptonName("Electron/Run2016BCD/Electron_IdIso0p10_eff.root"),
                 FullLeptonName("Electron/Run2016BCD/Electron_Ele25eta2p1WPTight_eff.root"),

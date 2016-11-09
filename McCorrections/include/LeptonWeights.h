@@ -56,7 +56,7 @@ public:
 
     double GetIdIsoWeight(const Event& event) const
     {
-        const Channel channel = static_cast<Channel>(event.channelID);
+        const Channel channel = static_cast<Channel>(event.channelId);
         if(channel == Channel::ETau) return electronSF.GetIdIsoSF(event.p4_1);
         if(channel == Channel::MuTau) return muonSF.GetIdIsoSF(event.p4_1);
         return 1.0;
@@ -64,7 +64,7 @@ public:
 
     double GetTriggerWeight(const Event& event) const
     {
-        const Channel channel = static_cast<Channel>(event.channelID);
+        const Channel channel = static_cast<Channel>(event.channelId);
         if(channel == Channel::ETau) return electronSF.GetTriggerSF(event.p4_1);
         if(channel == Channel::MuTau) return muonSF.GetTriggerSF(event.p4_1);
         return 1.0;

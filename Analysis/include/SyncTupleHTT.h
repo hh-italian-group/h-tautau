@@ -108,6 +108,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     VAR(Float_t, puweight) \
     /* hh->bbtautau part */ \
+    VAR(Float_t, shapeWeight) /* genWeight * puWeight * genEventSpec */ \
+    VAR(Float_t, topWeight) /* genTopWeight */ \
+    VAR(Int_t, lhe_n_partons) \
+    VAR(Int_t, lhe_n_b_partons) \
+    VAR(Float_t, lhe_HT) \
     VAR(Int_t, nbjets) /* pt>30 and abs(eta)<2.4 */ \
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \

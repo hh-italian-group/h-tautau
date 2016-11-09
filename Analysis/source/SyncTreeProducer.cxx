@@ -9,12 +9,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/McCorrections/include/EventWeights.h"
 
 struct Arguments {
     REQ_ARG(std::string, mode);
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, output_file);
+    OPT_ARG(std::string, sample_type, "signal");
 };
 
 namespace analysis {
@@ -36,7 +38,7 @@ public:
     static constexpr float default_value = std::numeric_limits<float>::lowest();
     static constexpr int default_int_value = std::numeric_limits<int>::lowest();
 
-    SyncTreeProducer(const Arguments& _args) : args(_args)
+    SyncTreeProducer(const Arguments& _args) : args(_args), eventWeights(Period::Run2016, DiscriminatorWP::Medium)
     {
         std::istringstream ss_mode(args.mode());
         ss_mode >> syncMode;
@@ -334,6 +336,20 @@ public:
                     sync().fatJet_n_subjettiness_tau2 = default_value;
                     sync().fatJet_n_subjettiness_tau3 = default_value;
                 }
+
+                double topWeight = 1;
+                if(args.sample_type() == "ttbar") {
+                    for(size_t n = 0; n < event->genParticles_pdg.size(); ++n) {
+                        if(std::abs(event->genParticles_pdg.at(n)) != 6) continue;
+                        const double pt = event->genParticles_p4.at(n).pt();
+                        topWeight *= std::sqrt(std::exp(0.156 - 0.00137 * pt));
+                    }
+                }
+                sync().topWeight = topWeight;
+                sync().shapeWeight = eventWeights.GetPileUpWeight(*event) * event->genEventWeight;
+                sync().lhe_n_b_partons = event->lhe_n_b_partons;
+                sync().lhe_n_partons = event->lhe_n_partons;
+                sync().lhe_HT = event->lhe_HT;
             }
 
             sync.Fill();
@@ -345,6 +361,7 @@ public:
 private:
     Arguments args;
     SyncMode syncMode;
+    mc_corrections::EventWeights eventWeights;
 };
 
 } // namespace analysis

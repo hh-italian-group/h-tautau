@@ -263,16 +263,16 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
     eventTuple().lhe_n_partons = 0;
     eventTuple().lhe_n_b_partons = 0;
-    double HT2 = 0;
+    double HT = 0;
     for(size_t n = 0; n < lheParticles.size(); ++n) {
         const int absPdgId = std::abs(lheEvent.IDUP[n]);
         const int status = lheEvent.ISTUP[n];
         if(status != 1 || !quarks_and_gluons.count(absPdgId)) continue;
         eventTuple().lhe_n_partons++;
         if(absPdgId == b_quark) eventTuple().lhe_n_b_partons++;
-        HT2 += std::pow(lheParticles[n][0], 2) + std::pow(lheParticles[n][1], 2);
+        HT += std::sqrt(std::pow(lheParticles[n][0], 2) + std::pow(lheParticles[n][1], 2));
     }
-    eventTuple().lhe_HT = std::sqrt(HT2);
+    eventTuple().lhe_HT = HT;
 }
 
 void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& jets)
@@ -366,6 +366,7 @@ void BaseTupleProducer::FillGenJetInfo()
 {
     eventTuple().genJets_nTotal = genJets->size();
     if(!saveGenJetInfo) return;
+
     for(const auto& jet : *genJets)
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(jet.p4()));
 }
