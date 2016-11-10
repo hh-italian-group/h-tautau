@@ -9,8 +9,11 @@ add_library("h-tautau" OBJECT ${HEADER_LIST})
 file(GLOB_RECURSE HTT_UTILITIES_SRC "${CMSSW_BASE_SRC}/HTT-utilities/*.cc")
 add_library(HTT-utilities STATIC ${HTT_UTILITIES_SRC})
 
+file(GLOB_RECURSE SVFIT_SRC "${CMSSW_BASE_SRC}/TauAnalysis/SVfitStandalone/*.cc")
+add_library(SVfit STATIC ${SVFIT_SRC})
+
 foreach(exe_name ${EXE_LIST})
-    target_link_libraries("${exe_name}" HTT-utilities)
+    target_link_libraries("${exe_name}" HTT-utilities SVfit)
 endforeach()
 
 set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_Stack Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)

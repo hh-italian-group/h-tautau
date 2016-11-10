@@ -141,6 +141,7 @@ protected:
     std::shared_ptr<RecoilCorrector> recoilPFMetCorrector;
 
 private:
+    static const bool enableThreadSafety;
     const edm::Event *edmEvent;
     edm::Handle<std::vector<pat::Electron> > pat_electrons;
     edm::Handle<std::vector<pat::Tau> > pat_taus;

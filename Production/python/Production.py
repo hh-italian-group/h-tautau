@@ -47,6 +47,9 @@ options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarP
                  "Save generator-level information for jets.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Dump full config into stdout.")
+options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
+                 "Number of threads.")
+
 options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
@@ -57,6 +60,7 @@ process = cms.Process(processName)
 process.options = cms.untracked.PSet()
 process.options.wantSummary = cms.untracked.bool(False)
 process.options.allowUnscheduled = cms.untracked.bool(True)
+process.options.numberOfThreads = cms.untracked.uint32(options.numberOfThreads)
 
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 100

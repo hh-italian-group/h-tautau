@@ -1,9 +1,17 @@
+#include "TROOT.h"
 #include "h-tautau/Production/interface/BaseTupleProducer.h"
 #include "h-tautau/McCorrections/include/TauUncertainties.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "../interface/GenTruthTools.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+
+
+namespace {
+bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
+}
+
+const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
