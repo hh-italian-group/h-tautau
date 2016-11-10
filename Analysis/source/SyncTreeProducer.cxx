@@ -355,8 +355,8 @@ public:
 
                 sync().genJets_nTotal = event->genJets_nTotal;
                 sync().genJets_nStored = event->genJets_p4.size();
-                sync().genJets_nStored_hadronFlavour_b = std::count(event->genJets_hadronFlavour.begin(),
-                                                                    event->genJets_hadronFlavour.end(), 5);
+                sync().genJets_nStored_hadronFlavour_b = std::min<size_t>(2,
+                    std::count(event->genJets_hadronFlavour.begin(), event->genJets_hadronFlavour.end(), 5));
                 sync().genJets_nStored_hadronFlavour_c = std::count(event->genJets_hadronFlavour.begin(),
                                                                     event->genJets_hadronFlavour.end(), 4);
                 sync().jets_nTotal_hadronFlavour_b = event->jets_nTotal_hadronFlavour_b;
