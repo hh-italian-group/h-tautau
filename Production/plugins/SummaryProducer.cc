@@ -10,9 +10,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
 
 #include "AnalysisTools/Core/include/Tools.h"
 #include "h-tautau/Analysis/include/SummaryTuple.h"
+#include "h-tautau/Analysis/include/EventTuple.h"
+#include "h-tautau/Production/interface/GenTruthTools.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
@@ -23,50 +26,25 @@ public:
     SummaryProducer(const edm::ParameterSet& cfg) :
         start(clock::now()),
         isMC(cfg.getParameter<bool>("isMC")),
+        saveGenTopInfo(cfg.getParameter<bool>("saveGenTopInfo")),
         lheEventProduct_token(mayConsume<LHEEventProduct>(cfg.getParameter<edm::InputTag>("lheEventProduct"))),
         genEvent_token(mayConsume<GenEventInfoProduct>(cfg.getParameter<edm::InputTag>("genEvent"))),
+        puInfo_token(mayConsume<std::vector<PileupSummaryInfo>>(cfg.getParameter<edm::InputTag>("puInfo"))),
         taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus"))),
         summaryTuple("summary", &edm::Service<TFileService>()->file(), false)
     {
         summaryTuple().numberOfProcessedEvents = 0;
         summaryTuple().totalWeight = 0.;
+        if(isMC)
+            expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
+                    new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
     }
 
 private:
     virtual void analyze(const edm::Event& event, const edm::EventSetup&) override
     {
-        static constexpr int b_quark = 5;
-        static const std::set<int> quarks_and_gluons = { 1, 2, 3, 4, 5, 6, 21 };
-
         summaryTuple().numberOfProcessedEvents++;
 
-        if(isMC) {
-            edm::Handle<GenEventInfoProduct> genEvent;
-            event.getByToken(genEvent_token, genEvent);
-            summaryTuple().totalWeight += genEvent->weight();
-
-            edm::Handle<LHEEventProduct> lheEventProduct;
-            event.getByToken(lheEventProduct_token, lheEventProduct);
-            if(lheEventProduct.isValid()) {
-                const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
-                const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
-                size_t n_partons = 0, n_b_partons = 0;
-                double HT = 0;
-                for(size_t n = 0; n < lheParticles.size(); ++n) {
-                    const int absPdgId = std::abs(lheEvent.IDUP[n]);
-                    const int status = lheEvent.ISTUP[n];
-                    if(status != 1 || !quarks_and_gluons.count(absPdgId)) continue;
-                    ++n_partons;
-                    if(absPdgId == b_quark) ++n_b_partons;
-                    HT += std::sqrt(std::pow(lheParticles[n][0], 2) + std::pow(lheParticles[n][1], 2));
-                }
-                const size_t ht10_bin = HT / 10;
-                const GenId genId(n_partons, n_b_partons, ht10_bin);
-                ++genEventCountMap[genId];
-            }
-        } else {
-            summaryTuple().totalWeight += 1;
-        }
         if(!tauId_names.size()) {
             edm::Handle<std::vector<pat::Tau>> taus;
             event.getByToken(taus_token, taus);
@@ -76,6 +54,50 @@ private:
                 }
             }
         }
+
+        if(!isMC) {
+            summaryTuple().totalWeight += 1;
+            return;
+        }
+
+        edm::Handle<GenEventInfoProduct> genEvent;
+        event.getByToken(genEvent_token, genEvent);
+        summaryTuple().totalWeight += genEvent->weight();
+
+        edm::Handle<std::vector<PileupSummaryInfo>> puInfo;
+        event.getByToken(puInfo_token, puInfo);
+        (*expressTuple)().npu = analysis::gen_truth::GetNumberOfPileUpInteractions(puInfo);
+        (*expressTuple)().genEventWeight = genEvent->weight();
+        (*expressTuple)().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
+        (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
+        (*expressTuple)().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
+
+        if(saveGenTopInfo) {
+            edm::Handle<TtGenEvent> topGenEvent;
+            event.getByToken(topGenEvent_token, topGenEvent);
+            if(topGenEvent.isValid()) {
+                auto top = topGenEvent->top();
+                if(top)
+                    (*expressTuple)().gen_top_pt = top->pt();
+                auto top_bar = topGenEvent->topBar();
+                if(top_bar)
+                    (*expressTuple)().gen_topBar_pt = top_bar->pt();
+            }
+        }
+
+        edm::Handle<LHEEventProduct> lheEventProduct;
+        event.getByToken(lheEventProduct_token, lheEventProduct);
+        if(lheEventProduct.isValid()) {
+            const auto lheSummary = analysis::gen_truth::ExtractLheSummary(*lheEventProduct);
+            const size_t ht10_bin = lheSummary.HT / 10;
+            const GenId genId(lheSummary.n_partons, lheSummary.n_b_partons, ht10_bin);
+            ++genEventCountMap[genId];
+            (*expressTuple)().lhe_H_m = lheSummary.m_H;
+            (*expressTuple)().lhe_hh_m = lheSummary.m_hh;
+            (*expressTuple)().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
+        }
+
+        expressTuple->Fill();
     }
 
     virtual void endJob() override
@@ -95,17 +117,21 @@ private:
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
         summaryTuple.Fill();
         summaryTuple.Write();
+        expressTuple->Write();
     }
 
 private:
     const clock::time_point start;
-    const bool isMC;
+    const bool isMC, saveGenTopInfo;
 
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
     edm::EDGetTokenT<GenEventInfoProduct> genEvent_token;
+    edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
+    edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfo_token;
     edm::EDGetTokenT<std::vector<pat::Tau>> taus_token;
 
     ntuple::SummaryTuple summaryTuple;
+    std::shared_ptr<ntuple::ExpressTuple> expressTuple;
     std::unordered_set<std::string> tauId_names;
     GenEventCountMap genEventCountMap;
 };

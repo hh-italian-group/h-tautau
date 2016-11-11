@@ -7,48 +7,48 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 options = VarParsing('analysis')
-options.register('globalTag', '76X_mcRun2_asymptotic_RunIIFall15DR76_v1', VarParsing.multiplicity.singleton,
-                 VarParsing.varType.string, "Global Tag to use.")
-options.register('sampleType', 'Fall15MC', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+options.register('globalTag', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                        "Global Tag to use.")
+options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                        "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Re-run Jet Energy Corrections. Default: False")
+                        "Re-run Jet Energy Corrections. Default: False")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Apply trigger matching for signal objects. Default: True")
+                        "Apply trigger matching for signal objects. Default: True")
 options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "List of root files to process.")
+                        "List of root files to process.")
 options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                  "Prefix to add to input file names.")
+                        "Prefix to add to input file names.")
 options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "Analysis channels to run.")
+                        "Analysis channels to run.")
 options.register('energyScales', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "Event energy scales to run.")
+                        "Event energy scales to run.")
 options.register('productionMode', 'hh', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "Selections that should be used for the production.")
+                        "Selections that should be used for the production.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "Event tuple file.")
+                        "Event tuple file.")
 options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Run SVfit algorithm on the selected tau pair.")
+                        "Run SVfit algorithm on the selected tau pair.")
 options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
+                        "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
 options.register('applyRecoilCorr', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Apply Met Recoil Corrections")
+                        "Apply Met Recoil Corrections")
 options.register('nJetsRecoilCorr', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int,
-                 "Number of Additional Jets for Recoil Correction")
+                        "Number of Additional Jets for Recoil Correction")
 options.register('lumiFile', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "JSON file with lumi mask.")
+                        "JSON file with lumi mask.")
 options.register('eventList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                 "List of events to process.")
+                        "List of events to process.")
 options.register('saveGenTopInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Save generator-level information for top quarks.")
+                        "Save generator-level information for top quarks.")
 options.register('saveGenBosonInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                  "Save generator-level information for bosons.")
+                        "Save generator-level information for bosons.")
 options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Save generator-level information for jets.")
+                        "Save generator-level information for jets.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                 "Dump full config into stdout.")
+                        "Dump full config into stdout.")
 options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
-                 "Number of threads.")
+                        "Number of threads.")
 
 options.parseArguments()
 
@@ -60,7 +60,7 @@ process = cms.Process(processName)
 process.options = cms.untracked.PSet()
 process.options.wantSummary = cms.untracked.bool(False)
 process.options.allowUnscheduled = cms.untracked.bool(True)
-process.options.numberOfThreads = cms.untracked.uint32(options.numberOfThreads)
+#process.options.numberOfThreads = cms.untracked.uint32(options.numberOfThreads)
 
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
@@ -160,10 +160,12 @@ if options.saveGenTopInfo:
 ### Tuple production sequence
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC     = cms.bool(not isData),
+    isMC            = cms.bool(not isData),
+    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
     lheEventProduct = cms.InputTag('externalLHEProducer'),
-    genEvent = cms.InputTag('generator'),
-    taus     = cms.InputTag('slimmedTaus')
+    genEvent        = cms.InputTag('generator'),
+    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
+    taus            = cms.InputTag('slimmedTaus')
 )
 
 process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)

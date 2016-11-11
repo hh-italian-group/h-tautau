@@ -257,30 +257,25 @@ bool BaseTupleProducer::PassICHEPMuonMediumId(const pat::Muon& pat_muon){
 
 void BaseTupleProducer::FillLheInfo(bool haveReference)
 {
-    static constexpr int b_quark = 5;
-    static const std::set<int> quarks_and_gluons = { 1, 2, 3, 4, 5, 6, 21 };
-
     if(haveReference || !lheEventProduct.isValid()) {
         eventTuple().lhe_n_partons = ntuple::DefaultFillValue<UInt_t>();
+        eventTuple().lhe_n_c_partons = ntuple::DefaultFillValue<UInt_t>();
         eventTuple().lhe_n_b_partons = ntuple::DefaultFillValue<UInt_t>();
         eventTuple().lhe_HT = ntuple::DefaultFillValue<Float_t>();
+        eventTuple().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
+        eventTuple().lhe_hh_m = ntuple::DefaultFillValue<Float_t>();
+        eventTuple().lhe_hh_cosTheta = ntuple::DefaultFillValue<Float_t>();
         return;
     }
 
-    const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
-    const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
-    eventTuple().lhe_n_partons = 0;
-    eventTuple().lhe_n_b_partons = 0;
-    double HT = 0;
-    for(size_t n = 0; n < lheParticles.size(); ++n) {
-        const int absPdgId = std::abs(lheEvent.IDUP[n]);
-        const int status = lheEvent.ISTUP[n];
-        if(status != 1 || !quarks_and_gluons.count(absPdgId)) continue;
-        eventTuple().lhe_n_partons++;
-        if(absPdgId == b_quark) eventTuple().lhe_n_b_partons++;
-        HT += std::sqrt(std::pow(lheParticles[n][0], 2) + std::pow(lheParticles[n][1], 2));
-    }
-    eventTuple().lhe_HT = HT;
+    const auto lheSummary = analysis::gen_truth::ExtractLheSummary(*lheEventProduct);
+    eventTuple().lhe_n_partons = lheSummary.n_partons;
+    eventTuple().lhe_n_c_partons = lheSummary.n_c_partons;
+    eventTuple().lhe_n_b_partons = lheSummary.n_b_partons;
+    eventTuple().lhe_HT = lheSummary.HT;
+    eventTuple().lhe_H_m = lheSummary.m_H;
+    eventTuple().lhe_hh_m = lheSummary.m_hh;
+    eventTuple().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
 }
 
 void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& jets)
@@ -474,17 +469,6 @@ void BaseTupleProducer::FillMetFilters()
     filters.SetResult(Filter::badChargedHadron,*badChCandidate);
 
     eventTuple().metFilters = filters.FilterResults();
-}
-
-double BaseTupleProducer::GetNumberOfPileUpInteractions() const
-{
-    if(PUInfo.isValid()) {
-        for(auto PVI = PUInfo->begin(); PVI != PUInfo->end(); ++PVI) {
-            if(PVI->getBunchCrossing() == 0)
-                return PVI->getTrueNumInteractions();
-        }
-    }
-    return std::numeric_limits<double>::lowest();
 }
 
 void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selection,
@@ -685,7 +669,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
     eventTuple().npv = vertices->size();
-    eventTuple().npu = GetNumberOfPileUpInteractions();
+    eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
 
     // HTT candidate
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;

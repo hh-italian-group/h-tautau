@@ -1,0 +1,9 @@
+EventAwareLumiBased ../json/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON_NoL1T.txt
+globalTag=80X_dataRun2_2016SeptRepro_v4 sampleType=Run2016BCD ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central anaChannels=muTau,muMu
+
+SingleMuon_Run2016B-23Sep2016-v3	17400	/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD
+SingleMuon_Run2016C-23Sep2016-v1	7500	/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD
+SingleMuon_Run2016D-23Sep2016-v1	10800	/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD
+SingleMuon_Run2016E-23Sep2016-v1	10100	/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD
+SingleMuon_Run2016F-23Sep2016-v1	7300	/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD
+SingleMuon_Run2016G-23Sep2016-v1	16500	/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD

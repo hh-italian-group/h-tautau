@@ -95,8 +95,12 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
     /* Generator level information */\
     VAR(UInt_t, lhe_n_partons) \
+    VAR(UInt_t, lhe_n_c_partons) \
     VAR(UInt_t, lhe_n_b_partons) \
     VAR(Float_t, lhe_HT) \
+    VAR(Float_t, lhe_H_m) \
+    VAR(Float_t, lhe_hh_m) \
+    VAR(Float_t, lhe_hh_cosTheta) \
     VAR(std::vector<Int_t>, genParticles_pdg) \
     VAR(std::vector<LorentzVectorM>, genParticles_p4) \
     VAR(UInt_t, genParticles_nPromptElectrons) \

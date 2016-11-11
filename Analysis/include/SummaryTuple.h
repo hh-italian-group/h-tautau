@@ -29,6 +29,26 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
 #undef VAR
 #undef SUMMARY_DATA
 
+
+#define EVENT_EXPRESS_DATA() \
+    VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
+    VAR(Float_t, genEventWeight) /* gen event weight */ \
+    VAR(Float_t, gen_top_pt) /* pt of gen ME top */ \
+    VAR(Float_t, gen_topBar_pt) /* pt of gen ME anti-top */ \
+    VAR(Float_t, lhe_H_m) /* mass of lhe H */ \
+    VAR(Float_t, lhe_hh_m) /* mass of lhe hh pair */ \
+    VAR(Float_t, lhe_hh_cosTheta) /* cos(theta) between h and z-axis in the hh reference frame */ \
+    /**/
+
+#define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
+DECLARE_TREE(ntuple, ExpressEvent, ExpressTuple, EVENT_EXPRESS_DATA, "all_events")
+#undef VAR
+
+#define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
+INITIALIZE_TREE(ntuple, ExpressTuple, EVENT_EXPRESS_DATA)
+#undef VAR
+#undef SUMMARY_DATA
+
 namespace ntuple {
 struct GenId {
     size_t n_partons;

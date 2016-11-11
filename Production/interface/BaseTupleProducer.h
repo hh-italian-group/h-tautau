@@ -192,7 +192,6 @@ protected:
     static bool PassPFLooseId(const pat::Jet& pat_jet);
     static bool PassICHEPMuonMediumId(const pat::Muon& pat_muon);
 
-    double GetNumberOfPileUpInteractions() const;
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                             const std::vector<LorentzVector>& signalLeptonMomentums);
     void FillEventTuple(const analysis::SelectionResultsBase& selection,

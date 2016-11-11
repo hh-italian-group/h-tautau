@@ -85,7 +85,6 @@ class JobCollection:
     def submit(self, config, dryrunBool):
         config.Data.splitting = self.splitting
         config.JobType.pyCfgParams = self.pyCfgParams
-        if len(self.lumiMask) > 0:
-            config.Data.lumiMask = self.lumiMask
+        config.Data.lumiMask = self.lumiMask
         for job in self.jobs:
             job.submit(config,dryrunBool)
