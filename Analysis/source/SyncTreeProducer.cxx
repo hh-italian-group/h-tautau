@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "AnalysisTools/Core/include/EnumNameMap.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "AnalysisTools/Core/include/TextIO.h"
 #include "h-tautau/Analysis/include/SyncTupleHTT.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
@@ -46,20 +47,34 @@ public:
 
     void Run()
     {
+        static const std::map<Channel, std::vector<std::string>> triggerPaths = {
+            { Channel::ETau, { "HLT_Ele25_eta2p1_WPTight_Gsf_v" } },
+            { Channel::MuTau, { "HLT_IsoMu22_v" } },
+            { Channel::TauTau, { "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v" } },
+            { Channel::MuMu, { "HLT_IsoMu22_v" } },
+        };
+
         std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.\n")
                    % args.input_file() % args.output_file() % args.mode();
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         auto outputFile = root_ext::CreateRootFile(args.output_file());
         EventTuple originalTuple(args.tree_name(), originalFile.get(), true);
-        SyncTuple sync(args.tree_name(), outputFile.get(), false );
+        SyncTuple sync(args.tree_name(), outputFile.get(), false);
+        ntuple::SummaryTuple summaryTuple("summary", originalFile.get(), true);
+        summaryTuple.GetEntry(0);
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple.data()));
+        const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple.GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple.GetEntry(current_entry);
             const auto bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
                                                                  cuts::btag_2016::eta, JetOrdering::CSV);
-            EventInfoBase event(originalTuple.data(), bjet_pair);
-            if(event.GetEnergyScale() != EventEnergyScale::Central || !event->trigger_match) continue;
+            auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo);
+            EventInfoBase& event = *eventInfoPtr;
+            if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
+            if(args.sample_type() == "data" && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel)))
+                continue;
 
             if(syncMode == SyncMode::HH) {
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;

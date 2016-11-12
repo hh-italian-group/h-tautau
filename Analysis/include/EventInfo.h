@@ -11,6 +11,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "KinFitInterface.h"
 #include "Candidate.h"
 #include "TupleObjects.h"
+#include "TriggerResults.h"
+#include "SummaryTuple.h"
 #include "AnalysisTools/Core/include/EventIdentifier.h"
 
 namespace analysis {
@@ -23,25 +25,79 @@ using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
 using MET = MissingET<ntuple::TupleMet>;
 
 namespace detail {
-template<typename FirstLeg>
+template<typename FirstLeg, typename SecondLeg>
 constexpr Channel IdentifyChannel();
 
 template<>
-inline constexpr Channel IdentifyChannel<ElectronCandidate>() { return Channel::ETau; }
+inline constexpr Channel IdentifyChannel<ElectronCandidate, TauCandidate>() { return Channel::ETau; }
 
 template<>
-inline constexpr Channel IdentifyChannel<MuonCandidate>() { return Channel::MuTau; }
+inline constexpr Channel IdentifyChannel<MuonCandidate, TauCandidate>() { return Channel::MuTau; }
 
 template<>
-inline constexpr Channel IdentifyChannel<TauCandidate>() { return Channel::TauTau; }
+inline constexpr Channel IdentifyChannel<TauCandidate, TauCandidate>() { return Channel::TauTau; }
+
+template<>
+inline constexpr Channel IdentifyChannel<MuonCandidate, MuonCandidate>() { return Channel::MuMu; }
 }
 
 struct ChannelInfo {
-    template<typename FirstLeg>
-    static constexpr Channel IdentifyChannel() { return detail::IdentifyChannel<FirstLeg>(); }
+    template<typename FirstLeg, typename SecondLeg>
+    static constexpr Channel IdentifyChannel() { return detail::IdentifyChannel<FirstLeg, SecondLeg>(); }
 };
 
+template<int channel_id> struct ChannelLegInfo;
+template<> struct ChannelLegInfo<static_cast<int>(Channel::ETau)> {
+    using FirstLeg = ElectronCandidate; using SecondLeg = TauCandidate;
+};
+template<> struct ChannelLegInfo<static_cast<int>(Channel::MuTau)> {
+    using FirstLeg = MuonCandidate; using SecondLeg = TauCandidate;
+};
+template<> struct ChannelLegInfo<static_cast<int>(Channel::TauTau)> {
+    using FirstLeg = TauCandidate; using SecondLeg = TauCandidate;
+};
+template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
+    using FirstLeg = MuonCandidate; using SecondLeg = MuonCandidate;
+};
+
+
 enum class JetOrdering { NoOrdering, Pt, CSV };
+
+class SummaryInfo {
+public:
+    using ProdSummary = ntuple::ProdSummary;
+
+    explicit SummaryInfo(const ProdSummary& _summary) : summary(_summary)
+    {
+        using FilterKey = std::pair<int, size_t>;
+        using FilterMap = std::map<FilterKey, std::map<size_t, std::vector<std::string>>>;
+        FilterMap filters;
+        for(size_t n = 0; n < summary.triggerFilters_channel.size(); ++n) {
+            const FilterKey key(summary.triggerFilters_channel.at(n), summary.triggerFilters_triggerIndex.at(n));
+            filters[key][summary.triggerFilters_LegId.at(n)].push_back(summary.triggerFilters_name.at(n));
+        }
+        for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
+            const int channel_id = summary.triggers_channel.at(n);
+            const Channel channel = static_cast<Channel>(channel_id);
+            const FilterKey key(channel_id, summary.triggers_index.at(n));
+            if(!triggerDescriptors.count(channel))
+                triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptors>(new TriggerDescriptors());
+            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), summary.triggers_n_legs.at(n),
+                                             filters[key]);
+        }
+    }
+
+    std::shared_ptr<const TriggerDescriptors> GetTriggerDescriptors(Channel channel) const
+    {
+        if(!triggerDescriptors.count(channel))
+            throw exception("Information for channel %1% not found.") % channel;
+        return triggerDescriptors.at(channel);
+    }
+
+private:
+    ProdSummary summary;
+    std::map<Channel, std::shared_ptr<TriggerDescriptors>> triggerDescriptors;
+};
 
 class EventInfoBase {
 public:
@@ -79,10 +135,16 @@ public:
 
     static constexpr int verbosity = 0;
 
-    explicit EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair = ntuple::UndefinedJetPair())
-        : event(&_event), eventIdentifier(_event.run, _event.lumi, _event.evt), selected_bjet_pair(_selected_bjet_pair),
-          has_bjet_pair(selected_bjet_pair.first < GetNJets() &&
-                        selected_bjet_pair.second < GetNJets()) {}
+    EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair,
+                  std::shared_ptr<const SummaryInfo> _summaryInfo) :
+        event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
+        selected_bjet_pair(_selected_bjet_pair),
+        has_bjet_pair(selected_bjet_pair.first < GetNJets() && selected_bjet_pair.second < GetNJets())
+    {
+        triggerResults.SetAcceptBits(event->trigger_accepts);
+        triggerResults.SetMatchBits(event->trigger_matches);
+    }
+
     virtual ~EventInfoBase() {}
 
     const Event& operator*() const { return *event; }
@@ -90,6 +152,7 @@ public:
 
     const EventIdentifier& GetEventId() const { return eventIdentifier; }
     EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
+    const TriggerResults& GetTriggerResults() const { return triggerResults; }
 
     virtual const AnalysisObject& GetLeg(size_t leg_id) { throw exception("Method not supported."); }
     virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) { throw exception("Method not supported."); }
@@ -226,6 +289,8 @@ public:
 
 protected:
     const Event* event;
+    std::shared_ptr<const SummaryInfo> summaryInfo;
+    TriggerResults triggerResults;
 
 private:
     EventIdentifier eventIdentifier;
@@ -242,14 +307,24 @@ private:
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
 };
 
-template<typename _FirstLeg>
+template<typename _FirstLeg, typename _SecondLeg>
 class EventInfo : public EventInfoBase {
 public:
     using FirstLeg = _FirstLeg;
-    using SecondLeg = TauCandidate;
+    using SecondLeg = _SecondLeg;
     using FirstTupleLeg = typename FirstLeg::PATObject;
     using SecondTupleLeg = typename SecondLeg::PATObject;
     using HiggsTTCandidate = CompositCandidate<FirstLeg, SecondLeg>;
+
+    static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
+
+    EventInfo(const Event& _event, const JetPair& _selected_bjet_pair,
+                  std::shared_ptr<const SummaryInfo> _summaryInfo) :
+        EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
+    {
+        if(summaryInfo)
+            triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
+    }
 
     using EventInfoBase::EventInfoBase;
 
@@ -304,5 +379,24 @@ private:
     std::shared_ptr<SecondLeg> leg2;
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
 };
+
+inline std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
+                                                    const EventInfoBase::JetPair& selected_bjet_pair,
+                                                    std::shared_ptr<const SummaryInfo> summaryInfo)
+{
+    if(channel == Channel::ETau)
+        return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
+                event, selected_bjet_pair, summaryInfo));
+    if(channel == Channel::MuTau)
+        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, TauCandidate>(
+                event, selected_bjet_pair, summaryInfo));
+    if(channel == Channel::TauTau)
+        return std::shared_ptr<EventInfoBase>(new EventInfo<TauCandidate, TauCandidate>(
+                event, selected_bjet_pair, summaryInfo));
+    if(channel == Channel::MuMu)
+        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, MuonCandidate>(
+                event, selected_bjet_pair, summaryInfo));
+    throw exception("Unsupported channel %1%.") % channel;
+}
 
 } // namespace analysis
