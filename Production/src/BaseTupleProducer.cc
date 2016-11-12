@@ -47,7 +47,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
-    hltPaths(iConfig.getParameter<std::vector<std::string>>("hltPaths")),
     eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
@@ -64,6 +63,16 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     for(const auto& scaleString : energyScaleStrings) {
         const auto es = analysis::Parse<analysis::EventEnergyScale>(scaleString);
         eventEnergyScales.push_back(es);
+    }
+
+    const auto& hltPaths = iConfig.getParameterSetVector("hltPaths");
+    for(const auto& hltPath : hltPaths) {
+        const std::string pattern = hltPath.getParameter<std::string>("pattern");
+        const size_t nLegs = hltPath.getUntrackedParameter<unsigned>("nLegs", 1);
+        analysis::TriggerDescriptors::FilterContainer filters;
+        filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
+        filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
+        triggerDescriptors.Add(pattern, nLegs, filters);
     }
 
     if(runSVfit)
@@ -734,8 +743,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         FillGenJetInfo();
     }
 
-    eventTuple().trigger_match = selection.triggerMatch;
     eventTuple().dilepton_veto  = selection.Zveto;
     eventTuple().extraelec_veto = selection.electronVeto;
     eventTuple().extramuon_veto = selection.muonVeto;
+
+    eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
+    eventTuple().trigger_accepts = selection.triggerResults.GetAcceptBits();
+    eventTuple().trigger_matches = selection.triggerResults.GetMatchBits();
 }

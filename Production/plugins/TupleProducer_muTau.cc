@@ -11,7 +11,10 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
-    if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
+    if(applyTriggerMatch) {
+        triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
+        cut(selection.triggerResults.AnyAccpet(), "trigger");
+    }
 
     // Di-Lepton Veto
     const auto z_muons = CollectZmuons();
@@ -33,11 +36,9 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
     auto selected_higgs = higgses.front();
 
-    selection.triggerMatch = true;
-    if(applyTriggerMatch) {
-        auto triggered_higgses = triggerTools.ApplyTriggerMatch<HiggsCandidate>({ selected_higgs }, hltPaths, false);
-        selection.triggerMatch = triggered_higgses.size();
-    }
+    if(applyTriggerMatch)
+        triggerTools.SetTriggerMatchBits(triggerDescriptors, selection.triggerResults, selected_higgs,
+                                         cuts::H_tautau_2016::DeltaR_triggerMatch, false);
 
     selection.SetHiggsCandidate(selected_higgs);
 

@@ -3,7 +3,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include "EventTuple.h"
+#include<bitset>
 
 namespace ntuple {
 
@@ -17,7 +17,7 @@ public:
 
     explicit MetFilters(unsigned filter_results = 0) : bits(filter_results) {}
     unsigned FilterResults() const { return bits.to_ulong(); }
-    bool PassAll() const { return FilterResults() == (1<<8) - 1; }
+    bool PassAll() const { return bits.all(); }
     bool Fail(Filter filter) const { return !bits[static_cast<size_t>(filter)]; }
     bool Pass(Filter filter) const { return !Fail(filter); }
     void SetResult(Filter filter, bool result) { bits[static_cast<size_t>(filter)] = result; }

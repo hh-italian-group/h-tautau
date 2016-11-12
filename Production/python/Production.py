@@ -164,8 +164,10 @@ process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
     lheEventProduct = cms.InputTag('externalLHEProducer'),
     genEvent        = cms.InputTag('generator'),
+    topGenEvent     = cms.InputTag('genEvt'),
     puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    taus            = cms.InputTag('slimmedTaus')
+    taus            = cms.InputTag('slimmedTaus'),
+    triggerSetup    = cms.VPSet()
 )
 
 process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
@@ -184,6 +186,10 @@ for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
     hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
+    process.summaryTupleProducer.triggerSetup.append(cms.PSet(
+        channel = cms.string(channel),
+        hltPaths = hltPaths
+    ))
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
         eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
@@ -208,7 +214,7 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
-        hltPaths                = cms.vstring(hltPaths),
+        hltPaths                = hltPaths,
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),

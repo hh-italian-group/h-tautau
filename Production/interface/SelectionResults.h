@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "h-tautau/Analysis/include/Candidate.h"
 #include "h-tautau/Analysis/include/KinFitInterface.h"
+#include "h-tautau/Analysis/include/TriggerResults.h"
 #include "SVfitInterface.h"
 
 #define SELECTION_ENTRY(name) \
@@ -45,11 +46,12 @@ struct SelectionResultsBase {
     edm::EventID eventId;
     EventEnergyScale energyScale;
 
-    bool Zveto, electronVeto, muonVeto, triggerMatch;
+    bool Zveto, electronVeto, muonVeto;
     sv_fit::FitResults svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;
     const Vertex* primaryVertex;
+    TriggerResults triggerResults;
 
     SelectionResultsBase(const edm::EventID& _eventId, EventEnergyScale _energyScale) :
         eventId(_eventId), energyScale(_energyScale) {}

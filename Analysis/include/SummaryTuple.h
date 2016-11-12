@@ -13,6 +13,15 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     /* Tau ID information */ \
     VAR(std::vector<std::string>, tauId_names) \
     VAR(std::vector<uint32_t>, tauId_keys) \
+    /* Trigger information */ \
+    VAR(std::vector<Int_t>, triggers_channel) \
+    VAR(std::vector<UInt_t>, triggers_index) \
+    VAR(std::vector<std::string>, triggers_pattern) \
+    VAR(std::vector<UInt_t>, triggers_n_legs) \
+    VAR(std::vector<Int_t>, triggerFilters_channel) \
+    VAR(std::vector<UInt_t>, triggerFilters_triggerIndex) \
+    VAR(std::vector<UInt_t>, triggerFilters_LegId) \
+    VAR(std::vector<std::string>, triggerFilters_name) \
     /* MC truth event splitting */ \
     VAR(std::vector<UInt_t>, lhe_n_partons) \
     VAR(std::vector<UInt_t>, lhe_n_b_partons) \
