@@ -15,6 +15,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
+#include "h-tautau/Analysis/include/TriggerResults.h"
 
 namespace analysis {
 
@@ -58,6 +59,7 @@ public:
     using L1ParticlePtrSet = std::set<const l1extra::L1JetParticle*>;
     template<typename T> using EDGetTokenT = edm::EDGetTokenT<T>;
     template<typename T> using Handle = edm::Handle<T>;
+    using TriggerObjectSet = std::set<const pat::TriggerObjectStandAlone*>;
 
     TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
@@ -71,68 +73,46 @@ public:
 
     void Initialize(const edm::Event& iEvent);
 
-    bool HaveTriggerFired(const std::vector<std::string> &hltPaths);
-    std::set<const pat::TriggerObjectStandAlone*> FindMatchingTriggerObjects(
-            const std::string& pathOfInterest, const std::set<trigger::TriggerObjectType>& objectTypes,
-            const LorentzVector& candidateMomentum, double deltaR_Limit);
+    void SetTriggerAcceptBits(const analysis::TriggerDescriptors& descriptors, analysis::TriggerResults& results);
+
+    TriggerObjectSet FindMatchingTriggerObjects(const analysis::TriggerDescriptors& descriptors, size_t path_index,
+            const std::set<trigger::TriggerObjectType>& objectTypes, const LorentzVector& candidateMomentum,
+            size_t leg_id, double deltaR_Limit);
 
     template<typename Candidate>
-    std::set<const pat::TriggerObjectStandAlone*> FindMatchingTriggerObjects(
-            const std::string& pathOfInterest, const Candidate& candidate, double deltaR_Limit)
+    TriggerObjectSet FindMatchingTriggerObjects(const analysis::TriggerDescriptors& descriptors, size_t path_index,
+            const Candidate& candidate, size_t leg_id, double deltaR_Limit)
     {
-        return FindMatchingTriggerObjects(pathOfInterest, detail::GetTriggerObjectTypes(*candidate),
-                                          candidate.GetMomentum(), deltaR_Limit);
+        return FindMatchingTriggerObjects(descriptors, path_index, detail::GetTriggerObjectTypes(*candidate),
+                                          candidate.GetMomentum(), leg_id, deltaR_Limit);
     }
 
-
     template<typename HiggsCandidate>
-    std::vector<HiggsCandidate> ApplyTriggerMatch(const std::vector<HiggsCandidate>& higgses,
-                                                  const std::vector<std::string>& hltPaths, bool isCrossTrigger,
-                                                  bool considerSecondLeg = true)
+    void SetTriggerMatchBits(const analysis::TriggerDescriptors& descriptors, analysis::TriggerResults& results,
+                             const HiggsCandidate& candidate, double deltaR_Limit, bool can_flip = false)
     {
-        std::vector<HiggsCandidate> triggeredHiggses;
-        for (const auto& higgs : higgses) {
-            for (const std::string& hltPath : hltPaths) {
-                if(HaveTriggerMatched(hltPath, higgs, cuts::H_tautau_2016::DeltaR_triggerMatch, isCrossTrigger,
-                                      considerSecondLeg)) {
-                    triggeredHiggses.push_back(higgs);
-                    break;
-                }
+        for(size_t n = 0; n < descriptors.size(); ++n) {
+            const size_t n_legs = descriptors.GetNumberOfLegs(n);
+            if(n_legs > 2 || n_legs == 0)
+                throw exception("Unsupported number of legs = %1%.") % n_legs;
+            bool match_found = false;
+            const size_t max_flip = can_flip ? 2 : 1;
+            for(size_t flip = 0; !match_found && flip < max_flip; ++flip) {
+                std::map<size_t, TriggerObjectSet> matches;
+                const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
+                matches[first] = FindMatchingTriggerObjects(descriptors, n, candidate.GetFirstDaughter(), first,
+                                                            deltaR_Limit);
+                matches[second] = FindMatchingTriggerObjects(descriptors, n, candidate.GetSecondDaughter(), second,
+                                                             deltaR_Limit);
+
+                std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+                std::set_union(matches[1].begin(), matches[1].end(), matches[2].begin(), matches[2].end(),
+                               std::back_inserter(comb_match));
+
+                match_found = matches[1].size() >= 1 && matches[2].size() >= n_legs - 1 && comb_match.size() >= n_legs;
             }
+            results.SetMatch(n, match_found);
         }
-        return triggeredHiggses;
-    }
-
-    template<typename HiggsCandidate>
-    bool HaveTriggerMatched(const std::string& pathOfInterest, const HiggsCandidate& candidate,
-                            double deltaR_Limit, bool isCrossTrigger, bool considerSecondLeg)
-    {
-        const auto match1 = FindMatchingTriggerObjects(pathOfInterest, candidate.GetFirstDaughter(), deltaR_Limit);
-        const auto match2 = FindMatchingTriggerObjects(pathOfInterest, candidate.GetSecondDaughter(), deltaR_Limit);
-        if(!isCrossTrigger)
-            return match1.size() || (considerSecondLeg && match2.size());
-
-        std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-        std::set_union(match1.begin(), match1.end(), match2.begin(), match2.end(), std::back_inserter(comb_match));
-        return match1.size() >= 1 && match2.size() >= 1 && comb_match.size() >= 2;
-    }
-
-    L1ParticlePtrSet L1TauMatch(const LorentzVector& tauMomentum);
-
-    template<typename HiggsCandidate>
-    std::vector<HiggsCandidate> ApplyL1TriggerTauMatch(const std::vector<HiggsCandidate>& higgses)
-    {
-        std::vector<HiggsCandidate> L1Higgses;
-        for (const auto& higgs : higgses) {
-            const auto leg1_match = L1TauMatch(higgs.GetFirstDaughter().GetMomentum());
-            if(!leg1_match.size()) continue;
-            const auto leg2_match = L1TauMatch(higgs.GetSecondDaughter().GetMomentum());
-            if(!leg2_match.size()) continue;
-
-            if(leg1_match.size() > 1 || leg2_match.size() > 1 || *leg1_match.begin() != *leg2_match.begin())
-                L1Higgses.push_back(higgs);
-        }
-        return L1Higgses;
     }
 
     bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;

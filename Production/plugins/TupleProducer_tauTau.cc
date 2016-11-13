@@ -11,7 +11,10 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
-    if(applyTriggerMatch) cut(triggerTools.HaveTriggerFired(hltPaths), "trigger");
+    if(applyTriggerMatch) {
+        triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
+        cut(selection.triggerResults.AnyAccpet(), "trigger");
+    }
 
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");
@@ -27,11 +30,9 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
 
-    selection.triggerMatch = true;
-    if(applyTriggerMatch) {
-        auto triggered_higgses = triggerTools.ApplyTriggerMatch<HiggsCandidate>({ selected_higgs }, hltPaths, true);
-        selection.triggerMatch = triggered_higgses.size();
-    }
+    if(applyTriggerMatch)
+        triggerTools.SetTriggerMatchBits(triggerDescriptors, selection.triggerResults, selected_higgs,
+                                         cuts::H_tautau_2016::DeltaR_triggerMatch, true);
 
     selection.SetHiggsCandidate(selected_higgs);
 

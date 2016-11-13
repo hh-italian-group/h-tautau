@@ -34,45 +34,51 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     iEvent->getByToken(l1JetParticles_token, l1JetParticles);
 }
 
-bool TriggerTools::HaveTriggerFired(const std::vector<std::string>& hltPaths)
+void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& descriptors,
+                                        analysis::TriggerResults& results)
 {
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
 
-    for (unsigned i = 0; i < triggerResultsHLT->size(); ++i) {
-        if(triggerPrescales->getPrescaleForIndex(i) != 1 && triggerResultsHLT->accept(i)) continue;
-        const std::string& objectMatchedPath = triggerNames.triggerName(i);
-        for (const std::string& triggerPath : hltPaths ){
-            const size_t found = objectMatchedPath.find(triggerPath);
-            if(found != std::string::npos)
-                return true;
-        }
+    for (size_t i = 0; i < triggerResultsHLT->size(); ++i) {
+        if(triggerPrescales->getPrescaleForIndex(i) != 1) continue;
+        size_t index;
+        if(descriptors.FindPatternMatch(triggerNames.triggerName(i), index))
+            results.SetAccept(index, triggerResultsHLT->accept(i));
     }
-    return false;
 }
 
-std::set<const pat::TriggerObjectStandAlone*> TriggerTools::FindMatchingTriggerObjects(
-        const std::string& pathOfInterest, const std::set<trigger::TriggerObjectType>& objectTypes,
-        const LorentzVector& candidateMomentum, double deltaR_Limit)
+TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
+        const TriggerDescriptors& descriptors, size_t path_index,
+        const std::set<trigger::TriggerObjectType>& objectTypes, const LorentzVector& candidateMomentum,
+        size_t leg_id, double deltaR_Limit)
 {
-    const auto haveExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
+    const auto hasExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
         for(auto type : objectTypes)
             if(triggerObject.type(type)) return true;
         return false;
     };
 
-    std::set<const pat::TriggerObjectStandAlone*> matches;
+    const auto& filters = descriptors.GetFilters(path_index, leg_id);
+    const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject) {
+        for(const auto& filter : filters)
+            if(!triggerObject.hasFilterLabel(filter)) return false;
+        return true;
+    };
+
+    TriggerObjectSet matches;
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-        if(!haveExpectedType(triggerObject)) continue;
+        if(!hasExpectedType(triggerObject)) continue;
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
-        const auto& matchedPaths = unpackedTriggerObject.pathNames(true, true);
-        for(const auto& matchedPath : matchedPaths) {
-            if( matchedPath.find(pathOfInterest) != std::string::npos ) {
+        if(!passFilters(unpackedTriggerObject)) continue;
+        const auto& paths = unpackedTriggerObject.pathNames(true, true);
+        for(const auto& path : paths) {
+            if(descriptors.PatternMatch(path, path_index)) {
                 matches.insert(&triggerObject);
                 break;
             }
@@ -80,20 +86,6 @@ std::set<const pat::TriggerObjectStandAlone*> TriggerTools::FindMatchingTriggerO
     }
 
     return matches;
-}
-
-TriggerTools::L1ParticlePtrSet TriggerTools::L1TauMatch(const LorentzVector& tauMomentum)
-{
-    static constexpr double MinPt = 28;
-    static constexpr double DeltaR = 0.5;
-    static constexpr double DeltaR2 = std::pow(DeltaR, 2);
-
-    L1ParticlePtrSet result;
-    for(const auto& l1Tau : *l1JetParticles){
-        if(l1Tau.pt() > MinPt && ROOT::Math::VectorUtil::DeltaR2(l1Tau.polarP4(), tauMomentum) < DeltaR2)
-            result.insert(&l1Tau);
-    }
-    return result;
 }
 
 bool TriggerTools::TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const

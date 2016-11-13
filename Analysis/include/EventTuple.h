@@ -75,6 +75,9 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
+    /* Trigger results */ \
+    VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
+    VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
     VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
     VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \

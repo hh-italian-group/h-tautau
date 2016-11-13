@@ -15,13 +15,17 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/Tools.h"
 #include "h-tautau/Analysis/include/SummaryTuple.h"
 #include "h-tautau/Analysis/include/EventTuple.h"
+#include "h-tautau/Analysis/include/TriggerResults.h"
 #include "h-tautau/Production/interface/GenTruthTools.h"
+#include "AnalysisTools/Core/include/TextIO.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
     using clock = std::chrono::system_clock;
     using GenId = ntuple::GenId;
     using GenEventCountMap = ntuple::GenEventCountMap;
+    using Channel = analysis::Channel;
+    using TriggerDescriptors = analysis::TriggerDescriptors;
 
     SummaryProducer(const edm::ParameterSet& cfg) :
         start(clock::now()),
@@ -29,6 +33,7 @@ public:
         saveGenTopInfo(cfg.getParameter<bool>("saveGenTopInfo")),
         lheEventProduct_token(mayConsume<LHEEventProduct>(cfg.getParameter<edm::InputTag>("lheEventProduct"))),
         genEvent_token(mayConsume<GenEventInfoProduct>(cfg.getParameter<edm::InputTag>("genEvent"))),
+        topGenEvent_token(mayConsume<TtGenEvent>(cfg.getParameter<edm::InputTag>("topGenEvent"))),
         puInfo_token(mayConsume<std::vector<PileupSummaryInfo>>(cfg.getParameter<edm::InputTag>("puInfo"))),
         taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus"))),
         summaryTuple("summary", &edm::Service<TFileService>()->file(), false)
@@ -38,6 +43,45 @@ public:
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
+
+        std::map<Channel, TriggerDescriptors> triggerDescriptors;
+        const auto& triggerSetup = cfg.getParameterSetVector("triggerSetup");
+        for(const auto& channelSetup : triggerSetup) {
+            const std::string channel_name = channelSetup.getParameter<std::string>("channel");
+            const Channel channel = analysis::Parse<Channel>(channel_name);
+            const auto& hltPaths = channelSetup.getParameterSetVector("hltPaths");
+            for(const auto& hltPath : hltPaths) {
+                const std::string pattern = hltPath.getParameter<std::string>("pattern");
+                const size_t nLegs = hltPath.getUntrackedParameter<unsigned>("nLegs", 1);
+                analysis::TriggerDescriptors::FilterContainer filters;
+                filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
+                filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
+                triggerDescriptors[channel].Add(pattern, nLegs, filters);
+            }
+        }
+
+        for(const auto& channel_desc : triggerDescriptors) {
+            const Channel channel = channel_desc.first;
+            const int channel_id = static_cast<int>(channel);
+            const TriggerDescriptors& descs = channel_desc.second;
+            for(size_t n = 0; n < descs.GetPatterns().size(); ++n) {
+                summaryTuple().triggers_channel.push_back(channel_id);
+                summaryTuple().triggers_index.push_back(n);
+                summaryTuple().triggers_pattern.push_back(descs.GetPatterns().at(n));
+                summaryTuple().triggers_n_legs.push_back(descs.GetNumberOfLegs(n));
+
+                for(const auto& filters_entry : descs.GetFilters(n)) {
+                    const size_t legId = filters_entry.first;
+                    const auto& filters = filters_entry.second;
+                    for(const auto& filter : filters) {
+                        summaryTuple().triggerFilters_channel.push_back(channel_id);
+                        summaryTuple().triggerFilters_triggerIndex.push_back(n);
+                        summaryTuple().triggerFilters_LegId.push_back(legId);
+                        summaryTuple().triggerFilters_name.push_back(filter);
+                    }
+                }
+            }
+        }
     }
 
 private:
@@ -117,7 +161,8 @@ private:
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
         summaryTuple.Fill();
         summaryTuple.Write();
-        expressTuple->Write();
+        if(expressTuple)
+            expressTuple->Write();
     }
 
 private:
