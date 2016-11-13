@@ -1,9 +1,9 @@
 EventAwareLumiBased ../json/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON_NoL1T.txt
-globalTag=80X_dataRun2_2016SeptRepro_v4 sampleType=Run2016BCD ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central anaChannels=tauTau
+globalTag=80X_dataRun2_2016SeptRepro_v4 sampleType=Run2016BCD ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
 
-Tau_Run2016B-23Sep2016-v3	7600	/Tau/Run2016B-23Sep2016-v3/MINIAOD
-Tau_Run2016C-23Sep2016-v1	4100	/Tau/Run2016C-23Sep2016-v1/MINIAOD
-Tau_Run2016D-23Sep2016-v1	6300	/Tau/Run2016D-23Sep2016-v1/MINIAOD
-Tau_Run2016E-23Sep2016-v1	6500	/Tau/Run2016E-23Sep2016-v1/MINIAOD
-Tau_Run2016F-23Sep2016-v1	4500	/Tau/Run2016F-23Sep2016-v1/MINIAOD
-Tau_Run2016G-23Sep2016-v1	8800	/Tau/Run2016G-23Sep2016-v1/MINIAOD
+Tau_Run2016B-23Sep2016-v3	9700	/Tau/Run2016B-23Sep2016-v3/MINIAOD
+Tau_Run2016C-23Sep2016-v1	5200	/Tau/Run2016C-23Sep2016-v1/MINIAOD
+Tau_Run2016D-23Sep2016-v1	8000	/Tau/Run2016D-23Sep2016-v1/MINIAOD
+Tau_Run2016E-23Sep2016-v1	8200	/Tau/Run2016E-23Sep2016-v1/MINIAOD
+Tau_Run2016F-23Sep2016-v1	5700	/Tau/Run2016F-23Sep2016-v1/MINIAOD
+Tau_Run2016G-23Sep2016-v1	11200	/Tau/Run2016G-23Sep2016-v1/MINIAOD
