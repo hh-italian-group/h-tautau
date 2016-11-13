@@ -19,7 +19,7 @@ def submit(config,dryrunBool):
 
 class Job:
     def __init__(self, line):
-        items = filter(lambda s: len(s) != 0, re.split(" ", line))
+        items = filter(lambda s: len(s) != 0, re.split(" |\t", line))
         if len(items) != 3:
             print "ERROR: invalid job description = '{}'.".format(line)
             sys.exit(1)
@@ -47,7 +47,7 @@ class JobCollection:
             print "ERROR: file '{}' is empty".format(file_name)
             sys.exit(1)
         header_items = filter(lambda s: len(s) != 0, re.split(" |\n", lines[0]))
-        self.pyCfgParams = filter(lambda s: len(s) != 0, re.split(" ", lines[1]))
+        self.pyCfgParams = filter(lambda s: len(s) != 0, re.split(" |\t", lines[1]))
         if len(header_items) == 0 or len(header_items) > 2:
             print "ERROR: invalid jobs file header '{}' in file '{}'".fromat(lines[0], file_name)
             sys.exit(1)
@@ -62,7 +62,7 @@ class JobCollection:
                 if len(lines) < 4:
                     print "ERROR: invalid signal jobs definition in file '{}'".format(file_name)
                     sys.exit(1)
-                masses = filter(lambda s: len(s) != 0, re.split(" ", lines[2]))
+                masses = filter(lambda s: len(s) != 0, re.split(" |\t", lines[2]))
                 template = lines[3]
                 for mass in masses:
                     line = template.format(M = mass)
