@@ -6,12 +6,15 @@
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
 
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,6,0)
 
 namespace {
 bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
+#endif
+
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
