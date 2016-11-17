@@ -85,7 +85,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
         kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
     if(applyRecoilCorr)
         recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
-            edm::FileInPath("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root").fullPath()));
+            "HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root"));
 }
 
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -581,6 +581,9 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
         cut(isNotSignal, ss_name.str());
     }
 }
+
+
+
 
 void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
                                        const std::vector<const MuonCandidate*>& signalMuons) const
