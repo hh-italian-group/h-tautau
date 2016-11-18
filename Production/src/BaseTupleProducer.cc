@@ -295,10 +295,10 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
     analysis::LorentzVectorXYZ total_p4, vis_p4;
     for(const auto& particle : *genParticles) {
         if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()|| reco::isNeutrino(particle)))
-              ||particle.isDirectHardProcessTauDecayProductFinalState()) 
+              ||particle.statusFlags().isDirectHardProcessTauDecayProduct()) 
             total_p4 += particle.p4();
         if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()))
-	            || (particle.isDirectHardProcessTauDecayProductFinalState() && !reco::isNeutrino(particle)) )
+	            || (particle.statusFlags().isDirectHardProcessTauDecayProduct() && !reco::isNeutrino(particle)) )
             vis_p4 += particle.p4(); 
     }
  
