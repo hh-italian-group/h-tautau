@@ -35,6 +35,10 @@ for JOB in $(ls) ; do
             echo "ERROR: can't find root file for successfully finished job '$JOB'." >&2
             exit 1
         fi
+        if [ -f "$OUTPUT_PATH/$JOB_NAME.root" ] ; then
+            echo "$JOB_NAME has already been transfered."
+            continue
+        fi
         mv "$JOB/$JOB_NAME.root" "$OUTPUT_PATH"
         RESULT=$?
         if [ $RESULT -ne 0 ] ; then
