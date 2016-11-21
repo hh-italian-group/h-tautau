@@ -15,6 +15,8 @@ parser.add_argument('--site', required=True, dest='site', type=str, help="Site f
 parser.add_argument('--dryrun', action="store_true", help="Submission dryrun.")
 parser.add_argument('--output', required=True, dest='output', type=str,
                     help="output path after /store/user/USERNAME")
+parser.add_argument('--blacklist', required=False, dest='blacklist', type=str, default="",
+					help="list of sites where the jobs shouldn't run")
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
 args = parser.parse_args()
 
@@ -36,6 +38,9 @@ config.Data.publication = False
 
 config.Site.storageSite = args.site
 config.Data.outLFNDirBase = "/store/user/{}/{}".format(getUsernameFromSiteDB(), args.output)
+
+if len(args.blacklist) != 0:
+	config.Site.blacklist = re.split(',', args.blacklist)
 
 from crab_tools import JobCollection
 for job_file in args.job_file:
