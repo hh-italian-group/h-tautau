@@ -3,7 +3,7 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 if [ $# -lt 4 ] ; then
-    echo "Usage: queue job_list_file tuple_output_path crab_output_paths" >&2
+    echo "Usage: queue job_list_file tuple_output_path crab_output_path [crab_output_path] ..." >&2
     exit 1
 fi
 
@@ -39,6 +39,6 @@ for JOB in $(cat "$JOB_LIST_FILE") ; do
     JOB_PATH="$(cd "${JOB_PATHS[0]}" && pwd)"
 
     LOCAL_JOB_NAME="${JOB_ID}_${JOB_NAME}"
-    ./AnalysisTools/Run/submit_jobs.sh "$QUEUE" "$LOCAL_JOB_NAME" "$TUPLE_OUTPUT_PATH/$LOCAL_JOB_NAME" \
-                                       hadd -f9 -n 11 "${JOB_NAME}.root" "$JOB_PATH/*/*.root"
+    ./AnalysisTools/Run/submit_job.sh "$QUEUE" "$LOCAL_JOB_NAME" "$TUPLE_OUTPUT_PATH/$LOCAL_JOB_NAME" \
+                                      hadd -f9 -n 11 "${JOB_NAME}.root" "$JOB_PATH/*/*.root"
 done
