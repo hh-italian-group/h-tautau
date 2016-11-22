@@ -2,13 +2,14 @@
 # Collect hadd outputs outputs.
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
-if [ $# -ne 2 ] ; then
-    echo "Usage: input_path output_path" >&2
+if [ $# -lt 2 ] ; then
+    echo "Usage: input_path output_path [other_output_path] ..." >&2
     exit 1
 fi
 
 INPUT_PATH="$1"
 OUTPUT_PATH="$2"
+ALL_OUTPUT_PATHS="${@:2}"
 
 if [ ! -d "$INPUT_PATH" ] ; then
     echo "ERROR: can't find input path '$INPUT_PATH'."  >&2
@@ -32,10 +33,15 @@ for JOB in $(ls) ; do
     LAST_LOG_ENTRY="$( tail -n 1 "$JOB/$LOG_NAME" )"
 
     if [[ $LAST_LOG_ENTRY =~ ^Job\ successfully\ ended\ at.* ]] ; then
-        if [ -f "$OUTPUT_PATH/$JOB_OUT_NAME.root" ] ; then
-            #echo "$JOB_NAME has already been transfered."
-            continue
-        fi
+        OUTPUT_FOUND=0
+        for OUTPUT in $ALL_OUTPUT_PATHS ; do
+            if [ -f "$OUTPUT/$JOB_OUT_NAME.root" ] ; then
+                OUTPUT_FOUND=1
+                break
+            fi
+        done
+        if [ $OUTPUT_FOUND -eq 1 ] ; then continue ; fi
+
         if [ ! -f "$JOB/$JOB_NAME.root" ] ; then
             echo "ERROR: can't find root file for successfully finished job '$JOB'." >&2
             exit 1
@@ -46,7 +52,6 @@ for JOB in $(ls) ; do
             echo "ERROR: can't transfer root file '$JOB/$JOB_NAME.root' into output directory '$OUTPUT_PATH'." >&2
             exit 1
         fi
-        #rm -r "$JOB"
         echo "$JOB_NAME transfered into '$OUTPUT_PATH'."
     elif [[ $LAST_LOG_ENTRY =~ ^Job\ failed\ at.* ]] ; then
         echo "$JOB failed."
