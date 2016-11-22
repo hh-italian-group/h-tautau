@@ -15,11 +15,6 @@ if [ ! -f "$JOB_LIST_FILE" ] ; then
     exit 1
 fi
 
-if [ ! -d "$TUPLE_PATH" ] ; then
-    echo "ERROR: can't find tuple path '$TUPLE_PATH'."  >&2
-    exit 1
-fi
-
 for JOB in $(cat "$JOB_LIST_FILE") ; do
     JOB_ID=$( echo $JOB | sed -E 's/([0-9]+_[0-9]+).*/\1/' )
     JOB_NAME=$( echo $JOB | sed -E 's/[0-9]+_[0-9]+:[^_]*_//' )
