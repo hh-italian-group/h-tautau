@@ -8,9 +8,9 @@ from CRABClient.UserUtilities import ClientException
 from CRABAPI.RawCommand import crabCommand
 from httplib import HTTPException
 
-def submit(config,dryrunBool):
+def submit(config, dryrunBool):
     try:
-        crabCommand('submit', config = config , dryrun=dryrunBool)
+        crabCommand('submit', config = config, dryrun = dryrunBool)
     except HTTPException as hte:
         print str(hte)
         print "\n{}\nERROR: failed to submit task due to HTTPException.\n{}".format(hte, hte.headers)
@@ -38,8 +38,9 @@ class Job:
         submit(config, dryrunBool)
 
 class JobCollection:
-    def __init__(self, file_name):
+    def __init__(self, file_name, job_names, lumi_mask):
         self.jobs = []
+        self.jobNames = job_names
         input_file = open(file_name, 'r')
         lines = [ s.strip() for s in input_file.readlines() ]
         lines = filter(lambda s: len(s) != 0 and s[0] != '#', lines)
@@ -70,6 +71,8 @@ class JobCollection:
                 return
             else:
                 self.lumiMask = header_items[1]
+        if len(lumi_mask) != 0:
+            self.lumiMask = lumi_mask
 
         for line in lines[2:]:
             self.jobs.append(Job(line))
@@ -87,4 +90,5 @@ class JobCollection:
         config.JobType.pyCfgParams = self.pyCfgParams
         config.Data.lumiMask = self.lumiMask
         for job in self.jobs:
-            job.submit(config,dryrunBool)
+            if len(self.jobNames) == 0 or job.requestName in self.jobNames:
+                job.submit(config, dryrunBool)
