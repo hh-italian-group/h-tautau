@@ -122,6 +122,15 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
+	/*BDT Variables*/\
+	VAR(Float_t, dphi_mumet) /*deltaPhi between lepton and MET*/\
+	VAR(Float_t, dphi_metsv) /*deltaPhi between MET and h(tautau) from SVfit*/\
+	VAR(Float_t, dphi_bbmet) /*deltaPhi between MET and h(bb)*/\
+	VAR(Float_t, dphi_bbsv) /*deltaPhi between h(bb) and h(tautau) from SVfit*/ \
+	VAR(Float_t, dR_bb) /*deltaR between the 2 bjets - ROOT::Math::VectorUtil::DeltaR*/ \
+	VAR(Float_t, dR_taumu) /*deltaR between the two taus*/ \
+	VAR(Float_t, mT1) /*transverse mass of the leton*/ \
+	VAR(Float_t, mT2) /*transverse mass of the tau*/ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
