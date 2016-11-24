@@ -18,13 +18,16 @@ def submit(config, dryrunBool):
         print "ERROR: failed to submit task due to ClientException.\n{}".format(cle)
 
 class Job:
-    def __init__(self, line):
+    def __init__(self, line, jobNameSuffix = '', unitsPerJob = -1):
         items = filter(lambda s: len(s) != 0, re.split(" |\t", line))
         if len(items) != 3:
             print "ERROR: invalid job description = '{}'.".format(line)
             sys.exit(1)
-        self.requestName = items[0]
-        self.unitsPerJob = int(items[1])
+        self.requestName = items[0] + jobNameSuffix
+        if unitsPerJob == -1:
+            self.unitsPerJob = int(items[1])
+        else:
+            self.unitsPerJob = unitsPerJob
         self.inputDataset = items[2]
 
     def __str__(self):
@@ -38,7 +41,7 @@ class Job:
         submit(config, dryrunBool)
 
 class JobCollection:
-    def __init__(self, file_name, job_names, lumi_mask):
+    def __init__(self, file_name, job_names = '', lumi_mask = '', jobNameSuffix = '', unitsPerJob = -1):
         self.jobs = []
         self.jobNames = job_names
         input_file = open(file_name, 'r')
@@ -75,7 +78,7 @@ class JobCollection:
             self.lumiMask = lumi_mask
 
         for line in lines[2:]:
-            self.jobs.append(Job(line))
+            self.jobs.append(Job(line, jobNameSuffix, unitsPerJob))
         input_file.close()
 
     def __str__(self):

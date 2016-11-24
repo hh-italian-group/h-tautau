@@ -22,6 +22,10 @@ parser.add_argument('--jobNames', required=False, dest='jobNames', type=str, def
 					help="list of job names to submit (if not specified - submit all)")
 parser.add_argument('--lumiMask', required=False, dest='lumiMask', type=str, default="",
 					help="json file with a lumi mask (default: apply lumi mask from the config file)")
+parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', type=str, default="",
+					help="suffix that will be added to each job name")
+parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
+					help="number of units per job (default: use values from the config file)")
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
 args = parser.parse_args()
 
@@ -51,7 +55,7 @@ job_names = Set(re.split(',', args.jobNames))
 
 from crab_tools import JobCollection
 for job_file in args.job_file:
-    job_collection = JobCollection(job_file, job_names, args.lumiMask)
+    job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
     print job_file
     print job_collection
     job_collection.submit(config,args.dryrun)
