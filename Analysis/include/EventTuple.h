@@ -72,9 +72,13 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Int_t, genEventType) /* gen event type */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
+	/* Event Weights Variables */ \
+	VAR(Float_t, btag_weight) \
+	VAR(Float_t, ttbar_weight) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
+	VAR(UInt_t, n_jets) /* Number of jets in the event */\
     /* Trigger results */ \
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \
