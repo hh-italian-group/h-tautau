@@ -75,6 +75,8 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 	/* Event Weights Variables */ \
 	VAR(Float_t, btag_weight) \
 	VAR(Float_t, ttbar_weight) \
+	VAR(Float_t, PU_weight) \
+	VAR(Float_t, shape_denominator_weight) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \

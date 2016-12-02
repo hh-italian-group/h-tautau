@@ -21,6 +21,7 @@ public:
         max_available_pu(_max_available_pu), default_pu_weight(_default_pu_weight),
         pu_weights(LoadPUWeights(pu_reweight_file_name, hist_name)) { }
 
+	template<typename Event>
     double Get(const Event& event) const
     {
         const double nPU = event.npu;

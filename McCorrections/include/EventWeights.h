@@ -6,6 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "PileUpWeight.h"
 #include "LeptonWeights.h"
 #include "BTagWeight.h"
+#include "TopPtWeight.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -16,6 +17,7 @@ public:
     using PileUpWeightPtr = std::shared_ptr<PileUpWeight>;
     using LeptonWeightsPtr = std::shared_ptr<LeptonWeights>;
     using BTagWeightPtr = std::shared_ptr<BTagWeight>;
+	using TopPtWeightPtr = std::shared_ptr<TopPtWeight>;
 
     EventWeights(Period period, DiscriminatorWP btag_wp)
     {
@@ -48,21 +50,26 @@ public:
                 FullName("bTagEfficiencies_80X.root"),
                 FullName("CSVv2_ichep.csv"),
                 btag_wp));
+			
+			top = TopPtWeightPtr(new TopPtWeight(0.0615, 0.0005));
+			
 
         } else {
             throw exception("Period %1% is not supported.") % period;
         }
     }
 
-    double GetPileUpWeight(const Event& event) const { return pileUp ? pileUp->Get(event) : 1.; }
+	template<typename Event>
+	double GetPileUpWeight(const Event& event) const { return pileUp ? pileUp->Get(event) : 1.; }
     double GetLeptonIdIsoWeight(const Event& event) const { return lepton ? lepton->GetIdIsoWeight(event) : 1.; }
     double GetLeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
     double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
     double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
+	double GetTopPtWeight(const Event& event) const {return top ? top->Get(event) : 1.; }
 
     double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
     {
-        double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event);
+        double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event) * GetTopPtWeight(event);
         if(apply_btag_weight)
             weight *= GetBtagWeight(event);
         return weight;
@@ -90,6 +97,7 @@ private:
     PileUpWeightPtr pileUp;
     LeptonWeightsPtr lepton;
     BTagWeightPtr bTag;
+	TopPtWeightPtr top;
 };
 
 } // namespace mc_corrections
