@@ -137,6 +137,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 	VAR(Float_t, dR_taumu) /*deltaR between the two taus*/ \
 	VAR(Float_t, mT1) /*transverse mass of the leton*/ \
 	VAR(Float_t, mT2) /*transverse mass of the tau*/ \
+	VAR(Float_t, m_bb) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
