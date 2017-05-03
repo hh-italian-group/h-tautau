@@ -6,7 +6,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "PileUpWeight.h"
 #include "LeptonWeights.h"
 #include "BTagWeight.h"
-#include "../../../hh-bbtautau/McCorrections/include/HH_BMStoSM_weight.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -17,7 +16,6 @@ public:
     using PileUpWeightPtr = std::shared_ptr<PileUpWeight>;
     using LeptonWeightsPtr = std::shared_ptr<LeptonWeights>;
     using BTagWeightPtr = std::shared_ptr<BTagWeight>;
-    using HH_BMStoSM_weightPtr = std::shared_ptr<HH_BMStoSM_weight>;
 
     EventWeights(Period period, DiscriminatorWP btag_wp)
     {
@@ -33,7 +31,6 @@ public:
                 FullName("bTagEff_Loose.root"),
                 FullName("CSVv2.csv"),
                 btag_wp));
-            sm_weight = HH_BMStoSM_weightPtr(new class HH_BMStoSM_weight(FullBSMtoSM_Name("weight_SM.root"),"weight_node_BSM"));
         }
         else if(period == Period::Run2016) {
 //            pileUp = PileUpWeightPtr(new class PileUpWeight(
@@ -51,7 +48,6 @@ public:
                 FullName("bTagEfficiencies_80X.root"),
                 FullName("CSVv2_ichep.csv"),
                 btag_wp));
-            sm_weight = HH_BMStoSM_weightPtr(new class HH_BMStoSM_weight(FullBSMtoSM_Name("weight_SM.root"),"weight_node_BSM"));
 
         } else {
             throw exception("Period %1% is not supported.") % period;
@@ -63,15 +59,12 @@ public:
     double GetLeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
     double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
     double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
-    double GetBSMtoSMweight(const Event& event) const {return sm_weight ? sm_weight->Get(event) : 1;}
 
-    double GetTotalWeight(const Event& event, bool apply_btag_weight = false, bool apply_bsm_to_sm_weight = false)
+    virtual double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
     {
         double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event);
         if(apply_btag_weight)
             weight *= GetBtagWeight(event);
-        if(apply_bsm_to_sm_weight)
-            weight *= GetBSMtoSMweight(event);
         return weight;
     }
 
@@ -93,17 +86,10 @@ private:
         return FullName(fileName, path);
     }
 
-    static std::string FullBSMtoSM_Name(const std::string& fileName)
-    {
-        static const std::string path = "hh-bbtautau/McCorrections/data";
-        return FullName(fileName, path);
-    }
-
 private:
     PileUpWeightPtr pileUp;
     LeptonWeightsPtr lepton;
     BTagWeightPtr bTag;
-    HH_BMStoSM_weightPtr sm_weight;
 };
 
 } // namespace mc_corrections
