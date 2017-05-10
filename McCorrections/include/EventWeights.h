@@ -60,7 +60,7 @@ public:
     double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
     double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
 
-    virtual double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
+    double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
     {
         double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event);
         if(apply_btag_weight)
