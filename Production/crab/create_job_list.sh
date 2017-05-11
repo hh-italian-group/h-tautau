@@ -20,7 +20,7 @@ for JOB in $(ls "$WORK_AREA") ; do
 		echo "ERROR: can't find log for job '$JOB'." >&2
 		exit 1
 	fi
-	JOB_IDS=( $(grep -E ".*Task name: " "$CRAB_LOG" | sed -E 's/.*Task name\: (.*)/\1/' ) )
+	JOB_IDS=( $(grep -E ".*Task name:" "$CRAB_LOG" | sed -E 's/.*Task name\:[^0-9]*(.*)/\1/' ) )
 	if [ ${#JOB_IDS[@]} -lt 1 ] ; then
 		echo "ERROR: can't find job id inside '$CRAB_LOG'." >&2
 		exit 1
