@@ -74,6 +74,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
 	/* Event Weights Variables */ \
     VAR(Float_t, weight_btag) \
+    VAR(Float_t, weight_lepton) \
     VAR(Float_t, weight_ttbar_pt) \
     VAR(Float_t, weight_ttbar_merge) \
     VAR(Float_t, weight_PU) \
