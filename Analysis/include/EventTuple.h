@@ -80,7 +80,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, weight_PU) \
     VAR(Float_t, weight_dy) \
     VAR(Float_t, weight_sm) \
-    VAR(Float_t, shape_denominator_weight) \
+    /* VAR(Float_t, shape_denominator_weight) */ \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
