@@ -80,12 +80,12 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, weight_PU) \
     VAR(Float_t, weight_dy) \
     VAR(Float_t, weight_sm) \
-	VAR(Float_t, shape_denominator_weight) \
+    VAR(Float_t, shape_denominator_weight) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
 	VAR(UInt_t, n_jets) /* Number of jets in the event */\
-    VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 */\
+    VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     /* Trigger results */ \
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \

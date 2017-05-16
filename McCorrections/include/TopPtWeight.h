@@ -14,7 +14,7 @@ class TopPtWeight {
 
 public:
 	
-	using Event = ntuple::Event;
+    using Event = ntuple::Event;
 
 	TopPtWeight(double p1, double p2):
 	_p1(p1), _p2(p2) {}
