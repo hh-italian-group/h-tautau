@@ -33,7 +33,7 @@ public:
 		return topWeight;
 	}
 
-    double Get_express(const ExpressEvent& expr_event) const
+    double Get(const ExpressEvent& expr_event) const
     {
         const double pt_top = expr_event.gen_top_pt;
         const double pt_topBar = expr_event.gen_topBar_pt;

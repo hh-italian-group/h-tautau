@@ -67,8 +67,8 @@ public:
     double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
     double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
 
+    template<typename Event>
 	double GetTopPtWeight(const Event& event) const {return top ? top->Get(event) : 1.; }
-    double GetTopPtWeight_express(const ExpressEvent& event) const {return top ? top->Get_express(event) : 1.; }
 
     double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
     {
