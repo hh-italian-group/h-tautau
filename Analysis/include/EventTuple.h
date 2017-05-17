@@ -73,13 +73,13 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
 	/* Event Weights Variables */ \
-    VAR(Float_t, weight_btag) \
-    VAR(Float_t, weight_lepton) \
-    VAR(Float_t, weight_ttbar_pt) \
-    VAR(Float_t, weight_ttbar_merge) \
-    VAR(Float_t, weight_PU) \
-    VAR(Float_t, weight_dy) \
-    VAR(Float_t, weight_sm) \
+    VAR(Double_t, weight_btag) \
+    VAR(Double_t, weight_lepton) \
+    VAR(Double_t, weight_ttbar_pt) \
+    VAR(Double_t, weight_ttbar_merge) \
+    VAR(Double_t, weight_PU) \
+    VAR(Double_t, weight_dy) \
+    VAR(Double_t, weight_sm) \
     /* VAR(Float_t, shape_denominator_weight) */ \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
