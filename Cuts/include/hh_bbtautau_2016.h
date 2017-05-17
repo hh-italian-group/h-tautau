@@ -61,5 +61,18 @@ namespace muonVeto {
     constexpr bool isLooseMuon = true; // = Should be ok, since the HIP problem is solved.
 }
 
+namespace hh_tag {
+    constexpr double peak_tautau = 116;
+    constexpr double resolution_tautau = 35.;
+    constexpr double peak_bb = 111;
+    constexpr double resolution_bb = 45;
+
+    inline bool IsInsideEllipse (double mass_tautau, double mass_bb){
+        const double ellipse_cut = std::pow(mass_tautau-peak_tautau, 2)/std::pow(resolution_tautau, 2) +
+                std::pow(mass_bb-peak_bb, 2)/std::pow(resolution_bb, 2);
+        return ellipse_cut<1;
+    }
+}
+
 } // namespace hh_bbtautau_2016
 } // namespace cuts
