@@ -14,6 +14,7 @@ namespace mc_corrections {
 class EventWeights {
 public:
     using Event = ntuple::Event;
+    using ExpressEvent = ntuple::ExpressEvent;
     using PileUpWeightPtr = std::shared_ptr<PileUpWeight>;
     using LeptonWeightsPtr = std::shared_ptr<LeptonWeights>;
     using BTagWeightPtr = std::shared_ptr<BTagWeight>;
@@ -65,6 +66,8 @@ public:
     double GetLeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
     double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
     double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
+
+    template<typename Event>
 	double GetTopPtWeight(const Event& event) const {return top ? top->Get(event) : 1.; }
 
     double GetTotalWeight(const Event& event, bool apply_btag_weight = false)

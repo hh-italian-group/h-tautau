@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "h-tautau/Analysis/include/EventTuple.h"
+#include "h-tautau/Analysis/include/SummaryTuple.h"
 
 
 namespace analysis {
@@ -14,12 +15,12 @@ class TopPtWeight {
 
 public:
 	
-	using Event = ntuple::Event;
+    using Event = ntuple::Event;
+    using ExpressEvent = ntuple::ExpressEvent;
 
 	TopPtWeight(double p1, double p2):
 	_p1(p1), _p2(p2) {}
 
-	template<typename Event>
 	double Get(const Event& event) const
 	{
 		double topWeight = 1.;
@@ -31,6 +32,15 @@ public:
 		}
 		return topWeight;
 	}
+
+    double Get(const ExpressEvent& expr_event) const
+    {
+        const double pt_top = expr_event.gen_top_pt;
+        const double pt_topBar = expr_event.gen_topBar_pt;
+        const double sf_1 = std::sqrt(std::exp(_p1 - _p2 * pt_top));
+        const double sf_2 = std::sqrt(std::exp(_p1 - _p2 * pt_topBar));
+        return sf_1 * sf_2;
+    }
 
 private:
 	double _p1;
