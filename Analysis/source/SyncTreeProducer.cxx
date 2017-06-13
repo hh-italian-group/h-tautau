@@ -86,7 +86,7 @@ public:
                 const uint32_t key = tools::hash(id_name);
                 const auto iter = std::find(id_keys.begin(), id_keys.end(), key);
                 if(iter == id_keys.end()) return default_value;
-                const auto index = std::distance(id_keys.begin(), iter);
+                const size_t index = static_cast<size_t>(std::distance(id_keys.begin(), iter));
                 return id_values.at(index);
             };
 
@@ -106,7 +106,7 @@ public:
             sync().d0_1 = event->dxy_1;
             sync().dZ_1 = event->dz_1;
 //            sync().mt_1 = Calculate_MT(event->p4_1, event->mvaMET_p4);
-            sync().pfmt_1 = Calculate_MT(event->p4_1, event->pfMET_p4);
+            sync().pfmt_1 = static_cast<float>(Calculate_MT(event->p4_1, event->pfMET_p4));
 //            sync().puppimt_1 = Calculate_MT(event->p4_1, event->pfMET_p4);
             sync().iso_1 =  event->iso_1;
 //            sync().id_e_mva_nt_loose_1 = event->id_e_mva_nt_loose_1;
@@ -138,7 +138,7 @@ public:
             sync().d0_2 = event->dxy_2;
             sync().dZ_2 = event->dz_2;
 //            sync().mt_2 = Calculate_MT(event->p4_2, event->mvaMET_p4);
-            sync().pfmt_2 = Calculate_MT(event->p4_2, event->pfMET_p4);
+            sync().pfmt_2 = static_cast<float>(Calculate_MT(event->p4_2, event->pfMET_p4));
 //            sync().puppimt_2 = Calculate_MT(event->p4_2, event->pfMET_p4);
             sync().iso_2 =  event->iso_2;
 //            sync().id_e_mva_nt_loose_2 = event->id_e_mva_nt_loose_2;
@@ -169,22 +169,22 @@ public:
             sync().mt_sv = event->SVfit_mt;
 
             sync().met = event->pfMET_p4.Pt();
-            if(syncMode == SyncMode::HH) sync().metphi = TVector2::Phi_0_2pi(event->pfMET_p4.Phi());
-            else sync().metphi = TVector2::Phi_mpi_pi(event->pfMET_p4.Phi());
+            if(syncMode == SyncMode::HH) sync().metphi = static_cast<float>(TVector2::Phi_0_2pi(event->pfMET_p4.Phi()));
+            else sync().metphi = static_cast<float>(TVector2::Phi_mpi_pi(event->pfMET_p4.Phi()));
 //            sync().puppimet = event->puppiMET_p4.Pt();
 //            sync().puppimetphi = event->puppiMET_p4.Phi();
 //            sync().mvamet = event->mvaMET_p4.Pt();
 //            sync().mvametphi = event->mvaMET_p4.Phi();
-            sync().pzetavis = Calculate_visiblePzeta(event->p4_1, event->p4_2);
+            sync().pzetavis = static_cast<float>(Calculate_visiblePzeta(event->p4_1, event->p4_2));
 //            sync().pzetamiss = Calculate_Pzeta(event->p4_1, event->p4_2, event->mvaMET_p4);
 //            sync().mvacov00 = event->mvaMET_cov[0][0];
 //            sync().mvacov01 = event->mvaMET_cov[0][1];
 //            sync().mvacov10 = event->mvaMET_cov[1][0];
 //            sync().mvacov11 = event->mvaMET_cov[1][1];
-            sync().metcov00 = event->pfMET_cov[0][0];
-            sync().metcov01 = event->pfMET_cov[0][1];
-            sync().metcov10 = event->pfMET_cov[1][0];
-            sync().metcov11 = event->pfMET_cov[1][1];
+            sync().metcov00 = static_cast<float>(event->pfMET_cov[0][0]);
+            sync().metcov01 = static_cast<float>(event->pfMET_cov[0][1]);
+            sync().metcov10 = static_cast<float>(event->pfMET_cov[1][0]);
+            sync().metcov11 = static_cast<float>(event->pfMET_cov[1][1]);
 
             const auto jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
             const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), JetOrdering::Pt);
@@ -192,12 +192,13 @@ public:
             const auto bjets_csv = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), JetOrdering::CSV);
 
             if(jets_pt20.size() >= 2) {
-                sync().mjj = (jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M();
-                sync().jdeta = jets_pt20.at(0).GetMomentum().Eta() - jets_pt20.at(1).GetMomentum().Eta();
+                sync().mjj = static_cast<float>((jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M());
+                sync().jdeta = static_cast<float>(jets_pt20.at(0).GetMomentum().Eta()
+                                                  - jets_pt20.at(1).GetMomentum().Eta());
                 //sync().njetingap = ;
                 //sync().njetingap20 = ;
-                sync().jdphi = TVector2::Phi_mpi_pi(jets_pt20.at(0).GetMomentum().Phi()
-                                                    - jets_pt20.at(1).GetMomentum().Phi());
+                sync().jdphi = static_cast<float>(TVector2::Phi_mpi_pi(jets_pt20.at(0).GetMomentum().Phi()
+                                                                       - jets_pt20.at(1).GetMomentum().Phi()));
             } else {
                 sync().mjj = default_value;
                 sync().jdeta = default_value;
@@ -206,13 +207,13 @@ public:
                 sync().jdphi = default_value;
             }
 
-            sync().nbtag = bjets_pt.size();
-            sync().njets = jets_pt30.size();
-            sync().njetspt20 = jets_pt20.size();
+            sync().nbtag = static_cast<int>(bjets_pt.size());
+            sync().njets = static_cast<int>(jets_pt30.size());
+            sync().njetspt20 = static_cast<int>(jets_pt20.size());
             if(jets_pt20.size() >= 1) {
-                sync().jpt_1 = jets_pt20.at(0).GetMomentum().Pt();
-                sync().jeta_1 = jets_pt20.at(0).GetMomentum().Eta();
-                sync().jphi_1 = jets_pt20.at(0).GetMomentum().Phi();
+                sync().jpt_1 = static_cast<float>(jets_pt20.at(0).GetMomentum().Pt());
+                sync().jeta_1 = static_cast<float>(jets_pt20.at(0).GetMomentum().Eta());
+                sync().jphi_1 = static_cast<float>(jets_pt20.at(0).GetMomentum().Phi());
                 sync().jrawf_1 = jets_pt20.at(0)->rawf();
                 sync().jmva_1 = jets_pt20.at(0)->mva();
             } else {
@@ -223,9 +224,9 @@ public:
                 sync().jmva_1 = default_value;
             }
             if(jets_pt20.size() >= 2) {
-                sync().jpt_2 = jets_pt20.at(1).GetMomentum().Pt();
-                sync().jeta_2 = jets_pt20.at(1).GetMomentum().Eta();
-                sync().jphi_2 = jets_pt20.at(1).GetMomentum().Phi();
+                sync().jpt_2 = static_cast<float>(jets_pt20.at(1).GetMomentum().Pt());
+                sync().jeta_2 = static_cast<float>(jets_pt20.at(1).GetMomentum().Eta());
+                sync().jphi_2 = static_cast<float>(jets_pt20.at(1).GetMomentum().Phi());
                 sync().jrawf_2 = jets_pt20.at(1)->rawf();
                 sync().jmva_2 = jets_pt20.at(1)->mva();
             } else {
@@ -236,9 +237,9 @@ public:
                 sync().jmva_2 = default_value;
             }
             if(bjets_pt.size() >= 1) {
-                sync().bpt_1 = bjets_pt.at(0).GetMomentum().Pt();
-                sync().beta_1 = bjets_pt.at(0).GetMomentum().Eta();
-                sync().bphi_1 = bjets_pt.at(0).GetMomentum().Phi();
+                sync().bpt_1 = static_cast<float>(bjets_pt.at(0).GetMomentum().Pt());
+                sync().beta_1 = static_cast<float>(bjets_pt.at(0).GetMomentum().Eta());
+                sync().bphi_1 = static_cast<float>(bjets_pt.at(0).GetMomentum().Phi());
                 sync().brawf_1 = bjets_pt.at(0)->rawf();
                 sync().bmva_1 = bjets_pt.at(0)->mva();
                 sync().bcsv_1 = bjets_pt.at(0)->csv();
@@ -251,9 +252,9 @@ public:
                 sync().bcsv_1 = default_value;
             }
             if(bjets_pt.size() >= 2) {
-                sync().bpt_2 = bjets_pt.at(1).GetMomentum().Pt();
-                sync().beta_2 = bjets_pt.at(1).GetMomentum().Eta();
-                sync().bphi_2 = bjets_pt.at(1).GetMomentum().Phi();
+                sync().bpt_2 = static_cast<float>(bjets_pt.at(1).GetMomentum().Pt());
+                sync().beta_2 = static_cast<float>(bjets_pt.at(1).GetMomentum().Eta());
+                sync().bphi_2 = static_cast<float>(bjets_pt.at(1).GetMomentum().Phi());
                 sync().brawf_2 = bjets_pt.at(1)->rawf();
                 sync().bmva_2 = bjets_pt.at(1)->mva();
                 sync().bcsv_2 = bjets_pt.at(1)->csv();
@@ -273,11 +274,11 @@ public:
 
             if(syncMode == SyncMode::HH){
 
-                sync().nbjets = bjets_csv.size();
+                sync().nbjets = static_cast<int>(bjets_csv.size());
                 if(bjets_csv.size() >= 1) {
-                    sync().bjet_pt_1 = bjets_csv.at(0).GetMomentum().Pt();
-                    sync().bjet_eta_1 = bjets_csv.at(0).GetMomentum().Eta();
-                    sync().bjet_phi_1 = bjets_csv.at(0).GetMomentum().Phi();
+                    sync().bjet_pt_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Pt());
+                    sync().bjet_eta_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Eta());
+                    sync().bjet_phi_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Phi());
                     sync().bjet_rawf_1 = bjets_csv.at(0)->rawf();
                     sync().bjet_mva_1 = bjets_csv.at(0)->mva();
                     sync().bjet_csv_1 = bjets_csv.at(0)->csv();
@@ -290,9 +291,9 @@ public:
                     sync().bjet_csv_1 = default_value;
                 }
                 if(bjets_csv.size() >= 2) {
-                    sync().bjet_pt_2 = bjets_csv.at(1).GetMomentum().Pt();
-                    sync().bjet_eta_2 = bjets_csv.at(1).GetMomentum().Eta();
-                    sync().bjet_phi_2 = bjets_csv.at(1).GetMomentum().Phi();
+                    sync().bjet_pt_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Pt());
+                    sync().bjet_eta_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Eta());
+                    sync().bjet_phi_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Phi());
                     sync().bjet_rawf_2 = bjets_csv.at(1)->rawf();
                     sync().bjet_mva_2 = bjets_csv.at(1)->mva();
                     sync().bjet_csv_2 = bjets_csv.at(1)->csv();
@@ -313,27 +314,27 @@ public:
                         sync().kinfit_convergence = default_int_value;
 
                     if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
-                        sync().m_kinfit = event.GetKinFitResults().mass;
+                        sync().m_kinfit = static_cast<float>(event.GetKinFitResults().mass);
                     else
                         sync().m_kinfit = default_value;
                 }
 
                 sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
-                sync().nFatJets = event.GetFatJets().size();
+                sync().nFatJets = static_cast<unsigned>(event.GetFatJets().size());
                 const FatJetCandidate* fatJetPtr = event.SelectFatJet(30, 0.4);
                 sync().hasFatJet = bjets_csv.size() >= 2 ? fatJetPtr != nullptr : -1;
                 if(fatJetPtr) {
                     const FatJetCandidate& fatJet = *fatJetPtr;
-                    sync().fatJet_pt = fatJet.GetMomentum().Pt();
-                    sync().fatJet_eta = fatJet.GetMomentum().Eta();
-                    sync().fatJet_phi = fatJet.GetMomentum().Phi();
-                    sync().fatJet_energy = fatJet.GetMomentum().E();
+                    sync().fatJet_pt = static_cast<float>(fatJet.GetMomentum().Pt());
+                    sync().fatJet_eta = static_cast<float>(fatJet.GetMomentum().Eta());
+                    sync().fatJet_phi = static_cast<float>(fatJet.GetMomentum().Phi());
+                    sync().fatJet_energy = static_cast<float>(fatJet.GetMomentum().E());
                     sync().fatJet_m_pruned = fatJet->m(ntuple::TupleFatJet::MassType::Pruned);
                     //                sync().fatJet_m_filtered = fatJet->m(ntuple::TupleFatJet::MassType::Filtered);
                     //                sync().fatJet_m_trimmed = fatJet->m(ntuple::TupleFatJet::MassType::Trimmed);
                     sync().fatJet_m_softDrop = fatJet->m(ntuple::TupleFatJet::MassType::SoftDrop);
-                    sync().fatJet_n_subjets = fatJet->subJets().size();
+                    sync().fatJet_n_subjets = static_cast<int>(fatJet->subJets().size());
                     sync().fatJet_n_subjettiness_tau1 = fatJet->n_subjettiness(1);
                     sync().fatJet_n_subjettiness_tau2 = fatJet->n_subjettiness(2);
                     sync().fatJet_n_subjettiness_tau3 = fatJet->n_subjettiness(3);
@@ -360,26 +361,26 @@ public:
                         topWeight *= std::sqrt(std::exp(0.156 - 0.00137 * pt));
                     }
                 }
-                sync().topWeight = topWeight;
-                sync().shapeWeight = eventWeights.GetPileUpWeight(*event) * event->genEventWeight;
-                sync().btagWeight = eventWeights.GetBtagWeight(*event);
+                sync().topWeight = static_cast<float>(topWeight);
+                sync().shapeWeight = static_cast<float>(eventWeights.GetPileUpWeight(*event) * event->genEventWeight);
+                sync().btagWeight = static_cast<float>(eventWeights.GetBtagWeight(*event));
 
-                sync().lhe_n_b_partons = event->lhe_n_b_partons;
-                sync().lhe_n_partons = event->lhe_n_partons;
+                sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
+                sync().lhe_n_partons = static_cast<int>(event->lhe_n_partons);
                 sync().lhe_HT = event->lhe_HT;
 
                 sync().genJets_nTotal = event->genJets_nTotal;
-                sync().genJets_nStored = event->genJets_p4.size();
-                sync().genJets_nStored_hadronFlavour_b = std::min<size_t>(2,
-                    std::count(event->genJets_hadronFlavour.begin(), event->genJets_hadronFlavour.end(), 5));
-                sync().genJets_nStored_hadronFlavour_c = std::count(event->genJets_hadronFlavour.begin(),
-                                                                    event->genJets_hadronFlavour.end(), 4);
+                sync().genJets_nStored = static_cast<unsigned>(event->genJets_p4.size());
+                sync().genJets_nStored_hadronFlavour_b = std::min<unsigned>(2, static_cast<unsigned>(
+                            std::count(event->genJets_hadronFlavour.begin(), event->genJets_hadronFlavour.end(), 5)));
+                sync().genJets_nStored_hadronFlavour_c = static_cast<unsigned>(
+                            std::count(event->genJets_hadronFlavour.begin(), event->genJets_hadronFlavour.end(), 4));
                 sync().jets_nTotal_hadronFlavour_b = event->jets_nTotal_hadronFlavour_b;
                 sync().jets_nTotal_hadronFlavour_c = event->jets_nTotal_hadronFlavour_c;
-                sync().jets_nSelected_hadronFlavour_b = std::count(event->jets_hadronFlavour.begin(),
-                                                                   event->jets_hadronFlavour.end(), 5);
-                sync().jets_nSelected_hadronFlavour_c = std::count(event->jets_hadronFlavour.begin(),
-                                                                   event->jets_hadronFlavour.end(), 4);
+                sync().jets_nSelected_hadronFlavour_b = static_cast<unsigned>(
+                            std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 5));
+                sync().jets_nSelected_hadronFlavour_c = static_cast<unsigned>(
+                            std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
             }
 
             sync.Fill();

@@ -67,7 +67,8 @@ struct BTagReaderInfo {
 
     void Eval(JetInfo& jetInfo)
     {
-        jetInfo.SF  = reader->eval_auto_bounds("central", flavor, jetInfo.eta, jetInfo.pt);
+        jetInfo.SF  = reader->eval_auto_bounds("central", flavor, static_cast<float>(jetInfo.eta),
+                                               static_cast<float>(jetInfo.pt));
         jetInfo.eff = GetEfficiency(jetInfo.pt, std::abs(jetInfo.eta));
     }
 
@@ -154,7 +155,7 @@ private:
             MC *= jetInfo.bTagOutcome ? jetInfo.eff : 1 - jetInfo.eff;
             Data *= jetInfo.bTagOutcome ? jetInfo.eff * jetInfo.SF : 1 - jetInfo.eff * jetInfo.SF;
         }
-        return MC ? Data/MC : 0;
+        return MC != 0 ? Data/MC : 0;
     }
 
     ReaderInfo& GetReader(int hadronFlavour) const
