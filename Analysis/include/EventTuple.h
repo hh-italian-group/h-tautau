@@ -79,6 +79,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Double_t, weight_ttbar_merge) \
     VAR(Double_t, weight_PU) \
     VAR(Double_t, weight_dy) \
+    VAR(Double_t, weight_wjets) \
     VAR(Double_t, weight_sm) \
     /* VAR(Float_t, shape_denominator_weight) */ \
     /* Event Variables */ \
