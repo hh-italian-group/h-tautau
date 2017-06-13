@@ -154,8 +154,8 @@ public:
     EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
     const TriggerResults& GetTriggerResults() const { return triggerResults; }
 
-    virtual const AnalysisObject& GetLeg(size_t leg_id) { throw exception("Method not supported."); }
-    virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) { throw exception("Method not supported."); }
+    virtual const AnalysisObject& GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
+    virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
 
     size_t GetNJets() const { return event->jets_p4.size(); }
     size_t GetNFatJets() const { return event->fatJets_p4.size(); }
@@ -241,7 +241,7 @@ public:
             if(iter == event->kinFit_jetPairId.end())
                 throw exception("Kinfit information for jet pair (%1%, %2%) is not stored for event %3%.")
                     % selected_bjet_pair.first % selected_bjet_pair.second % eventIdentifier;
-            const auto index = std::distance(event->kinFit_jetPairId.begin(), iter);
+            const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
             kinfit_results->convergence = event->kinFit_convergence.at(index);
             kinfit_results->chi2 = event->kinFit_chi2.at(index);

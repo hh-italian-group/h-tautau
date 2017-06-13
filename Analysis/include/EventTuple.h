@@ -158,6 +158,7 @@ namespace ntuple {
 template<typename T>
 constexpr T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
 
+enum class TreeState { Full, Skimmed };
 using JetPair = std::pair<size_t, size_t>;
 
 inline size_t NumberOfCombinationPairs(size_t n_jets) { return n_jets * (n_jets - 1); }
@@ -169,8 +170,10 @@ inline size_t CombinationPairToIndex(const JetPair& pair, size_t n_jets)
     if(n_jets < 2 || min == max || max >= n_jets)
         throw analysis::exception("bad combination pair (%1%, %2%) for n b-jets = %3%.")
             % pair.first % pair.second % n_jets;
-    const size_t corr = pair.first < pair.second ? -1 : 0;
-    return pair.first * (n_jets - 1) + pair.second + corr;
+    size_t index = pair.first * (n_jets - 1) + pair.second;
+    if(pair.first < pair.second)
+        --index;
+    return index;
 }
 
 inline JetPair CombinationIndexToPair(size_t index, size_t n_jets)

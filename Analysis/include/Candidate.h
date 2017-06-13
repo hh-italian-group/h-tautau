@@ -15,7 +15,14 @@ public:
     template<typename FourVector>
     explicit AnalysisObject(const FourVector& _momentum, int _charge = UnknownCharge)
         : momentum(_momentum), charge(_charge) {}
+    AnalysisObject(const AnalysisObject& other) : momentum(other.momentum), charge(other.charge) {}
     virtual ~AnalysisObject() {}
+    AnalysisObject& operator=(const AnalysisObject& other)
+    {
+        momentum = other.momentum;
+        charge = other.charge;
+        return *this;
+    }
 
     const LorentzVector& GetMomentum() const { return momentum; }
     template<typename FourVector>

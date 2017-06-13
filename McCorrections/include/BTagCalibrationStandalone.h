@@ -95,7 +95,6 @@ public:
   BTagEntry(const std::string &func, Parameters p);
   BTagEntry(const TF1* func, Parameters p);
   BTagEntry(const TH1* histo, Parameters p);
-  ~BTagEntry() {}
   static std::string makeCSVHeader();
   std::string makeCSVLine() const;
   static std::string trimStr(std::string str);
@@ -255,14 +254,14 @@ throw std::exception();
   }
 
   // make parameters
-  unsigned op = stoi(vec[0]);
+  int op = stoi(vec[0]);
   if (op > 3) {
 std::cerr << "ERROR in BTagCalibration: "
           << "Invalid csv line; OperatingPoint > 3: "
           << csvLine;
 throw std::exception();
   }
-  unsigned jf = stoi(vec[3]);
+  int jf = stoi(vec[3]);
   if (jf > 2) {
 std::cerr << "ERROR in BTagCalibration: "
           << "Invalid csv line; JetFlavor > 2: "
@@ -335,7 +334,7 @@ std::string th1ToFormulaBinTree(const TH1* hist, int start=0, int end=-1) {
   if (end == -1) {                      // initialize
     start = 0.;
     end = hist->GetNbinsX()+1;
-    TH1* h2 = (TH1*) hist->Clone();
+    TH1* h2 = dynamic_cast<TH1*>(hist->Clone());
     h2->SetBinContent(start, 0);  // kill underflow
     h2->SetBinContent(end, 0);    // kill overflow
     std::string res = th1ToFormulaBinTree(h2, start, end);
@@ -380,11 +379,11 @@ BTagEntry::BTagEntry(const TH1* hist, BTagEntry::Parameters p):
 
   // overwrite bounds with histo values
   if (params.operatingPoint == BTagEntry::OP_RESHAPING) {
-    params.discrMin = axis->GetBinLowEdge(1);
-    params.discrMax = axis->GetBinUpEdge(nbins);
+    params.discrMin = static_cast<float>(axis->GetBinLowEdge(1));
+    params.discrMax = static_cast<float>(axis->GetBinUpEdge(nbins));
   } else {
-    params.ptMin = axis->GetBinLowEdge(1);
-    params.ptMax = axis->GetBinUpEdge(nbins);
+    params.ptMin = static_cast<float>(axis->GetBinLowEdge(1));
+    params.ptMax = static_cast<float>(axis->GetBinUpEdge(nbins));
   }
 
   // balanced full binary tree height = ceil(log(2*n_leaves)/log(2))
@@ -704,10 +703,10 @@ double BTagCalibrationReader::BTagCalibrationReaderImpl::eval_auto_bounds(
   bool is_out_of_bounds = false;
 
   if (pt < sf_bounds.first) {
-    pt_for_eval = sf_bounds.first + .0001;
+    pt_for_eval = sf_bounds.first + .0001f;
     is_out_of_bounds = true;
   } else if (pt > sf_bounds.second) {
-    pt_for_eval = sf_bounds.second - .0001;
+    pt_for_eval = sf_bounds.second - .0001f;
     is_out_of_bounds = true;
   }
 
