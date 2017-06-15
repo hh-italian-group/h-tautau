@@ -3,13 +3,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include "AnalysisTools/Core/include/SmartTree.h"
+#include "EventTuple.h"
 
 #define SUMMARY_DATA() \
     /* Run statistics */ \
     VAR(UInt_t, exeTime) \
     VAR(ULong64_t, numberOfProcessedEvents) \
-    VAR(Double_t, totalWeight) \
+    VAR(Double_t, totalShapeWeight) \
+    VAR(Double_t, totalShapeWeight_withTopPt) \
     /* Tau ID information */ \
     VAR(std::vector<std::string>, tauId_names) \
     VAR(std::vector<uint32_t>, tauId_keys) \
@@ -77,5 +78,116 @@ struct GenId {
 };
 
 using GenEventCountMap = std::map<GenId, size_t>;
+
+inline GenEventCountMap ExtractGenEventCountMap(const ProdSummary& s)
+{
+    GenEventCountMap m;
+    for(size_t n = 0; n < s.lhe_n_partons.size(); ++n) {
+        const GenId id(s.lhe_n_partons.at(n), s.lhe_n_b_partons.at(n), s.lhe_ht10_bin.at(n));
+        if(m.count(id))
+            throw analysis::exception("Duplicated LHE gen id in prod summary.");
+        m[id] = s.lhe_n_events.at(n);
+    }
+    return m;
+}
+
+inline void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genCountMap)
+{
+    s.lhe_n_partons.clear();
+    s.lhe_n_b_partons.clear();
+    s.lhe_ht10_bin.clear();
+    s.lhe_n_events.clear();
+
+    for(const auto& bin : genCountMap) {
+        s.lhe_n_partons.push_back(static_cast<UInt_t>(bin.first.n_partons));
+        s.lhe_n_b_partons.push_back(static_cast<UInt_t>(bin.first.n_b_partons));
+        s.lhe_ht10_bin.push_back(static_cast<UInt_t>(bin.first.ht10_bin));
+        s.lhe_n_events.push_back(bin.second);
+    }
+}
+
+inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
+                                                        bool readMode, TreeState treeState)
+{
+    static const std::map<TreeState, std::set<std::string>> disabled_branches = {
+        { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt" } },
+        { TreeState::Skimmed, { } }
+    };
+
+    return std::make_shared<SummaryTuple>(name, directory, readMode, disabled_branches.at(treeState));
+}
+
+inline void CheckProdSummaryConsistency(const ProdSummary& s)
+{
+    if(s.tauId_keys.size() != s.tauId_names.size())
+        throw analysis::exception("Inconsistent tauId info in prod summary.");
+    const size_t n_trig = s.triggers_channel.size();
+    if(s.triggers_index.size() != n_trig || s.triggers_n_legs.size() != n_trig || s.triggers_pattern.size() != n_trig)
+        throw analysis::exception("Inconsistent trigger info in prod summary.");
+    const size_t n_filter = s.triggerFilters_channel.size();
+    if(s.triggerFilters_LegId.size() != n_filter || s.triggerFilters_name.size() != n_filter
+            || s.triggerFilters_triggerIndex.size() != n_filter)
+        throw analysis::exception("Inconsistent trigger filters info in prod summary.");
+    const size_t n_lhe = s.lhe_n_partons.size();
+    if(s.lhe_ht10_bin.size() != n_lhe || s.lhe_n_b_partons.size() != n_lhe || s.lhe_n_events.size() != n_lhe)
+        throw analysis::exception("Inconsistent LHE info in prod summary.");
+}
+
+inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2)
+{
+    if(s1.tauId_keys.size() != s2.tauId_keys.size()
+            || s1.triggers_channel.size() != s2.triggers_channel.size()
+            || s1.triggerFilters_channel.size() != s2.triggerFilters_channel.size())
+        return false;
+    for(size_t n = 0; n < s1.tauId_keys.size(); ++n) {
+        if(s1.tauId_keys.at(n) != s2.tauId_keys.at(n) || s1.tauId_names.at(n) != s2.tauId_names.at(n))
+            return false;
+    }
+    for(size_t n = 0; n < s1.triggers_channel.size(); ++n) {
+        if(s1.triggers_channel.at(n) != s2.triggers_channel.at(n)
+                || s1.triggers_index.at(n) != s2.triggers_index.at(n)
+                || s1.triggers_n_legs.at(n) != s2.triggers_n_legs.at(n)
+                || s1.triggers_pattern.at(n) != s2.triggers_pattern.at(n))
+            return false;
+    }
+    for(size_t n = 0; n < s1.triggerFilters_channel.size(); ++n) {
+        if(s1.triggerFilters_channel.at(n) != s2.triggerFilters_channel.at(n)
+                || s1.triggerFilters_LegId.at(n) != s2.triggerFilters_LegId.at(n)
+                || s1.triggerFilters_name.at(n) != s2.triggerFilters_name.at(n)
+                || s1.triggerFilters_triggerIndex.at(n) != s2.triggerFilters_triggerIndex.at(n))
+            return false;
+    }
+    return true;
+}
+
+inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
+{
+    ProdSummary summary;
+    const Long64_t n_entries = tuple.GetEntries();
+    if(n_entries < 1)
+        throw analysis::exception("Summary tuple is empty.");
+    tuple.GetEntry(0);
+    summary = tuple.data();
+    CheckProdSummaryConsistency(summary);
+    auto genCountMap = ExtractGenEventCountMap(summary);
+    for(Long64_t n = 1; n < n_entries; ++n) {
+        tuple.GetEntry(n);
+        const ProdSummary entry = tuple.data();
+        CheckProdSummaryConsistency(entry);
+        if(!CheckProdSummaryCompatibility(summary, entry))
+            throw analysis::exception("Incompatible prod summaries inside one summary tuple.");
+
+        summary.exeTime += entry.exeTime;
+        summary.numberOfProcessedEvents += entry.numberOfProcessedEvents;
+        summary.totalShapeWeight += entry.totalShapeWeight;
+        summary.totalShapeWeight_withTopPt += entry.totalShapeWeight_withTopPt;
+        auto otherGenCountMap = ExtractGenEventCountMap(entry);
+        for(const auto& bin : otherGenCountMap)
+            genCountMap[bin.first] += bin.second;
+    }
+
+    ConvertGenEventCountMap(summary, genCountMap);
+    return summary;
+}
 
 } // namespace ntuple
