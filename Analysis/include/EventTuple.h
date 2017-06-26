@@ -73,15 +73,19 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
 	/* Event Weights Variables */ \
+    VAR(Double_t, weight_pu) \
+    VAR(Double_t, weight_lepton_trig) \
+    VAR(Double_t, weight_lepton_id_iso) \
     VAR(Double_t, weight_btag) \
-    VAR(Double_t, weight_lepton) \
-    VAR(Double_t, weight_ttbar_pt) \
-    VAR(Double_t, weight_ttbar_merge) \
-    VAR(Double_t, weight_PU) \
+    VAR(Double_t, weight_btag_up) \
+    VAR(Double_t, weight_btag_down) \
     VAR(Double_t, weight_dy) \
+    VAR(Double_t, weight_ttbar) \
     VAR(Double_t, weight_wjets) \
-    VAR(Double_t, weight_sm) \
-    /* VAR(Float_t, shape_denominator_weight) */ \
+    VAR(Double_t, weight_bsm_to_sm) \
+    VAR(Double_t, weight_top_pt) \
+    VAR(Double_t, weight_xs) \
+    VAR(Double_t, weight_total) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -195,5 +199,24 @@ inline JetPair UndefinedJetPair()
     return pair;
 }
 
+inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory* directory,
+                                                    bool readMode, TreeState treeState,
+                                                    bool ignore_trigger_branches = false)
+{
+    static const std::map<TreeState, std::set<std::string>> disabled_branches = {
+        { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
+                             "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy", "weight_ttbar",
+                             "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_total" } },
+        { TreeState::Skimmed, { "lhe_particle_pdg", "lhe_particle_p4", "pfMET_cov", "genJets_partonFlavour",
+                                "genJets_hadronFlavour", "genJets_p4", "genParticles_p4", "genParticles_pdg" } }
+    };
+
+    static const std::set<std::string> trigger_branches = { "trigger_accepts", "trigger_matches" };
+    auto disabled = disabled_branches.at(treeState);
+    if(ignore_trigger_branches)
+        disabled.insert(trigger_branches.begin(), trigger_branches.end());
+
+    return std::make_shared<EventTuple>(name, directory, readMode, disabled);
+}
 
 } // namespace ntuple

@@ -24,6 +24,12 @@ ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::JetUp, "JetUp" }, { EventEnergyScale::JetDown, "JetDown" },
 };
 
+enum class UncertaintyScale { Central = 0, Up = 1, Down = 2 };
+ENUM_NAMES(UncertaintyScale) = {
+    { UncertaintyScale::Central, "Central" }, { UncertaintyScale::Up, "Up" }, { UncertaintyScale::Down, "Down" }
+};
+
+
 //using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 //static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
 

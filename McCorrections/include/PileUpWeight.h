@@ -4,13 +4,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "AnalysisTools/Core/include/RootExt.h"
-#include "h-tautau/Analysis/include/EventTuple.h"
-
+#include "WeightProvider.h"
 
 namespace analysis {
 namespace mc_corrections {
 
-class PileUpWeight {
+class PileUpWeight : public IWeightProvider {
 public:
     using Event = ntuple::Event;
     using Hist = TH1;
@@ -21,8 +20,12 @@ public:
         max_available_pu(_max_available_pu), default_pu_weight(_default_pu_weight),
         pu_weights(LoadPUWeights(pu_reweight_file_name, hist_name)) { }
 
+    virtual double Get(const Event& event) const override { return GetT(event); }
+    virtual double Get(const ntuple::ExpressEvent& event) const override { return GetT(event); }
+
+private:
 	template<typename Event>
-    double Get(const Event& event) const
+    double GetT(const Event& event) const
     {
         const double nPU = event.npu;
         const Int_t bin = pu_weights->FindBin(nPU);
@@ -31,7 +34,6 @@ public:
         return goodBin ? pu_weights->GetBinContent(bin) : default_pu_weight;
     }
 
-private:
     static HistPtr LoadPUWeights(const std::string& pu_reweight_file_name, const std::string& hist_name)
     {
         auto file = root_ext::OpenRootFile(pu_reweight_file_name);

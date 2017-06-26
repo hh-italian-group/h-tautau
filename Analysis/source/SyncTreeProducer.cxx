@@ -362,8 +362,10 @@ public:
                     }
                 }
                 sync().topWeight = static_cast<float>(topWeight);
-                sync().shapeWeight = static_cast<float>(eventWeights.GetPileUpWeight(*event) * event->genEventWeight);
-                sync().btagWeight = static_cast<float>(eventWeights.GetBtagWeight(*event));
+                sync().shapeWeight = static_cast<float>(
+                            eventWeights.GetWeight(*event, mc_corrections::WeightType::PileUp) * event->genEventWeight);
+                sync().btagWeight = static_cast<float>(
+                            eventWeights.GetWeight(*event, mc_corrections::WeightType::BTag));
 
                 sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
                 sync().lhe_n_partons = static_cast<int>(event->lhe_n_partons);

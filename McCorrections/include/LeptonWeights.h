@@ -5,7 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
-#include "h-tautau/Analysis/include/EventTuple.h"
+#include "WeightProvider.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -43,7 +43,7 @@ private:
 
 } // namespace detail
 
-class LeptonWeights {
+class LeptonWeights : public IWeightProvider {
 public:
     using Event = ntuple::Event;
 
@@ -70,7 +70,12 @@ public:
         return 1.0;
     }
 
-    double GetTotalWeight(const Event& event) const { return GetIdIsoWeight(event) * GetTriggerWeight(event); }
+    virtual double Get(const Event& event) const override { return GetIdIsoWeight(event) * GetTriggerWeight(event); }
+
+    virtual double Get(const ntuple::ExpressEvent& /*event*/) const override
+    {
+        throw exception("ExpressEvent is not supported in LeptonWeights::Get.");
+    }
 
 private:
     detail::LeptonScaleFactors electronSF, muonSF;

@@ -4,24 +4,19 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "AnalysisTools/Core/include/RootExt.h"
-#include "h-tautau/Analysis/include/EventTuple.h"
-#include "h-tautau/Analysis/include/SummaryTuple.h"
-
+#include "WeightProvider.h"
 
 namespace analysis {
 namespace mc_corrections {
 
-class TopPtWeight {
-
+class TopPtWeight : public IWeightProvider {
 public:
-	
     using Event = ntuple::Event;
     using ExpressEvent = ntuple::ExpressEvent;
 
-	TopPtWeight(double p1, double p2):
-	_p1(p1), _p2(p2) {}
+    TopPtWeight(double p1, double p2) : _p1(p1), _p2(p2) {}
 
-	double Get(const Event& event) const
+    virtual double Get(const Event& event) const override
 	{
 		double topWeight = 1.;
 		for (size_t n = 0; n < event.genParticles_pdg.size(); ++n)
@@ -33,7 +28,7 @@ public:
 		return topWeight;
 	}
 
-    double Get(const ExpressEvent& expr_event) const
+    virtual double Get(const ExpressEvent& expr_event) const override
     {
         const double pt_top = expr_event.gen_top_pt;
         const double pt_topBar = expr_event.gen_topBar_pt;
@@ -43,9 +38,7 @@ public:
     }
 
 private:
-	double _p1;
-	double _p2;
-
+    double _p1, _p2;
 };
 
 } // namespace mc_corrections

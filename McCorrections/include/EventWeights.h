@@ -7,78 +7,80 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "LeptonWeights.h"
 #include "BTagWeight.h"
 #include "TopPtWeight.h"
+#include "WeightingMode.h"
 
 namespace analysis {
 namespace mc_corrections {
 
 class EventWeights {
 public:
-    using Event = ntuple::Event;
-    using ExpressEvent = ntuple::ExpressEvent;
-    using PileUpWeightPtr = std::shared_ptr<PileUpWeight>;
-    using LeptonWeightsPtr = std::shared_ptr<LeptonWeights>;
-    using BTagWeightPtr = std::shared_ptr<BTagWeight>;
-	using TopPtWeightPtr = std::shared_ptr<TopPtWeight>;
+    using ProviderPtr = std::shared_ptr<IWeightProvider>;
+    using ProviderMap = std::map<WeightType, ProviderPtr>;
 
     EventWeights(Period period, DiscriminatorWP btag_wp)
     {
         if(period == Period::Run2015) {
-            pileUp = PileUpWeightPtr(new class PileUpWeight(
-                FullName("reWeight_Fall.root"), "lumiWeights", 60, 0));
-            lepton = LeptonWeightsPtr(new LeptonWeights(
-                FullLeptonName("Electron/Electron_IdIso0p10_eff.root"),
-                FullLeptonName("Electron/Electron_SingleEle_eff.root"),
-                FullLeptonName("Muon/Muon_IdIso0p1_fall15.root"),
-                FullLeptonName("Muon/Muon_IsoMu18_fall15.root")));
-            bTag = BTagWeightPtr(new class BTagWeight(
-                FullName("bTagEff_Loose.root"),
-                FullName("CSVv2.csv"),
-                btag_wp));
+            providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
+                        FullName("reWeight_Fall.root"), "lumiWeights", 60, 0);
+            providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+                        FullLeptonName("Electron/Electron_IdIso0p10_eff.root"),
+                        FullLeptonName("Electron/Electron_SingleEle_eff.root"),
+                        FullLeptonName("Muon/Muon_IdIso0p1_fall15.root"),
+                        FullLeptonName("Muon/Muon_IsoMu18_fall15.root"));
+            providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                        FullName("bTagEff_Loose.root"), FullName("CSVv2.csv"), btag_wp);
         }
         else if(period == Period::Run2016) {
-//            pileUp = PileUpWeightPtr(new class PileUpWeight(
-//                FullName("Data_Pileup_2016_271036-276811_13TeVSpring16_PromptReco_69p2mbMinBiasXS.root"),
-//                "pileup", 40, 0));
-            pileUp = PileUpWeightPtr(new PileUpWeight(FullName("purewHisto.root"), "pileup", 60, 0));
-
-            lepton = LeptonWeightsPtr(new LeptonWeights(
-                FullLeptonName("Electron/Run2016BCD/Electron_IdIso0p10_eff.root"),
-                FullLeptonName("Electron/Run2016BCD/Electron_Ele25eta2p1WPTight_eff.root"),
-                FullLeptonName("Muon/Run2016BCD/Muon_IdIso0p15_eff.root"),
-                FullLeptonName("Muon/Run2016BCD/Muon_IsoMu22_eff.root")));
-
-            bTag = BTagWeightPtr(new class BTagWeight(
-                FullName("bTagEfficiencies_80X.root"),
-                FullName("CSVv2_ichep.csv"),
-                btag_wp));
+            providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
+                        FullName("purewHisto.root"), "pileup", 60, 0);
+            providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+                        FullLeptonName("Electron/Run2016BCD/Electron_IdIso0p10_eff.root"),
+                        FullLeptonName("Electron/Run2016BCD/Electron_Ele25eta2p1WPTight_eff.root"),
+                        FullLeptonName("Muon/Run2016BCD/Muon_IdIso0p15_eff.root"),
+                        FullLeptonName("Muon/Run2016BCD/Muon_IsoMu22_eff.root"));
+            providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                        FullName("bTagEfficiencies_80X.root"), FullName("CSVv2_ichep.csv"), btag_wp);
 			
-			top = TopPtWeightPtr(new TopPtWeight(0.0615, 0.0005));
-			
+            providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
 
         } else {
             throw exception("Period %1% is not supported.") % period;
         }
     }
 
-	template<typename Event>
-	double GetPileUpWeight(const Event& event) const { return pileUp ? pileUp->Get(event) : 1.; }
-    double GetLeptonIdIsoWeight(const Event& event) const { return lepton ? lepton->GetIdIsoWeight(event) : 1.; }
-    double GetLeptonTriggerWeight(const Event& event) const { return lepton ? lepton->GetTriggerWeight(event) : 1.; }
-    double GetLeptonTotalWeight(const Event& event) const { return lepton ? lepton->GetTotalWeight(event) : 1.; }
-    double GetBtagWeight(const Event& event) const { return bTag ? bTag->Compute(event) : 1.; }
+    ProviderPtr GetProvider(WeightType weightType) const
+    {
+        if(!providers.count(weightType))
+            throw exception("Weight provider not found for %1% weight.") % weightType;
+        return providers.at(weightType);
+    }
+
+    template<typename Provider>
+    std::shared_ptr<Provider> GetProviderT(WeightType weightType) const
+    {
+        auto provider = GetProvider(weightType);
+        auto casted_provider = std::dynamic_pointer_cast<Provider>(provider);
+        if(!casted_provider)
+            throw exception("Can't cast provider for weight %1% to type %2%.") % weightType % typeid(Provider).name();
+        return casted_provider;
+    }
 
     template<typename Event>
-	double GetTopPtWeight(const Event& event) const {return top ? top->Get(event) : 1.; }
-
-    double GetTotalWeight(const Event& event, bool apply_btag_weight = false)
+    double GetWeight(const Event& event, WeightType weightType) const
     {
-        double weight = GetPileUpWeight(event) * GetLeptonTotalWeight(event) * GetTopPtWeight(event);
-        if(apply_btag_weight)
-            weight *= GetBtagWeight(event);
+        return GetProvider(weightType)->Get(event);
+    }
+
+    template<typename Event>
+    double GetTotalWeight(const Event& event, const WeightingMode& weightingMode) const
+    {
+        double weight = 1.;
+        for(WeightType weightType : weightingMode)
+            weight *= GetWeight(event, weightType);
         return weight;
     }
 
-private:
+protected:
     static std::string FullName(const std::string& fileName, const std::string& path)
     {
         return path + "/" + fileName;
@@ -96,11 +98,8 @@ private:
         return FullName(fileName, path);
     }
 
-private:
-    PileUpWeightPtr pileUp;
-    LeptonWeightsPtr lepton;
-    BTagWeightPtr bTag;
-	TopPtWeightPtr top;
+protected:
+    ProviderMap providers;
 };
 
 } // namespace mc_corrections

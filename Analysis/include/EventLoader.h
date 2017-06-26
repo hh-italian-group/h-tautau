@@ -13,7 +13,7 @@ public:
     enum class EventPart { FirstTauIds = 0, SecondTauIds = 1, Jets = 2, FatJets = 3, GenInfo = 4 };
 
     explicit StorageMode(unsigned _mode = 0) : mode_bits(_mode) {}
-    unsigned Mode() const { return mode_bits.to_ulong(); }
+    unsigned long Mode() const { return mode_bits.to_ulong(); }
     bool IsFull() const { return Mode() == 0; }
     bool IsMissing(EventPart part) const { return mode_bits[static_cast<size_t>(part)]; }
     bool IsPresent(EventPart part) const { return !IsMissing(part); }
@@ -25,14 +25,19 @@ private:
 
 class EventLoader {
 public:
-    static void Load(Event& event, const Event* ref)
+    static StorageMode Load(Event& event, const Event* ref)
     {
         using EventPart = StorageMode::EventPart;
 
         StorageMode mode(event.storageMode);
-        if(mode.IsFull()) return;
+        if(mode.IsFull()) return mode;
         if(!ref)
             throw analysis::exception("Can't load partially stored event without the reference.");
+        if(event.run != ref->run || event.lumi != ref->lumi || event.evt != ref->evt)
+            throw analysis::exception("Incompatible reverence event number.");
+        StorageMode ref_mode(ref->storageMode);
+        if(!ref_mode.IsFull())
+            throw analysis::exception("Incomplete reference event. Ref event storage mode = %1%") % ref_mode.Mode();
 
         if(mode.IsMissing(EventPart::FirstTauIds)) {
             event.tauId_keys_1 = ref->tauId_keys_1;
@@ -70,11 +75,14 @@ public:
             event.lhe_n_partons = ref->lhe_n_partons;
             event.lhe_n_b_partons = ref->lhe_n_b_partons;
             event.lhe_HT = ref->lhe_HT;
+            event.genEventType = ref->genEventType;
+            event.genEventWeight = ref->genEventWeight;
             event.genParticles_pdg = ref->genParticles_pdg;
             event.genParticles_p4 = ref->genParticles_p4;
             event.genJets_nTotal = ref->genJets_nTotal;
             event.genJets_p4 = ref->genJets_p4;
         }
+        return mode;
     }
 };
 
