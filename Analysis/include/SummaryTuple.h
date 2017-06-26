@@ -107,14 +107,23 @@ inline void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genC
 }
 
 inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
-                                                        bool readMode, TreeState treeState)
+                                                        bool readMode, TreeState treeState,
+                                                        bool ignore_trigger_branches = false)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
         { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt" } },
         { TreeState::Skimmed, { } }
     };
 
-    return std::make_shared<SummaryTuple>(name, directory, readMode, disabled_branches.at(treeState));
+    static const std::set<std::string> trigger_branches = {
+        "triggers_channel", "triggers_index", "triggers_pattern", "triggers_n_legs", "triggerFilters_channel",
+        "triggerFilters_triggerIndex", "triggerFilters_LegId", "triggerFilters_name"
+    };
+    auto disabled = disabled_branches.at(treeState);
+    if(ignore_trigger_branches)
+        disabled.insert(trigger_branches.begin(), trigger_branches.end());
+
+    return std::make_shared<SummaryTuple>(name, directory, readMode, disabled);
 }
 
 inline void CheckProdSummaryConsistency(const ProdSummary& s)
@@ -133,16 +142,24 @@ inline void CheckProdSummaryConsistency(const ProdSummary& s)
         throw analysis::exception("Inconsistent LHE info in prod summary.");
 }
 
-inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2)
+inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os = nullptr)
 {
-    if(s1.tauId_keys.size() != s2.tauId_keys.size()
-            || s1.triggers_channel.size() != s2.triggers_channel.size()
+    if(s1.tauId_keys.size() != s2.tauId_keys.size()) {
+        if(os) *os << "Number of tou id keys are not compatible: " << s1.tauId_keys.size() << "!="
+                   << s2.tauId_keys.size() << "." << std::endl;
+        return false;
+    }
+    for(size_t n = 0; n < s1.tauId_keys.size(); ++n) {
+        if(s1.tauId_keys.at(n) != s2.tauId_keys.at(n) || s1.tauId_names.at(n) != s2.tauId_names.at(n)) {
+            if(os) *os << "Tau id key is not compatible: (" << s1.tauId_keys.at(n) << ", "
+                       << s1.tauId_names.at(n) << ") != (" << s2.tauId_keys.at(n) << ", "
+                       << s1.tauId_names.at(n) << ")." << std::endl;
+            return false;
+        }
+    }
+    if(s1.triggers_channel.size() != s2.triggers_channel.size()
             || s1.triggerFilters_channel.size() != s2.triggerFilters_channel.size())
         return false;
-    for(size_t n = 0; n < s1.tauId_keys.size(); ++n) {
-        if(s1.tauId_keys.at(n) != s2.tauId_keys.at(n) || s1.tauId_names.at(n) != s2.tauId_names.at(n))
-            return false;
-    }
     for(size_t n = 0; n < s1.triggers_channel.size(); ++n) {
         if(s1.triggers_channel.at(n) != s2.triggers_channel.at(n)
                 || s1.triggers_index.at(n) != s2.triggers_index.at(n)
@@ -160,6 +177,25 @@ inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSumma
     return true;
 }
 
+inline void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSummary)
+{
+    CheckProdSummaryConsistency(summary);
+    CheckProdSummaryConsistency(otherSummary);
+    auto genCountMap = ExtractGenEventCountMap(summary);
+    if(!CheckProdSummaryCompatibility(summary, otherSummary, &std::cerr))
+        throw analysis::exception("Can't merge two incompatible prod summaries.");
+
+    summary.exeTime += otherSummary.exeTime;
+    summary.numberOfProcessedEvents += otherSummary.numberOfProcessedEvents;
+    summary.totalShapeWeight += otherSummary.totalShapeWeight;
+    summary.totalShapeWeight_withTopPt += otherSummary.totalShapeWeight_withTopPt;
+    auto otherGenCountMap = ExtractGenEventCountMap(otherSummary);
+    for(const auto& bin : otherGenCountMap)
+        genCountMap[bin.first] += bin.second;
+
+    ConvertGenEventCountMap(summary, genCountMap);
+}
+
 inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
 {
     ProdSummary summary;
@@ -174,8 +210,13 @@ inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
         tuple.GetEntry(n);
         const ProdSummary entry = tuple.data();
         CheckProdSummaryConsistency(entry);
-        if(!CheckProdSummaryCompatibility(summary, entry))
-            throw analysis::exception("Incompatible prod summaries inside one summary tuple.");
+//        try {
+            if(!CheckProdSummaryCompatibility(summary, entry, &std::cerr))
+                throw analysis::exception("Incompatible prod summaries inside one summary tuple."
+                                          " Entry id = %1% out of %2%.") % n % n_entries;
+//        } catch(analysis::exception& e) {
+//            std::cerr << "ERROR: " << e.what() << std::endl;
+//        }
 
         summary.exeTime += entry.exeTime;
         summary.numberOfProcessedEvents += entry.numberOfProcessedEvents;

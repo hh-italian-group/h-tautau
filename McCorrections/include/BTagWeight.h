@@ -5,10 +5,11 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 #include <TH2.h>
 
 #include "AnalysisTools/Core/include/RootExt.h"
-#include "h-tautau/Analysis/include/EventTuple.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "BTagCalibrationStandalone.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "WeightProvider.h"
+#include "TextIO.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -65,9 +66,9 @@ struct BTagReaderInfo {
         eff_hist = HistPtr(root_ext::ReadCloneObject<TH2F>(*file, name, "", true));
     }
 
-    void Eval(JetInfo& jetInfo)
+    void Eval(JetInfo& jetInfo, const std::string& unc_name)
     {
-        jetInfo.SF  = reader->eval_auto_bounds("central", flavor, static_cast<float>(jetInfo.eta),
+        jetInfo.SF  = reader->eval_auto_bounds(unc_name, flavor, static_cast<float>(jetInfo.eta),
                                                static_cast<float>(jetInfo.pt));
         jetInfo.eff = GetEfficiency(jetInfo.pt, std::abs(jetInfo.eta));
     }
@@ -85,7 +86,7 @@ private:
 
 } // namespace detail
 
-class BTagWeight {
+class BTagWeight : public IWeightProvider {
 public:
     using BTagCalibration = btag_calibration::BTagCalibration;
     using BTagCalibrationReader = btag_calibration::BTagCalibrationReader;
@@ -132,13 +133,25 @@ public:
                 ReaderInfoPtr(new ReaderInfo(reader_light, BTagEntry::FLAV_UDSG, bTagEffFile, wp));
     }
 
-    double Compute(const ntuple::Event& event)
+    virtual double Get(const ntuple::Event& event) const override
     {
+        return GetEx(event, UncertaintyScale::Central);
+    }
+
+    virtual double Get(const ntuple::ExpressEvent& /*event*/) const override
+    {
+        throw exception("ExpressEvent is not supported in BTagWeight::Get.");
+    }
+
+    double GetEx(const ntuple::Event& event, UncertaintyScale unc) const
+    {
+        const std::string unc_name = GetUncertantyName(unc);
+
         JetInfoVector jetInfos;
         for (size_t jetIndex = 0; jetIndex < event.jets_p4.size(); ++jetIndex) {
             JetInfo jetInfo(event, jetIndex);
             if(std::abs(jetInfo.eta) >= cuts::btag_2016::eta) continue;
-            GetReader(jetInfo.hadronFlavour).Eval(jetInfo);
+            GetReader(jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
             jetInfo.bTagOutcome = std::abs(jetInfo.eta) < cuts::btag_2016::eta && jetInfo.CSV > csv_cut;
             jetInfos.push_back(jetInfo);
         }
@@ -147,6 +160,14 @@ public:
     }
 
 private:
+
+    static std::string GetUncertantyName(UncertaintyScale unc)
+    {
+        std::string unc_name = ToString(unc);
+        std::transform(unc_name.begin(), unc_name.end(), unc_name.begin(), ::tolower);
+        return unc_name;
+    }
+
     static double GetBtagWeight(const JetInfoVector& jetInfos)
     {
         double MC = 1;
