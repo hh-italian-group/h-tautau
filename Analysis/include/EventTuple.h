@@ -138,6 +138,11 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
+    /* Skimmer Variables */\
+    VAR(size_t, file_desc_id) /* File id in TupleSkimmer. */ \
+    VAR(size_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
+    VAR(Int_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
+    VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -206,7 +211,8 @@ inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDi
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
         { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
                              "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy", "weight_ttbar",
-                             "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_total" } },
+                             "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_total",
+                            "file_desc_id", "n_splits", "split_seed", "split_id" } },
         { TreeState::Skimmed, { "lhe_particle_pdg", "lhe_particle_p4", "pfMET_cov", "genJets_partonFlavour",
                                 "genJets_hadronFlavour", "genJets_p4", "genParticles_p4", "genParticles_pdg" } }
     };

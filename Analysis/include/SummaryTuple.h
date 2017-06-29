@@ -28,6 +28,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<UInt_t>, lhe_n_b_partons) \
     VAR(std::vector<UInt_t>, lhe_ht10_bin) \
     VAR(std::vector<ULong64_t>, lhe_n_events) \
+    /* Skimmer Variables */\
+    VAR(std::vector<size_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
+    VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
+    VAR(size_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
+    VAR(Int_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -111,7 +116,8 @@ inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name,
                                                         bool ignore_trigger_branches = false)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
-        { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt" } },
+        { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt",
+                             "file_desc_id", "file_desc_name", "n_splits", "split_seed" } },
         { TreeState::Skimmed, { } }
     };
 
