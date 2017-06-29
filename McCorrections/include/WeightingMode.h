@@ -9,8 +9,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-ENUM_OSTREAM_OPERATORS()
-ENUM_ISTREAM_OPERATORS()
+using ::analysis::operator<<;
+using ::analysis::operator>>;
 
 enum class WeightType {
     PileUp = 0, LeptonTrigIdIso = 1, BTag = 2, DY = 3, TTbar = 4, Wjets = 5, BSM_to_SM = 6, TopPt = 7
