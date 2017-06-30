@@ -2,7 +2,7 @@
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
-
+#include <bitset>
 #include "EventTuple.h"
 
 namespace ntuple {
