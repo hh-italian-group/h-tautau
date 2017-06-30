@@ -29,9 +29,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<UInt_t>, lhe_ht10_bin) \
     VAR(std::vector<ULong64_t>, lhe_n_events) \
     /* Skimmer Variables */\
-    VAR(std::vector<size_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
+    VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
-    VAR(size_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
+    VAR(UInt_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
     VAR(UInt_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
     /**/
 

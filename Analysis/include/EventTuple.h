@@ -139,8 +139,8 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     /* Skimmer Variables */\
-    VAR(size_t, file_desc_id) /* File id in TupleSkimmer. */ \
-    VAR(size_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
+    VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
+    VAR(UInt_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
     VAR(UInt_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
     /**/
