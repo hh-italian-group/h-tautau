@@ -210,7 +210,7 @@ inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDi
         { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
                              "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy", "weight_ttbar",
                              "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_total",
-                            "file_desc_id", "n_splits", "split_seed", "split_id" } },
+                            "file_desc_id", "split_id" } },
         { TreeState::Skimmed, { "lhe_particle_pdg", "lhe_particle_p4", "pfMET_cov", "genJets_partonFlavour",
                                 "genJets_hadronFlavour", "genJets_p4", "genParticles_p4", "genParticles_pdg" } }
     };
