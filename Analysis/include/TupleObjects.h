@@ -3,6 +3,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include "AnalysisTools/Core/include/Tools.h"
 #include "AnalysisMath.h"
 #include "AnalysisTypes.h"
 #include "EventTuple.h"
