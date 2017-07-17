@@ -67,13 +67,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "TriggerTools.h"
 
-struct TupleProducerData : root_ext::AnalyzerData {
-    using AnalyzerData::AnalyzerData;
-    SELECTION_ENTRY(Selection)
-    TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
-    TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
-    TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
-};
+//struct TupleProducerData : root_ext::AnalyzerData {
+//    using AnalyzerData::AnalyzerData;
+//    SELECTION_ENTRY(Selection)
+//    TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
+//    TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
+//    TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
+//};
 
 namespace analysis {
 namespace detail {
@@ -110,8 +110,8 @@ public:
     using LorentzVectorE = analysis::LorentzVectorE;
 
 private:
-    TupleProducerData anaData;
-    root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
+//    TupleProducerData anaData;
+//    root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
     edm::EDGetToken electronsMiniAOD_token;
     edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token, eleCutBasedVetoMap_token;
     edm::EDGetToken tausMiniAOD_token;
@@ -188,7 +188,7 @@ public:
     BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName);
 
 protected:
-    TupleProducerData& GetAnaData() { return anaData; }
+//    TupleProducerData& GetAnaData() { return anaData; }
 
     static bool PassPFLooseId(const pat::Jet& pat_jet);
     static bool PassICHEPMuonMediumId(const pat::Muon& pat_muon);
@@ -236,12 +236,12 @@ protected:
                     if (expectedCharge !=analysis::AnalysisObject::UnknownCharge
                             && candidate.GetCharge() != expectedCharge) continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.GetMomentum().M(), 1);
+//                    GetAnaData().Mass(hist_name).Fill(candidate.GetMomentum().M(), 1);
                 }
             }
         }
 
-        GetAnaData().N_objects(hist_name).Fill(result.size(), 1);
+//        GetAnaData().N_objects(hist_name).Fill(result.size(), 1);
         return result;
     }
 
@@ -254,26 +254,26 @@ protected:
         std::ostringstream ss_suffix;
         ss_suffix << selection_label << "_" << eventEnergyScale;
         const std::string suffix = ss_suffix.str();
-        cuts::ObjectSelector& objectSelector = GetAnaData().Selection(suffix);
-        SelectionManager selectionManager(anaDataBeforeCut, suffix, weight);
+//        cuts::ObjectSelector& objectSelector = GetAnaData().Selection(suffix);
+//        SelectionManager selectionManager(anaDataBeforeCut, suffix, weight);
 
         const auto selector = [&](size_t id) -> Candidate {
             const Candidate& candidate = all_candidates.at(id);
 
-            Cutter cut(&objectSelector, &selectionManager);
-            base_selector(candidate, cut);
+//            Cutter cut(&objectSelector, &selectionManager);
+//            base_selector(candidate, cut);
             return candidate;
         };
 
         const auto selected = objectSelector.collect_objects<Candidate>(1, all_candidates.size(), selector, comparitor);
 
-        SelectionManager selectionManager_afterCut(anaDataAfterCut, suffix, weight);
-        for(const auto& candidate : selected) {
-            Cutter cut(nullptr, &selectionManager_afterCut);
-            base_selector(candidate, cut);
-        }
-        GetAnaData().N_objects(suffix).Fill(selected.size(), 1);
-        GetAnaData().N_objects(suffix + "_original").Fill(all_candidates.size(), weight);
+//        SelectionManager selectionManager_afterCut(anaDataAfterCut, suffix, weight);
+//        for(const auto& candidate : selected) {
+//            Cutter cut(nullptr, &selectionManager_afterCut);
+//            base_selector(candidate, cut);
+//        }
+//        GetAnaData().N_objects(suffix).Fill(selected.size(), 1);
+//        GetAnaData().N_objects(suffix + "_original").Fill(all_candidates.size(), weight);
 
         return selected;
     }
