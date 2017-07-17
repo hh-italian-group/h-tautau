@@ -170,6 +170,7 @@ protected:
     std::shared_ptr<MET> met;
     edm::Ptr<reco::Vertex> primaryVertex;
     edm::Handle<std::vector<reco::GenParticle>> genParticles;
+    std::vector<reco::GenParticle> genParticles_vec;
     edm::Handle<edm::View<reco::GenJet>> genJets;
     edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions, ele_cutBased_veto;
 
