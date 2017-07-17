@@ -29,9 +29,7 @@ ENUM_NAMES(UncertaintyScale) = {
     { UncertaintyScale::Central, "Central" }, { UncertaintyScale::Up, "Up" }, { UncertaintyScale::Down, "Down" }
 };
 
-
-//using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
-//static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
+using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
 enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight };
 ENUM_NAMES(DiscriminatorWP) = {
