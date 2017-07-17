@@ -8,6 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "AnalysisTools/Core/include/Tools.h"
 
 namespace analysis {
 
@@ -36,7 +37,7 @@ inline LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle,
     static const set empty = {};
     static const set light_leptons = { 11, 13 };
     static const set invisible_particles = { 12, 14, 16 };
-    static const set light_and_invisible = tools::union_sets({light_leptons, invisible_particles});
+    static const set light_and_invisible = analysis::tools::union_sets({light_leptons, invisible_particles});
 
     static const std::map<pair, const set*> to_exclude {
         { pair(false, false), &empty }, { pair(true, false), &invisible_particles },
