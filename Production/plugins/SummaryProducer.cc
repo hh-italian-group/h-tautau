@@ -39,7 +39,7 @@ public:
         summaryTuple("summary", &edm::Service<TFileService>()->file(), false)
     {
         summaryTuple().numberOfProcessedEvents = 0;
-        summaryTuple().totalWeight = 0.;
+        //summaryTuple().totalWeight = 0.;
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
@@ -100,13 +100,13 @@ private:
         }
 
         if(!isMC) {
-            summaryTuple().totalWeight += 1;
+            //summaryTuple().totalWeight += 1;
             return;
         }
 
         edm::Handle<GenEventInfoProduct> genEvent;
         event.getByToken(genEvent_token, genEvent);
-        summaryTuple().totalWeight += genEvent->weight();
+        //summaryTuple().totalWeight += genEvent->weight();
 
         edm::Handle<std::vector<PileupSummaryInfo>> puInfo;
         event.getByToken(puInfo_token, puInfo);
