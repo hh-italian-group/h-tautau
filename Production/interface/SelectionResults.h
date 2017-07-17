@@ -20,19 +20,27 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 class SelectionManager {
 public:
-    SelectionManager(root_ext::AnalyzerData& _anaData, const std::string& _selection_label, double _weight)
-        : anaData(&_anaData), selection_label(_selection_label), weight(_weight) {}
+    using RootHist = TH1D;
+    using Hist = root_ext::SmartHistogram<RootHist>;
+    using Entry = root_ext::AnalyzerDataEntry<RootHist>;
+    using AnaData = root_ext::AnalyzerData;
+    using Factory = root_ext::HistogramFactory<RootHist>;
+    SelectionManager(Entry& _entry, double _weight)
+        : entry(&_entry), weight(_weight) {}
 
     template<typename ValueType>
-    ValueType FillHistogram(ValueType value, const std::string& histogram_name)
+    ValueType FillHistogram(ValueType value, const std::string& hist_name)
     {
-        auto& histogram = anaData->Get(static_cast<TH1D*>(nullptr), histogram_name, selection_label);
-        return cuts::fill_histogram(value, histogram, weight);
+        if(!entry->GetHistograms().count(hist_name)) {
+            std::shared_ptr<Hist> hist(Factory::Make(hist_name));
+            entry->Set(hist_name, hist);
+        }
+        (*entry)(hist_name).Fill(value, weight);
+        return value;
     }
 
 private:
-    root_ext::AnalyzerData* anaData;
-    std::string selection_label;
+    Entry* entry;
     double weight;
 };
 
