@@ -148,6 +148,7 @@ private:
             (*expressTuple)().lhe_n_partons.push_back(lheSummary.n_partons);
             (*expressTuple)().lhe_n_b_partons.push_back(lheSummary.n_b_partons);
             (*expressTuple)().lhe_ht10_bin.push_back(ht10_bin);
+            (*expressTuple)().lhe_n_events.push_back(++genEventCountMap[genId]);
         }
 
         expressTuple->Fill();
@@ -166,9 +167,9 @@ private:
             summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
             summaryTuple().lhe_n_events.push_back(count_entry.second);
         }
-        for(const auto& count_entry : genEventCountMap) {
-            (*expressTuple)().lhe_n_events.push_back(count_entry.second);
-        }
+//        for(const auto& count_entry : genEventCountMap) {
+//            (*expressTuple)().lhe_n_events.push_back(count_entry.second);
+//        }
         const auto stop = clock::now();
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
         summaryTuple.Fill();
