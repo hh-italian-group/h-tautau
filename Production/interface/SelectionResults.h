@@ -20,18 +20,18 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 class SelectionManager {
 public:
-    SelectionManager(/*root_ext::AnalyzerData& _anaData,*/ const std::string& _selection_label, double _weight)
-        : /*anaData(&_anaData),*/ selection_label(_selection_label), weight(_weight) {}
+    SelectionManager(root_ext::AnalyzerData& _anaData, const std::string& _selection_label, double _weight)
+        : anaData(&_anaData), selection_label(_selection_label), weight(_weight) {}
 
-//    template<typename ValueType>
-//    ValueType FillHistogram(ValueType value, const std::string& histogram_name)
-//    {
-//        auto& histogram = anaData->Get(static_cast<TH1D*>(nullptr), histogram_name, selection_label);
-//        return cuts::fill_histogram(value, histogram, weight);
-//    }
+    template<typename ValueType>
+    ValueType FillHistogram(ValueType value, const std::string& histogram_name)
+    {
+        auto& histogram = anaData->Get(static_cast<TH1D*>(nullptr), histogram_name, selection_label);
+        return cuts::fill_histogram(value, histogram, weight);
+    }
 
 private:
-//    root_ext::AnalyzerData* anaData;
+    root_ext::AnalyzerData* anaData;
     std::string selection_label;
     double weight;
 };
