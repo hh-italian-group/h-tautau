@@ -6,6 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "AnalysisTools/Core/include/Tools.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 

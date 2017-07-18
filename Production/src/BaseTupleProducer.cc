@@ -13,11 +13,9 @@ bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
-BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
+BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& _treeName) :
+    treeName(_treeName),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
-    anaDataBeforeCut(&edm::Service<TFileService>()->file(), treeName + "_before_cut"),
-    anaDataAfterCut(&edm::Service<TFileService>()->file(), treeName + "_after_cut"),
-    anaDataFinalSelection(&edm::Service<TFileService>()->file(), treeName + "_final_selection"),
     electronsMiniAOD_token(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
     eleTightIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
     eleMediumIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
