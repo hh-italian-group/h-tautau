@@ -145,6 +145,9 @@ private:
             (*expressTuple)().lhe_H_m = lheSummary.m_H;
             (*expressTuple)().lhe_hh_m = lheSummary.m_hh;
             (*expressTuple)().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
+            (*expressTuple)().lhe_n_partons.push_back(lheSummary.n_partons);
+            (*expressTuple)().lhe_n_b_partons.push_back(lheSummary.n_b_partons);
+            (*expressTuple)().lhe_ht10_bin.push_back(ht10_bin);
         }
 
         expressTuple->Fill();
@@ -164,9 +167,6 @@ private:
             summaryTuple().lhe_n_events.push_back(count_entry.second);
         }
         for(const auto& count_entry : genEventCountMap) {
-            (*expressTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
-            (*expressTuple)().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
-            (*expressTuple)().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
             (*expressTuple)().lhe_n_events.push_back(count_entry.second);
         }
         const auto stop = clock::now();
