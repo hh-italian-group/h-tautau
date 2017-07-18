@@ -157,12 +157,12 @@ private:
             summaryTuple().tauId_names.push_back(name);
             summaryTuple().tauId_keys.push_back(key);
         }
-//        for(const auto& count_entry : genEventCountMap) {
-//            summaryTuple().lhe_n_partons.push_back(count_entry.first.n_partons);
-//            summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
-//            summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
-//            summaryTuple().lhe_n_events.push_back(count_entry.second);
-//        }
+        for(const auto& count_entry : genEventCountMap) {
+            summaryTuple().lhe_n_partons.push_back(count_entry.first.n_partons);
+            summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
+            summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
+            summaryTuple().lhe_n_events.push_back(count_entry.second);
+        }
         for(const auto& count_entry : genEventCountMap) {
             (*expressTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
             (*expressTuple)().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);

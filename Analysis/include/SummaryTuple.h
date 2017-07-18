@@ -28,6 +28,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
     VAR(UInt_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
     VAR(UInt_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
+    /* MC truth event splitting */ \
+    VAR(std::vector<UInt_t>, lhe_n_partons) \
+    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
+    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
+    VAR(std::vector<ULong64_t>, lhe_n_events) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
