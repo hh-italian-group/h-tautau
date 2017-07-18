@@ -18,6 +18,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/TriggerResults.h"
 #include "h-tautau/Production/interface/GenTruthTools.h"
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "h-tautau/Analysis/include/AnalysisTypes.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
@@ -122,6 +123,15 @@ private:
                 auto top_bar = topGenEvent->topBar();
                 if(top_bar)
                     (*expressTuple)().gen_topBar_pt = top_bar->pt();
+
+                analysis::GenEventType genEventType = analysis::GenEventType::Other;
+                if(topGenEvent->isFullHadronic())
+                    genEventType = analysis::GenEventType::TTbar_Hadronic;
+                else if(topGenEvent->isSemiLeptonic())
+                    genEventType = analysis::GenEventType::TTbar_SemiLeptonic;
+                else if(topGenEvent->isFullLeptonic())
+                    genEventType = analysis::GenEventType::TTbar_Leptonic;
+                (*expressTuple)().genEventType = static_cast<int>(genEventType);
             }
         }
 
@@ -147,11 +157,17 @@ private:
             summaryTuple().tauId_names.push_back(name);
             summaryTuple().tauId_keys.push_back(key);
         }
+//        for(const auto& count_entry : genEventCountMap) {
+//            summaryTuple().lhe_n_partons.push_back(count_entry.first.n_partons);
+//            summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
+//            summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
+//            summaryTuple().lhe_n_events.push_back(count_entry.second);
+//        }
         for(const auto& count_entry : genEventCountMap) {
-            summaryTuple().lhe_n_partons.push_back(count_entry.first.n_partons);
-            summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
-            summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
-            summaryTuple().lhe_n_events.push_back(count_entry.second);
+            (*expressTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
+            (*expressTuple)().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
+            (*expressTuple)().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
+            (*expressTuple)().lhe_n_events.push_back(count_entry.second);
         }
         const auto stop = clock::now();
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();

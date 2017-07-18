@@ -23,11 +23,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<UInt_t>, triggerFilters_triggerIndex) \
     VAR(std::vector<UInt_t>, triggerFilters_LegId) \
     VAR(std::vector<std::string>, triggerFilters_name) \
-    /* MC truth event splitting */ \
-    VAR(std::vector<UInt_t>, lhe_n_partons) \
-    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
-    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
-    VAR(std::vector<ULong64_t>, lhe_n_events) \
     /* Skimmer Variables */\
     VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
@@ -50,9 +45,15 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(Float_t, gen_top_pt) /* pt of gen ME top */ \
     VAR(Float_t, gen_topBar_pt) /* pt of gen ME anti-top */ \
+    VAR(Int_t,   genEventType) /* top gen event type */ \
     VAR(Float_t, lhe_H_m) /* mass of lhe H */ \
     VAR(Float_t, lhe_hh_m) /* mass of lhe hh pair */ \
     VAR(Float_t, lhe_hh_cosTheta) /* cos(theta) between h and z-axis in the hh reference frame */ \
+    /* MC truth event splitting */ \
+    VAR(std::vector<UInt_t>, lhe_n_partons) \
+    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
+    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
+    VAR(std::vector<ULong64_t>, lhe_n_events) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
