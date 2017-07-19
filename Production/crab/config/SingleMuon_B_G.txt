@@ -1,12 +1,10 @@
 EventAwareLumiBased ../json/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt
-globalTag=80X_dataRun2_2016SeptRepro_v4 sampleType=Run2016 ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
-globalTag=80X_dataRun2_2016SeptRepro_v7 (eras B-G) 80X_dataRun2_Prompt_v16 (era H);##to be divided
-SingleMuon_Run2016B-03Feb2017_ver1-v1	80000	/SingleMuon/Run2016B-03Feb2017_ver1-v1/MINIAOD
+globalTag=80X_dataRun2_2016SeptRepro_v7 sampleType=Run2016 ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
+
 SingleMuon_Run2016B-03Feb2017_ver2-v2	80000	/SingleMuon/Run2016B-03Feb2017_ver2-v2/MINIAOD
 SingleMuon_Run2016C-03Feb2017-v1        96000	/SingleMuon/Run2016C-03Feb2017-v1/MINIAOD
 SingleMuon_Run2016D-03Feb2017-v1        87000	/SingleMuon/Run2016D-03Feb2017-v1/MINIAOD
 SingleMuon_Run2016E-03Feb2017-v1        83000	/SingleMuon/Run2016E-03Feb2017-v1/MINIAOD
 SingleMuon_Run2016F-03Feb2017-v1        75000	/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD
 SingleMuon_Run2016G-03Feb2017-v1        84200	/SingleMuon/Run2016G-03Feb2017-v1/MINIAOD
-SingleMuon_Run2016H-03Feb2017_ver2-v1	100000	/SingleMuon/Run2016H-03Feb2017_ver2-v1/MINIAOD
-SingleMuon_Run2016H-03Feb2017_ver3-v1	100000	/SingleMuon/Run2016H-03Feb2017_ver3-v1/MINIAOD
+

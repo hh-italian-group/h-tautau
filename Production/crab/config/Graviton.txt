@@ -1,5 +1,5 @@
 EventAwareLumiBased
-globalTag=80X_mcRun2_asymptotic_2016_TrancheIV_v6 sampleType=Spring16MC ReRunJEC=True applyTriggerMatch=False saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+globalTag=80X_mcRun2_asymptotic_2016_TrancheIV_v6 sampleType=Summer16MC ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 GluGluToBulkGravitonToHHTo2B2Tau_M-250_narrow       5000	/GluGluToBulkGravitonToHHTo2B2Tau_M-250_narrow_13TeV-madgraph/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
 GluGluToBulkGravitonToHHTo2B2Tau_M-260_narrow       5000	/GluGluToBulkGravitonToHHTo2B2Tau_M-260_narrow_13TeV-madgraph/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
