@@ -109,20 +109,27 @@ private:
         event.getByToken(puInfo_token, puInfo);
         (*expressTuple)().npu = analysis::gen_truth::GetNumberOfPileUpInteractions(puInfo);
         (*expressTuple)().genEventWeight = genEvent->weight();
+        summaryTuple().genEventWeight = genEvent->weight();
         (*expressTuple)().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
+        summaryTuple().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
+        summaryTuple().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
 
         if(saveGenTopInfo) {
             edm::Handle<TtGenEvent> topGenEvent;
             event.getByToken(topGenEvent_token, topGenEvent);
             if(topGenEvent.isValid()) {
                 auto top = topGenEvent->top();
-                if(top)
+                if(top){
                     (*expressTuple)().gen_top_pt = top->pt();
+                    summaryTuple().gen_top_pt = top->pt();
+                }
                 auto top_bar = topGenEvent->topBar();
-                if(top_bar)
+                if(top_bar){
                     (*expressTuple)().gen_topBar_pt = top_bar->pt();
+                    summaryTuple().gen_topBar_pt = top_bar->pt();
+                }
 
                 analysis::GenEventType genEventType = analysis::GenEventType::Other;
                 if(topGenEvent->isFullHadronic())
@@ -132,6 +139,7 @@ private:
                 else if(topGenEvent->isFullLeptonic())
                     genEventType = analysis::GenEventType::TTbar_Leptonic;
                 (*expressTuple)().genEventType = static_cast<int>(genEventType);
+                summaryTuple().genEventType = static_cast<int>(genEventType);
             }
         }
 
@@ -167,9 +175,6 @@ private:
             summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
             summaryTuple().lhe_n_events.push_back(count_entry.second);
         }
-//        for(const auto& count_entry : genEventCountMap) {
-//            (*expressTuple)().lhe_n_events.push_back(count_entry.second);
-//        }
         const auto stop = clock::now();
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
         summaryTuple.Fill();
