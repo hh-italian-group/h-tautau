@@ -23,7 +23,8 @@ class Job:
         if len(items) != 3:
             print "ERROR: invalid job description = '{}'.".format(line)
             sys.exit(1)
-        self.requestName = items[0] + jobNameSuffix
+        self.jobName = items[0]
+        self.requestName = self.jobName + jobNameSuffix
         if unitsPerJob == -1:
             self.unitsPerJob = int(items[1])
         else:
@@ -93,5 +94,5 @@ class JobCollection:
         config.JobType.pyCfgParams = self.pyCfgParams
         config.Data.lumiMask = self.lumiMask
         for job in self.jobs:
-            if len(self.jobNames) == 0 or job.requestName in self.jobNames:
+            if len(self.jobNames) == 0 or job.jobName in self.jobNames:
                 job.submit(config, dryrunBool)
