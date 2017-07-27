@@ -25,6 +25,7 @@ public:
     using clock = std::chrono::system_clock;
     using GenId = ntuple::GenId;
     using GenEventCountMap = ntuple::GenEventCountMap;
+    using GenEventTypeCountMap = ntuple::GenEventTypeCountMap;
     using Channel = analysis::Channel;
     using TriggerDescriptors = analysis::TriggerDescriptors;
 
@@ -109,28 +110,14 @@ private:
         event.getByToken(puInfo_token, puInfo);
         (*expressTuple)().npu = analysis::gen_truth::GetNumberOfPileUpInteractions(puInfo);
         (*expressTuple)().genEventWeight = genEvent->weight();
-        summaryTuple().genEventWeight = genEvent->weight();
         (*expressTuple)().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
-        summaryTuple().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
-        summaryTuple().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
 
         if(saveGenTopInfo) {
             edm::Handle<TtGenEvent> topGenEvent;
             event.getByToken(topGenEvent_token, topGenEvent);
             if(topGenEvent.isValid()) {
-                auto top = topGenEvent->top();
-                if(top){
-                    (*expressTuple)().gen_top_pt = top->pt();
-                    summaryTuple().gen_top_pt = top->pt();
-                }
-                auto top_bar = topGenEvent->topBar();
-                if(top_bar){
-                    (*expressTuple)().gen_topBar_pt = top_bar->pt();
-                    summaryTuple().gen_topBar_pt = top_bar->pt();
-                }
-
                 analysis::GenEventType genEventType = analysis::GenEventType::Other;
                 if(topGenEvent->isFullHadronic())
                     genEventType = analysis::GenEventType::TTbar_Hadronic;
@@ -139,7 +126,7 @@ private:
                 else if(topGenEvent->isFullLeptonic())
                     genEventType = analysis::GenEventType::TTbar_Leptonic;
                 (*expressTuple)().genEventType = static_cast<int>(genEventType);
-                summaryTuple().genEventType = static_cast<int>(genEventType);
+                ++genEventTypeCountMap[static_cast<int>(genEventType)];
             }
         }
 
@@ -153,10 +140,9 @@ private:
             (*expressTuple)().lhe_H_m = lheSummary.m_H;
             (*expressTuple)().lhe_hh_m = lheSummary.m_hh;
             (*expressTuple)().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
-            (*expressTuple)().lhe_n_partons.push_back(lheSummary.n_partons);
-            (*expressTuple)().lhe_n_b_partons.push_back(lheSummary.n_b_partons);
-            (*expressTuple)().lhe_ht10_bin.push_back(ht10_bin);
-            (*expressTuple)().lhe_n_events.push_back(++genEventCountMap[genId]);
+            (*expressTuple)().lhe_n_partons = lheSummary.n_partons;
+            (*expressTuple)().lhe_n_b_partons = lheSummary.n_b_partons;
+            (*expressTuple)().lhe_ht10_bin = ht10_bin;
         }
 
         expressTuple->Fill();
@@ -174,6 +160,10 @@ private:
             summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
             summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
             summaryTuple().lhe_n_events.push_back(count_entry.second);
+        }
+        for(const auto& count_entry : genEventTypeCountMap) {
+            summaryTuple().genEventType.push_back(count_entry.first);
+            summaryTuple().genEventType_n_events.push_back(count_entry.second);
         }
         const auto stop = clock::now();
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
@@ -197,6 +187,7 @@ private:
     std::shared_ptr<ntuple::ExpressTuple> expressTuple;
     std::unordered_set<std::string> tauId_names;
     GenEventCountMap genEventCountMap;
+    GenEventTypeCountMap genEventTypeCountMap;
 };
 
 #include "FWCore/Framework/interface/MakerMacros.h"

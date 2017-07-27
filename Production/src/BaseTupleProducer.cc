@@ -168,11 +168,12 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         if(tauEnergyScales.count(energyScale)) {
             const analysis::gen_truth::MatchResult result =
                     analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
-            if(result.first != analysis::GenMatch::Tau) continue;
-            const int sign = tauEnergyScales.at(energyScale);
-            const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
-            const auto shiftedMomentum = tau.p4() * sf;
-            tauCandidate.SetMomentum(shiftedMomentum);
+            if(result.first == analysis::GenMatch::Tau){
+                const int sign = tauEnergyScales.at(energyScale);
+                const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
+                const auto shiftedMomentum = tau.p4() * sf;
+                tauCandidate.SetMomentum(shiftedMomentum);
+            }
         }
         taus.push_back(tauCandidate);
     }
