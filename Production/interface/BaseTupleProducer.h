@@ -69,7 +69,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 struct TupleProducerData : public root_ext::AnalyzerData {
     explicit TupleProducerData(TDirectory* _directory, const std::string& subDirectoryName = "") :
-        AnalyzerData(_directory, subDirectoryName) {}
+        AnalyzerData(_directory, subDirectoryName)
+    {
+        Selection.SetMasterHist();
+    }
     SELECTION_ENTRY(Selection)
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)

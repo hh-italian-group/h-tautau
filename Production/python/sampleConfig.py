@@ -5,7 +5,7 @@ import sys
 from sets import Set
 import FWCore.ParameterSet.Config as cms
 
-mcSampleTypes = Set([ 'Spring16MC' ])
+mcSampleTypes = Set([ 'Summer16MC' ])
 dataSampleTypes = Set([ 'Run2016' ])
 
 hltPaths_eTau_Run2016 = cms.VPSet(
@@ -179,7 +179,7 @@ hltPaths_muMu = {
 
 hltPaths = { 'eTau' : hltPaths_eTau, 'muTau' : hltPaths_muTau, 'tauTau' : hltPaths_tauTau, 'muMu' : hltPaths_muMu }
 for channelName in hltPaths:
-    hltPaths[channelName]['Spring16MC'] = hltPaths[channelName]['Run2016']
+    hltPaths[channelName]['Summer16MC'] = hltPaths[channelName]['Run2016']
 
 def IsData(sampleType):
     isData = sampleType in dataSampleTypes
