@@ -8,6 +8,7 @@ import subprocess
 import json
 import sys
 from LumiList import LumiList
+from multiprocessing import Process, Queue
 
 parser = argparse.ArgumentParser(description='Create json files to split dataset into several parts.',
                   formatter_class = lambda prog: argparse.HelpFormatter(prog,width=90))
@@ -17,6 +18,8 @@ parser.add_argument('--output-prefix', required=True, dest='output_prefix', type
 parser.add_argument('--output-suffix', required=False, dest='output_suffix', type=str, default='sub',
                     help="Prefix for output splitted json files")
 parser.add_argument('--n-splits', required=True, dest='n_splits', type=int, help="Number of splits")
+parser.add_argument('--n-parallel', required=False, dest='n_parallel', type=int, default=20,
+                    help="Number of parallel request to the DAS server.")
 args = parser.parse_args()
 
 if args.n_splits < 1:
@@ -35,7 +38,7 @@ def LoadFiles(dataset):
         files.append(data_entry['file'][0]['name'])
     return files
 
-def LoadFileLumis(file_name):
+def LoadFileLumis(queue, file_name, file_number):
     lumis = {}
     full_json = RunDasClient('lumi file={}'.format(file_name))
     for data_entry in full_json['data']:
@@ -44,13 +47,12 @@ def LoadFileLumis(file_name):
             if key not in lumis:
                 lumis[key] = []
             lumis[key].extend(entry['number'])
-    return LumiList(compactList=lumis)
+    queue.put((LumiList(compactList=lumis), file_number))
 
 def SaveLumis(file_name, lumis):
     lumi_file = open(file_name, 'w')
-    lumi_file.write(lumis.getCompactList())
+    lumi_file.write(str(lumis))
     lumi_file.close()
-
 
 files = LoadFiles(args.dataset)
 n_files = len(files)
@@ -66,14 +68,28 @@ all_lumis = LumiList()
 for split_number in range(0, args.n_splits):
     print "Processing split {}...".format(split_number + 1)
     split_lumis = LumiList()
-    for n in range(0, splits[split_number]):
-        split_lumis += LoadFileLumis(files[file_number])
-        file_number += 1
+    queue = Queue()
+    processes = {}
+    n = 0
+    n_processed = 0
+    while n_processed < splits[split_number]:
+        if n >= args.n_parallel:
+            file_lumis,file_number = queue.get()
+            processes[file_number].join()
+            split_lumis += file_lumis
+            n_processed += 1
+        if n < splits[split_number]:
+            p = Process(target=LoadFileLumis, args=(queue, files[file_number], file_number))
+            p.start()
+            processes[file_number] = p
+            n += 1
+            file_number += 1
+
     all_lumis += split_lumis
     file_name = '{}_{}{}.json'.format(args.output_prefix, args.output_suffix, split_number + 1)
-    SaveLumis(file_name)
+    SaveLumis(file_name, split_lumis)
 
 file_name = '{}.json'.format(args.output_prefix)
-SaveLumis(all_lumis)
+SaveLumis(file_name, all_lumis)
 
 print "All splits have been processed."
