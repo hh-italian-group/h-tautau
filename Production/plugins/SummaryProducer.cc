@@ -126,7 +126,7 @@ private:
                 else if(topGenEvent->isFullLeptonic())
                     genEventType = analysis::GenEventType::TTbar_Leptonic;
                 (*expressTuple)().genEventType = static_cast<int>(genEventType);
-                ++genEventTypeCountMap[static_cast<int>(genEventType)];
+                ++genEventTypeCountMap[genEventType];
             }
         }
 
@@ -162,7 +162,7 @@ private:
             summaryTuple().lhe_n_events.push_back(count_entry.second);
         }
         for(const auto& count_entry : genEventTypeCountMap) {
-            summaryTuple().genEventType.push_back(count_entry.first);
+            summaryTuple().genEventType.push_back(static_cast<int>(count_entry.first));
             summaryTuple().genEventType_n_events.push_back(count_entry.second);
         }
         const auto stop = clock::now();

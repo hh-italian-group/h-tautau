@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "EventTuple.h"
+#include "AnalysisTypes.h"
 
 #define SUMMARY_DATA() \
     /* Run statistics */ \
@@ -119,15 +120,16 @@ inline void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genC
     }
 }
 //genEventType part
-using GenEventTypeCountMap = std::map<int, size_t>;
+using GenEventTypeCountMap = std::map<analysis::GenEventType, size_t>;
 
 inline GenEventTypeCountMap ExtractGenEventTypeCountMap(const ProdSummary& s)
 {
     GenEventTypeCountMap m;
     for(size_t n = 0; n < s.genEventType.size(); ++n) {
-        if(m.count(s.genEventType.at(n)))
+        analysis::GenEventType genEventType = static_cast<analysis::GenEventType>(s.genEventType.at(n));
+        if(m.count(genEventType))
             throw analysis::exception("Duplicated genEventType in prod summary.");
-        m[s.genEventType.at(n)] = s.genEventType_n_events.at(n);
+        m[genEventType] = s.genEventType_n_events.at(n);
     }
     return m;
 }
