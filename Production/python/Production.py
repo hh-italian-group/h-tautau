@@ -60,7 +60,8 @@ process = cms.Process(processName)
 process.options = cms.untracked.PSet()
 process.options.wantSummary = cms.untracked.bool(False)
 process.options.allowUnscheduled = cms.untracked.bool(True)
-#process.options.numberOfThreads = cms.untracked.uint32(options.numberOfThreads)
+process.options.numberOfThreads = cms.untracked.uint32(options.numberOfThreads)
+process.options.numberOfStreams=cms.untracked.uint32(0)
 
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 100

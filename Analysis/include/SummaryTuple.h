@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "EventTuple.h"
+#include "AnalysisTypes.h"
 
 #define SUMMARY_DATA() \
     /* Run statistics */ \
@@ -23,16 +24,19 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<UInt_t>, triggerFilters_triggerIndex) \
     VAR(std::vector<UInt_t>, triggerFilters_LegId) \
     VAR(std::vector<std::string>, triggerFilters_name) \
-    /* MC truth event splitting */ \
-    VAR(std::vector<UInt_t>, lhe_n_partons) \
-    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
-    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
-    VAR(std::vector<ULong64_t>, lhe_n_events) \
     /* Skimmer Variables */\
     VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
     VAR(UInt_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
     VAR(UInt_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
+    /* MC truth event splitting */ \
+    VAR(std::vector<UInt_t>, lhe_n_partons) \
+    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
+    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
+    VAR(std::vector<ULong64_t>, lhe_n_events) \
+    /* Top reweighting */ \
+    VAR(std::vector<Int_t>, genEventType) /* top gen event type */ \
+    VAR(std::vector<ULong64_t>, genEventType_n_events) /* n events for top gen event type */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -50,9 +54,14 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(Float_t, gen_top_pt) /* pt of gen ME top */ \
     VAR(Float_t, gen_topBar_pt) /* pt of gen ME anti-top */ \
+    VAR(Int_t,   genEventType) /* top gen event type */ \
     VAR(Float_t, lhe_H_m) /* mass of lhe H */ \
     VAR(Float_t, lhe_hh_m) /* mass of lhe hh pair */ \
     VAR(Float_t, lhe_hh_cosTheta) /* cos(theta) between h and z-axis in the hh reference frame */ \
+    /* MC truth event splitting */ \
+    VAR(UInt_t, lhe_n_partons) \
+    VAR(UInt_t, lhe_n_b_partons) \
+    VAR(UInt_t, lhe_ht10_bin) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -110,6 +119,32 @@ inline void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genC
         s.lhe_n_events.push_back(bin.second);
     }
 }
+//genEventType part
+using GenEventTypeCountMap = std::map<analysis::GenEventType, size_t>;
+
+inline GenEventTypeCountMap ExtractGenEventTypeCountMap(const ProdSummary& s)
+{
+    GenEventTypeCountMap m;
+    for(size_t n = 0; n < s.genEventType.size(); ++n) {
+        analysis::GenEventType genEventType = static_cast<analysis::GenEventType>(s.genEventType.at(n));
+        if(m.count(genEventType))
+            throw analysis::exception("Duplicated genEventType in prod summary.");
+        m[genEventType] = s.genEventType_n_events.at(n);
+    }
+    return m;
+}
+
+inline void ConvertGenEventTypeCountMap(ProdSummary& s, const GenEventTypeCountMap& genCountMap)
+{
+    s.genEventType.clear();
+    s.genEventType_n_events.clear();
+
+    for(const auto& bin : genCountMap) {
+        s.genEventType.push_back(static_cast<Int_t>(bin.first));
+        s.genEventType_n_events.push_back(static_cast<ULong64_t>(bin.second));
+    }
+}
+
 
 inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
                                                         bool readMode, TreeState treeState,
@@ -146,6 +181,9 @@ inline void CheckProdSummaryConsistency(const ProdSummary& s)
     const size_t n_lhe = s.lhe_n_partons.size();
     if(s.lhe_ht10_bin.size() != n_lhe || s.lhe_n_b_partons.size() != n_lhe || s.lhe_n_events.size() != n_lhe)
         throw analysis::exception("Inconsistent LHE info in prod summary.");
+    const size_t n_genEventType = s.genEventType.size();
+    if(s.genEventType_n_events.size() != n_genEventType)
+        throw analysis::exception("Inconsistent genEventType info in prod summary.");
 }
 
 inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os = nullptr)
@@ -188,6 +226,7 @@ inline void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSum
     CheckProdSummaryConsistency(summary);
     CheckProdSummaryConsistency(otherSummary);
     auto genCountMap = ExtractGenEventCountMap(summary);
+    auto genEventTypeCountMap = ExtractGenEventTypeCountMap(summary);
     if(!CheckProdSummaryCompatibility(summary, otherSummary, &std::cerr))
         throw analysis::exception("Can't merge two incompatible prod summaries.");
 
@@ -196,10 +235,15 @@ inline void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSum
     summary.totalShapeWeight += otherSummary.totalShapeWeight;
     summary.totalShapeWeight_withTopPt += otherSummary.totalShapeWeight_withTopPt;
     auto otherGenCountMap = ExtractGenEventCountMap(otherSummary);
+    auto otherGenEventTypeCountMap = ExtractGenEventTypeCountMap(otherSummary);
     for(const auto& bin : otherGenCountMap)
         genCountMap[bin.first] += bin.second;
 
+    for(const auto& bin : otherGenEventTypeCountMap)
+        genEventTypeCountMap[bin.first] += bin.second;
+
     ConvertGenEventCountMap(summary, genCountMap);
+    ConvertGenEventTypeCountMap(summary, genEventTypeCountMap);
 }
 
 inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
@@ -212,6 +256,7 @@ inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
     summary = tuple.data();
     CheckProdSummaryConsistency(summary);
     auto genCountMap = ExtractGenEventCountMap(summary);
+    auto genEventTypeCountMap = ExtractGenEventTypeCountMap(summary);
     for(Long64_t n = 1; n < n_entries; ++n) {
         tuple.GetEntry(n);
         const ProdSummary entry = tuple.data();
@@ -229,11 +274,16 @@ inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
         summary.totalShapeWeight += entry.totalShapeWeight;
         summary.totalShapeWeight_withTopPt += entry.totalShapeWeight_withTopPt;
         auto otherGenCountMap = ExtractGenEventCountMap(entry);
+        auto otherGenEventTypeCountMap = ExtractGenEventTypeCountMap(entry);
         for(const auto& bin : otherGenCountMap)
             genCountMap[bin.first] += bin.second;
+
+        for(const auto& bin : otherGenEventTypeCountMap)
+            genEventTypeCountMap[bin.first] += bin.second;
     }
 
     ConvertGenEventCountMap(summary, genCountMap);
+    ConvertGenEventTypeCountMap(summary, genEventTypeCountMap);
     return summary;
 }
 

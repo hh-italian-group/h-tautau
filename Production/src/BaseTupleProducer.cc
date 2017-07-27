@@ -161,14 +161,19 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& muon : *pat_muons)
         muons.push_back(MuonCandidate(muon, Isolation(muon)));
 
+
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
         if(tauEnergyScales.count(energyScale)) {
-            const int sign = tauEnergyScales.at(energyScale);
-            const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
-            const auto shiftedMomentum = tau.p4() * sf;
-            tauCandidate.SetMomentum(shiftedMomentum);
+            const analysis::gen_truth::MatchResult result =
+                    analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
+            if(result.first == analysis::GenMatch::Tau){
+                const int sign = tauEnergyScales.at(energyScale);
+                const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
+                const auto shiftedMomentum = tau.p4() * sf;
+                tauCandidate.SetMomentum(shiftedMomentum);
+            }
         }
         taus.push_back(tauCandidate);
     }
