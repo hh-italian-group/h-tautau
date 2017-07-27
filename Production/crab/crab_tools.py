@@ -31,7 +31,7 @@ class Job:
         self.inputDataset = items[2]
         if n_items > 3:
             self.lumiMask = items[3]
-        else
+        else:
             self.lumiMask = None
 
 
@@ -39,7 +39,7 @@ class Job:
         str = "requestName = '{}', unitsPerJob = {}, inputDataset = '{}'".format(self.requestName, self.unitsPerJob,
                                                                                  self.inputDataset)
         if self.lumiMask is not None:
-            str += ", lumiMask = ''".format(self.lumiMask)
+            str += ", lumiMask = '{}'".format(self.lumiMask)
         return str
 
     def submit(self, config, dryrunBool):
