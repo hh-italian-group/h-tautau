@@ -57,8 +57,12 @@ if len(args.blacklist) != 0:
 job_names = Set(filter(lambda s: len(s) != 0, re.split(",", args.jobNames)))
 
 from crab_tools import JobCollection
-for job_file in args.job_file:
-    job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
-    print job_file
-    print job_collection
-    job_collection.submit(config,args.dryrun)
+try:
+    for job_file in args.job_file:
+        job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
+        print job_file
+        print job_collection
+        job_collection.submit(config,args.dryrun)
+except RuntimeError as err:
+    print >> sys.stderr, "ERROR:", str(err)
+    sys.exit(1)
