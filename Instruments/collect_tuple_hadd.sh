@@ -9,7 +9,6 @@ fi
 
 INPUT_PATH="$1"
 OUTPUT_PATH="$2"
-ALL_OUTPUT_PATHS="${@:2}"
 
 if [ ! -d "$INPUT_PATH" ] ; then
     echo "ERROR: can't find input path '$INPUT_PATH'."  >&2
@@ -21,6 +20,7 @@ if [ ! -d "$OUTPUT_PATH" ] ; then
     exit 1
 fi
 OUTPUT_PATH=$(cd $OUTPUT_PATH ; pwd)
+ALL_OUTPUT_PATHS="$OUTPUT_PATH ${@:3}"
 
 LOG_NAME="run_job.log"
 cd "$INPUT_PATH"
