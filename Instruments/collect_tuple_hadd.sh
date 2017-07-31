@@ -20,6 +20,7 @@ if [ ! -d "$OUTPUT_PATH" ] ; then
     echo "ERROR: can't find output path '$OUTPUT_PATH'."  >&2
     exit 1
 fi
+OUTPUT_PATH=$(cd $OUTPUT_PATH ; pwd)
 
 LOG_NAME="run_job.log"
 cd "$INPUT_PATH"
