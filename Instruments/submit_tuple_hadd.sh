@@ -11,6 +11,12 @@ QUEUE="$1"
 JOB_LIST_FILE="$2"
 TUPLE_OUTPUT_PATH="$3"
 CRAB_OUTPUT_PATHS="${@:4}"
+MERGE_EXE=$CMSSW_BASE/build/AnalysisTools/MergeRootFiles
+
+if [ ! -f $MERGE_EXE ] ; then 
+	echo "ERROR: MergeRootFiles executable not found."
+	exit 1
+fi
 
 if [ ! -f "$JOB_LIST_FILE" ] ; then
     echo "ERROR: can't find job list file '$JOB_LIST_FILE'." >&2
@@ -40,5 +46,5 @@ for JOB in $(cat "$JOB_LIST_FILE") ; do
 
     LOCAL_JOB_NAME="${JOB_ID}_${JOB_NAME}"
     ./AnalysisTools/Run/submit_job.sh "$QUEUE" "$LOCAL_JOB_NAME" "$TUPLE_OUTPUT_PATH/$LOCAL_JOB_NAME" \
-                                      hadd -f9 -n 11 "${JOB_NAME}.root" "$JOB_PATH/*/*.root"
+                                      $MERGE_EXE --output "${JOB_NAME}.root" --input-dir "$JOB_PATH"
 done
