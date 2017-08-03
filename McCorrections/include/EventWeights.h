@@ -39,7 +39,7 @@ public:
                         FullLeptonName("Muon/Run2016BCD/Muon_IdIso0p15_eff.root"),
                         FullLeptonName("Muon/Run2016BCD/Muon_IsoMu22_eff.root"));
             providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("bTagEfficiencies_80X.root"), FullName("CSVv2_ichep.csv"), btag_wp);
+                        FullName("bTagEfficiencies_80X.root"), FullName("CSVv2_Moriond17_B_H.csv"), btag_wp);
 			
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
 
