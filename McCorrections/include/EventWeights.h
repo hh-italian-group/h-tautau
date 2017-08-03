@@ -32,7 +32,7 @@ public:
         }
         else if(period == Period::Run2016) {
             providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
-                        FullName("purewHisto.root"), "pileup", 60, 0);
+                        FullName("pile_weight_Moriond_17.root"), "pileup", 60, 0);
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                         FullLeptonName("Electron/Run2016BCD/Electron_IdIso0p10_eff.root"),
                         FullLeptonName("Electron/Run2016BCD/Electron_Ele25eta2p1WPTight_eff.root"),

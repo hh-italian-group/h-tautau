@@ -22,7 +22,7 @@ class PileUpCalcData : public root_ext::AnalyzerData {
 public:
     using AnalyzerData::AnalyzerData;
     TH1D_ENTRY(n_pu_mc, 200, 0, 200)
-    TH1D_ENTRY(weight_pu, 200, 0, 200)
+    TH1D_ENTRY(pileup, 200, 0, 200)
 };
 
 
@@ -58,8 +58,10 @@ private:
         } //end loop on entries
 
         TH1D* n_pu_data = (TH1D*)data_pileup_file->Get("pileup");
-        anaData.weight_pu().CopyContent(*n_pu_data);
-        anaData.weight_pu().Divide(&anaData.n_pu_mc());
+        anaData.pileup().CopyContent(*n_pu_data);
+        RenormalizeHistogram(anaData.pileup(), 1, true);
+        RenormalizeHistogram(anaData.n_pu_mc(), 1, true);
+        anaData.pileup().Divide(&anaData.n_pu_mc());
     }
 };
 
