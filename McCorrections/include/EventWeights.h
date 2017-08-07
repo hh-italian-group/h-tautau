@@ -34,8 +34,8 @@ public:
             providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
                         FullName("pile_weight_Moriond_17.root"), "pileup", 60, 0);
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                        FullLeptonName("Electron/Run2016BCD/Electron_IdIso0p10_eff.root"),
-                        FullLeptonName("Electron/Run2016BCD/Electron_Ele25eta2p1WPTight_eff.root"),
+                        FullLeptonName("Electron/Run2016BtoH/Electron_IdIso_IsoLt0p15_eff.root"),
+                        FullLeptonName("Electron/Run2016BtoH/Electron_Ele25WPTight_eff.root"),
                         FullLeptonName("Muon/Run2016BCD/Muon_IdIso0p15_eff.root"),
                         FullLeptonName("Muon/Run2016BCD/Muon_IsoMu22_eff.root"));
             providers[WeightType::BTag] = std::make_shared<BTagWeight>(
