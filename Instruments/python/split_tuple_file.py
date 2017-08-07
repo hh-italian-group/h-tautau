@@ -112,4 +112,3 @@ while tuple_list.HasUnwrittenEvents():
     output_file.Close()
     n += 1
 
-
