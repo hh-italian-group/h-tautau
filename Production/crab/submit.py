@@ -18,6 +18,8 @@ parser.add_argument('--output', required=True, dest='output', type=str,
                     help="output path after /store/user/USERNAME")
 parser.add_argument('--blacklist', required=False, dest='blacklist', type=str, default="",
 					help="list of sites where the jobs shouldn't run")
+parser.add_argument('--whitelist', required=False, dest='whitelist', type=str, default="",
+					help="list of sites where the jobs can run")
 parser.add_argument('--jobNames', required=False, dest='jobNames', type=str, default="",
 					help="list of job names to submit (if not specified - submit all)")
 parser.add_argument('--lumiMask', required=False, dest='lumiMask', type=str, default="",
@@ -53,6 +55,8 @@ config.Data.outLFNDirBase = "/store/user/{}/{}".format(getUsernameFromSiteDB(), 
 
 if len(args.blacklist) != 0:
 	config.Site.blacklist = re.split(',', args.blacklist)
+if len(args.whitelist) != 0:
+	config.Site.whitelist = re.split(',', args.whitelist)
 
 job_names = Set(filter(lambda s: len(s) != 0, re.split(",", args.jobNames)))
 

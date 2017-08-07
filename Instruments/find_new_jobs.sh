@@ -15,9 +15,9 @@ if [ ! -f "$JOB_LIST_FILE" ] ; then
     exit 1
 fi
 
-for JOB in $(cat "$JOB_LIST_FILE") ; do
+cat "$JOB_LIST_FILE" | while read -r JOB ; do
     JOB_ID=$( echo $JOB | sed -E 's/([0-9]+_[0-9]+).*/\1/' )
-    JOB_NAME=$( echo $JOB | sed -E 's/[0-9]+_[0-9]+:[^_]*_//' )
+    JOB_NAME=$( echo $JOB | sed -E 's/[0-9]+_[0-9]+:[^_]*_([^ ]*).*/\1/' )
     JOB_OUT_NAME=$( echo $JOB_NAME | sed -E 's/^crab_//' )
 
     OUTPUT_FOUND=0
@@ -28,6 +28,6 @@ for JOB in $(cat "$JOB_LIST_FILE") ; do
         fi
     done
     if [ $OUTPUT_FOUND -eq 0 ] ; then
-        echo $JOB
+        echo "$JOB"
     fi
 done
