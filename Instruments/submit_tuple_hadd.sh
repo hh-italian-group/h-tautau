@@ -53,5 +53,6 @@ cat "$JOB_LIST_FILE" | while read -r JOB ; do
 
     LOCAL_JOB_NAME="${JOB_ID}_${JOB_NAME}"
     ./AnalysisTools/Run/submit_job.sh "$QUEUE" "$LOCAL_JOB_NAME" "$TUPLE_OUTPUT_PATH/$LOCAL_JOB_NAME" \
-                                      $MERGE_EXE --output "${JOB_NAME}.root" --input-dir "$JOB_PATH" $EXCLUDE_LIST
+                                      $MERGE_EXE --output "${JOB_NAME}.root" --input-dir "$JOB_PATH" $EXCLUDE_LIST \
+                                      --exclude-dir-list failed
 done
