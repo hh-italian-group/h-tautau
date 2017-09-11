@@ -67,13 +67,24 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "TriggerTools.h"
 
-struct TupleProducerData : root_ext::AnalyzerData {
-    using AnalyzerData::AnalyzerData;
+struct TupleProducerData : public root_ext::AnalyzerData {
+    explicit TupleProducerData(TDirectory* _directory, const std::string& subDirectoryName = "") :
+        AnalyzerData(_directory, subDirectoryName)
+    {
+        Selection.SetMasterHist();
+    }
     SELECTION_ENTRY(Selection)
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
     TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
 };
+
+struct SelectionData : public root_ext::AnalyzerData {
+    explicit SelectionData(TDirectory* _directory, const std::string& subDirectoryName = "") :
+        AnalyzerData(_directory, subDirectoryName) {}
+    ANA_DATA_ENTRY(TH1D, h)
+};
+
 
 namespace analysis {
 namespace detail {
@@ -110,8 +121,9 @@ public:
     using LorentzVectorE = analysis::LorentzVectorE;
 
 private:
+    std::string treeName;
     TupleProducerData anaData;
-    root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
+    std::map<std::string, std::shared_ptr<SelectionData>> anaDataBeforeCut, anaDataAfterCut;
     edm::EDGetToken electronsMiniAOD_token;
     edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token, eleCutBasedVetoMap_token;
     edm::EDGetToken tausMiniAOD_token;
@@ -254,7 +266,11 @@ protected:
         ss_suffix << selection_label << "_" << eventEnergyScale;
         const std::string suffix = ss_suffix.str();
         cuts::ObjectSelector& objectSelector = GetAnaData().Selection(suffix);
-        SelectionManager selectionManager(anaDataBeforeCut, suffix, weight);
+        if(!anaDataBeforeCut.count(suffix))
+            anaDataBeforeCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
+                                                                       treeName + "_before_cut/" + suffix);
+
+        SelectionManager selectionManager(anaDataBeforeCut.at(suffix)->h, weight);
 
         const auto selector = [&](size_t id) -> Candidate {
             const Candidate& candidate = all_candidates.at(id);
@@ -266,7 +282,11 @@ protected:
 
         const auto selected = objectSelector.collect_objects<Candidate>(1, all_candidates.size(), selector, comparitor);
 
-        SelectionManager selectionManager_afterCut(anaDataAfterCut, suffix, weight);
+        if(!anaDataAfterCut.count(suffix))
+            anaDataAfterCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
+                                                                       treeName + "_after_cut/" + suffix);
+
+        SelectionManager selectionManager_afterCut(anaDataAfterCut.at(suffix)->h, weight);
         for(const auto& candidate : selected) {
             Cutter cut(nullptr, &selectionManager_afterCut);
             base_selector(candidate, cut);

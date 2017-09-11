@@ -1,7 +1,6 @@
 # Definition of tools for CRAB job submission.
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
-import sys
 import re
 from sets import Set
 from CRABClient.UserUtilities import ClientException
@@ -20,24 +19,35 @@ def submit(config, dryrunBool):
 class Job:
     def __init__(self, line, jobNameSuffix = '', unitsPerJob = -1):
         items = filter(lambda s: len(s) != 0, re.split(" |\t", line))
-        if len(items) != 3:
-            print "ERROR: invalid job description = '{}'.".format(line)
-            sys.exit(1)
-        self.requestName = items[0] + jobNameSuffix
+        n_items = len(items)
+        if n_items < 3 or n_items > 4:
+            raise RuntimeError("invalid job description = '{}'.".format(line))
+        self.jobName = items[0]
+        self.requestName = self.jobName + jobNameSuffix
         if unitsPerJob == -1:
             self.unitsPerJob = int(items[1])
         else:
             self.unitsPerJob = unitsPerJob
         self.inputDataset = items[2]
+        if n_items > 3:
+            self.lumiMask = items[3]
+        else:
+            self.lumiMask = None
+
 
     def __str__(self):
-        return "requestName = '{}', unitsPerJob = {}, inputDataset = '{}'".format(self.requestName, self.unitsPerJob,
-                                                                                  self.inputDataset)
+        str = "requestName = '{}', unitsPerJob = {}, inputDataset = '{}'".format(self.requestName, self.unitsPerJob,
+                                                                                 self.inputDataset)
+        if self.lumiMask is not None:
+            str += ", lumiMask = '{}'".format(self.lumiMask)
+        return str
 
     def submit(self, config, dryrunBool):
         config.General.requestName = self.requestName
         config.Data.inputDataset = self.inputDataset
         config.Data.unitsPerJob = self.unitsPerJob
+        if self.lumiMask is not None:
+            config.Data.lumiMask = self.lumiMask
         submit(config, dryrunBool)
 
 class JobCollection:
@@ -48,24 +58,20 @@ class JobCollection:
         lines = [ s.strip() for s in input_file.readlines() ]
         lines = filter(lambda s: len(s) != 0 and s[0] != '#', lines)
         if len(lines) <= 2:
-            print "ERROR: file '{}' is empty".format(file_name)
-            sys.exit(1)
+            raise RuntimeError("file '{}' is empty".format(file_name))
         header_items = filter(lambda s: len(s) != 0, re.split(" |\n", lines[0]))
         self.pyCfgParams = filter(lambda s: len(s) != 0, re.split(" |\t", lines[1]))
         if len(header_items) == 0 or len(header_items) > 2:
-            print "ERROR: invalid jobs file header '{}' in file '{}'".fromat(lines[0], file_name)
-            sys.exit(1)
+            raise RuntimeError("invalid jobs file header '{}' in file '{}'".fromat(lines[0], file_name))
         self.splitting = header_items[0]
         known_splittings = Set(['FileBased', 'LumiBased', 'EventAwareLumiBased'])
         if not self.splitting in known_splittings:
-            print "ERROR: unknown splitting = '{}' in file '{}'".format(self.splitting, file_name)
-            sys.exit(1)
+            raise RuntimeError("unknown splitting = '{}' in file '{}'".format(self.splitting, file_name))
         self.lumiMask =  ''
         if len(header_items) > 1:
             if header_items[1].lower() == "signal":
                 if len(lines) < 4:
-                    print "ERROR: invalid signal jobs definition in file '{}'".format(file_name)
-                    sys.exit(1)
+                    raise RuntimeError("invalid signal jobs definition in file '{}'".format(file_name))
                 masses = filter(lambda s: len(s) != 0, re.split(" |\t", lines[2]))
                 template = lines[3]
                 for mass in masses:
@@ -91,7 +97,7 @@ class JobCollection:
     def submit(self, config, dryrunBool):
         config.Data.splitting = self.splitting
         config.JobType.pyCfgParams = self.pyCfgParams
-        config.Data.lumiMask = self.lumiMask
         for job in self.jobs:
-            if len(self.jobNames) == 0 or job.requestName in self.jobNames:
+            if len(self.jobNames) == 0 or job.jobName in self.jobNames:
+                config.Data.lumiMask = self.lumiMask
                 job.submit(config, dryrunBool)

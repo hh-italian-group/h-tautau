@@ -32,14 +32,14 @@ public:
         }
         else if(period == Period::Run2016) {
             providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
-                        FullName("purewHisto.root"), "pileup", 60, 0);
+                        FullName("pile_weight_Moriond_17.root"), "pileup", 60, 0);
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                        FullLeptonName("Electron/Run2016BCD/Electron_IdIso0p10_eff.root"),
-                        FullLeptonName("Electron/Run2016BCD/Electron_Ele25eta2p1WPTight_eff.root"),
-                        FullLeptonName("Muon/Run2016BCD/Muon_IdIso0p15_eff.root"),
-                        FullLeptonName("Muon/Run2016BCD/Muon_IsoMu22_eff.root"));
+                        FullLeptonName("Electron/Run2016BtoH/Electron_IdIso_IsoLt0p15_eff.root"),
+                        FullLeptonName("Electron/Run2016BtoH/Electron_Ele25WPTight_eff.root"),
+                        FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
+                        FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"));
             providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("bTagEfficiencies_80X.root"), FullName("CSVv2_ichep.csv"), btag_wp);
+                        FullName("bTagEfficiencies_80X.root"), FullName("CSVv2_Moriond17_B_H.csv"), btag_wp);
 			
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
 

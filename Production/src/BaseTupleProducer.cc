@@ -13,11 +13,9 @@ bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
-BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName):
+BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& _treeName) :
+    treeName(_treeName),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
-    anaDataBeforeCut(&edm::Service<TFileService>()->file(), treeName + "_before_cut"),
-    anaDataAfterCut(&edm::Service<TFileService>()->file(), treeName + "_after_cut"),
-    anaDataFinalSelection(&edm::Service<TFileService>()->file(), treeName + "_final_selection"),
     electronsMiniAOD_token(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
     eleTightIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
     eleMediumIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
@@ -163,14 +161,19 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& muon : *pat_muons)
         muons.push_back(MuonCandidate(muon, Isolation(muon)));
 
+
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
         if(tauEnergyScales.count(energyScale)) {
-            const int sign = tauEnergyScales.at(energyScale);
-            const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
-            const auto shiftedMomentum = tau.p4() * sf;
-            tauCandidate.SetMomentum(shiftedMomentum);
+            const analysis::gen_truth::MatchResult result =
+                    analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
+            if(result.first == analysis::GenMatch::Tau){
+                const int sign = tauEnergyScales.at(energyScale);
+                const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
+                const auto shiftedMomentum = tau.p4() * sf;
+                tauCandidate.SetMomentum(shiftedMomentum);
+            }
         }
         taus.push_back(tauCandidate);
     }

@@ -18,12 +18,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/TriggerResults.h"
 #include "h-tautau/Production/interface/GenTruthTools.h"
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "h-tautau/Analysis/include/AnalysisTypes.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
     using clock = std::chrono::system_clock;
     using GenId = ntuple::GenId;
     using GenEventCountMap = ntuple::GenEventCountMap;
+    using GenEventTypeCountMap = ntuple::GenEventTypeCountMap;
     using Channel = analysis::Channel;
     using TriggerDescriptors = analysis::TriggerDescriptors;
 
@@ -39,7 +41,6 @@ public:
         summaryTuple("summary", &edm::Service<TFileService>()->file(), false)
     {
         summaryTuple().numberOfProcessedEvents = 0;
-        summaryTuple().totalWeight = 0.;
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
@@ -99,14 +100,11 @@ private:
             }
         }
 
-        if(!isMC) {
-            summaryTuple().totalWeight += 1;
+        if(!isMC)
             return;
-        }
 
         edm::Handle<GenEventInfoProduct> genEvent;
         event.getByToken(genEvent_token, genEvent);
-        summaryTuple().totalWeight += genEvent->weight();
 
         edm::Handle<std::vector<PileupSummaryInfo>> puInfo;
         event.getByToken(puInfo_token, puInfo);
@@ -120,12 +118,15 @@ private:
             edm::Handle<TtGenEvent> topGenEvent;
             event.getByToken(topGenEvent_token, topGenEvent);
             if(topGenEvent.isValid()) {
-                auto top = topGenEvent->top();
-                if(top)
-                    (*expressTuple)().gen_top_pt = top->pt();
-                auto top_bar = topGenEvent->topBar();
-                if(top_bar)
-                    (*expressTuple)().gen_topBar_pt = top_bar->pt();
+                analysis::GenEventType genEventType = analysis::GenEventType::Other;
+                if(topGenEvent->isFullHadronic())
+                    genEventType = analysis::GenEventType::TTbar_Hadronic;
+                else if(topGenEvent->isSemiLeptonic())
+                    genEventType = analysis::GenEventType::TTbar_SemiLeptonic;
+                else if(topGenEvent->isFullLeptonic())
+                    genEventType = analysis::GenEventType::TTbar_Leptonic;
+                (*expressTuple)().genEventType = static_cast<int>(genEventType);
+                ++genEventTypeCountMap[genEventType];
             }
         }
 
@@ -139,6 +140,9 @@ private:
             (*expressTuple)().lhe_H_m = lheSummary.m_H;
             (*expressTuple)().lhe_hh_m = lheSummary.m_hh;
             (*expressTuple)().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
+            (*expressTuple)().lhe_n_partons = lheSummary.n_partons;
+            (*expressTuple)().lhe_n_b_partons = lheSummary.n_b_partons;
+            (*expressTuple)().lhe_ht10_bin = ht10_bin;
         }
 
         expressTuple->Fill();
@@ -156,6 +160,10 @@ private:
             summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
             summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
             summaryTuple().lhe_n_events.push_back(count_entry.second);
+        }
+        for(const auto& count_entry : genEventTypeCountMap) {
+            summaryTuple().genEventType.push_back(static_cast<int>(count_entry.first));
+            summaryTuple().genEventType_n_events.push_back(count_entry.second);
         }
         const auto stop = clock::now();
         summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
@@ -179,6 +187,7 @@ private:
     std::shared_ptr<ntuple::ExpressTuple> expressTuple;
     std::unordered_set<std::string> tauId_names;
     GenEventCountMap genEventCountMap;
+    GenEventTypeCountMap genEventTypeCountMap;
 };
 
 #include "FWCore/Framework/interface/MakerMacros.h"

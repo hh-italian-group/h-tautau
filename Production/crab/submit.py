@@ -26,6 +26,8 @@ parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', typ
 					help="suffix that will be added to each job name")
 parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
 					help="number of units per job (default: use values from the config file)")
+parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2000,
+					help="maximum amount of memory (in MB) a job is allowed to use (default: 2000 MB )")
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
 args = parser.parse_args()
 
@@ -39,6 +41,7 @@ config.General.workArea = args.workArea
 
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = args.cfg
+config.JobType.maxMemoryMB = args.maxMemory
 
 config.Data.inputDBS = 'global'
 config.General.transferOutputs = True
@@ -51,11 +54,15 @@ config.Data.outLFNDirBase = "/store/user/{}/{}".format(getUsernameFromSiteDB(), 
 if len(args.blacklist) != 0:
 	config.Site.blacklist = re.split(',', args.blacklist)
 
-job_names = Set(re.split(',', args.jobNames))
+job_names = Set(filter(lambda s: len(s) != 0, re.split(",", args.jobNames)))
 
 from crab_tools import JobCollection
-for job_file in args.job_file:
-    job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
-    print job_file
-    print job_collection
-    job_collection.submit(config,args.dryrun)
+try:
+    for job_file in args.job_file:
+        job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
+        print job_file
+        print job_collection
+        job_collection.submit(config,args.dryrun)
+except RuntimeError as err:
+    print >> sys.stderr, "ERROR:", str(err)
+    sys.exit(1)
