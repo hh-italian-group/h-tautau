@@ -6,12 +6,15 @@
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
 
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,6,0)
 
 namespace {
 bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
+#endif
+
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& _treeName) :
     treeName(_treeName),
@@ -80,7 +83,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
         kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
     if(applyRecoilCorr)
         recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
-            edm::FileInPath("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root").fullPath()));
+            "HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root"));
 }
 
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -295,10 +298,10 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
     analysis::LorentzVectorXYZ total_p4, vis_p4;
     for(const auto& particle : *genParticles) {
         if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()|| reco::isNeutrino(particle)))
-              ||particle.isDirectHardProcessTauDecayProductFinalState()) 
+              ||particle.statusFlags().isDirectHardProcessTauDecayProduct()) 
             total_p4 += particle.p4();
         if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()))
-	            || (particle.isDirectHardProcessTauDecayProductFinalState() && !reco::isNeutrino(particle)) )
+	            || (particle.statusFlags().isDirectHardProcessTauDecayProduct() && !reco::isNeutrino(particle)) )
             vis_p4 += particle.p4(); 
     }
  
@@ -581,6 +584,9 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
         cut(isNotSignal, ss_name.str());
     }
 }
+
+
+
 
 void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
                                        const std::vector<const MuonCandidate*>& signalMuons) const
