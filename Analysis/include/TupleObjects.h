@@ -58,8 +58,27 @@ class TupleTau : public TupleLepton {
 public:
     using IdKey = uint32_t;
     using TupleLepton::TupleLepton;
+    using ValueKeyPair = std::pair<std::string, IdKey>;
+
+public:
+    static ValueKeyPair GetNameKeyPair(const std::string& discriminator)
+    {
+        static std::map<std::string, IdKey> hashes;
+        auto iter = hashes.find(discriminator);
+        if(iter == hashes.end()) {
+            const IdKey key = analysis::tools::hash(discriminator);
+            iter = hashes.emplace(discriminator, key).first;
+        }
+        return *iter;
+    }
 
     DiscriminatorResult tauID(const std::string& discriminator) const
+    {
+        const IdKey key = GetNameKeyPair(discriminator).second;
+        return _tauID(key, discriminator);
+    }
+
+    bool tauID(IdKey key, DiscriminatorResult& result) const
     {
         if(!tauIds.size()) {
             const auto& keys = leg_id == 1 ? event->tauId_keys_1 :event->tauId_keys_2;
@@ -69,10 +88,11 @@ public:
             for(size_t n = 0; n < keys.size(); ++n)
                 tauIds[keys.at(n)] = values.at(n);
         }
-        const IdKey key = analysis::tools::hash(discriminator);
-        if(!tauIds.count(key))
-            throw analysis::exception("TauID discriminator '%1%' not found.") % discriminator;
-        return tauIds.at(key);
+        auto result_iter = tauIds.find(key);
+        bool has_result = result_iter != tauIds.end();
+        if(has_result)
+            result = result_iter->second;
+        return has_result;
     }
 
     DiscriminatorResult againstElectronMVA6(DiscriminatorWP wp) const
@@ -89,18 +109,54 @@ public:
         return tauID(ss_name.str());
     }
 
-    DiscriminatorResult byCombinedIsolationDeltaBetaCorrRaw3Hits() const
+    DiscriminatorResult byIsolationMVAraw(bool use_new_dm = false, bool use_lifetime = true) const
     {
-        return tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        using IsoKey = std::tuple<bool, bool>;
+        static std::map<IsoKey, ValueKeyPair> keys;
+        auto iso_key = std::make_tuple(use_new_dm, use_lifetime);
+        auto iter = keys.find(iso_key);
+        if(iter == keys.end()) {
+            const std::string discriminator = GetByIsolationName(use_new_dm, use_lifetime, true);
+            iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
+        }
+        return _tauID(iter->second.second, iter->second.first);
     }
 
-    DiscriminatorResult byIsolationMVA3raw(bool use_new_dm, bool use_lifetime) const
+    bool byIsolationMVA(DiscriminatorWP wp, bool use_new_dm = false, bool use_lifetime = true) const
+    {
+        using IsoKey = std::tuple<DiscriminatorWP, bool, bool>;
+        static std::map<IsoKey, ValueKeyPair> keys;
+        auto iso_key = std::make_tuple(wp, use_new_dm, use_lifetime);
+        auto iter = keys.find(iso_key);
+        if(iter == keys.end()) {
+            const std::string discriminator = GetByIsolationName(use_new_dm, use_lifetime, false, wp);
+            iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
+        }
+        return _tauID(iter->second.second, iter->second.first) > 0.5;
+    }
+
+private:
+    DiscriminatorResult _tauID(IdKey key, const std::string& discriminator) const
+    {
+        DiscriminatorResult result;
+        if(!tauID(key, result))
+            throw analysis::exception("TauID discriminator '%1%' not found.") % discriminator;
+        return result;
+    }
+
+    static std::string GetByIsolationName(bool use_new_dm, bool use_lifetime, bool raw,
+                                          DiscriminatorWP wp = DiscriminatorWP::Medium)
     {
         const std::string dm_str = use_new_dm ? "new" : "old";
         const std::string lt_str = use_lifetime ? "w" : "wo";
         std::ostringstream ss_name;
-        ss_name << "byIsolationMVArun2v1DB" << dm_str << "DM" << lt_str << "LTraw";
-        return tauID(ss_name.str());
+        ss_name << "by";
+        if(!raw)
+            ss_name << wp;
+        ss_name << "IsolationMVArun2v1DB" << dm_str << "DM" << lt_str << "LT";
+        if(raw)
+            ss_name << "raw";
+        return ss_name.str();
     }
 
 private:

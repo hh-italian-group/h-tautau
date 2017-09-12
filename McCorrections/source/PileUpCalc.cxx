@@ -46,18 +46,11 @@ private:
 
         auto inputFile = root_ext::OpenRootFile(args.MC_input_file());
         auto data_pileup_file = root_ext::OpenRootFile(args.data_pileup_file());
-        std::shared_ptr<ntuple::ExpressTuple> AllEventTuple(new ntuple::ExpressTuple(args.tree_name(), inputFile.get(), true));
-        const Long64_t n_entries = AllEventTuple->GetEntries();
+        ntuple::ExpressTuple tuple(args.tree_name(), inputFile.get(), true);
+        for(const auto& event : tuple)
+            anaData.n_pu_mc().Fill(event.npu);
 
-        for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) { //loop on entries
-
-            AllEventTuple->GetEntry(current_entry);
-            std::shared_ptr<ntuple::ExpressEvent> event(new ntuple::ExpressEvent(AllEventTuple->data()));
-
-            anaData.n_pu_mc().Fill(event->npu);
-        } //end loop on entries
-
-        TH1D* n_pu_data = (TH1D*)data_pileup_file->Get("pileup");
+        auto n_pu_data = std::shared_ptr<TH1D>(root_ext::ReadObject<TH1D>(*data_pileup_file, "pileup"));
         anaData.pileup().CopyContent(*n_pu_data);
         RenormalizeHistogram(anaData.pileup(), 1, true);
         RenormalizeHistogram(anaData.n_pu_mc(), 1, true);
