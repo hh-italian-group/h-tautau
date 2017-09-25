@@ -33,10 +33,10 @@ ENUM_NAMES(UncertaintyScale) = {
 //using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 //static const auto& AllEventEnergyScales = __EventEnergyScale_names<>::names.GetEnumEntries();
 
-enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight };
+enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight, VVTight };
 ENUM_NAMES(DiscriminatorWP) = {
     { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" }, { DiscriminatorWP::Medium, "Medium" },
-    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }
+    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" }
 };
 
 enum class MetType { PF, MVA, PUPPI };
