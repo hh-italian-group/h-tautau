@@ -11,15 +11,18 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "WeightProvider.h"
 #include "TextIO.h"
+#include "root/RConfigure.h"
+#include "TString.h"
 
 namespace analysis {
 namespace mc_corrections {
 
+using namespace boost::property_tree;
 
 class TauIdWeight : public IWeightProvider {
 public:
     using Event = ntuple::Event;
-    using namespace boost::property_tree;
+
 
     struct Key{
         bool isData{false};
@@ -34,25 +37,27 @@ public:
 
         static Key Parse(const std::string& key_string)
         {
-            Key key;
+            Key key(false,false,"VLoose",1);
             std::map<std::string, bool> data_map = { {"data", true}, {"mc" , false } };
             std::map<std::string, bool> genuine_map = { {"genuine", true}, {"fake" , false } };
 
             std::vector<std::string> key_elements = analysis::SplitValueList(key_string,true, "_" );
             if(key_elements.size() != 4)
                 throw exception("More than 4 key params found");
-            for (unsigned n = 0; n < key_elements.size(); ++n){
-                if(!data_map.count(key_elements.at(0)))
-                    throw exception("It cannot be set if it is data or MC.");
-                key.isData = data_map.at(key_elements.at(0));
-                if(!genuine_map.count(key_elements.at(1)))
-                    throw exception("It cannot be set if it is genuine or fake tau.");
-                key.isGenuineTau = genuine_map.at(key_elements.at(1));
-                std::string iso_string = key_elements.at(2).substr(0, key_elements.at(2) - 3);
-                key.isowp = Parse<analysis::DiscriminatorWP>(iso_string);
-                std::string idm_string = key_elements.at(3).substr(key_elements.at(2) - 2, 50);
-                key.decayMode = Parse<int>(idm_string);
-            }
+
+            if(!data_map.count(key_elements.at(0)))
+                throw exception("It cannot be set if it is data or MC.");
+            key.isData = data_map.at(key_elements.at(0));
+            if(!genuine_map.count(key_elements.at(1)))
+                throw exception("It cannot be set if it is genuine or fake tau.");
+            key.isGenuineTau = genuine_map.at(key_elements.at(1));
+            std::size_t pos_1 = key_elements.at(2).find("Iso");
+            std::string iso_string = key_elements.at(2).substr(0, pos_1);
+            key.isowp = Parse<analysis::DiscriminatorWP>(iso_string);
+            std::size_t pos_2 = key_elements.at(3).find("dm");
+            std::string idm_string = key_elements.at(3).substr(pos_2);
+            key.decayMode = Parse<int>(idm_string);
+
             return key;
         }
 
@@ -74,7 +79,7 @@ public:
         static Parameters Parse(const ptree& pt)
         {
             Parameters parameters;
-            for (auto& prop : pt.second){
+            for (auto& prop : pt){
                 parameters.alpha = Parse<double>(prop.second.get_child("alpha"));
                 parameters.m_0 = Parse<double>(prop.second.get_child("m_{0}"));
                 parameters.sigma = Parse<double>(prop.second.get_child("sigma"));
@@ -99,7 +104,7 @@ public:
 
     }
 
-    double EvaluateEfficiency(const double pt, const Parameters& parameters)
+    double EvaluateEfficiency(const double pt, const Parameters& parameters) const
     {
         return analysis::crystalballEfficiency(pt,parameters.m_0,parameters.sigma,parameters.alpha,
                                                parameters.n,parameters.norm);
