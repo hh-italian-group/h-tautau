@@ -107,7 +107,7 @@ public:
         for (auto& type : pt){
             std::cout << "Type first: " << type.first << "\n";
             const Key key = Key::Parse(type.first);
-            std::cout << "Type second: " << type.second << "\n";
+            std::cout << "Type second: " << type.second.data() << "\n";
             tauIdparam_map[key] = Parameters::Parse(type.second);
         }
 
