@@ -89,7 +89,7 @@ public:
         {
             Parameters parameters;
             for (auto& prop : pt){
-                std::cout << "prop first: " << prop.first << ", prop second: " << prop.second << "\n";
+                std::cout << "prop first: " << prop.first << ", prop second: " << prop.second.data() << "\n";
                 parameters.alpha = prop.second.get_child("alpha").get_value<double>();
                 parameters.m_0 = prop.second.get_child("m_{0}").get_value<double>();
                 parameters.sigma = prop.second.get_child("sigma").get_value<double>();
