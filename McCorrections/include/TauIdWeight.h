@@ -62,6 +62,14 @@ public:
             return key;
         }
 
+        bool operator < (const Key& other) const
+        {
+            if(isData != other.isData) return isData < other.isData;
+            if(isGenuineTau != other.isGenuineTau) return isGenuineTau < other.isGenuineTau;
+            if(isowp != other.isowp) return isowp < other.isowp;
+            return decayMode < other.decayMode;
+        }
+
     };
 
     struct Parameters{
