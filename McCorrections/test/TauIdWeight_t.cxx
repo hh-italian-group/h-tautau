@@ -23,7 +23,7 @@ public:
     using TauIdWeight = analysis::mc_corrections::TauIdWeight;
 
     TauIdWeight_t(const Arguments& _args) : args(_args),
-        tauId_weight(args.json_file(), args.iso_type())
+        tauId_weight(args.json_file(), Parse<DiscriminatorWP>(args.iso_type()))
     {
         std::cout << "Ciao" << std::endl;
     }
@@ -32,16 +32,11 @@ public:
 
     void Run()
     {
-        std::string filename = args.input_file();
-        auto inputFile = root_ext::OpenRootFile(filename);
-        ntuple::EventTuple eventTuple("tauTau", inputFile.get(), true, {}, {});
-        const Long64_t n_entries = eventTuple.GetEntries();
+        auto inputFile = root_ext::OpenRootFile(args.input_file());
+        auto eventTuple = ntuple::CreateEventTuple("tauTau",inputFile.get(),true,ntuple::TreeState::Full);
 
-        for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) { //loop on entries
-            eventTuple.GetEntry(current_entry);
-            const ntuple::Event& event = eventTuple.data();
-
-            std::cout << "TauID weight: " << tauId_weight.GetWeight(event) << std::endl;
+        for(const Event& event : *eventTuple) {
+            std::cout << "TauID weight: " << tauId_weight.Get(event) << std::endl;
         }
 
     }
