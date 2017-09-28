@@ -88,14 +88,14 @@ public:
         static Parameters Parse(const ptree& pt)
         {
             Parameters parameters;
-            for (auto& prop : pt){
-                std::cout << "prop first: " << prop.first << ", prop second: " << prop.second.data() << "\n";
-                parameters.alpha = prop.second.get_child("alpha").get_value<double>();
-                parameters.m_0 = prop.second.get_child("m_{0}").get_value<double>();
-                parameters.sigma = prop.second.get_child("sigma").get_value<double>();
-                parameters.norm = prop.second.get_child("norm").get_value<double>();
-                parameters.n = prop.second.get_child("n").get_value<double>();
-            }
+
+
+            parameters.alpha = pt.get_child("alpha").get_value<double>();
+            parameters.m_0 = pt.get_child("m_{0}").get_value<double>();
+            parameters.sigma = pt.get_child("sigma").get_value<double>();
+            parameters.norm = pt.get_child("norm").get_value<double>();
+            parameters.n = pt.get_child("n").get_value<double>();
+
             return parameters;
         }
     };
