@@ -35,7 +35,7 @@ public:
         auto inputFile = root_ext::OpenRootFile(args.input_file());
         auto eventTuple = ntuple::CreateEventTuple("tauTau",inputFile.get(),true,ntuple::TreeState::Full);
 
-        for(const Event& event : *eventTuple) {
+        for(const ntuple::Event& event : *eventTuple) {
             std::cout << "TauID weight: " << tauId_weight.Get(event) << std::endl;
         }
 

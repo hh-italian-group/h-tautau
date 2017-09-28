@@ -145,7 +145,7 @@ private:
 
 
     std::map<Key, Parameters> tauIdparam_map;
-    std::string iso_wp;
+    DiscriminatorWP iso_wp;
 
 };
 
