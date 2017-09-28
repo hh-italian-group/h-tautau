@@ -11,7 +11,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "WeightProvider.h"
 #include "TextIO.h"
-#include "root/RConfigure.h"
 #include "TString.h"
 
 namespace analysis {
