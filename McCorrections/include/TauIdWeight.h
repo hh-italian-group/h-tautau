@@ -106,9 +106,9 @@ public:
         json_parser::read_json(tauId_input, pt);
 
         for (auto& type : pt){
-            std::cout << "Type first: " << type.first << "\n";
+//            std::cout << "Type first: " << type.first << "\n";
             const Key key = Key::Parse(type.first);
-            std::cout << "Type second: " << type.second.get_value<std::string>() << "\n";
+//            std::cout << "Type second: " << type.second.get_value<std::string>() << "\n";
             tauIdparam_map[key] = Parameters::Parse(type.second);
         }
 
@@ -118,6 +118,7 @@ public:
     {
         const Channel channel = static_cast<Channel>(event.channelId);
         if(channel != Channel::TauTau) return 1.;
+        if(event.p4_1.pt() >= 1000 || event.p4_2.pt() >= 1000) return 1.;
 
         const Key key_data{true, true, iso_wp, 1};
         const Key key_mc{false, true, iso_wp, 1};
@@ -125,17 +126,35 @@ public:
         auto iter_data = tauIdparam_map.find(key_data);
         if(iter_data == tauIdparam_map.end())
             throw exception("Key data not found for TauId weight.");
+//        auto param_data = tauIdparam_map.at(key_data);
+//        std::cout << "Param data - alpha:" << param_data.alpha << "- m_0:" << param_data.m_0 <<
+//                     "- sigma:" << param_data.sigma << "- norm:" << param_data.norm <<
+//                     "- n:" << param_data.n << std::endl;
+
         eff_data_1 = EvaluateEfficiency(event.p4_1.pt(),tauIdparam_map.at(key_data));
         eff_data_2 = EvaluateEfficiency(event.p4_2.pt(),tauIdparam_map.at(key_data));
+
+//        std::cout << "eff_data_1: " << eff_data_1 << ", eff_data_2: " << eff_data_2 << std::endl;
 
         auto iter_mc = tauIdparam_map.find(key_mc);
         if(iter_mc == tauIdparam_map.end())
             throw exception("Key mc not found for TauId weight.");
+
+//        auto param_mc = tauIdparam_map.at(key_mc);
+//        std::cout << "Param mc - alpha:" << param_mc.alpha << "- m_0:" << param_mc.m_0 <<
+//                     "- sigma:" << param_mc.sigma << "- norm:" << param_mc.norm <<
+//                     "- n:" << param_mc.n << std::endl;
+
         eff_mc_1 = EvaluateEfficiency(event.p4_1.pt(),tauIdparam_map.at(key_mc));
         eff_mc_2 = EvaluateEfficiency(event.p4_2.pt(),tauIdparam_map.at(key_mc));
 
+//        std::cout << "eff_mc_1: " << eff_mc_1 << ", eff_mc_2: " << eff_mc_2 << std::endl;
+
         double sf_1 = eff_data_1/eff_mc_1;
         double sf_2 = eff_data_2/eff_mc_2;
+
+//        std::cout << "sf_1: " << sf_1 << ", sf_2: " << sf_2 << std::endl;
+
         return sf_1 * sf_2;
 
     }
@@ -149,7 +168,7 @@ private:
 
     double EvaluateEfficiency(double pt, const Parameters& parameters) const
     {
-        return analysis::crystalballEfficiency(pt,parameters.m_0,parameters.sigma,parameters.alpha,
+        return analysis::crystalball(pt,parameters.m_0,parameters.sigma,parameters.alpha,
                                                parameters.n,parameters.norm);
     }
 

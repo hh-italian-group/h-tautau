@@ -25,7 +25,7 @@ public:
     TauIdWeight_t(const Arguments& _args) : args(_args),
         tauId_weight(args.json_file(), Parse<DiscriminatorWP>(args.iso_type()))
     {
-        std::cout << "Ciao" << std::endl;
+
     }
 
 public:
