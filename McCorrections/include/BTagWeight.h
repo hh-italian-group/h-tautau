@@ -34,7 +34,7 @@ struct JetInfo {
 
 struct BTagReaderInfo {
     using ReaderPtr = std::shared_ptr<btag_calibration::BTagCalibrationReader>;
-    using HistPtr = std::shared_ptr<TH2F>;
+    using HistPtr = std::shared_ptr<TH2D>;
     using JetFlavor = btag_calibration::BTagEntry::JetFlavor;
     using FilePtr = std::shared_ptr<TFile>;
 
@@ -61,9 +61,9 @@ struct BTagReaderInfo {
         if(!wp_prefixes.count(wp))
             throw exception("B tag working point %1% not supported.") % wp;
 
-        const std::string name = boost::str(boost::format("%1%_%2%_ALL")
+        const std::string name = boost::str(boost::format("%1%_%2%_all")
                                             % flavor_prefixes.at(flavor) % wp_prefixes.at(wp));
-        eff_hist = HistPtr(root_ext::ReadCloneObject<TH2F>(*file, name, "", true));
+        eff_hist = HistPtr(root_ext::ReadCloneObject<TH2D>(*file, name, "", true));
     }
 
     void Eval(JetInfo& jetInfo, const std::string& unc_name)
