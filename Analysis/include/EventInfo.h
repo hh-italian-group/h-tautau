@@ -94,6 +94,9 @@ public:
         return triggerDescriptors.at(channel);
     }
 
+    const ProdSummary& operator*() const { return summary; }
+    const ProdSummary* operator->() const { return &summary; }
+
 private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptors>> triggerDescriptors;
@@ -135,9 +138,8 @@ public:
 
     static constexpr int verbosity = 0;
 
-    EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair,
-                  std::shared_ptr<const SummaryInfo> _summaryInfo) :
-        event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
+    EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair, const SummaryInfo& _summaryInfo) :
+        event(&_event), summaryInfo(&_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
         selected_bjet_pair(_selected_bjet_pair),
         has_bjet_pair(selected_bjet_pair.first < GetNJets() && selected_bjet_pair.second < GetNJets())
     {
@@ -289,7 +291,7 @@ public:
 
 protected:
     const Event* event;
-    std::shared_ptr<const SummaryInfo> summaryInfo;
+    const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
 
 private:
@@ -318,8 +320,7 @@ public:
 
     static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
 
-    EventInfo(const Event& _event, const JetPair& _selected_bjet_pair,
-                  std::shared_ptr<const SummaryInfo> _summaryInfo) :
+    EventInfo(const Event& _event, const JetPair& _selected_bjet_pair, const SummaryInfo& _summaryInfo) :
         EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
     {
         if(summaryInfo)
@@ -382,7 +383,7 @@ private:
 
 inline std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
                                                     const EventInfoBase::JetPair& selected_bjet_pair,
-                                                    std::shared_ptr<const SummaryInfo> summaryInfo)
+                                                    const SummaryInfo& summaryInfo)
 {
     if(channel == Channel::ETau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(

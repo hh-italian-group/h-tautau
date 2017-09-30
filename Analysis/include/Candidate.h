@@ -10,19 +10,16 @@ namespace analysis {
 class AnalysisObject {
 public:
     static constexpr int UnknownCharge = std::numeric_limits<int>::max();
+    static constexpr double UnknownIsolation = std::numeric_limits<double>::max();
 
-    AnalysisObject() {}
+    AnalysisObject() : charge(UnknownCharge), isolation(UnknownIsolation) {}
     template<typename FourVector>
-    explicit AnalysisObject(const FourVector& _momentum, int _charge = UnknownCharge)
-        : momentum(_momentum), charge(_charge) {}
-    AnalysisObject(const AnalysisObject& other) : momentum(other.momentum), charge(other.charge) {}
+    explicit AnalysisObject(const FourVector& _momentum, int _charge = UnknownCharge,
+                            double _isolation = UnknownIsolation) :
+        momentum(_momentum), charge(_charge), isolation(_isolation) {}
+    AnalysisObject(const AnalysisObject& other) = default;
     virtual ~AnalysisObject() {}
-    AnalysisObject& operator=(const AnalysisObject& other)
-    {
-        momentum = other.momentum;
-        charge = other.charge;
-        return *this;
-    }
+    AnalysisObject& operator=(const AnalysisObject& other) = default;
 
     const LorentzVector& GetMomentum() const { return momentum; }
     template<typename FourVector>
@@ -32,11 +29,15 @@ public:
     void SetCharge(int _charge) { charge = _charge; }
     bool HasCharge() const { return charge != UnknownCharge; }
 
-    bool operator<(const AnalysisObject& other) const { return momentum.pt() > other.momentum.pt(); }
+    double GetIsolation() const { return isolation; }
+    void SetIsolation(double _isolation) { isolation = _isolation; }
+    bool HasIsolation() const { return isolation != UnknownIsolation; }
 
+    bool operator<(const AnalysisObject& other) const { return momentum.pt() > other.momentum.pt(); }
 private:
     LorentzVector momentum;
     int charge;
+    double isolation;
 };
 
 template<typename _PATObject, typename _PATObjectConstPtr = const _PATObject*>
