@@ -12,12 +12,17 @@ public:
     static constexpr size_t NumberOfParts = 5;
     enum class EventPart { FirstTauIds = 0, SecondTauIds = 1, Jets = 2, FatJets = 3, GenInfo = 4 };
 
+    static const StorageMode& Full() { static const StorageMode m(0); return m; }
+
     explicit StorageMode(unsigned _mode = 0) : mode_bits(_mode) {}
     unsigned long Mode() const { return mode_bits.to_ulong(); }
     bool IsFull() const { return Mode() == 0; }
     bool IsMissing(EventPart part) const { return mode_bits[static_cast<size_t>(part)]; }
     bool IsPresent(EventPart part) const { return !IsMissing(part); }
     void SetPresence(EventPart part, bool presence) { mode_bits[static_cast<size_t>(part)] = !presence; }
+
+    bool operator==(const StorageMode& other) const { return Mode() == other.Mode(); }
+    bool operator!=(const StorageMode& other) const { return Mode() != other.Mode(); }
 
 private:
     std::bitset<NumberOfParts> mode_bits;
@@ -34,7 +39,7 @@ public:
         if(!ref)
             throw analysis::exception("Can't load partially stored event without the reference.");
         if(event.run != ref->run || event.lumi != ref->lumi || event.evt != ref->evt)
-            throw analysis::exception("Incompatible reverence event number.");
+            throw analysis::exception("Incompatible reference event number.");
         StorageMode ref_mode(ref->storageMode);
         if(!ref_mode.IsFull())
             throw analysis::exception("Incomplete reference event. Ref event storage mode = %1%") % ref_mode.Mode();
