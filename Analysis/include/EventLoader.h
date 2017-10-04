@@ -28,6 +28,8 @@ private:
     std::bitset<NumberOfParts> mode_bits;
 };
 
+#define CP_BR(br) event.br = ref->br
+
 class EventLoader {
 public:
     static StorageMode Load(Event& event, const Event* ref)
@@ -45,50 +47,66 @@ public:
             throw analysis::exception("Incomplete reference event. Ref event storage mode = %1%") % ref_mode.Mode();
 
         if(mode.IsMissing(EventPart::FirstTauIds)) {
-            event.tauId_keys_1 = ref->tauId_keys_1;
-            event.tauId_values_1 = ref->tauId_values_1;
+            CP_BR(tauId_keys_1);
+            CP_BR(tauId_values_1);
         }
 
         if(mode.IsMissing(EventPart::SecondTauIds)) {
-            event.tauId_keys_2 = ref->tauId_keys_2;
-            event.tauId_values_2 = ref->tauId_values_2;
+            CP_BR(tauId_keys_2);
+            CP_BR(tauId_values_2);
         }
 
         if(mode.IsMissing(EventPart::Jets)) {
-            event.jets_p4 = ref->jets_p4;
-            event.jets_csv = ref->jets_csv;
-            event.jets_hadronFlavour = ref->jets_hadronFlavour;
-            event.jets_mva = ref->jets_mva;
-            event.jets_rawf = ref->jets_rawf;
+            CP_BR(jets_p4);
+            CP_BR(jets_csv);
+            CP_BR(jets_rawf);
+            CP_BR(jets_mva);
+            CP_BR(jets_partonFlavour);
+            CP_BR(jets_hadronFlavour);
         }
 
         if(mode.IsMissing(EventPart::FatJets)) {
-            event.fatJets_p4 = ref->fatJets_p4;
-            event.fatJets_csv = ref->fatJets_csv;
-            event.fatJets_m_pruned = ref->fatJets_m_pruned;
-            event.fatJets_m_softDrop = ref->fatJets_m_softDrop;
-            event.fatJets_n_subjettiness_tau1 = ref->fatJets_n_subjettiness_tau1;
-            event.fatJets_n_subjettiness_tau2 = ref->fatJets_n_subjettiness_tau2;
-            event.fatJets_n_subjettiness_tau3 = ref->fatJets_n_subjettiness_tau3;
+            CP_BR(fatJets_p4);
+            CP_BR(fatJets_csv);
+            CP_BR(fatJets_m_pruned);
+            CP_BR(fatJets_m_softDrop);
+            CP_BR(fatJets_n_subjettiness_tau1);
+            CP_BR(fatJets_n_subjettiness_tau2);
+            CP_BR(fatJets_n_subjettiness_tau3);
 
-            event.subJets_p4 = ref->subJets_p4;
-            event.subJets_csv = ref->subJets_csv;
-            event.subJets_parentIndex = ref->subJets_parentIndex;
+            CP_BR(subJets_p4);
+            CP_BR(subJets_csv);
+            CP_BR(subJets_parentIndex);
         }
 
         if(mode.IsMissing(EventPart::GenInfo)) {
-            event.lhe_n_partons = ref->lhe_n_partons;
-            event.lhe_n_b_partons = ref->lhe_n_b_partons;
-            event.lhe_HT = ref->lhe_HT;
-            event.genEventType = ref->genEventType;
-            event.genEventWeight = ref->genEventWeight;
-            event.genParticles_pdg = ref->genParticles_pdg;
-            event.genParticles_p4 = ref->genParticles_p4;
-            event.genJets_nTotal = ref->genJets_nTotal;
-            event.genJets_p4 = ref->genJets_p4;
+            CP_BR(genEventType);
+            CP_BR(genEventWeight);
+            CP_BR(lhe_n_partons);
+            CP_BR(lhe_n_c_partons);
+            CP_BR(lhe_n_b_partons);
+            CP_BR(lhe_HT);
+            CP_BR(lhe_H_m);
+            CP_BR(lhe_hh_m);
+            CP_BR(lhe_hh_cosTheta);
+            CP_BR(genParticles_pdg);
+            CP_BR(genParticles_p4);
+            CP_BR(genParticles_nPromptElectrons);
+            CP_BR(genParticles_nPromptMuons);
+            CP_BR(genParticles_nPromptTaus);
+            CP_BR(genJets_nTotal);
+            CP_BR(jets_nTotal_partonFlavour_b);
+            CP_BR(jets_nTotal_partonFlavour_c);
+            CP_BR(jets_nTotal_hadronFlavour_b);
+            CP_BR(jets_nTotal_hadronFlavour_c);
+            CP_BR(genJets_p4);
+            CP_BR(genJets_partonFlavour);
+            CP_BR(genJets_hadronFlavour);
         }
         return mode;
     }
 };
+
+#undef CP_BR
 
 } // namespace nutple
