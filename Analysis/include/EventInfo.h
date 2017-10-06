@@ -303,6 +303,9 @@ public:
         return nullptr;
     }
 
+    void SetMvaScore(double _mva_score) { mva_score = _mva_score; }
+    double GetMvaScore() const { return mva_score; }
+
 protected:
     const Event* event;
     const SummaryInfo* summaryInfo;
@@ -322,6 +325,7 @@ private:
     std::shared_ptr<MET> met;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     boost::optional<double> mt2;
+    double mva_score;
 };
 
 template<typename _FirstLeg, typename _SecondLeg>
