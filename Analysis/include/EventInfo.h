@@ -14,6 +14,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TriggerResults.h"
 #include "SummaryTuple.h"
 #include "AnalysisTools/Core/include/EventIdentifier.h"
+#include "hh-bbtautau/Analysis/include/MT2.h"
 
 namespace analysis {
 
@@ -263,6 +264,19 @@ public:
         return p4;
     }
 
+    double GetMT2()
+    {
+        if(!mt2.is_initialized()) {
+            const double mt2_1 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
+                                               GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
+            const double mt2_2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetSecondDaughter().GetMomentum(),
+                                               GetHiggsBB().GetFirstDaughter().GetMomentum(), event->pfMET_p4);
+
+            mt2 = std::min(mt2_1, mt2_2);
+        }
+        return *mt2;
+    }
+
     const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut)
     {
         using FatJet = ntuple::TupleFatJet;
@@ -307,6 +321,7 @@ private:
     std::shared_ptr<ntuple::TupleMet> tuple_met;
     std::shared_ptr<MET> met;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
+    boost::optional<double> mt2;
 };
 
 template<typename _FirstLeg, typename _SecondLeg>
