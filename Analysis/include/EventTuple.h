@@ -211,8 +211,7 @@ inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDi
                              "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy", "weight_ttbar",
                              "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_total",
                             "file_desc_id", "split_id" } },
-        { TreeState::Skimmed, { "lhe_particle_pdg", "lhe_particle_p4", "pfMET_cov", "genJets_partonFlavour",
-                                "genJets_hadronFlavour", "genJets_p4", "genParticles_p4", "genParticles_pdg" } }
+        { TreeState::Skimmed, { } }
     };
 
     static const std::set<std::string> trigger_branches = { "trigger_accepts", "trigger_matches" };
