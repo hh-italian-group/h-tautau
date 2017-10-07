@@ -17,11 +17,12 @@ const EnumNameMap<Channel> __Channel_names_latex("ChannelLatex", {
     { Channel::MuMu, "#mu#mu" }
 });
 
-enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4 };
+enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, TopPtUp = 5, TopPtDown = 6 };
 ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::Central, "Central" },
     { EventEnergyScale::TauUp, "TauUp" }, { EventEnergyScale::TauDown, "TauDown" },
     { EventEnergyScale::JetUp, "JetUp" }, { EventEnergyScale::JetDown, "JetDown" },
+    { EventEnergyScale::TopPtUp, "TopPtUp" }, { EventEnergyScale::TopPtDown, "TopPtDown" },
 };
 
 enum class UncertaintyScale { Central = 0, Up = 1, Down = 2 };
