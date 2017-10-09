@@ -156,6 +156,7 @@ public:
     const EventIdentifier& GetEventId() const { return eventIdentifier; }
     EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
     const TriggerResults& GetTriggerResults() const { return triggerResults; }
+    const SummaryInfo& GetSummaryInfo() const { return *summaryInfo; }
 
     virtual const AnalysisObject& GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
     virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
