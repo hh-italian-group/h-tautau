@@ -16,23 +16,16 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-using namespace boost::property_tree;
-
 class TauIdWeight : public IWeightProvider {
 public:
     using Event = ntuple::Event;
+    using ptree = boost::property_tree::ptree;
 
-
-    struct Key{
+    struct Key {
         bool isData{false};
         bool isGenuineTau{false};
         DiscriminatorWP isowp{DiscriminatorWP::Medium};
         int decayMode{0};
-
-//        Key() {}
-//        Key(bool _isData, bool _isGenuineTau, const std::string& _iso_wp, int _decayMode) :
-//            isData(_isData), isGenuineTau(_isGenuineTau),isowp(Parse<analysis::DiscriminatorWP>(_iso_wp)),
-//            decayMode(_decayMode) {}
 
         static Key Parse(const std::string& key_string)
         {
@@ -40,24 +33,24 @@ public:
             static const std::map<std::string, bool> data_map = { {"data", true}, {"mc" , false } };
             static const std::map<std::string, bool> genuine_map = { {"genuine", true}, {"fake" , false } };
 
-            std::vector<std::string> key_elements = SplitValueList(key_string,true, "_" );
+            std::vector<std::string> key_elements = SplitValueList(key_string, true, "_");
             if(key_elements.size() != 4)
                 throw exception("More than 4 key params found");
 
             if(!data_map.count(key_elements.at(0)))
-                throw exception("Invalid tauId key %1%." ) %key_string;
+                throw exception("Invalid tauId key %1%." ) % key_string;
             key.isData = data_map.at(key_elements.at(0));
             if(!genuine_map.count(key_elements.at(1)))
-                throw exception("Invalid tauId key %1%." ) %key_string;
+                throw exception("Invalid tauId key %1%." ) % key_string;
             key.isGenuineTau = genuine_map.at(key_elements.at(1));
             if(key_elements.at(2).substr(key_elements.at(2).size() - 3) != "Iso")
-                throw exception("Invalid tauId key %1%." ) %key_string;
+                throw exception("Invalid tauId key %1%." ) % key_string;
             if(!TryParse(key_elements.at(2).substr(0, key_elements.at(2).size() - 3), key.isowp))
-                throw exception("Invalid tauId key %1%." ) %key_string;
+                throw exception("Invalid tauId key %1%." ) % key_string;
             if(key_elements.at(3).substr(0,2) != "dm")
-                throw exception("Invalid tauId key %1%." ) %key_string;
+                throw exception("Invalid tauId key %1%." ) % key_string;
             if(!TryParse(key_elements.at(3).substr(2), key.decayMode))
-                throw exception("Invalid tauId key %1%." ) %key_string;
+                throw exception("Invalid tauId key %1%." ) % key_string;
 
             return key;
         }
@@ -69,32 +62,25 @@ public:
             if(isowp != other.isowp) return isowp < other.isowp;
             return decayMode < other.decayMode;
         }
-
     };
 
     struct Parameters{
-        double alpha;
-        double m_0;
-        double sigma;
-        double norm;
-        double n;
+        double alpha, m_0, sigma, norm, n;
 
-//        Parameters() :
-//            alpha(0.0), m_0(0.0), sigma(0.0), norm(0.0), n(0.0) {}
+        double EvaluateEfficiency(double pt) const
+        {
+            return pt < 1000 ? crystalball(pt, m_0, sigma, alpha, n, norm) : 1;
+        }
 
-//        Parameters(double _alpha, double _m_0, double _sigma, double _norm, double _n) :
-//            alpha(_alpha), m_0(_m_0), sigma(_sigma), norm(_norm), n(_n) {}
-
-        static Parameters Parse(const ptree& pt)
+        static Parameters Parse(const ptree& entry)
         {
             Parameters parameters;
 
-
-            parameters.alpha = pt.get_child("alpha").get_value<double>();
-            parameters.m_0 = pt.get_child("m_{0}").get_value<double>();
-            parameters.sigma = pt.get_child("sigma").get_value<double>();
-            parameters.norm = pt.get_child("norm").get_value<double>();
-            parameters.n = pt.get_child("n").get_value<double>();
+            parameters.alpha = entry.get_child("alpha").get_value<double>();
+            parameters.m_0 = entry.get_child("m_{0}").get_value<double>();
+            parameters.sigma = entry.get_child("sigma").get_value<double>();
+            parameters.norm = entry.get_child("norm").get_value<double>();
+            parameters.n = entry.get_child("n").get_value<double>();
 
             return parameters;
         }
@@ -102,61 +88,21 @@ public:
 
     TauIdWeight(const std::string& tauId_input, DiscriminatorWP _iso_wp) : iso_wp(_iso_wp)
     {
-        ptree pt;
-        json_parser::read_json(tauId_input, pt);
-
-        for (auto& type : pt){
-//            std::cout << "Type first: " << type.first << "\n";
-            const Key key = Key::Parse(type.first);
-//            std::cout << "Type second: " << type.second.get_value<std::string>() << "\n";
-            tauIdparam_map[key] = Parameters::Parse(type.second);
+        ptree property_tree;
+        boost::property_tree::json_parser::read_json(tauId_input, property_tree);
+        for (auto& type_entry : property_tree) {
+            const Key key = Key::Parse(type_entry.first);
+            tauIdparam_map[key] = Parameters::Parse(type_entry.second);
         }
-
     }
 
     virtual double Get(const Event& event) const override
     {
         const Channel channel = static_cast<Channel>(event.channelId);
         if(channel != Channel::TauTau) return 1.;
-        if(event.p4_1.pt() >= 1000 || event.p4_2.pt() >= 1000) return 1.;
-
-        const Key key_data{true, true, iso_wp, 1};
-        const Key key_mc{false, true, iso_wp, 1};
-        double eff_data_1, eff_data_2, eff_mc_1, eff_mc_2;
-        auto iter_data = tauIdparam_map.find(key_data);
-        if(iter_data == tauIdparam_map.end())
-            throw exception("Key data not found for TauId weight.");
-//        auto param_data = tauIdparam_map.at(key_data);
-//        std::cout << "Param data - alpha:" << param_data.alpha << "- m_0:" << param_data.m_0 <<
-//                     "- sigma:" << param_data.sigma << "- norm:" << param_data.norm <<
-//                     "- n:" << param_data.n << std::endl;
-
-        eff_data_1 = EvaluateEfficiency(event.p4_1.pt(),tauIdparam_map.at(key_data));
-        eff_data_2 = EvaluateEfficiency(event.p4_2.pt(),tauIdparam_map.at(key_data));
-
-//        std::cout << "eff_data_1: " << eff_data_1 << ", eff_data_2: " << eff_data_2 << std::endl;
-
-        auto iter_mc = tauIdparam_map.find(key_mc);
-        if(iter_mc == tauIdparam_map.end())
-            throw exception("Key mc not found for TauId weight.");
-
-//        auto param_mc = tauIdparam_map.at(key_mc);
-//        std::cout << "Param mc - alpha:" << param_mc.alpha << "- m_0:" << param_mc.m_0 <<
-//                     "- sigma:" << param_mc.sigma << "- norm:" << param_mc.norm <<
-//                     "- n:" << param_mc.n << std::endl;
-
-        eff_mc_1 = EvaluateEfficiency(event.p4_1.pt(),tauIdparam_map.at(key_mc));
-        eff_mc_2 = EvaluateEfficiency(event.p4_2.pt(),tauIdparam_map.at(key_mc));
-
-//        std::cout << "eff_mc_1: " << eff_mc_1 << ", eff_mc_2: " << eff_mc_2 << std::endl;
-
-        double sf_1 = eff_data_1/eff_mc_1;
-        double sf_2 = eff_data_2/eff_mc_2;
-
-//        std::cout << "sf_1: " << sf_1 << ", sf_2: " << sf_2 << std::endl;
-
+        const double sf_1 = EvaluateSF(event.p4_1.pt(), static_cast<GenMatch>(event.gen_match_1), event.decayMode_1);
+        const double sf_2 = EvaluateSF(event.p4_2.pt(), static_cast<GenMatch>(event.gen_match_2), event.decayMode_2);
         return sf_1 * sf_2;
-
     }
 
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override
@@ -165,13 +111,24 @@ public:
     }
 
 private:
-
-    double EvaluateEfficiency(double pt, const Parameters& parameters) const
+    double EvaluateSF(double pt, GenMatch gen_match, int decay_mode) const
     {
-        return analysis::crystalball(pt,parameters.m_0,parameters.sigma,parameters.alpha,
-                                               parameters.n,parameters.norm);
+        const bool is_genuine = gen_match == GenMatch::Tau;
+        const double eff_data = EvaluateEfficiency(pt, true, is_genuine, decay_mode);
+        const double eff_mc = EvaluateEfficiency(pt, false, is_genuine, decay_mode);
+        return eff_data / eff_mc;
     }
 
+    double EvaluateEfficiency(double pt, bool is_data, bool is_genuine, int decay_mode) const
+    {
+        const Key key{is_data, is_genuine, iso_wp, decay_mode};
+        auto iter = tauIdparam_map.find(key);
+        if(iter == tauIdparam_map.end()) {
+            const std::string name = is_data ? "data" : "mc";
+            throw exception("Key %1% not found for TauId weight.") % name;
+        }
+        return iter->second.EvaluateEfficiency(pt);
+    }
 
     std::map<Key, Parameters> tauIdparam_map;
     DiscriminatorWP iso_wp;

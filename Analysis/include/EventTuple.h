@@ -25,6 +25,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
     LVAR(std::vector<uint32_t>, tauId_keys, n) /* keys for tau ID variables */ \
     LVAR(std::vector<float>, tauId_values, n) /* values of tau ID variables */ \
+    LVAR(Int_t, decayMode, n) /* tau decay mode */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -210,8 +211,8 @@ inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDi
         { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
                              "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy", "weight_ttbar",
                              "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_total",
-                            "file_desc_id", "split_id" } },
-        { TreeState::Skimmed, { } }
+                            "file_desc_id", "split_id", "decayMode_1", "decayMode_2" } },
+        { TreeState::Skimmed, { "decayMode_1", "decayMode_2" } }
     };
 
     static const std::set<std::string> trigger_branches = { "trigger_accepts", "trigger_matches" };
