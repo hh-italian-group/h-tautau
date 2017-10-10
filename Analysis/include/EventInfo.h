@@ -139,8 +139,9 @@ public:
 
     static constexpr int verbosity = 0;
 
-    EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair, const SummaryInfo& _summaryInfo) :
-        event(&_event), summaryInfo(&_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
+    EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair = JetPair(0, 1),
+                  const SummaryInfo* _summaryInfo = nullptr) :
+        event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
         selected_bjet_pair(_selected_bjet_pair),
         has_bjet_pair(selected_bjet_pair.first < GetNJets() && selected_bjet_pair.second < GetNJets())
     {
@@ -156,7 +157,12 @@ public:
     const EventIdentifier& GetEventId() const { return eventIdentifier; }
     EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
     const TriggerResults& GetTriggerResults() const { return triggerResults; }
-    const SummaryInfo& GetSummaryInfo() const { return *summaryInfo; }
+    const SummaryInfo& GetSummaryInfo() const
+    {
+        if(!summaryInfo)
+            throw exception("SummaryInfo was not provided for this event.");
+        return *summaryInfo;
+    }
 
     virtual const AnalysisObject& GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
     virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
@@ -340,7 +346,8 @@ public:
 
     static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
 
-    EventInfo(const Event& _event, const JetPair& _selected_bjet_pair, const SummaryInfo& _summaryInfo) :
+    EventInfo(const Event& _event, const JetPair& _selected_bjet_pair = JetPair(0, 1),
+              const SummaryInfo* _summaryInfo = nullptr) :
         EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
     {
         if(summaryInfo)
@@ -401,9 +408,10 @@ private:
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
 };
 
-inline std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
-                                                    const EventInfoBase::JetPair& selected_bjet_pair,
-                                                    const SummaryInfo& summaryInfo)
+inline std::shared_ptr<EventInfoBase> MakeEventInfo(
+        Channel channel, const EventInfoBase::Event& event,
+        const EventInfoBase::JetPair& selected_bjet_pair = EventInfoBase::JetPair(0, 1),
+        const SummaryInfo* summaryInfo = nullptr)
 {
     if(channel == Channel::ETau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
