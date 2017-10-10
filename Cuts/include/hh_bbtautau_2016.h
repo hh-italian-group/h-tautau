@@ -74,5 +74,10 @@ namespace hh_tag {
     }
 }
 
+namespace fatJetID {
+    constexpr double mass = 30;
+    constexpr double deltaR_subjet = 0.4;
+}
+
 } // namespace hh_bbtautau_2016
 } // namespace cuts
