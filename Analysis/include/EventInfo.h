@@ -343,8 +343,10 @@ public:
     EventInfo(const Event& _event, const JetPair& _selected_bjet_pair, const SummaryInfo& _summaryInfo) :
         EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
     {
-        if(summaryInfo)
-            triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
+        if(summaryInfo){
+            const auto ch = channel == Channel::MuMu ? Channel::MuTau : channel;
+            triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(ch));
+        }
     }
 
     using EventInfoBase::EventInfoBase;
