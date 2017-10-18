@@ -344,8 +344,7 @@ public:
         EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
     {
         if(summaryInfo){
-            const auto ch = channel == Channel::MuMu ? Channel::MuTau : channel;
-            triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(ch));
+            triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
         }
     }
 
