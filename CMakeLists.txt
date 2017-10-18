@@ -16,7 +16,7 @@ foreach(exe_name ${EXE_LIST})
     target_link_libraries("${exe_name}" HTT-utilities SVfit)
 endforeach()
 
-set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_Stack Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)
+set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)
 
 add_library("h-tautau" OBJECT ${HEADER_LIST} ${SOURCE_LIST} ${EXE_SOURCE_LIST} ${SCRIPT_LIST} ${CONFIG_LIST})
 set_target_properties("h-tautau" PROPERTIES EXCLUDE_FROM_ALL 1)
