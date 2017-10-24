@@ -43,7 +43,6 @@ private:
 
     void LoadInputs()
     {
-
         auto inputFile = root_ext::OpenRootFile(args.MC_input_file());
         auto data_pileup_file = root_ext::OpenRootFile(args.data_pileup_file());
         ntuple::ExpressTuple tuple(args.tree_name(), inputFile.get(), true);
