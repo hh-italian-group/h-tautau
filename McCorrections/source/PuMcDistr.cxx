@@ -11,7 +11,6 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 
 struct Arguments {
     run::Argument<std::string> tree_name{"tree_name", "Tree on which we work"};
-    run::Argument<std::string> data_pileup_file{"data_pileup_file", "Pileup file for data"};
     run::Argument<std::string> output_weight_file{"output_weight_file", "Output weight root file"};
     run::Argument<std::vector<std::string>> MC_input_files{"MC_input_files", "MC input files"};
 };
@@ -22,13 +21,13 @@ class PileUpCalcData : public root_ext::AnalyzerData {
 public:
     using AnalyzerData::AnalyzerData;
     TH1D_ENTRY(n_pu_mc, 1000, 0, 100)
-    TH1D_ENTRY(pileup, 1000, 0, 100)
+    TH1D_ENTRY(n_pu_mc_norm, 1000, 0, 100)
 };
 
 
-class PileUpCalc {
+class PuMcDistr {
 public:
-    PileUpCalc(const Arguments& _args) :
+    PuMcDistr(const Arguments& _args) :
         args(_args), output(root_ext::CreateRootFile(args.output_weight_file())), anaData(output)
     {
 
@@ -38,17 +37,14 @@ public:
     {
         for(const auto& file_name : args.MC_input_files()){
             auto inputFile = root_ext::OpenRootFile(file_name);
-            auto data_pileup_file = root_ext::OpenRootFile(args.data_pileup_file());
-            ntuple::ExpressTuple tuple(args.tree_name(), inputFile.get(), true);
-            if(!tuple) continue;
-            for(const auto& event : tuple)
-                anaData.n_pu_mc(file_name).Fill(event.npu);
-
-            auto n_pu_data = std::shared_ptr<TH1D>(root_ext::ReadObject<TH1D>(*data_pileup_file, "pileup"));
-            anaData.pileup().CopyContent(*n_pu_data);
-            RenormalizeHistogram(anaData.pileup(), 1, true);
-            RenormalizeHistogram(anaData.n_pu_mc(file_name), 1, true);
-            //anaData.pileup().Divide(&anaData.n_pu_mc());
+            std::cout << "File opened: " << file_name << std::endl;
+            try{
+                ntuple::ExpressTuple tuple(args.tree_name(), inputFile.get(), true);
+                for(const auto& event : tuple)
+                    anaData.n_pu_mc(file_name).Fill(event.npu);
+            }catch(analysis::exception&) {}
+            anaData.n_pu_mc_norm(file_name).CopyContent(anaData.n_pu_mc(file_name));
+            RenormalizeHistogram(anaData.n_pu_mc_norm(file_name), 1, true);
         }
     }
 
@@ -60,4 +56,4 @@ private:
 
 } //namespace analysis
 
-PROGRAM_MAIN(analysis::PileUpCalc, Arguments)
+PROGRAM_MAIN(analysis::PuMcDistr, Arguments)
