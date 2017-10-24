@@ -42,9 +42,11 @@ public:
                 ntuple::ExpressTuple tuple(args.tree_name(), inputFile.get(), true);
                 for(const auto& event : tuple)
                     anaData.n_pu_mc(file_name).Fill(event.npu);
+
+                anaData.n_pu_mc_norm(file_name).CopyContent(anaData.n_pu_mc(file_name));
+                RenormalizeHistogram(anaData.n_pu_mc_norm(file_name), 1, true);
             }catch(analysis::exception&) {}
-            anaData.n_pu_mc_norm(file_name).CopyContent(anaData.n_pu_mc(file_name));
-            RenormalizeHistogram(anaData.n_pu_mc_norm(file_name), 1, true);
+
         }
     }
 
