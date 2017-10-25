@@ -45,7 +45,7 @@ public:
 
                 anaData.n_pu_mc_norm(file_name).CopyContent(anaData.n_pu_mc(file_name));
                 RenormalizeHistogram(anaData.n_pu_mc_norm(file_name), 1, true);
-            }catch(analysis::exception&) {}
+            }catch(std::exception&) {}
 
         }
     }
