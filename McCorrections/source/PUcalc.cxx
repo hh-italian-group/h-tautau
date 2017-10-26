@@ -44,7 +44,7 @@ public:
                                      pu_data->GetXaxis()->GetBinUpEdge(pu_data->GetNbinsX()));
 
         auto pu_mc = std::shared_ptr<TH1D>(root_ext::ReadObject<TH1D>(*mc_pileup_file, "n_pu_mc"));
-        pu_mc->Rebin(10);//only pileupdata obs
+        //pu_mc->Rebin(10);//only pileupdata obs
         anaData.pileup("mc").CopyContent(*pu_mc);
         anaData.pileup("mc_norm").CopyContent(anaData.pileup("mc"));
         const int max_bin = anaData.pileup().FindBin(args.max_n_pu());
