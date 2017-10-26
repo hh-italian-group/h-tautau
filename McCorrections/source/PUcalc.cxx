@@ -40,8 +40,8 @@ public:
         auto mc_pileup_file = root_ext::OpenRootFile(args.MC_input_file());
         auto data_pileup_file = root_ext::OpenRootFile(args.data_pileup_file());
         auto pu_data = std::shared_ptr<TH1D>(root_ext::ReadObject<TH1D>(*data_pileup_file, "pileup"));
-        anaData.pileup.SetMasterHist(pu_data->GetNbinsX(),pu_data->GetXaxis()->GetBinUpEdge(0),
-                                     pu_data->GetXaxis()->GetBinLowEdge(pu_data->GetNbinsX()));
+        anaData.pileup.SetMasterHist(pu_data->GetNbinsX(),pu_data->GetXaxis()->GetBinLowEdge(1),
+                                     pu_data->GetXaxis()->GetBinUpEdge(pu_data->GetNbinsX()));
 
         auto pu_mc = std::shared_ptr<TH1D>(root_ext::ReadObject<TH1D>(*mc_pileup_file, "n_pu_mc"));
         anaData.pileup("mc").CopyContent(*pu_mc);
@@ -54,6 +54,8 @@ public:
             if(i<=max_bin) continue;
             anaData.pileup("mc_norm").SetBinContent(i,0);
             anaData.pileup("data_norm").SetBinContent(i,0);
+            anaData.pileup("mc_norm").SetBinError(i,0);
+            anaData.pileup("data_norm").SetBinError(i,0);
         }
 
         const double integral_mc = anaData.pileup("mc_norm").Integral(1,max_bin);
@@ -78,6 +80,7 @@ public:
         for(unsigned i = 0; i < anaData.pileup("weight").GetNbinsX(); ++i){
             if(i<=max_bin) continue;
             anaData.pileup("weight").SetBinContent(i,0);
+            anaData.pileup("weight").SetBinError(i,0);
         }
 
         anaData.pileup("weight").Divide(&anaData.pileup("mc_norm"));
