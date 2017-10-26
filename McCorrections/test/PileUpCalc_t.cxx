@@ -53,6 +53,7 @@ public:
             for(const ntuple::Event& event : eventTuple_mc) {
                 if (event.eventEnergyScale != 0 ) continue;
                 anaData.npv("mc").Fill(event.npv, pu_weight.Get(event));
+                anaData.npv("mc_noweights").Fill(event.npv);
             }
         }
 
@@ -68,6 +69,9 @@ public:
 
         anaData.npv("mc_norm").CopyContent(anaData.npv("mc"));
         RenormalizeHistogram(anaData.npv("mc_norm"), 1, true);
+
+        anaData.npv("mc_norm_noweights").CopyContent(anaData.npv("mc_noweights"));
+        RenormalizeHistogram(anaData.npv("mc_norm_noweights"), 1, true);
 
         anaData.npv("data_norm").CopyContent(anaData.npv("data"));
         RenormalizeHistogram(anaData.npv("data_norm"), 1, true);
