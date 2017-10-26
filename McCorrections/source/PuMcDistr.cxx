@@ -1,5 +1,5 @@
-/*! Merge BSM files.
-This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
+/*! Pileup distribution for MC.
+This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <boost/format.hpp>
 #include "AnalysisTools/Run/include/program_main.h"
 #include "AnalysisTools/Core/include/ConfigReader.h"

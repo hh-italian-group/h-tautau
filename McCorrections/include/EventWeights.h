@@ -39,7 +39,7 @@ public:
                         FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
                         FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"));
             providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("bTagEfficiencies_Moriond17.root"), FullName("CSVv2_Moriond17_B_H.csv"), btag_wp);
+                        FullBtagName("bTagEfficiencies_Moriond17.root"), FullBtagName("CSVv2_Moriond17_B_H.csv"), btag_wp);
 			
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
 
@@ -89,6 +89,12 @@ protected:
     static std::string FullName(const std::string& fileName)
     {
         static const std::string path = "h-tautau/McCorrections/data";
+        return FullName(fileName, path);
+    }
+
+    static std::string FullBtagName(const std::string& fileName)
+    {
+        static const std::string path = "h-tautau/McCorrections/data/btag";
         return FullName(fileName, path);
     }
 
