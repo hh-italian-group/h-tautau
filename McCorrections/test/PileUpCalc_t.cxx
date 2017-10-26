@@ -14,6 +14,7 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 struct Arguments {
     run::Argument<std::string> input_weight_file{"input_weight_file", "input weight root file"};
     run::Argument<std::string> weight_hist_name{"weight_hist_name", "weight histogram name"};
+    run::Argument<std::string> input_path{"input_path", "input path of files"};
     run::Argument<std::vector<std::string>> input_MC_files{"input_MC_files", "input MC files"};
     run::Argument<std::vector<std::string>> input_data_files{"input_data_files", "input data files"};
     run::Argument<std::string> tree_name{"tree_name", "Tree on which we work"};
@@ -43,7 +44,8 @@ public:
     void Run()
     {
         for(const auto& file_name : args.input_MC_files()){
-            auto inputFile_mc = root_ext::OpenRootFile(file_name);
+            const std::string filename = args.input_path()  + "/" + file_name;
+            auto inputFile_mc = root_ext::OpenRootFile(filename);
             ntuple::EventTuple eventTuple_mc(args.tree_name(), inputFile_mc.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_mc) {
                 if (event.eventEnergyScale != 0 ) continue;
@@ -52,7 +54,8 @@ public:
         }
 
         for(const auto& file_name : args.input_data_files()){
-            auto inputFile_data = root_ext::OpenRootFile(file_name);
+            const std::string filename = args.input_path()  + "/" + file_name;
+            auto inputFile_data = root_ext::OpenRootFile(filename);
             ntuple::EventTuple eventTuple_data(args.tree_name(), inputFile_data.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_data) {
                 anaData.npv("data").Fill(event.npv);
