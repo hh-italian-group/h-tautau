@@ -61,7 +61,7 @@ struct BTagReaderInfo {
         if(!wp_prefixes.count(wp))
             throw exception("B tag working point %1% not supported.") % wp;
 
-        const std::string name = boost::str(boost::format("%1%_%2%_all")
+        const std::string name = boost::str(boost::format("All/Efficiency/%1%_%2%_all")
                                             % flavor_prefixes.at(flavor) % wp_prefixes.at(wp));
         eff_hist = HistPtr(root_ext::ReadCloneObject<TH2D>(*file, name, "", true));
     }
