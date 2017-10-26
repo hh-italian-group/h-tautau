@@ -45,6 +45,7 @@ public:
     {
         for(const auto& file_name : args.input_MC_files()){
             const std::string filename = args.input_path()  + "/" + file_name;
+            std::cout << "MC filename: " << filename << std::endl;
             auto inputFile_mc = root_ext::OpenRootFile(filename);
             ntuple::EventTuple eventTuple_mc(args.tree_name(), inputFile_mc.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_mc) {
@@ -55,6 +56,7 @@ public:
 
         for(const auto& file_name : args.input_data_files()){
             const std::string filename = args.input_path()  + "/" + file_name;
+            std::cout << "data filename: " << filename << std::endl;
             auto inputFile_data = root_ext::OpenRootFile(filename);
             ntuple::EventTuple eventTuple_data(args.tree_name(), inputFile_data.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_data) {
