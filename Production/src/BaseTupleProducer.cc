@@ -637,6 +637,7 @@ void BaseTupleProducer::FillElectronLeg(size_t leg_id, const ElectronCandidate& 
     GET_LEG(dxy) = electron->gsfTrack()->dxy(primaryVertex->position());
     GET_LEG(dz) = electron->gsfTrack()->dz(primaryVertex->position());
     GET_LEG(iso) = electron.GetIsolation();
+    GET_LEG(decayMode) = -1;
     FillLegGenMatch(leg_id, electron->p4());
 }
 
@@ -647,6 +648,7 @@ void BaseTupleProducer::FillMuonLeg(size_t leg_id, const MuonCandidate& muon)
     GET_LEG(dxy) = muon->muonBestTrack()->dxy(primaryVertex->position());
     GET_LEG(dz) = muon->muonBestTrack()->dz(primaryVertex->position());
     GET_LEG(iso) = muon.GetIsolation();
+    GET_LEG(decayMode) = -1;
     FillLegGenMatch(leg_id, muon->p4());
 }
 
@@ -658,6 +660,7 @@ void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool 
     GET_LEG(dxy) = packedLeadTauCand->dxy();
     GET_LEG(dz) = packedLeadTauCand->dz();
     GET_LEG(iso) = tau.GetIsolation();
+    GET_LEG(decayMode) = tau->decayMode();
     FillLegGenMatch(leg_id, tau->p4());
     if(fill_tauIds)
         FillTauIds(leg_id, tau->tauIDs());

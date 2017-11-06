@@ -25,6 +25,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
     LVAR(std::vector<uint32_t>, tauId_keys, n) /* keys for tau ID variables */ \
     LVAR(std::vector<float>, tauId_values, n) /* values of tau ID variables */ \
+    LVAR(Int_t, decayMode, n) /* tau decay mode */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)

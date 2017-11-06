@@ -1,0 +1,7 @@
+EventAwareLumiBased
+globalTag=80X_mcRun2_asymptotic_2016_TrancheIV_v6 sampleType=Summer16MC ReRunJEC=True applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False runSVfit=False runKinFit=False anaChannels=tauTau
+
+TTTo2L2Nu_TuneCUETP8M2_ttHtranche3              48000	/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
+TTToSemilepton_TuneCUETP8M2_ttHtranche3         68000	/TTToSemilepton_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
+TT_TuneCUETP8M2T4                               100000	/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
+TT_TuneCUETP8M2T4_backup                        100000	/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_backup_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
