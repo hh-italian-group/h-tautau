@@ -274,9 +274,8 @@ public:
     double GetMT2()
     {
         if(!mt2.is_initialized()) {
-            const double mt2_calc = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
+            mt2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
                                                GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
-            mt2 = mt2_calc;
         }
         return *mt2;
     }
