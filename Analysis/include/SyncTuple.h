@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "EventInfo.h"
 
 #define LVAR(type, name, pref) VAR(type, pref##_##name)
 
@@ -56,3 +57,4 @@ INITIALIZE_TREE(ntuple, SyncTuple, SYNC_DATA)
 #undef LVAR
 #undef JET_DATA
 #undef JVAR
+
