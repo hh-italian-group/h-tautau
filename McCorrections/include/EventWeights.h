@@ -7,6 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "LeptonWeights.h"
 #include "BTagWeight.h"
 #include "TopPtWeight.h"
+#include "TauIdWeight.h"
 #include "WeightingMode.h"
 
 namespace analysis {
@@ -39,9 +40,11 @@ public:
                         FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
                         FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"));
             providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullBtagName("bTagEfficiencies_Moriond17.root"), FullBtagName("CSVv2_Moriond17_B_H.csv"), btag_wp);
-			
+                        FullBtagName("bTagEfficiencies_Moriond17.root"), FullBtagName("CSVv2_Moriond17_B_H.csv"),
+                        btag_wp);
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
+            providers[WeightType::TauId] = std::make_shared<TauIdWeight>(
+                        FullName("Tau/fitresults_tt_moriond2017.json"), DiscriminatorWP::Medium);
 
         } else {
             throw exception("Period %1% is not supported.") % period;
