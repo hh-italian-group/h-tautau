@@ -182,7 +182,7 @@ public:
         return *jets;
     }
 
-    const JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
+    JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::lowest(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
                              JetOrdering jet_ordering = JetOrdering::CSV)
