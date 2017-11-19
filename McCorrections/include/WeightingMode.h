@@ -13,7 +13,7 @@ using ::analysis::operator<<;
 using ::analysis::operator>>;
 
 enum class WeightType {
-    PileUp = 0, LeptonTrigIdIso = 1, BTag = 2, DY = 3, TTbar = 4, Wjets = 5, BSM_to_SM = 6, TopPt = 7
+    PileUp = 0, LeptonTrigIdIso = 1, BTag = 2, DY = 3, TTbar = 4, Wjets = 5, BSM_to_SM = 6, TopPt = 7, TauId = 8
 };
 ENUM_NAMES(WeightType) = {
     { WeightType::PileUp, "PileUp" },
@@ -23,7 +23,8 @@ ENUM_NAMES(WeightType) = {
     { WeightType::TTbar, "TTbar" },
     { WeightType::Wjets, "Wjets" },
     { WeightType::BSM_to_SM, "BSM_to_SM" },
-    { WeightType::TopPt, "TopPt" }
+    { WeightType::TopPt, "TopPt" },
+    { WeightType::TauId, "TauId" }
 };
 
 using WeightingMode = std::set<WeightType>;
@@ -41,6 +42,14 @@ inline WeightingMode operator&(const WeightingMode& a, const WeightingMode& b)
     std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
     return c;
 }
+
+inline WeightingMode operator-(const WeightingMode& a, const WeightingMode& b)
+{
+    WeightingMode c;
+    std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
+    return c;
+}
+
 
 } // namespace analysis
 } // namespace mc_corrections
