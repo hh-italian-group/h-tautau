@@ -58,6 +58,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(UInt_t, run) /* Run */ \
     VAR(UInt_t, lumi) /* Lumi */ \
     VAR(ULong64_t, evt) /* Evt */ \
+    VAR(UInt_t, sampleId) /* sample id */ \
     /* Event Variables */ \
     VAR(Int_t, npv) /* Number of offline primary vertices */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -182,6 +183,7 @@ namespace htt_sync {
         sync().run = event->run;
         sync().lumi = event->lumi;
         sync().evt = event->evt;
+        sync().sampleId = event->file_desc_id;
         sync().npv = event->npv;
         sync().npu = event->npu;
 
@@ -378,7 +380,6 @@ namespace htt_sync {
             sync().fatJet_n_subjettiness_tau3 = default_value;
         }
 
-
         sync().topWeight = event->weight_top_pt;
         sync().shapeWeight = event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
                 event->weight_wjets * event->weight_xs;
@@ -402,11 +403,5 @@ namespace htt_sync {
                     std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
 
         sync.Fill();
-
-
-
     }
-
 }
-
-
