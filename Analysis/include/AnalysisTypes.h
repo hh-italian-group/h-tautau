@@ -37,6 +37,11 @@ ENUM_NAMES(DiscriminatorWP) = {
     { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" }, { DiscriminatorWP::Medium, "Medium" },
     { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" }
 };
+const EnumNameMap<DiscriminatorWP> __DiscriminatorWP_short_names("ShortWPNames", {
+    { DiscriminatorWP::VLoose, "VL" }, { DiscriminatorWP::Loose, "L" }, { DiscriminatorWP::Medium, "M" },
+    { DiscriminatorWP::Tight, "T" }, { DiscriminatorWP::VTight, "VT" }, { DiscriminatorWP::VVTight, "VVT" }
+});
+
 
 enum class MetType { PF, MVA, PUPPI };
 ENUM_NAMES(MetType) = {

@@ -152,6 +152,7 @@ public:
     }
 
     EventInfoBase(const EventInfoBase&) = delete;
+    EventInfoBase& operator=(const EventInfoBase&) = delete;
 
     virtual ~EventInfoBase() {}
 
