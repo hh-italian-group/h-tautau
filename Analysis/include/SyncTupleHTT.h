@@ -162,8 +162,7 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-    template<typename FirstLeg, typename SecondLeg>
-    void FillSyncTuple(analysis::EventInfo<FirstLeg, SecondLeg>& event, htt_sync::SyncTuple& sync)
+    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -380,10 +379,10 @@ namespace htt_sync {
             sync().fatJet_n_subjettiness_tau3 = default_value;
         }
 
-        sync().topWeight = event->weight_top_pt;
-        sync().shapeWeight = event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
-                event->weight_wjets * event->weight_xs;
-        sync().btagWeight = event->weight_btag;
+        sync().topWeight = static_cast<float>(event->weight_top_pt);
+        sync().shapeWeight = static_cast<float>(event->weight_pu * event->weight_bsm_to_sm * event->weight_dy
+                                                * event->weight_ttbar * event->weight_wjets * event->weight_xs);
+        sync().btagWeight = static_cast<float>(event->weight_btag);
 
         sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
         sync().lhe_n_partons = static_cast<int>(event->lhe_n_partons);

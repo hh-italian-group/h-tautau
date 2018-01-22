@@ -51,8 +51,7 @@ public:
         anaData.pileup("data").CopyContent(*pu_data);
         anaData.pileup("data_norm").CopyContent(anaData.pileup("data"));
 
-        for(unsigned i = 0; i < anaData.pileup().GetNbinsX(); ++i){
-            if(i<=max_bin) continue;
+        for(int i = max_bin + 1; i <= anaData.pileup().GetNbinsX(); ++i){
             anaData.pileup("mc_norm").SetBinContent(i,0);
             anaData.pileup("data_norm").SetBinContent(i,0);
             anaData.pileup("mc_norm").SetBinError(i,0);
@@ -78,8 +77,7 @@ public:
 
         anaData.pileup("weight").CopyContent(anaData.pileup("data_norm"));
 
-        for(unsigned i = 0; i < anaData.pileup("weight").GetNbinsX(); ++i){
-            if(i<=max_bin) continue;
+        for(int i = max_bin; i <= anaData.pileup("weight").GetNbinsX(); ++i){
             anaData.pileup("weight").SetBinContent(i,0);
             anaData.pileup("weight").SetBinError(i,0);
         }

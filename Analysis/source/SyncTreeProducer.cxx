@@ -70,17 +70,16 @@ public:
             originalTuple.GetEntry(current_entry);
             const auto bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
                                                                  cuts::btag_2016::eta, JetOrdering::CSV);
-            auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
-            EventInfoBase& event = *eventInfoPtr;
-            if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            if(args.sample_type() == "data" && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel)))
+            auto event = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
+            if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
+            if(args.sample_type() == "data" && !event->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel)))
                 continue;
 
             if(syncMode == SyncMode::HH) {
-                if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
+                if(/*event->dilepton_veto ||*/ (*event)->extraelec_veto || (*event)->extramuon_veto) continue;
             }
 
-            htt_sync::FillSyncTuple(event,sync);
+            htt_sync::FillSyncTuple(*event, sync);
         }
 
         sync.Write();
