@@ -3,6 +3,7 @@ Defined only cuts that are different from the H to tautau baseline selection.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
+#include "AnalysisMath.h"
 
 namespace cuts {
 namespace hh_bbtautau_2016 {
@@ -62,23 +63,28 @@ namespace muonVeto {
 }
 
 namespace hh_tag {
-    constexpr double peak_tautau = 116;
-    constexpr double resolution_tautau = 35.;
-    constexpr double peak_bb = 111;
-    constexpr double resolution_bb = 45;
+
     constexpr double boosted_m_tautau_min = 80;
     constexpr double boosted_m_tautau_max = 152;
     constexpr double boosted_m_bb_min = 90;
     constexpr double boosted_m_bb_max = 160;
 
-    inline bool IsInsideMassWindow(double mass_tautau, double mass_bb, bool is_boosted = false)
+    inline const analysis::EllipseParameters& m_hh_window()
     {
-        if(is_boosted)
-            return mass_tautau > boosted_m_tautau_min && mass_tautau < boosted_m_tautau_max
-                && mass_bb > boosted_m_bb_min && mass_bb < boosted_m_bb_max;
-        const double ellipse_cut = std::pow(mass_tautau-peak_tautau, 2)/std::pow(resolution_tautau, 2)
-                                 + std::pow(mass_bb-peak_bb, 2)/std::pow(resolution_bb, 2);
-        return ellipse_cut<1;
+        static const analysis::EllipseParameters m_hh_window_param{116.0, 35.0, 111.0, 45.0};
+        return m_hh_window_param;
+    }
+
+    inline const analysis::EllipseParameters& new_m_hh_window()
+    {
+        static const analysis::EllipseParameters m_hh_window_param{87.9563, 41.8451, 109.639, 43.0346};
+        return m_hh_window_param;
+    }
+
+    inline bool IsInsideBoostedMassWindow(double mass_tautau, double mass_bb)
+    {
+        return mass_tautau > boosted_m_tautau_min && mass_tautau < boosted_m_tautau_max
+            && mass_bb > boosted_m_bb_min && mass_bb < boosted_m_bb_max;
     }
 }
 
