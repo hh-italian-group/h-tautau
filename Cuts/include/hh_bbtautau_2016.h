@@ -61,26 +61,26 @@ namespace muonVeto {
     constexpr bool isLooseMuon = true; // = Should be ok, since the HIP problem is solved.
 }
 
-namespace hh_tag {
-    constexpr double peak_tautau = 116;
-    constexpr double resolution_tautau = 35.;
-    constexpr double peak_bb = 111;
-    constexpr double resolution_bb = 45;
-    constexpr double boosted_m_tautau_min = 80;
-    constexpr double boosted_m_tautau_max = 152;
-    constexpr double boosted_m_bb_min = 90;
-    constexpr double boosted_m_bb_max = 160;
+//namespace hh_tag {
+//    constexpr double peak_tautau = 116;
+//    constexpr double resolution_tautau = 35.;
+//    constexpr double peak_bb = 111;
+//    constexpr double resolution_bb = 45;
+//    constexpr double boosted_m_tautau_min = 80;
+//    constexpr double boosted_m_tautau_max = 152;
+//    constexpr double boosted_m_bb_min = 90;
+//    constexpr double boosted_m_bb_max = 160;
 
-    inline bool IsInsideMassWindow(double mass_tautau, double mass_bb, bool is_boosted = false)
-    {
-        if(is_boosted)
-            return mass_tautau > boosted_m_tautau_min && mass_tautau < boosted_m_tautau_max
-                && mass_bb > boosted_m_bb_min && mass_bb < boosted_m_bb_max;
-        const double ellipse_cut = std::pow(mass_tautau-peak_tautau, 2)/std::pow(resolution_tautau, 2)
-                                 + std::pow(mass_bb-peak_bb, 2)/std::pow(resolution_bb, 2);
-        return ellipse_cut<1;
-    }
-}
+//    inline bool IsInsideMassWindow(double mass_tautau, double mass_bb, bool is_boosted = false)
+//    {
+//        if(is_boosted)
+//            return mass_tautau > boosted_m_tautau_min && mass_tautau < boosted_m_tautau_max
+//                && mass_bb > boosted_m_bb_min && mass_bb < boosted_m_bb_max;
+//        const double ellipse_cut = std::pow(mass_tautau-peak_tautau, 2)/std::pow(resolution_tautau, 2)
+//                                 + std::pow(mass_bb-peak_bb, 2)/std::pow(resolution_bb, 2);
+//        return ellipse_cut<1;
+//    }
+//}
 
 namespace fatJetID {
     constexpr double mass = 30;
