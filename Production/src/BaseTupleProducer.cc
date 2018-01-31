@@ -569,7 +569,7 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     cut(isMedium, "electronMVAMediumID");
     if(productionMode != ProductionMode::hh) {
         const auto eleMissingHits =
-                electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+                electron->gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
         cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     }
