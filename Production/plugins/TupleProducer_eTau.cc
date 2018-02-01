@@ -68,7 +68,7 @@ bool TupleProducer_eTau::SelectSpring15VetoElectron(const pat::Electron& electro
     constexpr reco::HitPattern::HitCategory missingHitType =
     reco::HitPattern::MISSING_INNER_HITS;
     const unsigned mHits = 
-    electron.gsfTrack()->hitPattern().numberOfHits(missingHitType);
+    electron.gsfTrack()->hitPattern().numberOfAllHits(missingHitType);
     bool result = false;
     if(fabs(electron.superCluster()->position().eta()) <= 1.479){
 	result=full5x5_sigmaIetaIeta < 0.0114 &&
@@ -151,7 +151,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     cut(isTight, "electronMVATightID");
     if(productionMode != ProductionMode::hh) {
         const auto eleMissingHits =
-                electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+                electron->gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
         cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     } else {

@@ -5,8 +5,8 @@ import sys
 from sets import Set
 import FWCore.ParameterSet.Config as cms
 
-mcSampleTypes = Set([ 'Summer16MC' ])
-dataSampleTypes = Set([ 'Run2016' ])
+mcSampleTypes = Set([ 'Summer16MC', 'Fall17MC' ])
+dataSampleTypes = Set([ 'Run2016' , 'Run2017' ])
 
 hltPaths_eTau_Run2016 = cms.VPSet(
     cms.PSet( pattern = cms.string("HLT_Ele23_WPLoose_Gsf_v"),
@@ -65,8 +65,24 @@ hltPaths_eTau_Run2016 = cms.VPSet(
                                                "hltOverlapFilterIsoEle27WPLooseGsfLooseIsoPFTau20") ),
 )
 
+hltPaths_eTau_Run2017 = cms.VPSet(
+    cms.PSet( pattern = cms.string("HLT_Ele32_WPTight_Gsf_v"),
+              nLegs = cms.untracked.uint32(1),
+              filters1 = cms.untracked.vstring("hltEle32WPTightGsfTrackIsoFilter") ),
+    cms.PSet( pattern = cms.string("HLT_Ele35_WPTight_Gsf_v"),
+              nLegs = cms.untracked.uint32(1),
+              filters1 = cms.untracked.vstring("hltEle35noerWPTightGsfTrackIsoFilter") ),
+    cms.PSet( pattern = cms.string("HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltEle24erWPTightGsfTrackIsoFilterForTau",
+                                               "hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30"),
+              filters2 = cms.untracked.vstring("hltSelectedPFTau30LooseChargedIsolationL1HLTMatched",
+                                              "hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30") ),
+)
+
 hltPaths_eTau = {
-    'Run2016'   : hltPaths_eTau_Run2016
+    'Run2016'   : hltPaths_eTau_Run2016,
+    'Run2017'   : hltPaths_eTau_Run2017
 }
 
 hltPaths_muTau_Run2016 = cms.VPSet(
@@ -138,8 +154,31 @@ hltPaths_muTau_Run2016 = cms.VPSet(
                                                "hltOverlapFilterSingleIsoMu21LooseIsoPFTau20") ),
 )
 
+hltPaths_muTau_Run2017 = cms.VPSet(
+    cms.PSet( pattern = cms.string("HLT_IsoMu24_v"),
+              nLegs = cms.untracked.uint32(1),
+              filters1 = cms.untracked.vstring("hltL3crIsoL1sSingleMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p07") ),
+    cms.PSet( pattern = cms.string("HLT_IsoMu27_v"),
+              nLegs = cms.untracked.uint32(1),
+              filters1 = cms.untracked.vstring("hltL3crIsoL1sMu22Or25L1f0L2f10QL3f27QL3trkIsoFiltered0p07") ),
+    cms.PSet( pattern = cms.string("HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau20_eta2p1_SingleL1_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltPFTau20TrackLooseChargedIsoAgainstMuon",
+                                               "hltOverlapFilterIsoMu24LooseChargedIsoPFTau20"),
+              filters2 = cms.untracked.vstring("hltL3crIsoL1sSingleMu22erL1f0L2f10QL3f24QL3trkIsoFiltered0p07",
+                                               "hltOverlapFilterIsoMu24LooseChargedIsoPFTau20") ),
+    cms.PSet( pattern = cms.string("HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltL3crIsoL1sMu18erTau24erIorMu20erTau24erL1f0L2f10QL3f20QL3trkIsoFiltered0p07",
+                                               "hltOverlapFilterIsoMu20LooseChargedIsoPFTau27L1Seeded"),
+              filters2 = cms.untracked.vstring("hltSelectedPFTau27LooseChargedIsolationAgainstMuonL1HLTMatched",
+                                               "hltOverlapFilterIsoMu20LooseChargedIsoPFTau27L1Seeded") ),
+)
+
+
 hltPaths_muTau = {
-    'Run2016'   : hltPaths_muTau_Run2016
+    'Run2016'   : hltPaths_muTau_Run2016,
+    'Run2017'   : hltPaths_muTau_Run2017
 }
 
 hltPaths_tauTau_Run2016 = cms.VPSet(
@@ -163,8 +202,29 @@ hltPaths_tauTau_Run2016 = cms.VPSet(
               nLegs = cms.untracked.uint32(2)),
 )
 
+hltPaths_tauTau_Run2017 = cms.VPSet(
+    cms.PSet( pattern = cms.string("HLT_DoubleMediumChargedIsoPFTau35_Trk1_eta2p1_Reg_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltDoublePFTau35TrackPt1MediumChargedIsolationDz02Reg"),
+              filters2 = cms.untracked.vstring("hltDoublePFTau35TrackPt1MediumChargedIsolationDz02Reg") ),
+    cms.PSet( pattern = cms.string("HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg"),
+              filters2 = cms.untracked.vstring("hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg") ),
+    cms.PSet( pattern = cms.string("HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltDoublePFTau40TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg"),
+              filters2 = cms.untracked.vstring("hltDoublePFTau40TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg") ),
+    cms.PSet( pattern = cms.string("HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg_v"),
+              nLegs = cms.untracked.uint32(2),
+              filters1 = cms.untracked.vstring("hltDoublePFTau40TrackPt1TightChargedIsolationDz02Reg"),
+              filters2 = cms.untracked.vstring("hltDoublePFTau40TrackPt1TightChargedIsolationDz02Reg") ),
+
+)
+
 hltPaths_tauTau = {
-    'Run2016'   : hltPaths_tauTau_Run2016
+    'Run2016'   : hltPaths_tauTau_Run2016,
+    'Run2017'   : hltPaths_tauTau_Run2017
 }
 
 hltPaths_muMu_Run2016 = cms.VPSet(
@@ -173,13 +233,21 @@ hltPaths_muMu_Run2016 = cms.VPSet(
               filters1 = cms.untracked.vstring("hltL3crIsoL1sMu20L1f0L2f10QL3f22QL3trkIsoFiltered0p09") )
 )
 
+hltPaths_muMu_Run2017 = cms.VPSet(
+    cms.PSet( pattern = cms.string("HLT_IsoMu22_v"),
+              nLegs = cms.untracked.uint32(1),
+              filters1 = cms.untracked.vstring("hltL3crIsoL1sMu20L1f0L2f10QL3f22QL3trkIsoFiltered0p09") )
+)
+
 hltPaths_muMu = {
-    'Run2016'   : hltPaths_muMu_Run2016
+    'Run2016'   : hltPaths_muMu_Run2016,
+    'Run2017'   : hltPaths_muMu_Run2017
 }
 
 hltPaths = { 'eTau' : hltPaths_eTau, 'muTau' : hltPaths_muTau, 'tauTau' : hltPaths_tauTau, 'muMu' : hltPaths_muMu }
 for channelName in hltPaths:
     hltPaths[channelName]['Summer16MC'] = hltPaths[channelName]['Run2016']
+    hltPaths[channelName]['Fall17MC'] = hltPaths[channelName]['Run2017']
 
 def IsData(sampleType):
     isData = sampleType in dataSampleTypes
