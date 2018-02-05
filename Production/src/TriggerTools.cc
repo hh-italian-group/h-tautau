@@ -61,8 +61,6 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
 
     const auto& filters = descriptors.GetFilters(path_index, leg_id);
     const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject) {
-//    const auto passFilters = [&](pat::TriggerObjectStandAlone triggerObject) {
-        std::cout << "Filertes size: " << filters.size() << std::endl;
         for(const auto& filter : filters)
             if(!triggerObject.hasFilterLabel(filter)) return false;
         return true;
@@ -72,17 +70,14 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
-    std::cout << "Before loop Trigger Obj" << std::endl;
     //for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
     for (pat::TriggerObjectStandAlone triggerObject : *triggerObjects) {
-        std::cout << "loop trigger objects" << std::endl;
         if(!hasExpectedType(triggerObject)) continue;
-        std::cout << "Expected Trigger Obj" << std::endl;
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
         //pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         //unpackedTriggerObject.unpackPathNames(triggerNames);
         triggerObject.unpackPathNames(triggerNames);
-        triggerObject.unpackFilterLabels(filters); //new
+        triggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
         //if(!passFilters(unpackedTriggerObject)) continue;
         if(!passFilters(triggerObject)) continue;
         //const auto& paths = unpackedTriggerObject.pathNames(true, true);

@@ -7,12 +7,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::TauTau;
-
-    std::cout << "Before vertex" << std::endl;
     
     SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
-    std::cout << "After vertex" << std::endl;
 
     if(applyTriggerMatch) {
         triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
