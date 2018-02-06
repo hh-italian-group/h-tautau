@@ -225,6 +225,7 @@ double BaseTupleProducer::Isolation(const pat::Muon& muon)
 double BaseTupleProducer::Isolation(const pat::Tau& tau)
 {
     return tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+    //byIsolationMVArun2v1DBoldDMwLTrawNew //new
 }
 
 //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
@@ -253,6 +254,34 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
 
     return true;
 }
+
+//https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017#Preliminary_Recommendations_for
+//recommended for 2017
+//bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet)
+//{
+//    const pat::Jet& patJet = pat_jet.correctedJet("Uncorrected");
+//    const double abs_eta = std::abs(patJet.eta());
+//    if(abs_eta <= 2.7 && (
+//                         patJet.neutralHadronEnergyFraction() >= 0.9 ||
+//                         patJet.neutralEmEnergyFraction() >= 0.9 ||
+//                         patJet.nConstituents() <= 1)) return false;
+//
+//    if(abs_eta <= 2.4 && (
+//                          patJet.chargedHadronEnergyFraction() <= 0 ||
+//                          patJet.chargedMultiplicity() <= 0 )) return false;
+//
+//    if(abs_eta > 2.7 && abs_eta <= 3.0 && (
+//                                           patJet.neutralEmEnergyFraction() <= 0.02 ||
+//                                           patJet.neutralEmEnergyFraction() >= 0.99 ||
+//                                           patJet.neutralMultiplicity() <= 2)) return false;
+//
+//    if(abs_eta > 3.0 && (
+//                         patJet.neutralEmEnergyFraction() >= 0.9 ||
+//                         patJet.neutralHadronEnergyFraction() <= 0.02 ||
+//                         patJet.neutralMultiplicity() <= 10)) return false;
+//
+//    return true;
+//}
 
 bool BaseTupleProducer::PassICHEPMuonMediumId(const pat::Muon& pat_muon){
     if(pat_muon.innerTrack().isNull()) return false;
@@ -627,6 +656,24 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
         cut(deltaR > deltaR_signalObjects, cut_name.str(), deltaR);
     }
 }
+
+//void BaseTupleProducer::SelectJet_2017(const JetCandidate& jet, Cutter& cut,
+//                                  const std::vector<LorentzVector>& signalLeptonMomentums) const
+//{
+//    using namespace cuts::H_tautau_2016::jetID;
+//    
+//    cut(true, "gt0_jet_cand");
+//    const LorentzVector& p4 = jet.GetMomentum();
+//    cut(p4.Pt() > pt, "pt", p4.Pt());
+////    cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
+//    cut(PassPFLooseId(*jet), "jet_id");
+//    for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
+//        std::ostringstream cut_name;
+//        cut_name << "deltaR_lep" << n + 1;
+//        const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalLeptonMomentums.at(n));
+//        cut(deltaR > deltaR_signalObjects, cut_name.str(), deltaR);
+//    }
+//}
 
 #define GET_LEG(x) (leg_id == 1 ? eventTuple().x##_1 : eventTuple().x##_2)
 
