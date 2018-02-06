@@ -2,9 +2,10 @@
 # Install hh-italian-group framework.
 # This file is part of https://github.com/hh-italian-group/hh-bbtautau.
 
-INSTALL_MODES=(prod ana limits)
+INSTALL_MODES=(prod prod17 ana limits)
 DEFAULT_N_JOBS=4
 DEFAULT_RELEASE_PROD="CMSSW_8_0_28"
+DEFAULT_RELEASE_PROD17="CMSSW_9_4_4"
 DEFAULT_RELEASE_LIMITS="CMSSW_7_4_7"
 DEFAULT_RELEASE_ANA="CMSSW_9_0_0"
 
@@ -42,6 +43,8 @@ if [ "x$RELEASE" = "x" ] ; then
         RELEASE=$DEFAULT_RELEASE_LIMITS
     elif [ $MODE = "prod" ] ; then
         RELEASE=$DEFAULT_RELEASE_PROD
+    elif [ $MODE = "prod17" ] ; then
+        RELEASE=$DEFAULT_RELEASE_PROD17
     else
         RELEASE=$DEFAULT_RELEASE_ANA
     fi
@@ -53,6 +56,8 @@ fi
 
 if [ $MODE = "limits" ] ; then
     export SCRAM_ARCH=slc6_amd64_gcc491
+elif [ $MODE = "prod17" ] ; then
+    export SCRAM_ARCH=slc6_amd64_gcc630
 else
     export SCRAM_ARCH=slc6_amd64_gcc530
 fi
@@ -82,6 +87,31 @@ if [ $MODE = "prod" ] ; then
     # MET corrections
     #git cms-merge-topic cms-met:METRecipe_8020
     git cms-merge-topic cms-met:METRecipe_8020_for80Xintegration
+fi
+
+if [ $MODE = "prod17" ] ; then
+    git cms-init
+
+    # Electron MVA identification
+    git cms-merge-topic guitargeek:ElectronID_MVA2017_940pre3
+    scram b -j 8
+
+    # Add the area containing the MVA weights (from cms-data, to appear in “external”).
+    # Note: the “external” area appears after “scram build” is run at least once, as above
+    cd $RELEASE/external
+
+    cd slc6_amd64_gcc630/
+    git clone https://github.com/lsoffi/RecoEgamma-PhotonIdentification.git data/RecoEgamma/PhotonIdentification/data
+    cd data/RecoEgamma/PhotonIdentification/data
+    git checkout CMSSW_9_4_0_pre3_TnP
+    cd $RELEASE/external
+    cd slc6_amd64_gcc630/
+    git clone https://github.com/lsoffi/RecoEgamma-ElectronIdentification.git data/RecoEgamma/ElectronIdentification/data
+    cd data/RecoEgamma/ElectronIdentification/data
+    git checkout CMSSW_9_4_0_pre3_TnP
+    # Go back to the src/
+    cd $RELEASE/src
+
 fi
 
 if [ $MODE = "limits" ] ; then
@@ -117,7 +147,7 @@ git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-utilities
 git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
 # Recoil Corrections
-if [ $MODE = "prod" -o $MODE = "limits" ] ; then
+if [ $MODE = "prod" -o $MODE = "prod17" -o $MODE = "limits" ] ; then
     git clone https://github.com/CMS-HTT/RecoilCorrections.git  HTT-utilities/RecoilCorrections
 fi
 
@@ -135,6 +165,18 @@ if [ $MODE = "prod" ] ; then
     cd ..
     cd hh-bbtautau
     git checkout ana_v2
+    cd ..
+fi
+
+if [ $MODE = "prod17" ] ; then
+    cd AnalysisTools
+    git checkout master
+    cd ..
+    cd h-tautau
+    git checkout prod_v4_2017
+    cd ..
+    cd hh-bbtautau
+    git checkout ana_v4
     cd ..
 fi
 
@@ -159,6 +201,6 @@ fi
 # Prepare analysis working area
 ./AnalysisTools/Run/install.sh ../build AnalysisTools h-tautau hh-bbtautau
 
-if [ $MODE = "prod" -o $MODE = "limits" ] ; then
+if [ $MODE = "prod" -o $MODE = "prod17" -o $MODE = "limits" ] ; then
     scram b -j$N_JOBS
 fi
