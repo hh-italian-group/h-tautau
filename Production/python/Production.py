@@ -139,13 +139,16 @@ switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps
 switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 
 # define which IDs we want to produce
-id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_Trig_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff' ]
+id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
+               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
 
 #add them to the VID producer
 for idmod in id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+
+tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
+tauIdConfig.tauId_calculation_2017(process)
+#from h-tautau.Production.TauID_2017 import *
 #------------
 
 ### Top gen level info
@@ -193,9 +196,9 @@ for channel in channels:
     ))
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
-        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
-        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90'),
-        eleCutBasedVeto         = cms.InputTag('egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto'),
+        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80'),
+        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90'),
+        eleCutBasedVeto         = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wpLoose'),
         tauSrc                  = cms.InputTag('slimmedTaus'),
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
@@ -232,6 +235,8 @@ for channel in channels:
 process.p = cms.Path(
     process.egmGsfElectronIDSequence *
     process.electronMVAValueMapProducer *
+    process.rerunMvaIsolation2SeqRun2 *
+    process.NewTauIDsEmbedded *
     process.JECsequence *
     process.fullPatMetSequence *
     process.BadPFMuonFilter *
