@@ -43,10 +43,11 @@ ENUM_NAMES(MetType) = {
     { MetType::PF, "PF" }, { MetType::MVA, "MVA" }, { MetType::PUPPI, "PUPPI" }
 };
 
-enum class Period { Run2015, Run2016 };
+enum class Period { Run2015, Run2016, Run2017 };
 ENUM_NAMES(Period) = {
     { Period::Run2015, "Run2015" },
-    { Period::Run2016, "Run2016" }
+    { Period::Run2016, "Run2016" },
+    { Period::Run2017, "Run2017" }
 };
 
 enum class GenMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };

@@ -33,6 +33,16 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 #define JET_COMMON_DATA(col) \
     JVAR(LorentzVectorE, p4, col) /* Jet 4-momentum */ \
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
+    JVAR(Float_t, deepCsv_udsg, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepCsv_b, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepCsv_c, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepCsv_bb, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepFlavour_uds, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepFlavour_g, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepFlavour_b, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepFlavour_lepb, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepFlavour_c, col) /* Jet deepCSV value */ \
+    JVAR(Float_t, deepFlavour_bb, col) /* Jet deepCSV value */ \
     /**/
 
 #define JET_DATA(col) \
