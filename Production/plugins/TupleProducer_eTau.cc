@@ -124,7 +124,7 @@ void TupleProducer_eTau::SelectZElectron(const ElectronCandidate& electron, Cutt
     cut(electron_dxy < dxy, "dxy", electron_dxy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const bool veto  = (*ele_cutBased_veto)[electron.getPtr()];
+    const bool veto  = (*loose_id_veto)[electron.getPtr()];
 //    const bool veto  = SelectSpring15VetoElectron(*electron);
     cut(veto, "cut_based_veto");
     cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
@@ -138,7 +138,9 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     cut(true, "gt0_ele_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     double pt_cut = pt;
-    if( productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::ETau::electronID::pt;
+    if( productionMode == ProductionMode::hh) {
+        pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::ETau::electronID::pt : cuts::hh_bbtautau_2016::ETau::electronID::pt;
+    }
     else if(productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::electronID::pt;
     else if(productionMode == ProductionMode::h_tt_sm) pt_cut = cuts::H_tautau_2016_sm::ETau::electronID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
@@ -165,7 +167,9 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 
     cut(true, "gt0_tau_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    const double pt_cut = productionMode == ProductionMode::h_tt_mssm ?  cuts::H_tautau_2016_mssm::ETau::tauID::pt : pt;
+    double pt_cut = pt;
+    if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::tauID::pt;
+    if (period == analysis::Period::Run2017) pt_cut = cuts::hh_bbtautau_2017::ETau::tauID::pt;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     const auto dmFinding = tau->tauID("decayModeFinding");

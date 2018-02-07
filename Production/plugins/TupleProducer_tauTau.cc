@@ -72,7 +72,8 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 
     cut(true, "gt0_tau_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    cut(p4.Pt() > pt, "pt", p4.Pt());
+    double pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::pt : cuts::H_tautau_2016::TauTau::tauID::pt ;
+    cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     const auto dmFinding = tau->tauID("decayModeFinding");
     cut(dmFinding > decayModeFinding, "oldDecayMode", dmFinding);

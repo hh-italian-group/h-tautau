@@ -5,7 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 namespace cuts {
-namespace hh_bbtautau_2016 {
+namespace hh_bbtautau_2017 {
 
 constexpr double DeltaR_betweenSignalObjects = 0.1; // > Decreased to not loose efficiency for high mX.
 
@@ -18,6 +18,7 @@ namespace MuTau {
     }
 
     namespace tauID {
+        constexpr double pt = 25; // > to be fixed
         // againstElectronVLooseMVA6 and againstMuonTight3 should be applied at the tuple production level.
     }
 
@@ -35,10 +36,17 @@ namespace ETau {
     }
 
     namespace tauID {
+        constexpr double pt = 35; // > to be fixed
         // againstElectronTightMVA6 and againstMuonLoose3 should be applied at the tuple production level.
     }
 
     // ZeeVeto should not be applied.
+}
+    
+namespace TauTau {
+    namespace tauID {
+        constexpr double pt = 45; // > to be fixed
+    }
 }
 
 namespace MuMu {

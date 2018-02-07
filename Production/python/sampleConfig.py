@@ -8,6 +8,12 @@ import FWCore.ParameterSet.Config as cms
 mcSampleTypes = Set([ 'Summer16MC', 'Fall17MC' ])
 dataSampleTypes = Set([ 'Run2016' , 'Run2017' ])
 
+periodDict = { 'Summer16MC' : 'Run2016',
+               'Run2016' : 'Run2016',
+               'Fall17MC' : 'Run2017',
+               'Run2017' : 'Run2017'
+               }
+
 hltPaths_eTau_Run2016 = cms.VPSet(
     cms.PSet( pattern = cms.string("HLT_Ele23_WPLoose_Gsf_v"),
               nLegs = cms.untracked.uint32(1),
@@ -466,3 +472,9 @@ def GetHltPaths(channelName, sampleType):
         print "ERROR: no HLT paths found for sample type '{}' for channel '{}'.".format(sampleType, channel)
         sys.exit(1)
     return hltPaths[channelName][sampleType]
+
+def GetPeriod(sampleType):
+    if sampleType not in periodDict:
+        print "ERROR: unknown sample type = '{}'".format(sampleType)
+        sys.exit(1)
+    return periodDict[sampleType]

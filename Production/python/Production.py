@@ -54,6 +54,7 @@ options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
+period = sampleConfig.GetPeriod(options.sampleType)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -198,7 +199,7 @@ for channel in channels:
         electronSrc             = cms.InputTag('slimmedElectrons'),
         eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80'),
         eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90'),
-        eleCutBasedVeto         = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wpLoose'),
+        eleLooseIdMap         = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wpLoose'),
         tauSrc                  = cms.InputTag('slimmedTaus'),
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
@@ -226,6 +227,7 @@ for channel in channels:
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
+        period                  = cms.string(period),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
