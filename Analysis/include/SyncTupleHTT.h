@@ -38,6 +38,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     LVAR(Float_t, byIsolationMVA3oldDMwoLTraw, pref) \
     LVAR(Float_t, byIsolationMVA3newDMwLTraw, pref) \
     LVAR(Float_t, byIsolationMVA3oldDMwLTraw, pref) \
+    LVAR(Float_t, byIsolationMVArun2v1DBoldDMwLTrawNew, pref) \
     LVAR(Float_t, chargedIsoPtSum, pref) \
     LVAR(Float_t, decayModeFindingOldDMs, pref) \
     LVAR(Float_t, neutralIsoPtSum, pref) \
@@ -164,8 +165,8 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-    template<typename FirstLeg, typename SecondLeg>
-    void FillSyncTuple(analysis::EventInfo<FirstLeg, SecondLeg>& event, htt_sync::SyncTuple& sync, analysis::Period& run_period)
+//    template<typename FirstLeg, typename SecondLeg> //analysis::EventInfo<FirstLeg, SecondLeg>& event
+    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -212,6 +213,7 @@ namespace htt_sync {
         sync().byIsolationMVA3newDMwLTraw_1 = GetTauID(1, "byIsolationMVA3newDMwLTraw");
         sync().byIsolationMVA3oldDMwLTraw_1 = GetTauID(1, "byIsolationMVA3oldDMwLTraw");
         sync().decayModeFindingOldDMs_1 = GetTauID(1, "decayModeFindingOldDMs");
+        if (run_period == analysis::Period::Run2017) sync().byIsolationMVArun2v1DBoldDMwLTrawNew_1 = GetTauID(1, "byIsolationMVArun2v1DBoldDMwLTrawNew");
 
         sync().pt_2 = event->p4_2.Pt();
         sync().phi_2 = event->p4_2.Phi();
@@ -236,6 +238,7 @@ namespace htt_sync {
         sync().byIsolationMVA3newDMwLTraw_2 = GetTauID(2, "byIsolationMVA3newDMwLTraw");
         sync().byIsolationMVA3oldDMwLTraw_2 = GetTauID(2, "byIsolationMVA3oldDMwLTraw");
         sync().decayModeFindingOldDMs_2 = GetTauID(2, "decayModeFindingOldDMs");
+        if (run_period == analysis::Period::Run2017) sync().byIsolationMVArun2v1DBoldDMwLTrawNew_2 = GetTauID(2, "byIsolationMVArun2v1DBoldDMwLTrawNew");
 
         sync().pt_tt = (event->p4_1 + event->p4_2 + event->pfMET_p4).Pt();
         sync().m_vis = (event->p4_1 + event->p4_2).M();
@@ -264,7 +267,7 @@ namespace htt_sync {
             bjets_csv = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
         }
         
-        if (run_period == analysis::Period::Run2016){
+        if (run_period == analysis::Period::Run2017){
             jets_pt20 = event.SelectJets(20, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             jets_pt30 = event.SelectJets(30, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, analysis::JetOrdering::Pt);
@@ -433,10 +436,10 @@ namespace htt_sync {
             sync().fatJet_n_subjettiness_tau3 = default_value;
         }
 
-        sync().topWeight = event->weight_top_pt;
-        sync().shapeWeight = event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
-                event->weight_wjets * event->weight_xs;
-        sync().btagWeight = event->weight_btag;
+        sync().topWeight = static_cast<Float_t>(event->weight_top_pt);
+        sync().shapeWeight = static_cast<Float_t>(event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
+                                                  event->weight_wjets*event->weight_xs);
+        sync().btagWeight = static_cast<Float_t>(event->weight_btag);
 
         sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
         sync().lhe_n_partons = static_cast<int>(event->lhe_n_partons);
