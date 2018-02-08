@@ -734,16 +734,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             const LorentzVector& p4 = jet.GetMomentum();
             eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-            eventTuple().jets_deepCsv_udsg.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probudsg")); //new
             eventTuple().jets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
-            eventTuple().jets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
-            eventTuple().jets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
-            eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds")); //new
-            eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg")); //new
-            eventTuple().jets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb")); //new
-            eventTuple().jets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb")); //new
-            eventTuple().jets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc")); //new
-            eventTuple().jets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb")); //new
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
             eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
