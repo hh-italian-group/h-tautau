@@ -62,7 +62,7 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
 };
 
 
-enum class JetOrdering { NoOrdering, Pt, CSV };
+enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
 
 class SummaryInfo {
 public:
@@ -112,7 +112,7 @@ public:
     using HiggsBBCandidate = CompositCandidate<JetCandidate, JetCandidate>;
 
     static JetPair SelectBjetPair(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
-                                   double eta_cut = std::numeric_limits<double>::lowest(),
+                                   double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
         const auto orderer = [&](size_t j1, size_t j2) -> bool {
@@ -120,6 +120,8 @@ public:
                 return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
             if(jet_ordering == JetOrdering::CSV)
                 return event.jets_csv.at(j1) > event.jets_csv.at(j2);
+            if(jet_ordering == JetOrdering::DeepCSV)
+                return event.jets_deepCsv_b.at(j1) > event.jets_deepCsv_b.at(j2);
             throw exception("Unsupported jet ordering for b-jet pair selection.");
         };
 
@@ -183,13 +185,15 @@ public:
     }
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
-                             double eta_cut = std::numeric_limits<double>::lowest(),
+                             double eta_cut = std::numeric_limits<double>::max(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
                              JetOrdering jet_ordering = JetOrdering::CSV)
     {
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
                 return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
+            if(jet_ordering == JetOrdering::DeepCSV)
+                return j1->deepcsv() > j2->deepcsv();
             return j1->csv() > j2->csv();
         };
 
