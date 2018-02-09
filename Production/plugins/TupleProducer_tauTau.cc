@@ -14,21 +14,16 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     if(applyTriggerMatch) {
         triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
         cut(selection.triggerResults.AnyAccpet(), "trigger");
-        std::cout << "Done trigger match" << std::endl;
     }
 
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");
-    std::cout << "Selected taus" << std::endl;
 
     const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
             : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
-    std::cout << "DeltaR_betweenSignalObjects: " << DeltaR_betweenSignalObjects << std::endl;
     auto higgses = FindCompatibleObjects(selectedTaus, selectedTaus, DeltaR_betweenSignalObjects, "H_tau_tau");
-    std::cout << "higgses: " << higgses.size() << std::endl;
     cut(higgses.size(), "tau_tau_pair");
-    std::cout << "Selected HIggs tautau" << std::endl;
 
     std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
     auto selected_higgs = higgses.front();
@@ -40,20 +35,17 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
                                          cuts::H_tautau_2016::DeltaR_triggerMatch, true);
 
     selection.SetHiggsCandidate(selected_higgs);
-    std::cout << "SetHiggs candidate" << std::endl;
 
     //Third-Lepton Veto
     const auto electronVetoCollection = CollectVetoElectrons();
     const auto muonVetoCollection = CollectVetoMuons();
     selection.electronVeto = electronVetoCollection.size();
     selection.muonVeto = muonVetoCollection.size();
-    std::cout << "After third lepton veto" << std::endl;
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
     if(runSVfit)
         selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
     FillEventTuple(selection);
-    std::cout << "Filled event tuple" << std::endl;
 
     if(eventEnergyScale == analysis::EventEnergyScale::Central)
         previous_selection = SelectionResultsPtr(new SelectionResults(selection));

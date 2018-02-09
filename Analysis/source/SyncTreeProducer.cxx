@@ -75,19 +75,14 @@ public:
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            std::cout << "Energy scale Central" << std::endl;
             if(run_period == Period::Run2016 && args.sample_type() == "data" && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
-            std::cout << "before trigger match" << std::endl;
             if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
-            std::cout << "after trigger match" << std::endl;
 
             if(syncMode == SyncMode::HH) {
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
-                std::cout << "after vetoes" << std::endl;
             }
 
             htt_sync::FillSyncTuple(event,sync,run_period);
-            std::cout << "Filled SyncTuple" << std::endl;
         }
 
         sync.Write();
