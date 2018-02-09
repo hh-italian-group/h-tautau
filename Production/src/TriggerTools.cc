@@ -65,8 +65,6 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
             if(!triggerObject.hasFilterLabel(filter)) return false;
         return true;
     };
-
-//    std::cout << "Candidate momentum: Pt= " << candidateMomentum.Pt() << ", Eta= " << candidateMomentum.Eta() << ", Phi= " << candidateMomentum.Phi() << ", M= " << candidateMomentum.M() << std::endl;
     
     TriggerObjectSet matches;
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
@@ -82,14 +80,11 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
         const auto& paths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& path : paths) {
             if(descriptors.PatternMatch(path, path_index)) {
-//                std::cout << "Found match" << std::endl;
-//                std::cout << "Trigger object momentum: Pt= " << triggerObject.p4().Pt() << ", Eta= " << triggerObject.p4().Eta() << ", Phi= " << triggerObject.p4().Phi() << ", M= " << triggerObject.p4().M() << std::endl;
                 matches.insert(&triggerObject);
                 break;
             }
         }
     }
-    std::cout << "leg_id: " << leg_id << std::endl;
     return matches;
 }
 

@@ -100,7 +100,6 @@ public:
             for(size_t flip = 0; !match_found && flip < max_flip; ++flip) {
                 std::map<size_t, TriggerObjectSet> matches;
                 const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
-                std::cout << "first leg: " << first << ", second leg: " << second << std::endl;
                 matches[first] = FindMatchingTriggerObjects(descriptors, n, candidate.GetFirstDaughter(), first,
                                                             deltaR_Limit);
                 matches[second] = FindMatchingTriggerObjects(descriptors, n, candidate.GetSecondDaughter(), second,
@@ -110,9 +109,7 @@ public:
                 std::set_union(matches[1].begin(), matches[1].end(), matches[2].begin(), matches[2].end(),
                                std::back_inserter(comb_match));
 
-                std::cout << "comb_match.size(): " << comb_match.size() << std::endl;
                 match_found = matches[1].size() >= 1 && matches[2].size() >= n_legs - 1 && comb_match.size() >= n_legs;
-                std::cout << "match_found: " << match_found << std::endl;
             }
             results.SetMatch(n, match_found);
         }

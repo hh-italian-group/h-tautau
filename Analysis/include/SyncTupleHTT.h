@@ -165,7 +165,6 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-//    template<typename FirstLeg, typename SecondLeg> //analysis::EventInfo<FirstLeg, SecondLeg>& event
     void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period)
     {
 

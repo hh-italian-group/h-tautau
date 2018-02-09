@@ -75,7 +75,7 @@ public:
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            if(run_period == Period::Run2016 && args.sample_type() == "data" && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
+            if(run_period == Period::Run2016 && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
             if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
 
             if(syncMode == SyncMode::HH) {
