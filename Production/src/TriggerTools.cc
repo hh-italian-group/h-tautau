@@ -65,23 +65,19 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
             if(!triggerObject.hasFilterLabel(filter)) return false;
         return true;
     };
-
+    
     TriggerObjectSet matches;
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
-    //for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-    for (pat::TriggerObjectStandAlone triggerObject : *triggerObjects) {
+    for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
         if(!hasExpectedType(triggerObject)) continue;
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
-        //pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
-        //unpackedTriggerObject.unpackPathNames(triggerNames);
-        triggerObject.unpackPathNames(triggerNames);
-        triggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
-        //if(!passFilters(unpackedTriggerObject)) continue;
-        if(!passFilters(triggerObject)) continue;
-        //const auto& paths = unpackedTriggerObject.pathNames(true, true);
-        const auto& paths = triggerObject.pathNames(true, true);
+        pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
+        unpackedTriggerObject.unpackPathNames(triggerNames);
+        unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
+        if(!passFilters(unpackedTriggerObject)) continue;
+        const auto& paths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& path : paths) {
             if(descriptors.PatternMatch(path, path_index)) {
                 matches.insert(&triggerObject);
@@ -89,7 +85,6 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
             }
         }
     }
-
     return matches;
 }
 

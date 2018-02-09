@@ -16,6 +16,7 @@ struct Arguments {
     REQ_ARG(std::string, mode);
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
+    REQ_ARG(std::string, period);
     REQ_ARG(std::string, output_file);
     OPT_ARG(std::string, sample_type, "signal");
 };
@@ -43,6 +44,7 @@ public:
     {
         std::istringstream ss_mode(args.mode());
         ss_mode >> syncMode;
+        run_period = analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(args.period());
     }
 
     void Run()
@@ -73,14 +75,14 @@ public:
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            if(args.sample_type() == "data" && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel)))
-                continue;
+            if(run_period == Period::Run2016 && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
+            if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
 
             if(syncMode == SyncMode::HH) {
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
             }
 
-            htt_sync::FillSyncTuple(event,sync);
+            htt_sync::FillSyncTuple(event,sync,run_period);
         }
 
         sync.Write();
@@ -89,6 +91,7 @@ public:
 private:
     Arguments args;
     SyncMode syncMode;
+    analysis::Period run_period;
     mc_corrections::EventWeights eventWeights;
 };
 

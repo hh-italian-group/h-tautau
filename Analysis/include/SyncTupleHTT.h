@@ -7,6 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "EventInfo.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "AnalysisTypes.h"
 
 #define LVAR(type, name, pref) VAR(type, name##_##pref)
 #define JVAR(type, name, suff, pref) VAR(type, suff##name##_##pref)
@@ -37,6 +38,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     LVAR(Float_t, byIsolationMVA3oldDMwoLTraw, pref) \
     LVAR(Float_t, byIsolationMVA3newDMwLTraw, pref) \
     LVAR(Float_t, byIsolationMVA3oldDMwLTraw, pref) \
+    LVAR(Float_t, byIsolationMVArun2v1DBoldDMwLTrawNew, pref) \
     LVAR(Float_t, chargedIsoPtSum, pref) \
     LVAR(Float_t, decayModeFindingOldDMs, pref) \
     LVAR(Float_t, neutralIsoPtSum, pref) \
@@ -52,6 +54,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, rawf, suff, pref) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     JVAR(Float_t, mva, suff, pref) /* pu Jet id score */ \
     JVAR(Float_t, csv, suff, pref) \
+    JVAR(Float_t, deepcsv, suff, pref) \
     /**/
 
 #define SYNC_DATA() \
@@ -162,8 +165,7 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-    template<typename FirstLeg, typename SecondLeg>
-    void FillSyncTuple(analysis::EventInfo<FirstLeg, SecondLeg>& event, htt_sync::SyncTuple& sync)
+    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -210,6 +212,7 @@ namespace htt_sync {
         sync().byIsolationMVA3newDMwLTraw_1 = GetTauID(1, "byIsolationMVA3newDMwLTraw");
         sync().byIsolationMVA3oldDMwLTraw_1 = GetTauID(1, "byIsolationMVA3oldDMwLTraw");
         sync().decayModeFindingOldDMs_1 = GetTauID(1, "decayModeFindingOldDMs");
+        if (run_period == analysis::Period::Run2017) sync().byIsolationMVArun2v1DBoldDMwLTrawNew_1 = GetTauID(1, "byIsolationMVArun2v1DBoldDMwLTrawNew");
 
         sync().pt_2 = event->p4_2.Pt();
         sync().phi_2 = event->p4_2.Phi();
@@ -234,6 +237,7 @@ namespace htt_sync {
         sync().byIsolationMVA3newDMwLTraw_2 = GetTauID(2, "byIsolationMVA3newDMwLTraw");
         sync().byIsolationMVA3oldDMwLTraw_2 = GetTauID(2, "byIsolationMVA3oldDMwLTraw");
         sync().decayModeFindingOldDMs_2 = GetTauID(2, "decayModeFindingOldDMs");
+        if (run_period == analysis::Period::Run2017) sync().byIsolationMVArun2v1DBoldDMwLTrawNew_2 = GetTauID(2, "byIsolationMVArun2v1DBoldDMwLTrawNew");
 
         sync().pt_tt = (event->p4_1 + event->p4_2 + event->pfMET_p4).Pt();
         sync().m_vis = (event->p4_1 + event->p4_2).M();
@@ -249,10 +253,25 @@ namespace htt_sync {
         sync().metcov10 = static_cast<float>(event->pfMET_cov[1][0]);
         sync().metcov11 = static_cast<float>(event->pfMET_cov[1][1]);
 
-        const auto jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-        const auto jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-        const auto bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, analysis::JetOrdering::Pt);
-        const auto bjets_csv = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
+        analysis::EventInfoBase::JetCollection jets_pt20;
+        analysis::EventInfoBase::JetCollection jets_pt30;
+        analysis::EventInfoBase::JetCollection bjets_pt;
+        analysis::EventInfoBase::JetCollection bjets_csv;
+        analysis::EventInfoBase::JetCollection bjets_deepcsv;
+        
+        if (run_period == analysis::Period::Run2016){
+            jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, analysis::JetOrdering::Pt);
+            bjets_csv = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
+        }
+        
+        if (run_period == analysis::Period::Run2017){
+            jets_pt20 = event.SelectJets(20, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            jets_pt30 = event.SelectJets(30, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, analysis::JetOrdering::Pt);
+            bjets_deepcsv = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::DeepCSV);
+        }
 
         if(jets_pt20.size() >= 2) {
             sync().mjj = static_cast<float>((jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M());
@@ -301,36 +320,72 @@ namespace htt_sync {
         sync().extraelec_veto = event->extraelec_veto;
 
 
-        sync().nbjets = static_cast<int>(bjets_csv.size());
-        if(bjets_csv.size() >= 1) {
-            sync().bjet_pt_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Pt());
-            sync().bjet_eta_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Eta());
-            sync().bjet_phi_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Phi());
-            sync().bjet_rawf_1 = bjets_csv.at(0)->rawf();
-            sync().bjet_mva_1 = bjets_csv.at(0)->mva();
-            sync().bjet_csv_1 = bjets_csv.at(0)->csv();
-        } else {
-            sync().bjet_pt_1 = default_value;
-            sync().bjet_eta_1 = default_value;
-            sync().bjet_phi_1 = default_value;
-            sync().bjet_rawf_1 = default_value;
-            sync().bjet_mva_1 = default_value;
-            sync().bjet_csv_1 = default_value;
+        if (run_period == analysis::Period::Run2016){
+            sync().nbjets = static_cast<int>(bjets_csv.size());
+            if(bjets_csv.size() >= 1) {
+                sync().bjet_pt_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Pt());
+                sync().bjet_eta_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Eta());
+                sync().bjet_phi_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Phi());
+                sync().bjet_rawf_1 = bjets_csv.at(0)->rawf();
+                sync().bjet_mva_1 = bjets_csv.at(0)->mva();
+                sync().bjet_csv_1 = bjets_csv.at(0)->csv();
+            } else {
+                sync().bjet_pt_1 = default_value;
+                sync().bjet_eta_1 = default_value;
+                sync().bjet_phi_1 = default_value;
+                sync().bjet_rawf_1 = default_value;
+                sync().bjet_mva_1 = default_value;
+                sync().bjet_csv_1 = default_value;
+            }
+            if(bjets_csv.size() >= 2) {
+                sync().bjet_pt_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Pt());
+                sync().bjet_eta_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Eta());
+                sync().bjet_phi_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Phi());
+                sync().bjet_rawf_2 = bjets_csv.at(1)->rawf();
+                sync().bjet_mva_2 = bjets_csv.at(1)->mva();
+                sync().bjet_csv_2 = bjets_csv.at(1)->csv();
+            } else {
+                sync().bjet_pt_2 = default_value;
+                sync().bjet_eta_2 = default_value;
+                sync().bjet_phi_2 = default_value;
+                sync().bjet_rawf_2 = default_value;
+                sync().bjet_mva_2 = default_value;
+                sync().bjet_csv_2 = default_value;
+            }
         }
-        if(bjets_csv.size() >= 2) {
-            sync().bjet_pt_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Pt());
-            sync().bjet_eta_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Eta());
-            sync().bjet_phi_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Phi());
-            sync().bjet_rawf_2 = bjets_csv.at(1)->rawf();
-            sync().bjet_mva_2 = bjets_csv.at(1)->mva();
-            sync().bjet_csv_2 = bjets_csv.at(1)->csv();
-        } else {
-            sync().bjet_pt_2 = default_value;
-            sync().bjet_eta_2 = default_value;
-            sync().bjet_phi_2 = default_value;
-            sync().bjet_rawf_2 = default_value;
-            sync().bjet_mva_2 = default_value;
-            sync().bjet_csv_2 = default_value;
+        
+        if (run_period == analysis::Period::Run2017){
+            sync().nbjets = static_cast<int>(bjets_deepcsv.size());
+            if(bjets_deepcsv.size() >= 1) {
+                sync().bjet_pt_1 = static_cast<float>(bjets_deepcsv.at(0).GetMomentum().Pt());
+                sync().bjet_eta_1 = static_cast<float>(bjets_deepcsv.at(0).GetMomentum().Eta());
+                sync().bjet_phi_1 = static_cast<float>(bjets_deepcsv.at(0).GetMomentum().Phi());
+                sync().bjet_rawf_1 = bjets_deepcsv.at(0)->rawf();
+                sync().bjet_mva_1 = bjets_deepcsv.at(0)->mva();
+                sync().bjet_deepcsv_1 = bjets_deepcsv.at(0)->deepcsv();
+            } else {
+                sync().bjet_pt_1 = default_value;
+                sync().bjet_eta_1 = default_value;
+                sync().bjet_phi_1 = default_value;
+                sync().bjet_rawf_1 = default_value;
+                sync().bjet_mva_1 = default_value;
+                sync().bjet_deepcsv_1 = default_value;
+            }
+            if(bjets_deepcsv.size() >= 2) {
+                sync().bjet_pt_2 = static_cast<float>(bjets_deepcsv.at(1).GetMomentum().Pt());
+                sync().bjet_eta_2 = static_cast<float>(bjets_deepcsv.at(1).GetMomentum().Eta());
+                sync().bjet_phi_2 = static_cast<float>(bjets_deepcsv.at(1).GetMomentum().Phi());
+                sync().bjet_rawf_2 = bjets_deepcsv.at(1)->rawf();
+                sync().bjet_mva_2 = bjets_deepcsv.at(1)->mva();
+                sync().bjet_deepcsv_2 = bjets_deepcsv.at(1)->deepcsv();
+            } else {
+                sync().bjet_pt_2 = default_value;
+                sync().bjet_eta_2 = default_value;
+                sync().bjet_phi_2 = default_value;
+                sync().bjet_rawf_2 = default_value;
+                sync().bjet_mva_2 = default_value;
+                sync().bjet_deepcsv_2 = default_value;
+            }
         }
 
 
@@ -380,10 +435,10 @@ namespace htt_sync {
             sync().fatJet_n_subjettiness_tau3 = default_value;
         }
 
-        sync().topWeight = event->weight_top_pt;
-        sync().shapeWeight = event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
-                event->weight_wjets * event->weight_xs;
-        sync().btagWeight = event->weight_btag;
+        sync().topWeight = static_cast<Float_t>(event->weight_top_pt);
+        sync().shapeWeight = static_cast<Float_t>(event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
+                                                  event->weight_wjets*event->weight_xs);
+        sync().btagWeight = static_cast<Float_t>(event->weight_btag);
 
         sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
         sync().lhe_n_partons = static_cast<int>(event->lhe_n_partons);
