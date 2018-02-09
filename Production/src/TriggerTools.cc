@@ -66,6 +66,8 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
         return true;
     };
 
+    std::cout << "Candidate momentum: Pt= " << candidateMomentum.Pt() << ", Eta= " << candidateMomentum.Eta() << ", Phi= " << candidateMomentum.Phi() << ", M= " << candidateMomentum.M() << std::endl;
+    
     TriggerObjectSet matches;
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
@@ -74,22 +76,27 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     for (pat::TriggerObjectStandAlone triggerObject : *triggerObjects) {
         if(!hasExpectedType(triggerObject)) continue;
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
+        std::cout << "Matched in DR" << std::endl;
         //pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         //unpackedTriggerObject.unpackPathNames(triggerNames);
         triggerObject.unpackPathNames(triggerNames);
         triggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
         //if(!passFilters(unpackedTriggerObject)) continue;
         if(!passFilters(triggerObject)) continue;
+        std::cout << "Passed Filters" << std::endl;
         //const auto& paths = unpackedTriggerObject.pathNames(true, true);
         const auto& paths = triggerObject.pathNames(true, true);
         for(const auto& path : paths) {
+            std::cout << "path: " << path << std::endl;
             if(descriptors.PatternMatch(path, path_index)) {
+                std::cout << "Found match" << std::endl;
+                std::cout << "Trigger object momentum: Pt= " << triggerObject.p4().Pt() << ", Eta= " << triggerObject.p4().Eta() << ", Phi= " << triggerObject.p4().Phi() << ", M= " << triggerObject.p4().M() << std::endl;
                 matches.insert(&triggerObject);
                 break;
             }
         }
     }
-
+    std::cout << "leg_id: " << leg_id << std::endl;
     return matches;
 }
 
