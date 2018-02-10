@@ -33,12 +33,10 @@ class PileUpCalc_t {
 public:
     using PileUpWeight = analysis::mc_corrections::PileUpWeight;
 
-    PileUpCalc_t(const Arguments& _args) : pu_weight(args.input_weight_file(), args.weight_hist_name(), 60, 0),
-        args(_args), output(root_ext::CreateRootFile(args.output_file())),
-        anaData(output)
-
+    PileUpCalc_t(const Arguments& _args) :
+        args(_args), pu_weight(args.input_weight_file(), args.weight_hist_name(), 60, 0),
+        output(root_ext::CreateRootFile(args.output_file())), anaData(output)
     {
-
     }
 
 public:

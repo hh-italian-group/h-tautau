@@ -110,6 +110,8 @@ public:
     using JetCollection = std::vector<JetCandidate>;
     using FatJetCollection = std::vector<FatJetCandidate>;
     using HiggsBBCandidate = CompositCandidate<JetCandidate, JetCandidate>;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
 
     static JetPair SelectBjetPair(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
                                    double eta_cut = std::numeric_limits<double>::lowest(),
@@ -149,6 +151,9 @@ public:
         triggerResults.SetMatchBits(event->trigger_matches);
     }
 
+    EventInfoBase(const EventInfoBase&) = delete;
+    EventInfoBase& operator=(const EventInfoBase&) = delete;
+
     virtual ~EventInfoBase() {}
 
     const Event& operator*() const { return *event; }
@@ -172,6 +177,7 @@ public:
 
     const JetCollection& GetJets()
     {
+        Lock lock(mutex);
         if(!jets) {
             jets = std::shared_ptr<JetCollection>(new JetCollection());
             for(size_t n = 0; n < GetNJets(); ++n) {
@@ -187,6 +193,7 @@ public:
                              double csv_cut = std::numeric_limits<double>::lowest(),
                              JetOrdering jet_ordering = JetOrdering::CSV)
     {
+        Lock lock(mutex);
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
                 return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
@@ -208,6 +215,7 @@ public:
 
     const FatJetCollection& GetFatJets()
     {
+        Lock lock(mutex);
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
             for(size_t n = 0; n < GetNFatJets(); ++n) {
@@ -222,6 +230,7 @@ public:
 
     const HiggsBBCandidate& GetHiggsBB()
     {
+        Lock lock(mutex);
         if(!HasBjetPair())
             throw exception("Can't create H->bb candidate.");
         if(!higgs_bb) {
@@ -234,6 +243,7 @@ public:
 
     const MET& GetMET()
     {
+        Lock lock(mutex);
         if(!met) {
             tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
             met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
@@ -243,6 +253,7 @@ public:
 
     const kin_fit::FitResults& GetKinFitResults()
     {
+        Lock lock(mutex);
         if(!HasBjetPair())
             throw exception("Can't retrieve KinFit results.");
         if(!kinfit_results) {
@@ -263,6 +274,7 @@ public:
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET)
     {
+        Lock lock(mutex);
         if(useSVfit && addMET)
             throw exception("Can't add MET and with SVfit applied.");
         LorentzVector p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum();
@@ -273,6 +285,7 @@ public:
 
     double GetMT2()
     {
+        Lock lock(mutex);
         if(!mt2.is_initialized()) {
             mt2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
                                                GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
@@ -282,6 +295,7 @@ public:
 
     const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut)
     {
+        Lock lock(mutex);
         using FatJet = ntuple::TupleFatJet;
         using SubJet = ntuple::TupleSubJet;
         if(!HasBjetPair()) return nullptr;
@@ -306,13 +320,19 @@ public:
         return nullptr;
     }
 
-    void SetMvaScore(double _mva_score) { mva_score = _mva_score; }
+    void SetMvaScore(double _mva_score)
+    {
+        Lock lock(mutex);
+        mva_score = _mva_score;
+    }
+
     double GetMvaScore() const { return mva_score; }
 
 protected:
     const Event* event;
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
+    Mutex mutex;
 
 private:
     EventIdentifier eventIdentifier;
@@ -355,6 +375,7 @@ public:
 
     const FirstLeg& GetFirstLeg()
     {
+        Lock lock(mutex);
         if(!leg1) {
             tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, 1));
             leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1, tuple_leg1->iso()));
@@ -364,6 +385,7 @@ public:
 
     const SecondLeg& GetSecondLeg()
     {
+        Lock lock(mutex);
         if(!leg2) {
             tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, 2));
             leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2, tuple_leg2->iso()));
@@ -380,6 +402,7 @@ public:
 
     const HiggsTTCandidate& GetHiggsTT(bool useSVfit)
     {
+        Lock lock(mutex);
         if(useSVfit) {
             if(!higgs_tt_sv) {
                 higgs_tt_sv = std::shared_ptr<HiggsTTCandidate>(
