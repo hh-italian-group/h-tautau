@@ -9,6 +9,16 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
+struct Legs{
+    std::string type;
+    double pt;
+    TriggerDescriptors::FilterVector filters;
+
+    Legs(const std::string _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
+        : type(_type), pt(_pt), filters(_filters) {}
+
+};
+
 class TriggerDescriptors {
 public:
     using Pattern = std::string;
