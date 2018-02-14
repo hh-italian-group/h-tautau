@@ -11,18 +11,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-struct Legs{
-    LegType type;
-    double pt;
-    TriggerDescriptors::FilterVector filters;
-
-    Legs(const std::string _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
-        : pt(_pt), filters(_filters) {
-        type = Parse<LegType>(_type);
-    }
-
-};
-
 class TriggerDescriptors {
 public:
     using Pattern = std::string;
@@ -30,6 +18,18 @@ public:
     using PatternContainer = std::vector<Pattern>;
     using FilterVector = std::vector<Filter>;
     using FilterContainer = std::map<size_t, FilterVector>;
+
+    struct Legs{
+        LegType type;
+        double pt;
+        FilterVector filters;
+
+        Legs(const std::string _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
+            : pt(_pt), filters(_filters) {
+            type = Parse<LegType>(_type);
+        }
+
+    };
 
     const PatternContainer& GetPatterns() const { return patterns; }
     size_t size() const { return patterns.size(); }
@@ -51,7 +51,7 @@ public:
     {
         static const FilterVector empty = {};
         for (unsigned n = 0; n < legs_info.size(); ++n){
-            const analysis::Legs& legs = legs_info.at(n);
+            const Legs& legs = legs_info.at(n);
             if(legs.type == analysis::Parse(leg_type))
                 return legs.filters;
         }
@@ -78,7 +78,7 @@ public:
 //    }
 
 
-    void Add(const Pattern& pattern, std::vector<analysis::Legs> legs)
+    void Add(const Pattern& pattern, std::vector<Legs> legs)
     {
         static const std::string regex_format = "^%1%[0-9]+$";
         if(pattern_indices.count(pattern))
@@ -124,7 +124,7 @@ private:
     PatternContainer patterns;
     std::vector<size_t> number_of_legs;
     std::vector<FilterContainer> filters;
-    std::vector<analysis::Legs> legs_info;
+    std::vector<Legs> legs_info;
     std::vector<boost::regex> regexes;
     std::map<Pattern, size_t> pattern_indices;
 };

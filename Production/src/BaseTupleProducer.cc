@@ -69,14 +69,14 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     for(const auto& hltPath : hltPaths) {
         const std::string pattern = hltPath.getParameter<std::string>("pattern");
         const std::vector<std::string> legs = hltPath.getUntrackedParameter<std::vector<std::string>>("legs", {});
-        std::vector<analysis::Legs> legs_vector;
+        std::vector<analysis::TriggerDescriptors::Legs> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
             const std::string type = leg_list.Get("type");
-            const double pt = leg_list.Get("pt");
+            const double pt = leg_list.Get<double>("pt");
             const std::string filter_str = leg_list.Get("filters");
             const analysis::TriggerDescriptors::FilterVector filters = analysis::SplitValueList(filter_str,false);
-            const analysis::Legs legs_struct(type,pt,filters);
+            const analysis::TriggerDescriptors::Legs legs_struct(type,pt,filters);
             legs_vector.push_back(legs_struct);
         }
 
