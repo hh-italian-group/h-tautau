@@ -85,7 +85,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
 //        analysis::TriggerDescriptors::FilterContainer filters;
 //        filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
 //        filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
-        triggerDescriptors.Add(pattern, nLegs, filters);
+        triggerDescriptors.Add(pattern, legs_vector);
     }
 
     if(runSVfit)

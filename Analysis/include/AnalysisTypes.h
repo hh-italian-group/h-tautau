@@ -17,6 +17,11 @@ const EnumNameMap<Channel> __Channel_names_latex("ChannelLatex", {
     { Channel::MuMu, "#mu#mu" }
 });
 
+enum class LegType { e = 0, mu = 1, tau = 2 };
+ENUM_NAMES(Type) = {
+    { LegType::e, "e" }, { LegType::mu, "mu" }, { LegType::tau, "tau" }
+};
+
 enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, TopPtUp = 5, TopPtDown = 6 };
 ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::Central, "Central" },

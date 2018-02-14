@@ -6,16 +6,20 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <bitset>
 #include <boost/regex.hpp>
 #include "AnalysisTools/Core/include/exception.h"
+#include "AnalysisTypes.h"
+#include "AnalysisTools/Core/include/TextIO.h"
 
 namespace analysis {
 
 struct Legs{
-    std::string type;
+    LegType type;
     double pt;
     TriggerDescriptors::FilterVector filters;
 
     Legs(const std::string _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
-        : type(_type), pt(_pt), filters(_filters) {}
+        : pt(_pt), filters(_filters) {
+        type = Parse<LegType>(_type);
+    }
 
 };
 
@@ -36,11 +40,22 @@ public:
         return filters.at(index);
     }
 
-    const FilterVector& GetFilters(size_t index, size_t leg_id) const
+//    const FilterVector& GetFilters(size_t index, size_t leg_id) const
+//    {
+//        static const FilterVector empty = {};
+//        const auto& f = GetFilters(index);
+//        return f.count(leg_id) ? f.at(leg_id) : empty;
+//    }
+
+    const FilterVector& GetFilters(const std::string& leg_type) const
     {
         static const FilterVector empty = {};
-        const auto& f = GetFilters(index);
-        return f.count(leg_id) ? f.at(leg_id) : empty;
+        for (unsigned n = 0; n < legs_info.size(); ++n){
+            const analysis::Legs& legs = legs_info.at(n);
+            if(legs.type == analysis::Parse(leg_type))
+                return legs.filters;
+        }
+        return empty;
     }
 
     size_t GetNumberOfLegs(size_t index) const
@@ -49,17 +64,33 @@ public:
         return number_of_legs.at(index);
     }
 
-    void Add(const Pattern& pattern, size_t n_legs, const FilterContainer& leg_filters)
+//    void Add(const Pattern& pattern, size_t n_legs, const FilterContainer& leg_filters)
+//    {
+//        static const std::string regex_format = "^%1%[0-9]+$";
+//        if(pattern_indices.count(pattern))
+//            throw exception("Duplicated trigger pattern '%1%'.") % pattern;
+//        pattern_indices[pattern] = patterns.size();
+//        patterns.push_back(pattern);
+//        number_of_legs.push_back(n_legs);
+//        filters.push_back(leg_filters);
+//        const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
+//        regexes.push_back(boost::regex(regex_str));
+//    }
+
+
+    void Add(const Pattern& pattern, std::vector<analysis::Legs> legs)
     {
         static const std::string regex_format = "^%1%[0-9]+$";
         if(pattern_indices.count(pattern))
             throw exception("Duplicated trigger pattern '%1%'.") % pattern;
         pattern_indices[pattern] = patterns.size();
         patterns.push_back(pattern);
-        number_of_legs.push_back(n_legs);
-        filters.push_back(leg_filters);
+        number_of_legs.push_back(legs.size());
         const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
         regexes.push_back(boost::regex(regex_str));
+        for (unsigned n = 0; n < legs.size(); ++n){
+            legs_info.push_back(legs.at(n));
+        }
     }
 
     bool PatternMatch(const std::string& path_name, size_t index) const
@@ -93,6 +124,7 @@ private:
     PatternContainer patterns;
     std::vector<size_t> number_of_legs;
     std::vector<FilterContainer> filters;
+    std::vector<analysis::Legs> legs_info;
     std::vector<boost::regex> regexes;
     std::map<Pattern, size_t> pattern_indices;
 };
