@@ -19,48 +19,38 @@ public:
     using FilterVector = std::vector<Filter>;
     using FilterContainer = std::map<size_t, FilterVector>;
 
-    struct Legs{
+    struct Leg{
         LegType type;
         double pt;
         FilterVector filters;
 
-        Legs(const LegType _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
+        Leg(const LegType _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
             : type(_type), pt(_pt), filters(_filters) { }
 
     };
 
     struct PatternStruct{
         Pattern pattern;
-        std::vector<TriggerDescriptors::Legs> legs_info;
-        std::vector<boost::regex> regexes;
+        std::vector<Leg> legs_info;
+        boost::regex regex;
 
-        PatternStruct(const Pattern _pattern, const std::vector<TriggerDescriptors::Legs> _legs_info)
+        PatternStruct(const Pattern _pattern, const std::vector<Leg> _legs_info)
             : pattern(_pattern), legs_info(_legs_info)
         {
             static const std::string regex_format = "^%1%[0-9]+$";
             const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
-            regexes.push_back(boost::regex(regex_str));
+            regex = boost::regex(regex_str);
         }
+
+        bool PatternMatch(const std::string& path_name) const
+        {
+            return boost::regex_match(path_name, regex);
+        }
+
 
     };
 
-
-    const FilterVector& GetFilters(const std::string& leg_type) const
-    {
-        static const FilterVector empty = {};
-        for (unsigned n = 0; n < legs_info.size(); ++n){
-            const Legs& legs = legs_info.at(n);
-            if(legs.type == analysis::Parse(leg_type))
-                return legs.filters;
-        }
-        return empty;
-    }
-
-    size_t GetNumberOfLegs(std::vector<Legs> legs) const
-    {
-        return legs.size();
-    }
-
+    //GetPatterns ritorna un vettore di PatternStruct
 
     void Add(const Pattern& pattern, std::vector<Legs> legs)
     {
@@ -72,12 +62,6 @@ public:
         pattern_structs.push_back(pattern_struct);
     }
 
-    bool PatternMatch(const std::string& path_name, size_t index) const
-    {
-        CheckIndex(index);
-        return boost::regex_match(path_name, regexes.at(index));
-    }
-
     bool FindPatternMatch(const std::string& path_name, size_t& index) const
     {
         for(index = 0; index < pattern_structs.size(); ++index)
@@ -85,18 +69,12 @@ public:
         return false;
     }
 
+
     size_t GetIndex(const Pattern& pattern) const
     {
         if(!pattern_indices.count(pattern))
             throw exception("Trigger '%1%' not found.") % pattern;
         return pattern_indices.at(pattern);
-    }
-
-private:
-    void CheckIndex(size_t index) const
-    {
-        if(index >= pattern_structs.size())
-            throw exception("Trigger pattern index is out of range.");
     }
 
 private:

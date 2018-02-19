@@ -75,7 +75,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
             const analysis::TriggerDescriptors::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
-            const analysis::TriggerDescriptors::Legs legs_struct(type,pt,filters);
+            const analysis::TriggerDescriptors::Leg legs_struct(type,pt,filters);
             legs_vector.push_back(legs_struct);
         }
         triggerDescriptors.Add(pattern, legs_vector);
