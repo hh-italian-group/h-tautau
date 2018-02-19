@@ -1,32 +1,36 @@
 #!/bin/bash
 # Install hh-italian-group framework.
-# This file is part of https://github.com/hh-italian-group/hh-bbtautau.
+# This file is part of https://github.com/hh-italian-group/h-tautau.
 
-INSTALL_MODES=(prod prod17 ana limits)
-DEFAULT_N_JOBS=4
-DEFAULT_RELEASE_PROD="CMSSW_8_0_28"
-DEFAULT_RELEASE_PROD17="CMSSW_9_4_4"
-DEFAULT_RELEASE_LIMITS="CMSSW_7_4_7"
-DEFAULT_RELEASE_ANA="CMSSW_9_0_0"
+declare -A INSTALL_MODES
+INSTALL_MODES=( ["prod16"]="CMSSW_8_0_28 slc6_amd64_gcc530" \
+                ["prod17"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
+                ["ana"]="CMSSW_9_4_4 slc6_amd64_gcc630")
+DEFAULT_N_JOBS=8
 
 function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
 
 if [ $# -lt 1 -o $# -gt 3 ] ; then
     echo "Usage: mode [n_jobs] [cmssw_release]"
-    printf "\n\tmode\t\t\tinstallation mode. Supported modes: "
-    join_by ", " "${INSTALL_MODES[@]}"
-    printf ".\n\tn_jobs\t\t\tthe number of jobs to run simultaneous during the compilation. Default: $DEFAULT_N_JOBS.\n"
-    printf "\tcmssw_release\t\tCMSSW release."
-    printf " Default: $DEFAULT_RELEASE_PROD\tfor tuple production,\n"
-    printf "\t\t\t\t\t\t\t$DEFAULT_RELEASE_LIMITS\tfor limits computation,\n"
-    printf "\t\t\t\t\t\t\t$DEFAULT_RELEASE_ANA\tfor analysis.\n"
+    printf "\n\t%-20sinstallation mode. Supported modes: " "mode"
+    join_by ", " "${!INSTALL_MODES[@]}"
+    printf ".\n\t%-20sthe number of jobs to run simultaneously during the compilation." "n_jobs"
+    printf " Default: $DEFAULT_N_JOBS.\n"
+    printf "\t%-20sCMSSW release." "cmssw_release"
+    printf " Defaults:\n"
+    for mode in "${!INSTALL_MODES[@]}" ; do
+        MODE_DESC=( ${INSTALL_MODES[$mode]} )
+        printf "\t%-20s\t%-10s\t%s\n" "" "$mode" "${MODE_DESC[0]}"
+    done
     exit 1
 fi
 
 MODE=$1
-if [[ ! ${INSTALL_MODES[@]} =~ $MODE ]] ; then
+if [[ ! ${!INSTALL_MODES[@]} =~ $MODE ]] ; then
     echo "ERROR: unsupported installation mode '$MODE'."
-    echo "Supported installation modes: ${INSTALL_MODES[@]}"
+    printf "Supported installation modes: "
+    join_by ", " "${!INSTALL_MODES[@]}"
+    printf ".\n"
     exit 1
 fi
 
@@ -39,27 +43,13 @@ fi
 
 RELEASE=$3
 if [ "x$RELEASE" = "x" ] ; then
-    if [ $MODE = "limits" ] ; then
-        RELEASE=$DEFAULT_RELEASE_LIMITS
-    elif [ $MODE = "prod" ] ; then
-        RELEASE=$DEFAULT_RELEASE_PROD
-    elif [ $MODE = "prod17" ] ; then
-        RELEASE=$DEFAULT_RELEASE_PROD17
-    else
-        RELEASE=$DEFAULT_RELEASE_ANA
-    fi
+    MODE_DESC=( ${INSTALL_MODES[$MODE]} )
+    RELEASE=${MODE_DESC[0]}
+    export SCRAM_ARCH=${MODE_DESC[1]}
 fi
 if [ -e $RELEASE ] ; then
-echo "ERROR: Working area for $RELEASE already exists."
-exit 1
-fi
-
-if [ $MODE = "limits" ] ; then
-    export SCRAM_ARCH=slc6_amd64_gcc491
-elif [ $MODE = "prod17" ] ; then
-    export SCRAM_ARCH=slc6_amd64_gcc630
-else
-    export SCRAM_ARCH=slc6_amd64_gcc530
+    echo "ERROR: Working area for $RELEASE already exists."
+    exit 1
 fi
 
 scramv1 project CMSSW $RELEASE
@@ -77,7 +67,7 @@ if [ $RESULT -ne 0 ] ; then
     exit 2
 fi
 
-if [ $MODE = "prod" ] ; then
+if [ $MODE = "prod16" ] ; then
     git cms-init
 
     # MET filters
@@ -98,43 +88,21 @@ if [ $MODE = "prod17" ] ; then
 
     # Add the area containing the MVA weights (from cms-data, to appear in “external”).
     # Note: the “external” area appears after “scram build” is run at least once, as above
-    cd $RELEASE/external
-
-    cd slc6_amd64_gcc630/
+    cd $CMSSW_BASE/external/$SCRAM_ARCH
     git clone https://github.com/lsoffi/RecoEgamma-PhotonIdentification.git data/RecoEgamma/PhotonIdentification/data
     cd data/RecoEgamma/PhotonIdentification/data
     git checkout CMSSW_9_4_0_pre3_TnP
-    cd $RELEASE/external
-    cd slc6_amd64_gcc630/
+    cd $CMSSW_BASE/external/$SCRAM_ARCH
     git clone https://github.com/lsoffi/RecoEgamma-ElectronIdentification.git data/RecoEgamma/ElectronIdentification/data
     cd data/RecoEgamma/ElectronIdentification/data
     git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
-    cd $RELEASE/src
-
-fi
-
-if [ $MODE = "limits" ] ; then
-    # Combine tool
-    git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
-    cd HiggsAnalysis/CombinedLimit
-    git checkout v6.3.0
-    cd ../..
-
-    # CombineHarvester package
-    git clone https://github.com/cms-analysis/CombineHarvester.git
-    # HH stat tools
-    git clone git@github.com:hh-italian-group/HHStatAnalysis.git
-    cd HHStatAnalysis
-    git checkout ttbb-it
-    cd ..
+    cd $CMSSW_BASE/src
 fi
 
 # SVfit packages
-#git clone git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone #notworking
 git clone git@github.com:hh-italian-group/SVfit_standalone.git TauAnalysis/SVfitStandalone
 cd TauAnalysis/SVfitStandalone
-#git checkout HIG-16-006
 git checkout hh_italian
 cd ../..
 
@@ -143,64 +111,47 @@ git clone git@github.com:hh-italian-group/HHKinFit2.git HHKinFit2/HHKinFit2
 
 # LeptonEfficiencies packages
 git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-utilities
-#git clone git@github.com:CMS-HTT/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
 # Recoil Corrections
-if [ $MODE = "prod" -o $MODE = "prod17" -o $MODE = "limits" ] ; then
+if [ $MODE = "prod16" -o $MODE = "prod17" ] ; then
     git clone https://github.com/CMS-HTT/RecoilCorrections.git  HTT-utilities/RecoilCorrections
 fi
 
-# hh-italian-group packages
-git clone git@github.com:hh-italian-group/AnalysisTools.git
-git clone git@github.com:hh-italian-group/h-tautau.git
-git clone git@github.com:hh-italian-group/hh-bbtautau.git
+# Install analysis packages
+declare -A ANA_PACKAGES
+ANA_PACKAGES=( ["AnalysisTools"]="prod16:prod_v4 prod17:master ana:master" \
+               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4_2017 ana:ana_v3" \
+               ["hh-bbtautau"]="prod16:ana_v3 prod17:ana_v4 ana:ana_v3" )
+GITHUB_USER=$(git config user.github)
 
-if [ $MODE = "prod" ] ; then
-    cd AnalysisTools
-    git checkout prod_v3
-    cd ..
-    cd h-tautau
-    git checkout prod_v3
-    cd ..
-    cd hh-bbtautau
-    git checkout ana_v2
-    cd ..
-fi
+for pkg in "${!ANA_PACKAGES[@]}" ; do
+    pkg_descs="${ANA_PACKAGES[$pkg]}"
+    branch="master"
+    for desc in $pkg_descs ; do
+        if [ "${desc%%:*}" = "$MODE" ] ; then
+            branch=${desc##*:}
+            break
+        fi
+    done
 
-if [ $MODE = "prod17" ] ; then
-    cd AnalysisTools
-    git checkout master
+    git clone git@github.com:hh-italian-group/${pkg}.git
+    cd "$pkg"
+    if [ "$branch" != "master" ] ; then
+        git checkout -b $branch origin/$branch
+    fi
+    git ls-remote git@github.com:$GITHUB_USER/${pkg}.git &> /dev/null
+    RESULT=$?
+    if [ $RESULT -eq 0 ] ; then
+        git remote add $GITHUB_USER git@github.com:$GITHUB_USER/${pkg}.git
+        git fetch $GITHUB_USER
+    fi
     cd ..
-    cd h-tautau
-    git checkout prod_v4_2017
-    cd ..
-    cd hh-bbtautau
-    git checkout ana_v4
-    cd ..
-fi
-
-if [ $MODE = "limits" ] ; then
-    cd h-tautau
-    git checkout sync
-    cd ..
-fi
-
-if [ $MODE = "ana" ] ; then
-    cd AnalysisTools
-    git checkout master
-    cd ..
-    cd h-tautau
-    git checkout ana_v3
-    cd ..
-    cd hh-bbtautau
-    git checkout ana_v3
-    cd ..
-fi
+done
 
 # Prepare analysis working area
-./AnalysisTools/Run/install.sh ../build AnalysisTools h-tautau hh-bbtautau
+./AnalysisTools/Run/install.sh ../build "${!ANA_PACKAGES[@]}"
 
-if [ $MODE = "prod" -o $MODE = "prod17" -o $MODE = "limits" ] ; then
+if [ $MODE != "ana" ] ; then
     scram b -j$N_JOBS
 fi
