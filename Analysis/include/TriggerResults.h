@@ -24,10 +24,8 @@ public:
         double pt;
         FilterVector filters;
 
-        Legs(const std::string _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
-            : pt(_pt), filters(_filters) {
-            type = Parse<LegType>(_type);
-        }
+        Legs(const LegType _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
+            : type(_type), pt(_pt), filters(_filters) { }
 
     };
 

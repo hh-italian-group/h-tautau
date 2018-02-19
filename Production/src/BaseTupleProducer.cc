@@ -72,7 +72,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
         std::vector<analysis::TriggerDescriptors::Legs> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
-            const std::string type = leg_list.Get("type");
+            const analysis::LegType type = analysis::Parse<analysis::LegType >(leg_list.Get("type"));
             const double pt = leg_list.Get<double>("pt");
             const std::string filter_str = leg_list.Get("filters");
             const analysis::TriggerDescriptors::FilterVector filters = analysis::SplitValueList(filter_str,false);
