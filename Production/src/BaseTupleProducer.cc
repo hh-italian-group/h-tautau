@@ -72,19 +72,12 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
         std::vector<analysis::TriggerDescriptors::Legs> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
-            const analysis::LegType type = analysis::Parse<analysis::LegType >(leg_list.Get("type"));
+            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
-            const std::string filter_str = leg_list.Get("filters");
-            const analysis::TriggerDescriptors::FilterVector filters = analysis::SplitValueList(filter_str,false);
+            const analysis::TriggerDescriptors::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
             const analysis::TriggerDescriptors::Legs legs_struct(type,pt,filters);
             legs_vector.push_back(legs_struct);
         }
-
-
-//        const size_t nLegs = hltPath.getUntrackedParameter<unsigned>("nLegs", 1);
-//        analysis::TriggerDescriptors::FilterContainer filters;
-//        filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
-//        filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
         triggerDescriptors.Add(pattern, legs_vector);
     }
 

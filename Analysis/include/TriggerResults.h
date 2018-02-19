@@ -29,21 +29,21 @@ public:
 
     };
 
-    const PatternContainer& GetPatterns() const { return patterns; }
-    size_t size() const { return patterns.size(); }
+    struct PatternStruct{
+        Pattern pattern;
+        std::vector<TriggerDescriptors::Legs> legs_info;
+        std::vector<boost::regex> regexes;
 
-    const FilterContainer& GetFilters(size_t index) const
-    {
-        CheckIndex(index);
-        return filters.at(index);
-    }
+        PatternStruct(const Pattern _pattern, const std::vector<TriggerDescriptors::Legs> _legs_info)
+            : pattern(_pattern), legs_info(_legs_info)
+        {
+            static const std::string regex_format = "^%1%[0-9]+$";
+            const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
+            regexes.push_back(boost::regex(regex_str));
+        }
 
-//    const FilterVector& GetFilters(size_t index, size_t leg_id) const
-//    {
-//        static const FilterVector empty = {};
-//        const auto& f = GetFilters(index);
-//        return f.count(leg_id) ? f.at(leg_id) : empty;
-//    }
+    };
+
 
     const FilterVector& GetFilters(const std::string& leg_type) const
     {
@@ -56,39 +56,20 @@ public:
         return empty;
     }
 
-    size_t GetNumberOfLegs(size_t index) const
+    size_t GetNumberOfLegs(std::vector<Legs> legs) const
     {
-        CheckIndex(index);
-        return number_of_legs.at(index);
+        return legs.size();
     }
-
-//    void Add(const Pattern& pattern, size_t n_legs, const FilterContainer& leg_filters)
-//    {
-//        static const std::string regex_format = "^%1%[0-9]+$";
-//        if(pattern_indices.count(pattern))
-//            throw exception("Duplicated trigger pattern '%1%'.") % pattern;
-//        pattern_indices[pattern] = patterns.size();
-//        patterns.push_back(pattern);
-//        number_of_legs.push_back(n_legs);
-//        filters.push_back(leg_filters);
-//        const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
-//        regexes.push_back(boost::regex(regex_str));
-//    }
 
 
     void Add(const Pattern& pattern, std::vector<Legs> legs)
     {
-        static const std::string regex_format = "^%1%[0-9]+$";
+
         if(pattern_indices.count(pattern))
             throw exception("Duplicated trigger pattern '%1%'.") % pattern;
-        pattern_indices[pattern] = patterns.size();
-        patterns.push_back(pattern);
-        number_of_legs.push_back(legs.size());
-        const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
-        regexes.push_back(boost::regex(regex_str));
-        for (unsigned n = 0; n < legs.size(); ++n){
-            legs_info.push_back(legs.at(n));
-        }
+        pattern_indices[pattern] = legs.size();
+        TriggerDescriptors::PatternStruct pattern_struct(pattern,legs);
+        pattern_structs.push_back(pattern_struct);
     }
 
     bool PatternMatch(const std::string& path_name, size_t index) const
@@ -99,7 +80,7 @@ public:
 
     bool FindPatternMatch(const std::string& path_name, size_t& index) const
     {
-        for(index = 0; index < patterns.size(); ++index)
+        for(index = 0; index < pattern_structs.size(); ++index)
             if(PatternMatch(path_name, index)) return true;
         return false;
     }
@@ -114,16 +95,12 @@ public:
 private:
     void CheckIndex(size_t index) const
     {
-        if(index >= patterns.size())
+        if(index >= pattern_structs.size())
             throw exception("Trigger pattern index is out of range.");
     }
 
 private:
-    PatternContainer patterns;
-    std::vector<size_t> number_of_legs;
-    std::vector<FilterContainer> filters;
-    std::vector<Legs> legs_info;
-    std::vector<boost::regex> regexes;
+    std::vector<TriggerDescriptors::PatternStruct> pattern_structs;
     std::map<Pattern, size_t> pattern_indices;
 };
 
