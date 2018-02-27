@@ -127,7 +127,7 @@ void TupleProducer_eTau::SelectZElectron(const ElectronCandidate& electron, Cutt
     const bool veto  = (*loose_id_veto)[electron.getPtr()];
 //    const bool veto  = SelectSpring15VetoElectron(*electron);
     cut(veto, "cut_based_veto");
-    if(run_period != Period::Run2017)
+    if(period != analysis::Period::Run2017)
         cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
 }
 
@@ -158,7 +158,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
         cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     } else {
-        if(run_period != Period::Run2017)
+        if(period != analysis::Period::Run2017)
             cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
     }
 }
