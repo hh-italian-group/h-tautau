@@ -611,7 +611,8 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
         cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     }
-    cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
+    if(period != analysis::Period::Run2017)
+        cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
     for(size_t n = 0; n < signalElectrons.size(); ++n) {
         std::ostringstream ss_name;
         ss_name << "isNotSignal_" << n + 1;
