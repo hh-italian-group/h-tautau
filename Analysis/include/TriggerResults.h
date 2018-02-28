@@ -50,11 +50,14 @@ public:
 
     };
 
-    //GetPatterns ritorna un vettore di PatternStruct
-
-    void Add(const Pattern& pattern, std::vector<Legs> legs)
+    TriggerDescriptors::PatternStruct GetPatternStruct(const Pattern& pattern)
     {
+        size_t index = GetIndex(pattern);
+        return pattern_structs.at(index);
+    }
 
+    void Add(const Pattern& pattern, std::vector<Leg> legs)
+    {
         if(pattern_indices.count(pattern))
             throw exception("Duplicated trigger pattern '%1%'.") % pattern;
         pattern_indices[pattern] = legs.size();

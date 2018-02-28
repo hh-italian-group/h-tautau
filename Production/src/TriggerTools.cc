@@ -32,6 +32,35 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     iEvent->getByToken(triggerPrescales_token, triggerPrescales);
     iEvent->getByToken(triggerObjects_token, triggerObjects);
     iEvent->getByToken(l1JetParticles_token, l1JetParticles);
+
+    const auto hasExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
+        for(auto type : objectTypes)
+            if(triggerObject.type(type)) return true;
+        return false;
+    };
+
+    const auto& filters = descriptors.GetFilters(path_index, leg_id);
+    const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject) {
+        for(const auto& filter : filters)
+            if(!triggerObject.hasFilterLabel(filter)) return false;
+        return true;
+    };
+
+    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
+
+    const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
+    for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
+        if(!hasExpectedType(triggerObject)) continue;
+        pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
+        unpackedTriggerObject.unpackPathNames(triggerNames);
+        unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
+        if(!passFilters(unpackedTriggerObject)) continue;
+        const auto& paths = unpackedTriggerObject.pathNames(true, true);
+        for(const auto& path : paths) {
+            path_triggerObjPtr_map[path].push_back(*triggerObject);
+        }
+    }
+
 }
 
 void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& descriptors,

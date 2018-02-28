@@ -69,7 +69,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     for(const auto& hltPath : hltPaths) {
         const std::string pattern = hltPath.getParameter<std::string>("pattern");
         const std::vector<std::string> legs = hltPath.getUntrackedParameter<std::vector<std::string>>("legs", {});
-        std::vector<analysis::TriggerDescriptors::Legs> legs_vector;
+        std::vector<analysis::TriggerDescriptors::Leg> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
@@ -79,6 +79,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
             legs_vector.push_back(legs_struct);
         }
         triggerDescriptors.Add(pattern, legs_vector);
+
     }
 
     if(runSVfit)

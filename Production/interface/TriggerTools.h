@@ -131,6 +131,8 @@ private:
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
     edm::Handle<std::vector<l1extra::L1JetParticle>> l1JetParticles;
+
+    std::map<std::string,std::vector<*pat::TriggerObjectStandAlone>> path_triggerObjPtr_map;
 };
 
 } // namespace analysis
