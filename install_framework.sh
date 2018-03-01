@@ -3,7 +3,7 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
-INSTALL_MODES=( ["prod16"]="CMSSW_8_0_28 slc6_amd64_gcc530" \
+INSTALL_MODES=( ["prod16"]="CMSSW_8_0_30 slc6_amd64_gcc530" \
                 ["prod17"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
                 ["ana"]="CMSSW_9_4_4 slc6_amd64_gcc630")
 DEFAULT_N_JOBS=8
