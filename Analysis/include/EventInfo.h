@@ -121,7 +121,7 @@ public:
             if(jet_ordering == JetOrdering::CSV)
                 return event.jets_csv.at(j1) > event.jets_csv.at(j2);
             if(jet_ordering == JetOrdering::DeepCSV)
-                return event.jets_deepCsv_b.at(j1) > event.jets_deepCsv_b.at(j2);
+                return event.jets_deepCsv_b_vs_all.at(j1) > event.jets_deepCsv_b_vs_all.at(j2);
             throw exception("Unsupported jet ordering for b-jet pair selection.");
         };
 
