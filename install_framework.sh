@@ -1,11 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Install hh-italian-group framework.
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
 INSTALL_MODES=( ["prod16"]="CMSSW_8_0_30 slc6_amd64_gcc530" \
                 ["prod17"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
-                ["ana"]="CMSSW_9_4_4 slc6_amd64_gcc630")
+                ["ana"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
+                ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=8
 
 function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
@@ -45,26 +46,33 @@ RELEASE=$3
 if [ "x$RELEASE" = "x" ] ; then
     MODE_DESC=( ${INSTALL_MODES[$MODE]} )
     RELEASE=${MODE_DESC[0]}
-    export SCRAM_ARCH=${MODE_DESC[1]}
+    if [ "$MODE" != "ana_osx" ] ; then
+        export SCRAM_ARCH=${MODE_DESC[1]}
+    fi
 fi
 if [ -e $RELEASE ] ; then
     echo "ERROR: Working area for $RELEASE already exists."
     exit 1
 fi
 
-scramv1 project CMSSW $RELEASE
-RESULT=$?
-if [ $RESULT -ne 0 ] ; then
-    echo "ERROR: unable to create working area for CMSSW release '$RELEASE'."
-    exit 2
-fi
+if [ "$MODE" != "ana_osx" ] ; then
+    scramv1 project CMSSW $RELEASE
+    RESULT=$?
+    if [ $RESULT -ne 0 ] ; then
+        echo "ERROR: unable to create working area for CMSSW release '$RELEASE'."
+        exit 2
+    fi
 
-cd $RELEASE/src
-eval `scramv1 runtime -sh`
-RESULT=$?
-if [ $RESULT -ne 0 ] ; then
-    echo "ERROR: unable to setup the environment for CMSSW release '$RELEASE'."
-    exit 2
+    cd $RELEASE/src
+    eval `scramv1 runtime -sh`
+    RESULT=$?
+    if [ $RESULT -ne 0 ] ; then
+        echo "ERROR: unable to setup the environment for CMSSW release '$RELEASE'."
+        exit 2
+    fi
+else
+    mkdir -p "$RELEASE"
+    cd "$RELEASE"
 fi
 
 if [ $MODE = "prod16" ] ; then
@@ -120,9 +128,9 @@ fi
 
 # Install analysis packages
 declare -A ANA_PACKAGES
-ANA_PACKAGES=( ["AnalysisTools"]="prod16:prod_v4 prod17:master ana:master" \
-               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4_2017 ana:ana_v3" \
-               ["hh-bbtautau"]="prod16:ana_v3 prod17:ana_v4 ana:ana_v3" )
+ANA_PACKAGES=( ["AnalysisTools"]="prod16:prod_v4 prod17:master ana:master ana_osx:master" \
+               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4_2017 ana:ana_v3 ana_osx:ana_v3" \
+               ["hh-bbtautau"]="prod16:ana_v3 prod17:ana_v4 ana:ana_v3 ana_osx:ana_v3" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do
@@ -149,9 +157,15 @@ for pkg in "${!ANA_PACKAGES[@]}" ; do
     cd ..
 done
 
-# Prepare analysis working area
-./AnalysisTools/Run/install.sh ../build "${!ANA_PACKAGES[@]}"
+if [ "$MODE" = "ana_osx" ] ; then
+    BUILD_PATH=build
+else
+    BUILD_PATH=../build
+fi
 
-if [ $MODE != "ana" ] ; then
+# Prepare analysis working area
+./AnalysisTools/Run/install.sh "$BUILD_PATH" "${!ANA_PACKAGES[@]}"
+
+if ! [[ $MODE =~ ana.* ]] ; then
     scram b -j$N_JOBS
 fi
