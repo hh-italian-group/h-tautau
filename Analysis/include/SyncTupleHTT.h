@@ -336,6 +336,7 @@ namespace htt_sync {
             sync().bjet_rawf_1 = default_value;
             sync().bjet_mva_1 = default_value;
             sync().bjet_csv_1 = default_value;
+            sync().bjet_deepcsv_1 = default_value;
         }
         if(bjets_id.size() >= 2) {
             sync().bjet_pt_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Pt());
@@ -352,6 +353,7 @@ namespace htt_sync {
             sync().bjet_rawf_2 = default_value;
             sync().bjet_mva_2 = default_value;
             sync().bjet_csv_2 = default_value;
+            sync().bjet_deepcsv_2 = default_value;
         }
         
         
