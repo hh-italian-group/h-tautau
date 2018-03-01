@@ -70,6 +70,7 @@ public:
         const Long64_t n_entries = originalTuple.GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple.GetEntry(current_entry);
+            //RunPeriod difference
             const auto bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
                                                                  cuts::btag_2016::eta, JetOrdering::CSV);
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
