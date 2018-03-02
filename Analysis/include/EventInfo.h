@@ -196,7 +196,7 @@ public:
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
-                             JetOrdering jet_ordering = JetOrdering::CSV, const std::set<size_t> bjet_indexes = {})
+                             JetOrdering jet_ordering = JetOrdering::CSV)
     {
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
@@ -208,6 +208,7 @@ public:
 
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
+        const std::set<size_t> bjet_indexes = GetSelectedBjetIndices();
         for(unsigned n = 0; n < all_jets.size(); ++n) {
             if(bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
@@ -223,7 +224,7 @@ public:
 
     JetPair SelectVBFJetPair(const JetCollection& jets_vbf)
     {
-        double max_mjj;
+        double max_mjj = -std::numeric_limits<double>::infinity();
         JetPair selected_pair = ntuple::UndefinedJetPair();
         for(size_t n = 0; n < jets_vbf.size(); ++n) {
             for(size_t h = n+1; h < jets_vbf.size(); ++h) {
@@ -244,6 +245,19 @@ public:
         }
 
         return selected_pair;
+    }
+
+    double GetHTotherJets()
+    {
+        const JetCollection& all_jets = GetJets();
+        const std::set<size_t> bjet_indexes = GetSelectedBjetIndices();
+        double sum = 0;
+        for(unsigned n = 0; n < all_jets.size(); ++n) {
+            if(bjet_indexes.count(n)) continue;
+            const JetCandidate& jet = all_jets.at(n);
+            sum += jet.GetMomentum().Pt();
+        }
+        return sum;
     }
 
 
