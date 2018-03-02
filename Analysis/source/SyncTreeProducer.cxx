@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/McCorrections/include/EventWeights.h"
 
 struct Arguments {

@@ -7,6 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "EventInfo.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2017.h"
 #include "AnalysisTypes.h"
 
 #define LVAR(type, name, pref) VAR(type, name##_##pref)
@@ -322,9 +323,9 @@ namespace htt_sync {
         
         sync().nbjets = static_cast<int>(bjets_id.size());
         if(bjets_id.size() >= 1) {
-            sync().bjet_pt_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Pt());
-            sync().bjet_eta_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Eta());
-            sync().bjet_phi_1 = static_cast<float>(bjets_csv.at(0).GetMomentum().Phi());
+            sync().bjet_pt_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Pt());
+            sync().bjet_eta_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Eta());
+            sync().bjet_phi_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Phi());
             sync().bjet_rawf_1 = bjets_id.at(0)->rawf();
             sync().bjet_mva_1 = bjets_id.at(0)->mva();
             sync().bjet_csv_1 = bjets_id.at(0)->csv();
@@ -339,9 +340,9 @@ namespace htt_sync {
             sync().bjet_deepcsv_1 = default_value;
         }
         if(bjets_id.size() >= 2) {
-            sync().bjet_pt_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Pt());
-            sync().bjet_eta_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Eta());
-            sync().bjet_phi_2 = static_cast<float>(bjets_csv.at(1).GetMomentum().Phi());
+            sync().bjet_pt_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Pt());
+            sync().bjet_eta_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Eta());
+            sync().bjet_phi_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Phi());
             sync().bjet_rawf_2 = bjets_id.at(1)->rawf();
             sync().bjet_mva_2 = bjets_id.at(1)->mva();
             sync().bjet_csv_2 = bjets_id.at(1)->csv();
@@ -359,12 +360,12 @@ namespace htt_sync {
         
 
         if(event->kinFit_convergence.size() > 0) {
-            if(bjets_csv.size() >= 2)
+            if(bjets_id.size() >= 2)
                 sync().kinfit_convergence = event.GetKinFitResults().convergence;
             else
                 sync().kinfit_convergence = default_int_value;
 
-            if(bjets_csv.size() >= 2 && event.GetKinFitResults().HasValidMass())
+            if(bjets_id.size() >= 2 && event.GetKinFitResults().HasValidMass())
                 sync().m_kinfit = static_cast<float>(event.GetKinFitResults().mass);
             else
                 sync().m_kinfit = default_value;
