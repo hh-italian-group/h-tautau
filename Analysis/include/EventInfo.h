@@ -139,6 +139,15 @@ public:
         return selected_pair;
     }
 
+    std::set<size_t> GetSelectedBjetIndices()
+    {
+        std::set<size_t> bjet_indexes;
+        bjet_indexes.insert(selected_bjet_pair.first);
+        bjet_indexes.insert(selected_bjet_pair.second);
+        return bjet_indexes;
+    }
+
+
     static constexpr int verbosity = 0;
 
     EventInfoBase(const Event& _event, const JetPair& _selected_bjet_pair = JetPair(0, 1),
@@ -211,6 +220,32 @@ public:
             std::sort(selected_jets.begin(), selected_jets.end(), orderer);
         return selected_jets;
     }
+
+    JetPair SelectVBFJetPair(const JetCollection& jets_vbf)
+    {
+        double max_mjj;
+        JetPair selected_pair = ntuple::UndefinedJetPair();
+        for(size_t n = 0; n < jets_vbf.size(); ++n) {
+            for(size_t h = n+1; h < jets_vbf.size(); ++h) {
+                const JetCandidate& jet_1 = jets_vbf.at(n);
+                const JetCandidate& jet_2 = jets_vbf.at(h);
+                const LorentzVector jet_12 = jet_1.GetMomentum() + jet_2.GetMomentum();
+                if(jet_12.M() >= max_mjj){
+                    max_mjj = jet_12.M();
+                    if(jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt()){
+                        selected_pair.first = n;
+                        selected_pair.second = h;
+                    } else {
+                        selected_pair.first = h;
+                        selected_pair.second = n;
+                    }
+                }
+            }
+        }
+
+        return selected_pair;
+    }
+
 
     const FatJetCollection& GetFatJets()
     {
