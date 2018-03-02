@@ -187,7 +187,7 @@ public:
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
-                             JetOrdering jet_ordering = JetOrdering::CSV)
+                             JetOrdering jet_ordering = JetOrdering::CSV, const std::set<size_t> bjet_indexes = {})
     {
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
@@ -199,7 +199,9 @@ public:
 
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
-        for(const JetCandidate& jet : all_jets) {
+        for(unsigned n = 0; n < all_jets.size(); ++n) {
+            if(bjet_indexes.count(n)) continue;
+            const JetCandidate& jet = all_jets.at(n);
             if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) < eta_cut
                     && jet->csv() > csv_cut)
                 selected_jets.push_back(jet);

@@ -81,6 +81,9 @@ public:
                                                           cuts::btag_2017::eta, JetOrdering::DeepCSV);
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
+            std::set<size_t> bjet_indexes;
+            bjet_indexes.insert(bjet_pair.first);
+            bjet_indexes.insert(bjet_pair.second);
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
             if(run_period == Period::Run2016 && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
             if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
@@ -89,7 +92,7 @@ public:
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
             }
 
-            htt_sync::FillSyncTuple(event,sync,run_period);
+            htt_sync::FillSyncTuple(event,sync,run_period,bjet_indexes);
         }
 
         sync.Write();

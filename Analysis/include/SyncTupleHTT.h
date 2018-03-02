@@ -105,8 +105,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, nbtag) /* pt>20 and abs(eta)<2.4 */ \
     VAR(Int_t, njets) /* pt>30 and abs(eta)<4.7 */ \
     VAR(Int_t, njetspt20) /* pt>20 and abs(eta)<4.7 */ \
+    VAR(Int_t, njets_vbf) /* pt>10 and no eta cut for vbf selection */ \
     JET_DATA(j, 1) /* leading jet sorted by pt (Fill only if corrected jet pt > 20 GeV) */ \
     JET_DATA(j, 2) /* trailing jet sorted by pt (Fill only if corrected jet pt>20 GeV) */ \
+    JET_DATA(j, vbf_1) /* leading jet sorted by pt (Fill only if corrected jet pt > 20 GeV) */ \
+    JET_DATA(j, vbf_2) /* trailing jet sorted by pt (Fill only if corrected jet pt>20 GeV) */ \
     JET_DATA(b, 1) /* leading b-jet sorted by pt (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(b, 2) /* leading b-jet sorted by pt (Fill only if corrected b-jet pt>20 GeV) */ \
     /* Extra lepton vetos */ \
@@ -166,7 +169,7 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period)
+    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period, const std::set<size_t> bjet_indexes)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -256,6 +259,7 @@ namespace htt_sync {
 
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
+        analysis::EventInfoBase::JetCollection jets_vbf;
         analysis::EventInfoBase::JetCollection bjets_pt;
         analysis::EventInfoBase::JetCollection bjets_id;
         
@@ -267,8 +271,9 @@ namespace htt_sync {
         }
         
         if (run_period == analysis::Period::Run2017){
-            jets_pt20 = event.SelectJets(20, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);//remove
-            jets_pt30 = event.SelectJets(30, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);//remove
+            jets_pt20 = event.SelectJets(20, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            jets_pt30 = event.SelectJets(30, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            jets_vbf = event.SelectJets(10, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt,bjet_indexes);
             bjets_pt = event.SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M, analysis::JetOrdering::Pt);
             bjets_id = event.SelectJets(cuts::btag_2017::pt,cuts::btag_2017::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::DeepCSV);
         }
@@ -313,6 +318,26 @@ namespace htt_sync {
             sync().jphi_2 = default_value;
             sync().jrawf_2 = default_value;
             sync().jmva_2 = default_value;
+        }
+
+        sync().njets_vbf = static_cast<int>(jets_vbf.size());
+        if(jets_vbf.size() >= 1) {
+            sync().jpt_vbf_1 = static_cast<float>(jets_vbf.at(0).GetMomentum().Pt());
+            sync().jeta_vbf_1 = static_cast<float>(jets_vbf.at(0).GetMomentum().Eta());
+            sync().jphi_vbf_1 = static_cast<float>(jets_vbf.at(0).GetMomentum().Phi());
+        } else {
+            sync().jpt_vbf_1 = default_value;
+            sync().jeta_vbf_1 = default_value;
+            sync().jphi_vbf_1 = default_value;
+        }
+        if(jets_vbf.size() >= 2) {
+            sync().jpt_vbf_2 = static_cast<float>(jets_vbf.at(1).GetMomentum().Pt());
+            sync().jeta_vbf_2 = static_cast<float>(jets_vbf.at(1).GetMomentum().Eta());
+            sync().jphi_vbf_2 = static_cast<float>(jets_vbf.at(1).GetMomentum().Phi());
+        } else {
+            sync().jpt_vbf_2 = default_value;
+            sync().jeta_vbf_2 = default_value;
+            sync().jphi_vbf_2 = default_value;
         }
 
         sync().dilepton_veto = event->dilepton_veto;
