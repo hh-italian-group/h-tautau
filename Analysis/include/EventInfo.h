@@ -231,15 +231,12 @@ public:
                 const JetCandidate& jet_1 = jets_vbf.at(n);
                 const JetCandidate& jet_2 = jets_vbf.at(h);
                 const LorentzVector jet_12 = jet_1.GetMomentum() + jet_2.GetMomentum();
-                if(jet_12.M() >= max_mjj){
+                if(jet_12.M() > max_mjj){
                     max_mjj = jet_12.M();
-                    if(jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt()){
-                        selected_pair.first = n;
-                        selected_pair.second = h;
-                    } else {
-                        selected_pair.first = h;
-                        selected_pair.second = n;
-                    }
+                    if(jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt())
+                        selected_pair = std::make_pair(n,h);
+                    else
+                        selected_pair = std::make_pair(h,n);
                 }
             }
         }
