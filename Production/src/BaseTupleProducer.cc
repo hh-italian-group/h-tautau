@@ -743,6 +743,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
             eventTuple().jets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
+            eventTuple().jets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+//            eventTuple().jets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
             eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
@@ -761,6 +763,9 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             const LorentzVector& p4 = jet.GetMomentum();
             eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+            eventTuple().fatJets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
+            eventTuple().fatJets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+//            eventTuple().fatJets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
             eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
             eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
@@ -774,6 +779,9 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
                 eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
                 eventTuple().subJets_csv.push_back(
                             sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                eventTuple().subJets_deepCsv_b.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
+                eventTuple().subJets_deepCsv_bb.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+//                eventTuple().subJets_deepCsv_b_vs_all.push_back(sub_jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
                 eventTuple().subJets_parentIndex.push_back(parentIndex);
             }
         }
