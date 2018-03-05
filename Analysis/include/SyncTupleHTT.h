@@ -105,8 +105,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, nbtag) /* pt>20 and abs(eta)<2.4 */ \
     VAR(Int_t, njets) /* pt>30 and abs(eta)<4.7 */ \
     VAR(Int_t, njetspt20) /* pt>20 and abs(eta)<4.7 */ \
+    VAR(Int_t, njets_vbf) /* pt>10 and no eta cut for vbf selection */ \
+    VAR(Bool_t, isVBF) /* Event is vbf if there are 2 additional jets which satisfy the VBF selection */ \
     JET_DATA(j, 1) /* leading jet sorted by pt (Fill only if corrected jet pt > 20 GeV) */ \
     JET_DATA(j, 2) /* trailing jet sorted by pt (Fill only if corrected jet pt>20 GeV) */ \
+    JET_DATA(j, vbf_1) /* leading jet sorted by pt (Fill only if corrected jet pt > 20 GeV) */ \
+    JET_DATA(j, vbf_2) /* trailing jet sorted by pt (Fill only if corrected jet pt>20 GeV) */ \
     JET_DATA(b, 1) /* leading b-jet sorted by pt (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(b, 2) /* leading b-jet sorted by pt (Fill only if corrected b-jet pt>20 GeV) */ \
     /* Extra lepton vetos */ \
@@ -124,6 +128,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, nbjets) /* pt>30 and abs(eta)<2.4 */ \
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
+    VAR(Double_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     VAR(Float_t, m_kinfit) \
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
@@ -256,6 +261,8 @@ namespace htt_sync {
 
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
+        analysis::EventInfoBase::JetCollection jets_vbf;
+        analysis::EventInfoBase::JetPair vbf_jet_pair;
         analysis::EventInfoBase::JetCollection bjets_pt;
         analysis::EventInfoBase::JetCollection bjets_id;
         
@@ -267,8 +274,11 @@ namespace htt_sync {
         }
         
         if (run_period == analysis::Period::Run2017){
-            jets_pt20 = event.SelectJets(20, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);//remove
-            jets_pt30 = event.SelectJets(30, std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);//remove
+            jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
+            jets_vbf = event.SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt,
+                                        event.GetSelectedBjetIndicesSet());
+            vbf_jet_pair = event.SelectVBFJetPair(jets_vbf);
             bjets_pt = event.SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M, analysis::JetOrdering::Pt);
             bjets_id = event.SelectJets(cuts::btag_2017::pt,cuts::btag_2017::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::DeepCSV);
         }
@@ -315,6 +325,27 @@ namespace htt_sync {
             sync().jmva_2 = default_value;
         }
 
+        sync().njets_vbf = static_cast<int>(jets_vbf.size());
+        sync().isVBF = jets_vbf.size()>=2;
+        if(vbf_jet_pair.first < jets_vbf.size()) {
+            sync().jpt_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
+            sync().jeta_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Eta());
+            sync().jphi_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Phi());
+        } else {
+            sync().jpt_vbf_1 = default_value;
+            sync().jeta_vbf_1 = default_value;
+            sync().jphi_vbf_1 = default_value;
+        }
+        if(vbf_jet_pair.second < jets_vbf.size()) {
+            sync().jpt_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+            sync().jeta_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Eta());
+            sync().jphi_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Phi());
+        } else {
+            sync().jpt_vbf_2 = default_value;
+            sync().jeta_vbf_2 = default_value;
+            sync().jphi_vbf_2 = default_value;
+        }
+
         sync().dilepton_veto = event->dilepton_veto;
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
@@ -357,7 +388,7 @@ namespace htt_sync {
             sync().bjet_deepcsv_2 = default_value;
         }
         
-        
+        sync().ht_other_jets = event.GetHT();
 
         if(event->kinFit_convergence.size() > 0) {
             if(bjets_id.size() >= 2)

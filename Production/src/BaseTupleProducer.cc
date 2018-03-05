@@ -658,7 +658,10 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     cut(true, "gt0_jet_cand");
     const LorentzVector& p4 = jet.GetMomentum();
     cut(p4.Pt() > pt, "pt", p4.Pt());
-    if(period != analysis::Period::Run2017) cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
+    if(period == analysis::Period::Run2017)
+        cut(std::abs(p4.Eta()) < cuts::hh_bbtautau_2017::jetID::eta, "eta", p4.Eta());
+    else
+        cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     bool passPFId = false;
     if(period == analysis::Period::Run2017) passPFId = PassPFTightId(*jet);
     else if(period == analysis::Period::Run2015 || period == analysis::Period::Run2016)

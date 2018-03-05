@@ -95,5 +95,10 @@ namespace fatJetID {
     constexpr double deltaR_subjet = 0.4;
 }
 
-} // namespace hh_bbtautau_2016
+namespace jetID {
+    constexpr double eta = 5; // <
+
+}
+
+} // namespace hh_bbtautau_2017
 } // namespace cuts
