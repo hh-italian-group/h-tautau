@@ -256,7 +256,7 @@ public:
         return selected_pair;
     }
 
-    double GetHTotherJets() const
+    double GetHTotherJets()
     {
         const JetCollection& all_jets = GetJets();
         const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
