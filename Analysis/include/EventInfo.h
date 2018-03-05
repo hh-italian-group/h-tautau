@@ -120,8 +120,12 @@ public:
                 return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
             if(jet_ordering == JetOrdering::CSV)
                 return event.jets_csv.at(j1) > event.jets_csv.at(j2);
-            if(jet_ordering == JetOrdering::DeepCSV)
-                return event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) > event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2);
+            if(jet_ordering == JetOrdering::DeepCSV){
+                if(event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) != event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2))
+                    return event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) > event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2);
+                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
+            }
+
             throw exception("Unsupported jet ordering for b-jet pair selection.");
         };
 
