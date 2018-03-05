@@ -139,7 +139,15 @@ public:
         return selected_pair;
     }
 
-    std::set<size_t> GetSelectedBjetIndices()
+    const std::array<size_t,2> GetSelectedBjetIndicesArray()
+    {
+        std::array<size_t,2> bjet_indexes;
+        bjet_indexes.fill(selected_bjet_pair.first);
+        bjet_indexes.fill(selected_bjet_pair.second);
+        return bjet_indexes;
+    }
+
+    const std::set<size_t> GetSelectedBjetIndicesSet()
     {
         std::set<size_t> bjet_indexes;
         bjet_indexes.insert(selected_bjet_pair.first);
@@ -196,7 +204,8 @@ public:
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
-                             JetOrdering jet_ordering = JetOrdering::CSV)
+                             JetOrdering jet_ordering = JetOrdering::CSV,
+                             std::set<size_t> bjet_indexes = {})
     {
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
@@ -208,8 +217,7 @@ public:
 
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
-        const std::set<size_t> bjet_indexes = GetSelectedBjetIndices();
-        for(unsigned n = 0; n < all_jets.size(); ++n) {
+        for(size_t n = 0; n < all_jets.size(); ++n) {
             if(bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
             if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) < eta_cut
@@ -222,7 +230,7 @@ public:
         return selected_jets;
     }
 
-    JetPair SelectVBFJetPair(const JetCollection& jets_vbf)
+    static JetPair SelectVBFJetPair(const JetCollection& jets_vbf)
     {
         double max_mjj = -std::numeric_limits<double>::infinity();
         JetPair selected_pair = ntuple::UndefinedJetPair();
@@ -244,10 +252,10 @@ public:
         return selected_pair;
     }
 
-    double GetHTotherJets()
+    const double GetHTotherJets()
     {
         const JetCollection& all_jets = GetJets();
-        const std::set<size_t> bjet_indexes = GetSelectedBjetIndices();
+        const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
         double sum = 0;
         for(unsigned n = 0; n < all_jets.size(); ++n) {
             if(bjet_indexes.count(n)) continue;

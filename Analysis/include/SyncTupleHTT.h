@@ -276,7 +276,8 @@ namespace htt_sync {
         if (run_period == analysis::Period::Run2017){
             jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-            jets_vbf = event.SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt);
+            jets_vbf = event.SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt,
+                                        analysis::EventInfoBase::GetSelectedBjetIndicesSet());
             vbf_jet_pair = event.SelectVBFJetPair(jets_vbf);
             bjets_pt = event.SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M, analysis::JetOrdering::Pt);
             bjets_id = event.SelectJets(cuts::btag_2017::pt,cuts::btag_2017::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::DeepCSV);
@@ -325,8 +326,8 @@ namespace htt_sync {
         }
 
         sync().njets_vbf = static_cast<int>(jets_vbf.size());
-        sync().isVBF = jets_vbf.size()>=2 ? true : false;
-        if(jets_vbf.size() >= 1) {
+        sync().isVBF = jets_vbf.size()>=2;
+        if(vbf_jet_pair.first < jets_vbf.size()) {
             sync().jpt_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
             sync().jeta_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Eta());
             sync().jphi_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Phi());
@@ -335,7 +336,7 @@ namespace htt_sync {
             sync().jeta_vbf_1 = default_value;
             sync().jphi_vbf_1 = default_value;
         }
-        if(jets_vbf.size() >= 2) {
+        if(vbf_jet_pair.second < jets_vbf.size()) {
             sync().jpt_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
             sync().jeta_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Eta());
             sync().jphi_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Phi());
@@ -387,7 +388,7 @@ namespace htt_sync {
             sync().bjet_deepcsv_2 = default_value;
         }
         
-        sync().ht_other_jets = analysis::EventInfoBase::GetHTotherJets();
+        sync().ht_other_jets = event.GetHTotherJets();
 
         if(event->kinFit_convergence.size() > 0) {
             if(bjets_id.size() >= 2)
