@@ -259,13 +259,13 @@ public:
         return selected_pair;
     }
 
-    double GetHT(bool includeHbbJets = false)
+    double GetHT(bool includeHbbJets = true)
     {
         const JetCollection& all_jets = GetJets();
         const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
         double sum = 0;
         for(unsigned n = 0; n < all_jets.size(); ++n) {
-            if(includeHbbJets && bjet_indexes.count(n)) continue;
+            if(!includeHbbJets && bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
             sum += jet.GetMomentum().Pt();
         }
