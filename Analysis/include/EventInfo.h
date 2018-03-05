@@ -143,15 +143,15 @@ public:
         return selected_pair;
     }
 
-    const std::array<size_t,2> GetSelectedBjetIndicesArray()
+    std::array<size_t,2> GetSelectedBjetIndices() const
     {
         std::array<size_t,2> bjet_indexes;
-        bjet_indexes.fill(selected_bjet_pair.first);
-        bjet_indexes.fill(selected_bjet_pair.second);
+        bjet_indexes[0] = selected_bjet_pair.first;
+        bjet_indexes[1] = selected_bjet_pair.second;
         return bjet_indexes;
     }
 
-    const std::set<size_t> GetSelectedBjetIndicesSet()
+    std::set<size_t> GetSelectedBjetIndicesSet() const
     {
         std::set<size_t> bjet_indexes;
         bjet_indexes.insert(selected_bjet_pair.first);
@@ -256,7 +256,7 @@ public:
         return selected_pair;
     }
 
-    const double GetHTotherJets()
+    double GetHTotherJets() const
     {
         const JetCollection& all_jets = GetJets();
         const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
