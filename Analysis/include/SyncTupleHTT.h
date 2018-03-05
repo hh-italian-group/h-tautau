@@ -388,7 +388,7 @@ namespace htt_sync {
             sync().bjet_deepcsv_2 = default_value;
         }
         
-        sync().ht_other_jets = event.GetHTotherJets();
+        sync().ht_other_jets = event.GetHT();
 
         if(event->kinFit_convergence.size() > 0) {
             if(bjets_id.size() >= 2)
