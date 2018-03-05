@@ -212,7 +212,7 @@ public:
                              double eta_cut = std::numeric_limits<double>::max(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
                              JetOrdering jet_ordering = JetOrdering::CSV,
-                             std::set<size_t> bjet_indexes = {})
+                             const std::set<size_t>& bjet_indexes = {})
     {
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
@@ -259,13 +259,13 @@ public:
         return selected_pair;
     }
 
-    double GetHTotherJets()
+    double GetHT(bool includeHbbJets = false)
     {
         const JetCollection& all_jets = GetJets();
-        //const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
+        const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
         double sum = 0;
         for(unsigned n = 0; n < all_jets.size(); ++n) {
-            //if(bjet_indexes.count(n)) continue;
+            if(includeHbbJets && bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
             sum += jet.GetMomentum().Pt();
         }
