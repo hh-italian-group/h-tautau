@@ -128,7 +128,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Int_t, nbjets) /* pt>30 and abs(eta)<2.4 */ \
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
-    VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
+    VAR(Double_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     VAR(Float_t, m_kinfit) \
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
@@ -277,7 +277,7 @@ namespace htt_sync {
             jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             jets_vbf = event.SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt,
-                                        analysis::EventInfoBase::GetSelectedBjetIndicesSet());
+                                        event.GetSelectedBjetIndicesSet());
             vbf_jet_pair = event.SelectVBFJetPair(jets_vbf);
             bjets_pt = event.SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M, analysis::JetOrdering::Pt);
             bjets_id = event.SelectJets(cuts::btag_2017::pt,cuts::btag_2017::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::DeepCSV);
