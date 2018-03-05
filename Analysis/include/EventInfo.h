@@ -118,8 +118,11 @@ public:
         const auto orderer = [&](size_t j1, size_t j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
                 return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            if(jet_ordering == JetOrdering::CSV)
-                return event.jets_csv.at(j1) > event.jets_csv.at(j2);
+            if(jet_ordering == JetOrdering::CSV){
+                if(event.jets_csv.at(j1) != event.jets_csv.at(j2))
+                    return event.jets_csv.at(j1) > event.jets_csv.at(j2);
+                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
+            }
             if(jet_ordering == JetOrdering::DeepCSV){
                 if(event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) != event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2))
                     return event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) > event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2);
@@ -259,10 +262,10 @@ public:
     double GetHTotherJets()
     {
         const JetCollection& all_jets = GetJets();
-        const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
+        //const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
         double sum = 0;
         for(unsigned n = 0; n < all_jets.size(); ++n) {
-            if(bjet_indexes.count(n)) continue;
+            //if(bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
             sum += jet.GetMomentum().Pt();
         }
