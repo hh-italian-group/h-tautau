@@ -217,9 +217,17 @@ public:
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
                 return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            if(jet_ordering == JetOrdering::DeepCSV)
-                return j1->deepcsv() > j2->deepcsv();
-            return j1->csv() > j2->csv();
+            if(jet_ordering == JetOrdering::DeepCSV){
+                if(j1->deepcsv() != j2->deepcsv())
+                    return j1->deepcsv() > j2->deepcsv();
+                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
+            }
+            if(jet_ordering == JetOrdering::CSV){
+                if(j1->csv() != j2->csv())
+                    return j1->csv() > j2->csv();
+                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
+            }
+            throw exception("Unsupported jet ordering for jet selection.");
         };
 
         const JetCollection& all_jets = GetJets();
