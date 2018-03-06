@@ -147,7 +147,6 @@ protected:
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
     const int nJetsRecoilCorr;    
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
-    analysis::TriggerDescriptors triggerDescriptors;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;

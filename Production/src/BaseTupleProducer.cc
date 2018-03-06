@@ -55,7 +55,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
-                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")))
+                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
+                 mayConsume<std::vector<edm::ParameterSet>>(iConfig.getParameterSetVector("hltPaths")))
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
@@ -63,23 +64,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     for(const auto& scaleString : energyScaleStrings) {
         const auto es = analysis::Parse<analysis::EventEnergyScale>(scaleString);
         eventEnergyScales.push_back(es);
-    }
-
-    const auto& hltPaths = iConfig.getParameterSetVector("hltPaths");
-    for(const auto& hltPath : hltPaths) {
-        const std::string pattern = hltPath.getParameter<std::string>("pattern");
-        const std::vector<std::string> legs = hltPath.getUntrackedParameter<std::vector<std::string>>("legs", {});
-        std::vector<analysis::TriggerDescriptors::Leg> legs_vector;
-        for (unsigned n = 0; n < legs.size(); ++n){
-            const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
-            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
-            const double pt = leg_list.Get<double>("pt");
-            const analysis::TriggerDescriptors::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
-            const analysis::TriggerDescriptors::Leg legs_struct(type,pt,filters);
-            legs_vector.push_back(legs_struct);
-        }
-        triggerDescriptors.Add(pattern, legs_vector);
-
     }
 
     if(runSVfit)

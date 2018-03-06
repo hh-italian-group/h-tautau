@@ -14,14 +14,36 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
-                           EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token) :
+                           EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
+                           std::vector<edm::ParameterSet> _hltPaths) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
-    l1JetParticles_token(_l1JetParticles_token)
+    l1JetParticles_token(_l1JetParticles_token), hltPaths(_hltPaths)
 {
     triggerResults_tokens[CMSSW_Process::SIM] = _triggerResultsSIM_token;
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
+
+    for(const auto& hltPath : hltPaths) {
+        pattern = hltPath.getParameter<std::string>("pattern");
+        legs = hltPath.getUntrackedParameter<std::vector<std::string>>("legs", {});
+        TriggerTools::CreateTriggerDescriptors();
+    }
+
+}
+
+void TriggerTools::CreateTriggerDescriptors()
+{
+    std::vector<analysis::TriggerDescriptors::Leg> legs_vector;
+    for (unsigned n = 0; n < legs.size(); ++n){
+        const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
+        const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
+        const double pt = leg_list.Get<double>("pt");
+        const analysis::TriggerDescriptors::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
+        const analysis::TriggerDescriptors::Leg legs_struct(type,pt,filters);
+        legs_vector.push_back(legs_struct);
+    }
+    triggerDescriptors.Add(pattern, legs_vector);
 }
 
 void TriggerTools::Initialize(const edm::Event &_iEvent)
@@ -33,35 +55,42 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     iEvent->getByToken(triggerObjects_token, triggerObjects);
     iEvent->getByToken(l1JetParticles_token, l1JetParticles);
 
-    const auto hasExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
-        for(auto type : objectTypes)
-            if(triggerObject.type(type)) return true;
-        return false;
+    const auto hasExpectedType = [&](const LegType& legType, const pat::TriggerObjectStandAlone& triggerObject) {
+            for(auto type : detail::GetTriggerObjectTypes().at(legType))
+                if(triggerObject.type(type)) return true;
+            return false;
     };
 
-    const auto& filters = descriptors.GetFilters(path_index, leg_id);
-    const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject) {
+
+    const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject,
+            const TriggerDescriptors::FilterVector& filters) {
         for(const auto& filter : filters)
             if(!triggerObject.hasFilterLabel(filter)) return false;
         return true;
     };
 
-    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
 
+    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-        if(!hasExpectedType(triggerObject)) continue;
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
         unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
-        if(!passFilters(unpackedTriggerObject)) continue;
         const auto& paths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& path : paths) {
-            path_triggerObjPtr_map[path].push_back(*triggerObject);
+            const TriggerDescriptors::PatternStruct pattern_struct = triggerDescriptors.GetPatternStruct(path);
+            for(unsigned n = 0; n < pattern_struct.legs_info.size(); ++n){
+                const TriggerDescriptors::Leg leg = pattern_struct.legs_info.at(n);
+                if(!passFilters(unpackedTriggerObject,leg.filters)) continue;
+                if(!hasExpectedType(leg.type,unpackedTriggerObject)) continue;
+                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(*unpackedTriggerObject);
+            }
         }
     }
 
 }
+
+
 
 void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& descriptors,
                                         analysis::TriggerResults& results)
@@ -78,41 +107,28 @@ void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& desc
 }
 
 TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
-        const TriggerDescriptors& descriptors, size_t path_index,
-        const std::set<trigger::TriggerObjectType>& objectTypes, const LorentzVector& candidateMomentum,
-        size_t leg_id, double deltaR_Limit)
+        const TriggerDescriptors& descriptors, const LorentzVector& candidateMomentum,
+        double deltaR_Limit)
 {
-    const auto hasExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
-        for(auto type : objectTypes)
-            if(triggerObject.type(type)) return true;
-        return false;
-    };
 
-    const auto& filters = descriptors.GetFilters(path_index, leg_id);
-    const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject) {
-        for(const auto& filter : filters)
-            if(!triggerObject.hasFilterLabel(filter)) return false;
-        return true;
-    };
+
+
     
     TriggerObjectSet matches;
-    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
+
     const double deltaR2 = std::pow(deltaR_Limit, 2);
-    const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
+
+    //loop on map
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-        if(!hasExpectedType(triggerObject)) continue;
+
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
-        pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
-        unpackedTriggerObject.unpackPathNames(triggerNames);
-        unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
-        if(!passFilters(unpackedTriggerObject)) continue;
-        const auto& paths = unpackedTriggerObject.pathNames(true, true);
-        for(const auto& path : paths) {
+
+
             if(descriptors.PatternMatch(path, path_index)) {
                 matches.insert(&triggerObject);
                 break;
             }
-        }
+
     }
     return matches;
 }
