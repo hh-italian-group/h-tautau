@@ -55,6 +55,11 @@ public:
         size_t index = GetIndex(pattern);
         return pattern_structs.at(index);
     }
+    
+    std::vector<TriggerDescriptors::PatternStruct> GetPatternStructs()
+    {
+        return pattern_structs;
+    }
 
     void Add(const Pattern& pattern, std::vector<Leg> legs)
     {

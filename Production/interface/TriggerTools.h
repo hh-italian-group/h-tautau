@@ -79,29 +79,31 @@ public:
     }
 
     template<typename HiggsCandidate>
-    void SetTriggerMatchBits(const analysis::TriggerDescriptors& descriptors, analysis::TriggerResults& results,
+    void SetTriggerMatchBits(const analysis::TriggerDescriptors& descriptors,
                              const HiggsCandidate& candidate, double deltaR_Limit)
     {
-
-            const size_t n_legs = descriptors.GetNumberOfLegs(n);
-            if(n_legs > 2 || n_legs == 0)
-                throw exception("Unsupported number of legs = %1%.") % n_legs;
-            bool match_found = false;
-
-                std::map<size_t, TriggerObjectSet> matches;
-                //cosa metto?
-                matches[first] = FindMatchingTriggerObjects(descriptors, n, candidate.GetFirstDaughter(), first,
-                                                            deltaR_Limit);
-                matches[second] = FindMatchingTriggerObjects(descriptors, n, candidate.GetSecondDaughter(), second,
-                                                             deltaR_Limit);
-
-                std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-                std::set_union(matches[1].begin(), matches[1].end(), matches[2].begin(), matches[2].end(),
-                               std::back_inserter(comb_match));
-
-                match_found = matches[1].size() >= 1 && matches[2].size() >= n_legs - 1 && comb_match.size() >= n_legs;
-
-            results.SetMatch(n, match_found); //n cos'è??
+        bool match_found = false;
+        std::vector<analysis::TriggerDescriptors::PatternStruct> pattern_structs = descriptors.GetPatternStructs();
+        
+        for (size_t n = 0; n < pattern_structs.size(); ++n){
+            analysis::TriggerDescriptors::PatternStruct pattern_struct = pattern_structs.at(n);
+            
+            //to be fixed
+            std::map<size_t, TriggerObjectSet> matches;
+            
+            matches[first] = FindMatchingTriggerObjects(pattern_struct, n, candidate.GetFirstDaughter(),
+                                                        deltaR_Limit);
+            matches[second] = FindMatchingTriggerObjects(pattern_struct, n, candidate.GetSecondDaughter(),
+                                                         deltaR_Limit);
+            
+            std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+            std::set_union(matches[1].begin(), matches[1].end(), matches[2].begin(), matches[2].end(),
+                           std::back_inserter(comb_match));
+            
+            match_found = matches[1].size() >= 1 && matches[2].size() >= n_legs - 1 && comb_match.size() >= n_legs;
+            
+        }
+        results.SetMatch(n, match_found); //n cos'è??
 
     }
 

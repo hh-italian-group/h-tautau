@@ -106,31 +106,24 @@ void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& desc
     }
 }
 
-TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
-        const TriggerDescriptors& descriptors, const LorentzVector& candidateMomentum,
-        double deltaR_Limit)
+    //to be fixed...
+std::map<size_t,std::set<*pat::TriggerObjectStandAlone>> TriggerTools::FindMatchingTriggerObjects(
+        const analysis::TriggerDescriptors::PatternStruct& pattern_struct
+        const LorentzVector& candidateMomentum, const LegType& candidate_type /*???*/, double deltaR_Limit)
 {
-
-
-
-    
-    TriggerObjectSet matches;
-
+    std::map<size_t,std::set<*pat::TriggerObjectStandAlone>> matched_legId_triggerObjectSet_map;
+    const analysis::TriggerDescriptors::Pattern pattern = pattern_struct.pattern;
+    std::map<size_t,std::set<*pat::TriggerObjectStandAlone>> legId_triggerObjPtr_map = path_legId_triggerObjPtr_map.at(pattern);
     const double deltaR2 = std::pow(deltaR_Limit, 2);
-
-    //loop on map
-    for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-
-        if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
-
-
-            if(descriptors.PatternMatch(path, path_index)) {
-                matches.insert(&triggerObject);
-                break;
-            }
-
+    
+    for(const auto& iter : legId_triggerObjPtr_map){
+        std::set<*pat::TriggerObjectStandAlone> triggerObjectSet = iter.second;
+        for(const auto& triggerObject : triggerObjectSet){
+            if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
+        }
     }
-    return matches;
+    
+    return matched_legId_triggerObjectSet_map;
 }
 
 bool TriggerTools::TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const
