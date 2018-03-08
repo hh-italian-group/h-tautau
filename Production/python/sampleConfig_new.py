@@ -370,3 +370,6 @@ def GetPeriod(sampleType):
         print "ERROR: unknown sample type = '{}'".format(sampleType)
         sys.exit(1)
     return periodDict[sampleType]
+
+def GetDeltaPt():
+    return DeltaSafetyPt

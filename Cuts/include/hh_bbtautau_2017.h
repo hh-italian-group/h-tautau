@@ -46,6 +46,7 @@ namespace ETau {
 namespace TauTau {
     namespace tauID {
         constexpr double pt = 45; // > to be fixed
+        constexpr double eta = 2.3; // > to be fixed
     }
 }
 

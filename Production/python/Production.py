@@ -55,6 +55,7 @@ options.parseArguments()
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
+deltaPt = sampleConfig.GetDeltaPt()
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -229,6 +230,7 @@ for channel in channels:
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
         period                  = cms.string(period),
+        deltaPt                 = deltaPt,
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),

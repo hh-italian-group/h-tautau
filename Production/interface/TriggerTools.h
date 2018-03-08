@@ -29,15 +29,25 @@ ENUM_NAMES(CMSSW_Process) = {
 
 namespace detail {
 
-inline const std::map<std::string,std::set<trigger::TriggerObjectType>>& GetTriggerObjectTypes()
+template<typename PatObject>
+const analysis::LegType& GetTriggerObjectTypes(const PatObject&);
+
+template<>
+inline const analysis::LegType& GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
 {
-    static const std::map<analysis::LegType,std::set<trigger::TriggerObjectType>> types
-            = {
-               { analysis::LegType::e, { trigger::TriggerElectron, trigger::TriggerCluster } },
-               { analysis::LegType::mu, { trigger::TriggerMuon } },
-               { analysis::LegType::tau, { trigger::TriggerTau } }
-              };
-    return types;
+    return analysis::LegType::e;
+}
+
+template<>
+inline const analysis::LegType& GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
+{
+    return analysis::LegType::mu;
+}
+
+template<>
+inline const analysis::LegType& GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
+{
+    return analysis::LegType::tau;
 }
 
 } // namespace detail
@@ -56,7 +66,7 @@ public:
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                 std::vector<edm::ParameterSet> _hltPaths);
+                 std::vector<edm::ParameterSet> _hltPaths, std::map<std::string, double> _deltaPt);
 
     TriggerTools(const edm::ParameterSet& iConfig);
 
@@ -64,47 +74,46 @@ public:
 
     void Initialize(const edm::Event& iEvent);
 
-    void SetTriggerAcceptBits(const analysis::TriggerDescriptors& descriptors, analysis::TriggerResults& results);
+    void SetTriggerAcceptBits(const analysis::TriggerDescriptorCollection& descriptors, analysis::TriggerResults& results);
 
-    TriggerObjectSet FindMatchingTriggerObjects(const analysis::TriggerDescriptors& descriptors, size_t path_index,
-            const std::set<trigger::TriggerObjectType>& objectTypes, const LorentzVector& candidateMomentum,
-            size_t leg_id, double deltaR_Limit);
+    std::map<size_t,TriggerTools::TriggerObjectSet> FindMatchingTriggerObjects(
+            const analysis::TriggerDescriptorCollection::TriggerDescriptor& pattern_struct,
+            const LorentzVector& candidateMomentum, const LegType& candidate_type, double deltaR_Limit);
 
-    template<typename Candidate>
-    TriggerObjectSet FindMatchingTriggerObjects(const analysis::TriggerDescriptors& descriptors, size_t path_index,
-            const Candidate& candidate, size_t leg_id, double deltaR_Limit)
-    {
-        return FindMatchingTriggerObjects(descriptors, path_index, detail::GetTriggerObjectTypes(*candidate),
-                                          candidate.GetMomentum(), leg_id, deltaR_Limit);
-    }
 
     template<typename HiggsCandidate>
-    void SetTriggerMatchBits(const analysis::TriggerDescriptors& descriptors,
+    void SetTriggerMatchBits(const analysis::TriggerDescriptorCollection& descriptors,
                              const HiggsCandidate& candidate, double deltaR_Limit)
-    {
-        bool match_found = false;
-        std::vector<analysis::TriggerDescriptors::PatternStruct> pattern_structs = descriptors.GetPatternStructs();
-        
-        for (size_t n = 0; n < pattern_structs.size(); ++n){
-            analysis::TriggerDescriptors::PatternStruct pattern_struct = pattern_structs.at(n);
-            
-            //to be fixed
-            std::map<size_t, TriggerObjectSet> matches;
-            
-            matches[first] = FindMatchingTriggerObjects(pattern_struct, n, candidate.GetFirstDaughter(),
+    { 
+        for (size_t n = 0; n < descriptors.GetVectorTriggerDescriptorSize(); ++n){
+            analysis::TriggerDescriptorCollection::TriggerDescriptor pattern_struct = descriptors.GetTriggerDescriptor(n);
+            std::map<size_t, TriggerObjectSet> matches_first, matches_second;
+            matches_first = FindMatchingTriggerObjects(pattern_struct,candidate.GetFirstDaughter().GetMomentum(),
+                                                        detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),
                                                         deltaR_Limit);
-            matches[second] = FindMatchingTriggerObjects(pattern_struct, n, candidate.GetSecondDaughter(),
+            matches_second = FindMatchingTriggerObjects(pattern_struct,candidate.GetSecondDaughter().GetMomentum(),
+                                                         detail::GetTriggerObjectTypes(*candidate.GetSecondDaughter()),
                                                          deltaR_Limit);
-            
-            std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-            std::set_union(matches[1].begin(), matches[1].end(), matches[2].begin(), matches[2].end(),
-                           std::back_inserter(comb_match));
-            
-            match_found = matches[1].size() >= 1 && matches[2].size() >= n_legs - 1 && comb_match.size() >= n_legs;
-            
+            results.SetMatch(n, TriggerMatchFound(matches_first, matches_second, pattern_struct.legs_info.size()));
         }
-        results.SetMatch(n, match_found); //n cos'è??
+    }
 
+    //to be fixed
+    bool TriggerMatchFound(const std::map<size_t, TriggerObjectSet>& matches_first,
+                           const std::map<size_t, TriggerObjectSet>& matches_second,
+                           const size_t n_legs_total)
+    {
+        std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+        for(const auto& first : matches_first){
+            for(const auto& second : matches_second){
+                std::set_difference(first.second.begin(), first.second.end(),
+                                      second.second.begin(), second.second.end(),
+                                       std::inserter(comb_match,comb_match.begin()));
+            }
+        }
+        if(comb_match.size() >= n_legs_total)
+            return true;
+        return false;
     }
 
     bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;
@@ -119,8 +128,9 @@ private:
     EDGetTokenT<std::vector<l1extra::L1JetParticle>> l1JetParticles_token;
 
     const edm::Event* iEvent;
-    analysis::TriggerDescriptors triggerDescriptors;
+    analysis::TriggerDescriptorCollection triggerDescriptors;
     std::vector<edm::ParameterSet> hltPaths;
+    std::map<std::string,double> deltaPt;
     std::string pattern;
     std::vector<std::string> legs;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
@@ -128,7 +138,7 @@ private:
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
     edm::Handle<std::vector<l1extra::L1JetParticle>> l1JetParticles;
 
-    std::map<std::string,std::map<size_t,std::set<*pat::TriggerObjectStandAlone>>> path_legId_triggerObjPtr_map;
+    std::map<std::string,std::map<size_t,TriggerObjectSet>> path_legId_triggerObjPtr_map;
 };
 
 } // namespace analysis

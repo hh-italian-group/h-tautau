@@ -11,7 +11,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-class TriggerDescriptors {
+class TriggerDescriptorCollection {
 public:
     using Pattern = std::string;
     using Filter = std::string;
@@ -24,17 +24,17 @@ public:
         double pt;
         FilterVector filters;
 
-        Leg(const LegType _type, const double _pt, const TriggerDescriptors::FilterVector _filters)
+        Leg(const LegType _type, const double _pt, const TriggerDescriptorCollection::FilterVector _filters)
             : type(_type), pt(_pt), filters(_filters) { }
 
     };
 
-    struct PatternStruct{
+    struct TriggerDescriptor{
         Pattern pattern;
         std::vector<Leg> legs_info;
         boost::regex regex;
 
-        PatternStruct(const Pattern _pattern, const std::vector<Leg> _legs_info)
+        TriggerDescriptor(const Pattern _pattern, const std::vector<Leg> _legs_info)
             : pattern(_pattern), legs_info(_legs_info)
         {
             static const std::string regex_format = "^%1%[0-9]+$";
@@ -50,23 +50,28 @@ public:
 
     };
 
-    TriggerDescriptors::PatternStruct GetPatternStruct(const Pattern& pattern)
+    size_t GetVectorTriggerDescriptorSize()
+    {
+        return pattern_structs.size();
+    }
+
+    TriggerDescriptorCollection::TriggerDescriptor GetTriggerDescriptor(size_t index)
+    {
+        return pattern_structs.at(index);
+    }
+
+    TriggerDescriptorCollection::TriggerDescriptor GetTriggerDescriptor(const Pattern& pattern)
     {
         size_t index = GetIndex(pattern);
         return pattern_structs.at(index);
     }
     
-    std::vector<TriggerDescriptors::PatternStruct> GetPatternStructs()
-    {
-        return pattern_structs;
-    }
-
     void Add(const Pattern& pattern, std::vector<Leg> legs)
     {
         if(pattern_indices.count(pattern))
             throw exception("Duplicated trigger pattern '%1%'.") % pattern;
         pattern_indices[pattern] = legs.size();
-        TriggerDescriptors::PatternStruct pattern_struct(pattern,legs);
+        TriggerDescriptorCollection::TriggerDescriptor pattern_struct(pattern,legs);
         pattern_structs.push_back(pattern_struct);
     }
 
@@ -86,7 +91,7 @@ public:
     }
 
 private:
-    std::vector<TriggerDescriptors::PatternStruct> pattern_structs;
+    std::vector<TriggerDescriptorCollection::TriggerDescriptor> pattern_structs;
     std::map<Pattern, size_t> pattern_indices;
 };
 
@@ -95,8 +100,8 @@ public:
     using BitsContainer = unsigned long long;
     static constexpr size_t MaxNumberOfTriggers = std::numeric_limits<BitsContainer>::digits;
     using Bits = std::bitset<MaxNumberOfTriggers>;
-    using DescriptorsPtr = std::shared_ptr<const TriggerDescriptors>;
-    using Pattern = TriggerDescriptors::Pattern;
+    using DescriptorsPtr = std::shared_ptr<const TriggerDescriptorCollection>;
+    using Pattern = TriggerDescriptorCollection::Pattern;
 
     BitsContainer GetAcceptBits() const { return accept_bits.to_ullong(); }
     BitsContainer GetMatchBits() const { return match_bits.to_ullong(); }

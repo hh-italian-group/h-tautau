@@ -82,13 +82,13 @@ public:
             const Channel channel = static_cast<Channel>(channel_id);
             const FilterKey key(channel_id, summary.triggers_index.at(n));
             if(!triggerDescriptors.count(channel))
-                triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptors>(new TriggerDescriptors());
+                triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptorCollection>(new TriggerDescriptorCollection());
             triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), summary.triggers_n_legs.at(n),
                                              filters[key]);
         }
     }
 
-    std::shared_ptr<const TriggerDescriptors> GetTriggerDescriptors(Channel channel) const
+    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const
     {
         if(!triggerDescriptors.count(channel))
             throw exception("Information for channel %1% not found.") % channel;
@@ -100,7 +100,7 @@ public:
 
 private:
     ProdSummary summary;
-    std::map<Channel, std::shared_ptr<TriggerDescriptors>> triggerDescriptors;
+    std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
 };
 
 class EventInfoBase {

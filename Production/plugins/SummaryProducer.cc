@@ -27,7 +27,7 @@ public:
     using GenEventCountMap = ntuple::GenEventCountMap;
     using GenEventTypeCountMap = ntuple::GenEventTypeCountMap;
     using Channel = analysis::Channel;
-    using TriggerDescriptors = analysis::TriggerDescriptors;
+    using TriggerDescriptorCollection = analysis::TriggerDescriptorCollection;
 
     SummaryProducer(const edm::ParameterSet& cfg) :
         start(clock::now()),
@@ -45,7 +45,7 @@ public:
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
 
-        std::map<Channel, TriggerDescriptors> triggerDescriptors;
+        std::map<Channel, TriggerDescriptorCollection> triggerDescriptors;
         const auto& triggerSetup = cfg.getParameterSetVector("triggerSetup");
         for(const auto& channelSetup : triggerSetup) {
             const std::string channel_name = channelSetup.getParameter<std::string>("channel");
@@ -54,7 +54,7 @@ public:
             for(const auto& hltPath : hltPaths) {
                 const std::string pattern = hltPath.getParameter<std::string>("pattern");
                 const size_t nLegs = hltPath.getUntrackedParameter<unsigned>("nLegs", 1);
-                analysis::TriggerDescriptors::FilterContainer filters;
+                analysis::TriggerDescriptorCollection::FilterContainer filters;
                 filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
                 filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
                 triggerDescriptors[channel].Add(pattern, nLegs, filters);
@@ -64,7 +64,7 @@ public:
         for(const auto& channel_desc : triggerDescriptors) {
             const Channel channel = channel_desc.first;
             const int channel_id = static_cast<int>(channel);
-            const TriggerDescriptors& descs = channel_desc.second;
+            const TriggerDescriptorCollection& descs = channel_desc.second;
             for(size_t n = 0; n < descs.GetPatterns().size(); ++n) {
                 summaryTuple().triggers_channel.push_back(channel_id);
                 summaryTuple().triggers_index.push_back(n);

@@ -56,7 +56,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
                                                     iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
-                 mayConsume<std::vector<edm::ParameterSet>>(iConfig.getParameterSetVector("hltPaths")))
+                 mayConsume<std::vector<edm::ParameterSet>>(iConfig.getParameterSetVector("hltPaths")),
+                 mayConsume<std::map<size_t, double>>(iConfig.getParameterSet("deltaPt")))
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
