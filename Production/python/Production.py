@@ -55,7 +55,7 @@ options.parseArguments()
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
-deltaPt = sampleConfig.GetDeltaPt()
+triggerCfg = sampleConfig.GetTriggerCfg(period)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -191,10 +191,10 @@ else:
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
-    hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
+
     process.summaryTupleProducer.triggerSetup.append(cms.PSet(
         channel = cms.string(channel),
-        hltPaths = hltPaths
+        triggerCfg = triggerCfg
     ))
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
@@ -222,7 +222,6 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
-        hltPaths                = hltPaths,
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
@@ -230,7 +229,8 @@ for channel in channels:
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
         period                  = cms.string(period),
-        deltaPt                 = deltaPt,
+        triggerCfg              = cms.string(triggerCfg),
+        channel                 = cms.string(channel),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),

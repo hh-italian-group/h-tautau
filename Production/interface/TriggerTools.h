@@ -66,7 +66,7 @@ public:
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                 std::vector<edm::ParameterSet> _hltPaths, std::map<std::string, double> _deltaPt);
+                 std::string _triggerCfg, analysis::Channel _channel);
 
     TriggerTools(const edm::ParameterSet& iConfig);
 
@@ -129,8 +129,8 @@ private:
 
     const edm::Event* iEvent;
     analysis::TriggerDescriptorCollection triggerDescriptors;
-    std::vector<edm::ParameterSet> hltPaths;
-    std::map<std::string,double> deltaPt;
+    std::string triggerCfg;
+    analysis::Channel channel;
     std::string pattern;
     std::vector<std::string> legs;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;

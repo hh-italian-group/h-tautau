@@ -13,8 +13,8 @@ bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
-BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& _treeName) :
-    treeName(_treeName),
+BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const analysis::Channel& _channel) :
+    treeName(ToString(_channel)),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
     electronsMiniAOD_token(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
     eleTightIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
@@ -56,8 +56,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
                                                     iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
-                 mayConsume<std::vector<edm::ParameterSet>>(iConfig.getParameterSetVector("hltPaths")),
-                 mayConsume<std::map<size_t, double>>(iConfig.getParameterSet("deltaPt")))
+                 mayConsume<std::string>(iConfig.getParameter<std::string>("triggerCfg")),
+                 analysis::EnumNameMap<analysis::Channel>::GetDefault().Parse(
+                                        iConfig.getParameter<std::string>("channel")))
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());

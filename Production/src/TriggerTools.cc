@@ -5,6 +5,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "AnalysisTools/Core/include/RootExt.h"
+#include "AnalysisTools/Core/include/ConfigReader.h"
+#include "Production/interface/TriggerFileDescriptor.h"
+#include "Production/interface/TriggerFileConfigEntryReader.h"
 
 namespace analysis {
 
@@ -15,16 +18,25 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                            EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                           std::vector<edm::ParameterSet> _hltPaths,
-                           std::map<std::string, double> _deltaPt) :
+                           std::string _triggerCfg,
+                           analysis::Channel _channel) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
-    l1JetParticles_token(_l1JetParticles_token), hltPaths(_hltPaths), deltaPt(_deltaPt)
+    l1JetParticles_token(_l1JetParticles_token), triggerCfg(_triggerCfg), channel(_channel)
 {
     triggerResults_tokens[CMSSW_Process::SIM] = _triggerResultsSIM_token;
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
 
+    analysis::ConfigReader config_reader;
+
+    TriggerDescriptorCollection trigger_file_descriptors;
+    analysis::trigger::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+    config_reader.AddEntryReader("FILE", file_entry_reader, true);
+
+    config_reader.ReadConfig(triggerCfg);
+
+    // leggi cfg e memorizza elementi
     for(const auto& hltPath : hltPaths) {
         pattern = hltPath.getParameter<std::string>("pattern");
         legs = hltPath.getUntrackedParameter<std::vector<std::string>>("legs", {});
