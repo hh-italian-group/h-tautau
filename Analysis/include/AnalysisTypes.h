@@ -18,7 +18,7 @@ const EnumNameMap<Channel> __Channel_names_latex("ChannelLatex", {
 });
 
 enum class LegType { e = 0, mu = 1, tau = 2 };
-ENUM_NAMES(Type) = {
+ENUM_NAMES(LegType) = {
     { LegType::e, "e" }, { LegType::mu, "mu" }, { LegType::tau, "tau" }
 };
 
