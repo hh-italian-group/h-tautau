@@ -97,7 +97,8 @@ private:
 
 class TriggerResults {
 public:
-    using BitsContainer = unsigned long long;
+    //using BitsContainer = unsigned long long;
+    using BitsContainer = boost::multiprecision::uint128_t;
     static constexpr size_t MaxNumberOfTriggers = std::numeric_limits<BitsContainer>::digits;
     using Bits = std::bitset<MaxNumberOfTriggers>;
     using DescriptorsPtr = std::shared_ptr<const TriggerDescriptorCollection>;

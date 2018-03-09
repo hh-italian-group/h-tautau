@@ -33,8 +33,9 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
 
 }
 
-void TriggerTools::CreateTriggerDescriptors()
+static TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(map, channel)
 {
+    for(entry : map) {
     std::vector<analysis::TriggerDescriptorCollection::Leg> legs_vector;
     for (unsigned n = 0; n < legs.size(); ++n){
         const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
@@ -45,6 +46,8 @@ void TriggerTools::CreateTriggerDescriptors()
         legs_vector.push_back(legs_struct);
     }
     triggerDescriptors.Add(pattern, legs_vector);
+    }
+    return trig
 }
 
 void TriggerTools::Initialize(const edm::Event &_iEvent)
