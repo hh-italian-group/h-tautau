@@ -49,7 +49,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     }
 
     for(const auto& trigger_file_descriptor : trigger_file_descriptors) {
-        const analysis::trigger::TriggerFileDescriptor trigger_descriptor = trigger_file_descriptor.second;
+        const analysis::TriggerFileDescriptor trigger_descriptor = trigger_file_descriptor.second;
         channels = trigger_descriptor.channels;
         pattern_legs_map[trigger_file_descriptor.first] = trigger_descriptor.legs;
     }

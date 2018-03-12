@@ -8,8 +8,6 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 
 namespace analysis {
 
-namespace trigger{
-
 class TriggerFileConfigEntryReader : public analysis::ConfigEntryReader {
 public:
     TriggerFileConfigEntryReader(TriggerFileDescriptorCollection& _descriptors) : descriptors(&_descriptors) {}
@@ -38,8 +36,8 @@ public:
     }
 
 private:
-    analysis::trigger::TriggerFileDescriptor current;
-    analysis::trigger::TriggerFileDescriptorCollection* descriptors;
+    analysis::TriggerFileDescriptor current;
+    analysis::TriggerFileDescriptorCollection* descriptors;
 };
 
 class SetupConfigEntryReader : public analysis::ConfigEntryReader {
@@ -67,10 +65,8 @@ public:
     }
 
 private:
-    analysis::trigger::SetupDescriptor current;
-    analysis::trigger::SetupDescriptorCollection* descriptors;
+    analysis::SetupDescriptor current;
+    analysis::SetupDescriptorCollection* descriptors;
 };
-
-} //namespace trigger
 
 } // namespace analysis

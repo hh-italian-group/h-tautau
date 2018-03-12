@@ -14,8 +14,6 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 
 namespace analysis {
 
-namespace trigger{
-
 struct SetupDescriptor {
     std::string name;
     std::map<analysis::LegType, double> deltaPt_map;
@@ -32,7 +30,5 @@ struct TriggerFileDescriptor {
 };
 
 using TriggerFileDescriptorCollection = std::unordered_map<std::string, TriggerFileDescriptor>;
-
-} //namespace trigger
 
 } // namespace analysis

@@ -50,8 +50,8 @@ public:
 
         analysis::ConfigReader config_reader;
 
-        analysis::trigger::TriggerFileDescriptorCollection trigger_file_descriptors;
-        analysis::trigger::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+        analysis::TriggerFileDescriptorCollection trigger_file_descriptors;
+        analysis::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
         config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
 
 
