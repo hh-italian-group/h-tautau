@@ -152,7 +152,7 @@ std::map<size_t,TriggerTools::TriggerObjectSet> TriggerTools::FindMatchingTrigge
     for(const auto& iter : legId_triggerObjPtr_map){
         TriggerTools::TriggerObjectSet triggerObjectSet = iter.second;
         for(const auto& triggerObject : triggerObjectSet){
-            if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->pol, candidateMomentum) >= deltaR2) continue;
+            if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
             for(size_t n = 0; n < pattern_struct.legs_info.size(); ++n){
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(candidate_type != leg.type) continue;
