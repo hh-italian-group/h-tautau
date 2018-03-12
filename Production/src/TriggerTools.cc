@@ -157,7 +157,7 @@ std::map<size_t,TriggerTools::TriggerObjectSet> TriggerTools::FindMatchingTrigge
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(candidate_type != leg.type) continue;
                 if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
-                matched_legId_triggerObjectSet_map[iter.first].insert(*triggerObject);
+                matched_legId_triggerObjectSet_map[iter.first].insert(triggerObject);
             }
         }
     }  
