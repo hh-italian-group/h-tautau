@@ -65,7 +65,7 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const analysi
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
-            const analysis::TriggerDescriptorCollection::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
+            const analysis::TriggerDescriptorCollection::FilterVector filters = leg_list.GetList(leg_list.Get("filters"),false);
             const analysis::TriggerDescriptorCollection::Leg legs_struct(type,pt,filters);
             legs_vector.push_back(legs_struct);
         }

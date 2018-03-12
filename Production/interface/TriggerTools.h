@@ -71,8 +71,6 @@ public:
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
                  std::string _triggerCfg, analysis::Channel _channel);
 
-    TriggerTools(const edm::ParameterSet& iConfig, const std::string& _triggerCfg, const analysis::Channel& _channel);
-
     static TriggerDescriptorCollection CreateTriggerDescriptors(const analysis::TriggerFileDescriptorCollection trigger_file_descriptors,const Channel channel);
 
     void Initialize(const edm::Event& iEvent);
