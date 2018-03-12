@@ -11,7 +11,6 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 #include "AnalysisTools/Core/include/PhysicalValue.h"
 #include "h-tautau/Analysis/include/SummaryTuple.h"
 #include "AnalysisTools/Core/include/ConfigReader.h"
-#include "Instruments/include/SampleDescriptor.h"
 
 namespace analysis {
 
