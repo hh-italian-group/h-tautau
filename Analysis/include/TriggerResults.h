@@ -75,10 +75,9 @@ public:
         pattern_structs.push_back(pattern_struct);
     }
 
-    bool FindPatternMatch(const std::string& path_name, size_t& index) const
+    bool FindPatternMatch(const std::string& path_name) const
     {
-        for(index = 0; index < pattern_structs.size(); ++index)
-            if(PatternMatch(path_name, index)) return true;
+        if(TriggerDescriptor::PatternMatch(path_name)) return true;
         return false;
     }
 
@@ -97,8 +96,7 @@ private:
 
 class TriggerResults {
 public:
-    //using BitsContainer = unsigned long long;
-    using BitsContainer = boost::multiprecision::uint128_t;
+    using BitsContainer = unsigned long long;
     static constexpr size_t MaxNumberOfTriggers = std::numeric_limits<BitsContainer>::digits;
     using Bits = std::bitset<MaxNumberOfTriggers>;
     using DescriptorsPtr = std::shared_ptr<const TriggerDescriptorCollection>;
