@@ -17,7 +17,7 @@ public:
     virtual void StartEntry(const std::string& name, const std::string& reference_name) override
     {
         ConfigEntryReader::StartEntry(name, reference_name);
-        current = reference_name.size() ? descriptors->at(reference_name) : NJets_HT_BinFileDescriptor();
+        current = reference_name.size() ? descriptors->at(reference_name) : TriggerFileDescriptor();
         current.name = name;
     }
 

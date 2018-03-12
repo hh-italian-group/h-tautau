@@ -33,19 +33,19 @@ template<typename PatObject>
 const analysis::LegType& GetTriggerObjectTypes(const PatObject&);
 
 template<>
-inline const analysis::LegType& GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
+inline const analysis::LegType GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
 {
     return analysis::LegType::e;
 }
 
 template<>
-inline const analysis::LegType& GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
+inline const analysis::LegType GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
 {
     return analysis::LegType::mu;
 }
 
 template<>
-inline const analysis::LegType& GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
+inline const analysis::LegType GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
 {
     return analysis::LegType::tau;
 }
