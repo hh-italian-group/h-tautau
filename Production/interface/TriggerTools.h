@@ -30,24 +30,24 @@ ENUM_NAMES(CMSSW_Process) = {
 namespace detail {
 
 template<typename PatObject>
-const analysis::LegType& GetTriggerObjectTypes(const PatObject&);
+const LegType GetTriggerObjectTypes(const PatObject&);
 
 template<>
-inline const analysis::LegType GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
+inline LegType GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
 {
-    return analysis::LegType::e;
+    return LegType::e;
 }
 
 template<>
-inline const analysis::LegType GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
+inline LegType GetTriggerObjectTypes<pat::Muon>(const pat::Muon&)
 {
-    return analysis::LegType::mu;
+    return LegType::mu;
 }
 
 template<>
-inline const analysis::LegType GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
+inline LegType GetTriggerObjectTypes<pat::Tau>(const pat::Tau&)
 {
-    return analysis::LegType::tau;
+    return LegType::tau;
 }
 
 } // namespace detail
