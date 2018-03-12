@@ -17,6 +17,7 @@ namespace analysis {
 namespace trigger{
 
 struct SetupDescriptor {
+    std::string name;
     std::map<analysis::LegType, double> deltaPt_map;
 
 };
@@ -24,6 +25,7 @@ struct SetupDescriptor {
 using SetupDescriptorCollection = std::unordered_map<std::string, SetupDescriptor>;
 
 struct TriggerFileDescriptor {
+    std::string name;
     std::set<Channel> channels;
     std::vector<std::string> legs;
 
