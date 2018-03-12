@@ -63,13 +63,8 @@ public:
         for(const auto& channelSetup : triggerSetup) {
             const std::string channel_name = channelSetup.getParameter<std::string>("channel");
             const Channel channel = analysis::Parse<Channel>(channel_name);
-            std::map<std::string, std::vector<std::string>> pattern_legs_map;
-            for(const auto& trigger_file_descriptor : trigger_file_descriptors) {
-                const analysis::trigger::TriggerFileDescriptor trigger_descriptor = trigger_file_descriptor.second;
-                pattern_legs_map[trigger_file_descriptor.first] = trigger_descriptor.legs;
-            }
 
-            triggerDescriptors[channel] = analysis::TriggerTools::CreateTriggerDescriptors(pattern_legs_map,channel);;
+            triggerDescriptors[channel] = analysis::TriggerTools::CreateTriggerDescriptors(trigger_file_descriptors,channel);
         }
 
         for(const auto& channel_desc : triggerDescriptors) {
