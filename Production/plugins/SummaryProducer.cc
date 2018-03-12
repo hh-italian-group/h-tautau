@@ -19,6 +19,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/GenTruthTools.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
+#include "Production/interface/TriggerFileDescriptor.h"
+#include "Production/interface/TriggerFileConfigEntryReader.h"
+#include "Production/interface/TriggerTools.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
@@ -45,42 +48,37 @@ public:
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
 
+        analysis::ConfigReader config_reader;
+
+        analysis::trigger::TriggerFileDescriptorCollection trigger_file_descriptors;
+        analysis::trigger::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+        config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
+
+
+        const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
+        config_reader.ReadConfig(triggerCfg);
+
         std::map<Channel, TriggerDescriptorCollection> triggerDescriptors;
         const auto& triggerSetup = cfg.getParameterSetVector("triggerSetup");
         for(const auto& channelSetup : triggerSetup) {
             const std::string channel_name = channelSetup.getParameter<std::string>("channel");
             const Channel channel = analysis::Parse<Channel>(channel_name);
-            const auto& hltPaths = channelSetup.getParameterSetVector("hltPaths");
-            for(const auto& hltPath : hltPaths) {
-                const std::string pattern = hltPath.getParameter<std::string>("pattern");
-                const size_t nLegs = hltPath.getUntrackedParameter<unsigned>("nLegs", 1);
-                analysis::TriggerDescriptorCollection::FilterContainer filters;
-                filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
-                filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
-                triggerDescriptors[channel].Add(pattern, nLegs, filters);
+            std::map<std::string, std::vector<std::string>> pattern_legs_map;
+            for(const auto& trigger_file_descriptor : trigger_file_descriptors) {
+                const analysis::trigger::TriggerFileDescriptor trigger_descriptor = trigger_file_descriptor.second;
+                pattern_legs_map[trigger_file_descriptor.first] = trigger_descriptor.legs;
             }
+
+            triggerDescriptors[channel] = analysis::TriggerTools::CreateTriggerDescriptors(pattern_legs_map,channel);;
         }
 
         for(const auto& channel_desc : triggerDescriptors) {
             const Channel channel = channel_desc.first;
             const int channel_id = static_cast<int>(channel);
             const TriggerDescriptorCollection& descs = channel_desc.second;
-            for(size_t n = 0; n < descs.GetPatterns().size(); ++n) {
+            for(size_t n = 0; n < descs.GetVectorTriggerDescriptorSize(); ++n) {
                 summaryTuple().triggers_channel.push_back(channel_id);
-                summaryTuple().triggers_index.push_back(n);
-                summaryTuple().triggers_pattern.push_back(descs.GetPatterns().at(n));
-                summaryTuple().triggers_n_legs.push_back(descs.GetNumberOfLegs(n));
-
-                for(const auto& filters_entry : descs.GetFilters(n)) {
-                    const size_t legId = filters_entry.first;
-                    const auto& filters = filters_entry.second;
-                    for(const auto& filter : filters) {
-                        summaryTuple().triggerFilters_channel.push_back(channel_id);
-                        summaryTuple().triggerFilters_triggerIndex.push_back(n);
-                        summaryTuple().triggerFilters_LegId.push_back(legId);
-                        summaryTuple().triggerFilters_name.push_back(filter);
-                    }
-                }
+                summaryTuple().triggers_pattern.push_back(descs.GetTriggerDescriptor(n).pattern);
             }
         }
     }

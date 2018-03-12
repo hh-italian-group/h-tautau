@@ -30,36 +30,52 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
 
     analysis::ConfigReader config_reader;
 
-    TriggerDescriptorCollection trigger_file_descriptors;
+    analysis::trigger::TriggerFileDescriptorCollection trigger_file_descriptors;
     analysis::trigger::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
-    config_reader.AddEntryReader("FILE", file_entry_reader, true);
+    config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
+
+    analysis::trigger::SetupDescriptorCollection setup_descriptors;
+    analysis::trigger::SetupConfigEntryReader setup_entry_reader(setup_descriptors);
+    config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
 
     config_reader.ReadConfig(triggerCfg);
 
-    // leggi cfg e memorizza elementi
-    for(const auto& hltPath : hltPaths) {
-        pattern = hltPath.getParameter<std::string>("pattern");
-        legs = hltPath.getUntrackedParameter<std::vector<std::string>>("legs", {});
-        TriggerTools::CreateTriggerDescriptors();
+    for (const auto& setup : setup_descriptors){
+        const analysis::trigger::SetupDescriptor setup_descriptor = setup.second;
+        for(const auto iter : setup_descriptor.deltaPt_map){
+            deltaPt_map[iter.first] = iter.second;
+        }
     }
+
+    for(const auto& trigger_file_descriptor : trigger_file_descriptors) {
+        const analysis::trigger::TriggerFileDescriptor trigger_descriptor = trigger_file_descriptor.second;
+        channels = trigger_descriptor.channels;
+        pattern_legs_map[trigger_file_descriptor.first] = trigger_descriptor.legs;
+    }
+
+    TriggerTools::CreateTriggerDescriptors(pattern_legs_map,channel);
 
 }
 
-static TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(map, channel)
+TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
+                                                                          const Channel& channel)
 {
-    for(entry : map) {
-    std::vector<analysis::TriggerDescriptorCollection::Leg> legs_vector;
-    for (unsigned n = 0; n < legs.size(); ++n){
-        const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
-        const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
-        const double pt = leg_list.Get<double>("pt");
-        const analysis::TriggerDescriptorCollection::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
-        const analysis::TriggerDescriptorCollection::Leg legs_struct(type,pt,filters);
-        legs_vector.push_back(legs_struct);
+    TriggerDescriptorCollection triggerDescriptors;
+    for(const auto& entry : pattern_legs_map) {
+        if(!TriggerTools::channels.count(channel)) continue;
+        const std::vector<std::string> legs = entry.second;
+        std::vector<analysis::TriggerDescriptorCollection::Leg> legs_vector;
+        for (unsigned n = 0; n < legs.size(); ++n){
+            const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
+            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
+            const double pt = leg_list.Get<double>("pt");
+            const analysis::TriggerDescriptorCollection::FilterVector filters = analysis::PropertyList::GetList(leg_list.Get("filters"),false);
+            const analysis::TriggerDescriptorCollection::Leg legs_struct(type,pt,filters);
+            legs_vector.push_back(legs_struct);
+        }
+        triggerDescriptors.Add(entry.first, legs_vector);
     }
-    triggerDescriptors.Add(pattern, legs_vector);
-    }
-    return trig
+    return triggerDescriptors;
 }
 
 void TriggerTools::Initialize(const edm::Event &_iEvent)
@@ -145,7 +161,7 @@ std::map<size_t,TriggerTools::TriggerObjectSet> TriggerTools::FindMatchingTrigge
             for(size_t n = 0; n < pattern_struct.legs_info.size(); ++n){
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(candidate_type != leg.type) continue;
-                if(candidateMomentum.Pt() <= leg.pt + deltaPt.at(leg.type)) continue;
+                if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
                 matched_legId_triggerObjectSet_map[iter.first].insert(*triggerObject);
             }
         }

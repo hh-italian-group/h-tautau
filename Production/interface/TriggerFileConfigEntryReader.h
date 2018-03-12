@@ -12,7 +12,7 @@ namespace trigger{
 
 class TriggerFileConfigEntryReader : public analysis::ConfigEntryReader {
 public:
-    TriggerFileConfigEntryReader(TriggerDescriptorCollection& _descriptors) : descriptors(&_descriptors) {}
+    TriggerFileConfigEntryReader(TriggerFileDescriptorCollection& _descriptors) : descriptors(&_descriptors) {}
 
     virtual void StartEntry(const std::string& name, const std::string& reference_name) override
     {
@@ -23,11 +23,8 @@ public:
 
     virtual void EndEntry() override
     {
-        CheckReadParamCounts("file_path", 0, Condition::greater_equal);
-        CheckReadParamCounts("n_jet", 1, Condition::equal_to);
-        CheckReadParamCounts("n_bjet", 1, Condition::equal_to);
-        CheckReadParamCounts("n_ht", 1, Condition::equal_to);
-        CheckReadParamCounts("fileType", 1, Condition::equal_to);
+        CheckReadParamCounts("channels", 1, Condition::less_equal);
+        CheckReadParamCounts("leg", 0, Condition::greater_equal);
 
         (*descriptors)[current.name] = current;
     }
@@ -35,16 +32,43 @@ public:
     virtual void ReadParameter(const std::string& /*param_name*/, const std::string& /*param_value*/,
                                std::istringstream& /*ss*/) override
     {
-        ParseEntry("file_path", current.file_paths);
-        ParseEntry("n_jet", current.n_jet);
-        ParseEntry("n_bjet", current.n_bjet);
-        ParseEntry("n_ht", current.n_ht);
-        ParseEntry("fileType", current.fileType);
+        ParseEnumList("channels", current.channels);
+        ParseEntry("leg", current.legs);
+
     }
 
 private:
-    TriggerFileDescriptor current;
-    TriggerDescriptorCollection* descriptors;
+    analysis::trigger::TriggerFileDescriptor current;
+    analysis::trigger::TriggerFileDescriptorCollection* descriptors;
+};
+
+class SetupConfigEntryReader : public analysis::ConfigEntryReader {
+public:
+    SetupConfigEntryReader(SetupDescriptorCollection& _descriptors) : descriptors(&_descriptors) {}
+
+    virtual void StartEntry(const std::string& name, const std::string& reference_name) override
+    {
+        ConfigEntryReader::StartEntry(name, reference_name);
+        current = reference_name.size() ? descriptors->at(reference_name) : SetupDescriptor();
+        current.name = name;
+    }
+
+    virtual void EndEntry() override
+    {
+        CheckReadParamCounts("deltaPt", 0, Condition::greater_equal);
+
+        (*descriptors)[current.name] = current;
+    }
+
+    virtual void ReadParameter(const std::string& /*param_name*/, const std::string& /*param_value*/,
+                               std::istringstream& /*ss*/) override
+    {
+        ParseEntry("deltaPt", current.deltaPt_map);
+    }
+
+private:
+    analysis::trigger::SetupDescriptor current;
+    analysis::trigger::SetupDescriptorCollection* descriptors;
 };
 
 } //namespace trigger

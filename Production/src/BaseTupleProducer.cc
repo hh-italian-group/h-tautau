@@ -57,8 +57,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const ana
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
                                                     iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
                  mayConsume<std::string>(iConfig.getParameter<std::string>("triggerCfg")),
-                 analysis::EnumNameMap<analysis::Channel>::GetDefault().Parse(
-                                        iConfig.getParameter<std::string>("channel")))
+                 _channel)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());

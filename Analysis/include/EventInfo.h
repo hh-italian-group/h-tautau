@@ -70,21 +70,12 @@ public:
 
     explicit SummaryInfo(const ProdSummary& _summary) : summary(_summary)
     {
-        using FilterKey = std::pair<int, size_t>;
-        using FilterMap = std::map<FilterKey, std::map<size_t, std::vector<std::string>>>;
-        FilterMap filters;
-        for(size_t n = 0; n < summary.triggerFilters_channel.size(); ++n) {
-            const FilterKey key(summary.triggerFilters_channel.at(n), summary.triggerFilters_triggerIndex.at(n));
-            filters[key][summary.triggerFilters_LegId.at(n)].push_back(summary.triggerFilters_name.at(n));
-        }
         for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
             const int channel_id = summary.triggers_channel.at(n);
             const Channel channel = static_cast<Channel>(channel_id);
-            const FilterKey key(channel_id, summary.triggers_index.at(n));
             if(!triggerDescriptors.count(channel))
                 triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptorCollection>(new TriggerDescriptorCollection());
-            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), summary.triggers_n_legs.at(n),
-                                             filters[key]);
+            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
         }
     }
 

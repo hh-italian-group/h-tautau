@@ -70,7 +70,8 @@ public:
 
     TriggerTools(const edm::ParameterSet& iConfig);
 
-    void CreateTriggerDescriptors();
+    static TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
+                                                                const Channel& channel);
 
     void Initialize(const edm::Event& iEvent);
 
@@ -131,8 +132,9 @@ private:
     analysis::TriggerDescriptorCollection triggerDescriptors;
     std::string triggerCfg;
     analysis::Channel channel;
-    std::string pattern;
-    std::vector<std::string> legs;
+    std::set<analysis::Channel> channels;
+    std::map<std::string, std::vector<std::string>> pattern_legs_map;
+    std::map<analysis::LegType, double> deltaPt_map;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
