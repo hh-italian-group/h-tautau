@@ -8,6 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/ConfigReader.h"
 #include "h-tautau/Production/interface/TriggerFileDescriptor.h"
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
+#include "AnalysisTools/Core/include/PropertyConfigReader.h"
 
 namespace analysis {
 
