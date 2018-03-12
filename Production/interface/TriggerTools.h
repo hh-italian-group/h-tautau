@@ -130,8 +130,6 @@ private:
     analysis::TriggerDescriptorCollection triggerDescriptors;
     std::string triggerCfg;
     analysis::Channel channel;
-    std::set<analysis::Channel> channels;
-    std::map<std::string, std::vector<std::string>> pattern_legs_map;
     std::map<analysis::LegType, double> deltaPt_map;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;

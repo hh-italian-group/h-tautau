@@ -29,41 +29,36 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
 
-    analysis::ConfigReader config_reader;
+    ConfigReader config_reader;
 
-    analysis::trigger::TriggerFileDescriptorCollection trigger_file_descriptors;
-    analysis::trigger::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+    TriggerFileDescriptorCollection trigger_file_descriptors;
+    TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
     config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
 
-    analysis::trigger::SetupDescriptorCollection setup_descriptors;
-    analysis::trigger::SetupConfigEntryReader setup_entry_reader(setup_descriptors);
+    SetupDescriptorCollection setup_descriptors;
+    SetupConfigEntryReader setup_entry_reader(setup_descriptors);
     config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
 
     config_reader.ReadConfig(triggerCfg);
 
     for (const auto& setup : setup_descriptors){
-        const analysis::trigger::SetupDescriptor setup_descriptor = setup.second;
+        const SetupDescriptor setup_descriptor = setup.second;
         for(const auto iter : setup_descriptor.deltaPt_map){
             deltaPt_map[iter.first] = iter.second;
         }
     }
 
-    for(const auto& trigger_file_descriptor : trigger_file_descriptors) {
-        const analysis::TriggerFileDescriptor trigger_descriptor = trigger_file_descriptor.second;
-        channels = trigger_descriptor.channels;
-        pattern_legs_map[trigger_file_descriptor.first] = trigger_descriptor.legs;
-    }
-
-    triggerDescriptors = TriggerTools::CreateTriggerDescriptors(pattern_legs_map,channel);
+    triggerDescriptors = TriggerTools::CreateTriggerDescriptors(trigger_file_descriptors,channel);
 
 }
 
-TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
-                                                                          const Channel& channel)
+TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const analysis::TriggerFileDescriptorCollection trigger_file_descriptors,
+                                                                          const Channel channel)
 {
     TriggerDescriptorCollection triggerDescriptors;
-    for(const auto& entry : pattern_legs_map) {
-        if(!channels.count(channel)) continue;
+    for(const auto& entry : trigger_file_descriptors) {
+        TriggerFileDescriptor trigger_file_descriptor = entry.second;
+        if(!trigger_file_descriptor.channels.count(channel)) continue;
         const std::vector<std::string> legs = entry.second;
         std::vector<analysis::TriggerDescriptorCollection::Leg> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
@@ -123,7 +118,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(!passFilters(unpackedTriggerObject,leg.filters)) continue;
                 if(!hasExpectedType(leg.type,unpackedTriggerObject)) continue;
-                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(&triggerObject);
+                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(*triggerObject);
             }
         }
     }
@@ -157,7 +152,7 @@ std::map<size_t,TriggerTools::TriggerObjectSet> TriggerTools::FindMatchingTrigge
     for(const auto& iter : legId_triggerObjPtr_map){
         TriggerTools::TriggerObjectSet triggerObjectSet = iter.second;
         for(const auto& triggerObject : triggerObjectSet){
-            if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
+            if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->pol, candidateMomentum) >= deltaR2) continue;
             for(size_t n = 0; n < pattern_struct.legs_info.size(); ++n){
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(candidate_type != leg.type) continue;
