@@ -19,9 +19,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/GenTruthTools.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
-#include "Production/interface/TriggerFileDescriptor.h"
-#include "Production/interface/TriggerFileConfigEntryReader.h"
-#include "Production/interface/TriggerTools.h"
+#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
+#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
+#include "h-tautau/Production/interface/TriggerTools.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
