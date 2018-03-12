@@ -123,7 +123,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(!passFilters(unpackedTriggerObject,leg.filters)) continue;
                 if(!hasExpectedType(leg.type,unpackedTriggerObject)) continue;
-                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(*unpackedTriggerObject);
+                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(&triggerObject);
             }
         }
     }
