@@ -16,6 +16,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "h-tautau/Analysis/include/TriggerResults.h"
+#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
+#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
+#include "AnalysisTools/Core/include/PropertyConfigReader.h"
 
 namespace analysis {
 
@@ -70,7 +73,7 @@ public:
 
     TriggerTools(const edm::ParameterSet& iConfig, const std::string& _triggerCfg, const analysis::Channel& _channel);
 
-    static TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,const Channel& channel);
+    static TriggerDescriptorCollection CreateTriggerDescriptors(const analysis::TriggerFileDescriptorCollection trigger_file_descriptors,const Channel channel);
 
     void Initialize(const edm::Event& iEvent);
 
