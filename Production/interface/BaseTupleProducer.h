@@ -197,7 +197,7 @@ private:
     const double Isolation(const pat::Tau& tau);
 
 public:
-    BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName);
+    BaseTupleProducer(const edm::ParameterSet& iConfig, const analysis::Channel& _channel);
 
 protected:
     TupleProducerData& GetAnaData() { return anaData; }

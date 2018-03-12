@@ -76,7 +76,7 @@ public:
             const Channel channel = channel_desc.first;
             const int channel_id = static_cast<int>(channel);
             const TriggerDescriptorCollection& descs = channel_desc.second;
-            for(size_t n = 0; n < descs.GetVectorTriggerDescriptorSize(); ++n) {
+            for(size_t n = 0; n < descs.Size(); ++n) {
                 summaryTuple().triggers_channel.push_back(channel_id);
                 summaryTuple().triggers_pattern.push_back(descs.GetTriggerDescriptor(n).pattern);
             }

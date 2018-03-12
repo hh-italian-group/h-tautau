@@ -30,7 +30,7 @@ ENUM_NAMES(CMSSW_Process) = {
 namespace detail {
 
 template<typename PatObject>
-const LegType GetTriggerObjectTypes(const PatObject&);
+LegType GetTriggerObjectTypes(const PatObject&);
 
 template<>
 inline LegType GetTriggerObjectTypes<pat::Electron>(const pat::Electron&)
@@ -68,14 +68,14 @@ public:
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
                  std::string _triggerCfg, analysis::Channel _channel);
 
-    TriggerTools(const edm::ParameterSet& iConfig);
+    TriggerTools(const edm::ParameterSet& iConfig, const std::string& _triggerCfg, const analysis::Channel& _channel);
 
     static TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
                                                                 const Channel& channel);
 
     void Initialize(const edm::Event& iEvent);
 
-    void SetTriggerAcceptBits(const analysis::TriggerDescriptorCollection& descriptors, analysis::TriggerResults& results);
+    void SetTriggerAcceptBits(analysis::TriggerResults& results);
 
     std::map<size_t,TriggerTools::TriggerObjectSet> FindMatchingTriggerObjects(
             const analysis::TriggerDescriptorCollection::TriggerDescriptor& pattern_struct,
@@ -83,11 +83,10 @@ public:
 
 
     template<typename HiggsCandidate>
-    void SetTriggerMatchBits(const analysis::TriggerDescriptorCollection& descriptors,
-                             const HiggsCandidate& candidate, double deltaR_Limit)
+    void SetTriggerMatchBits(analysis::TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     { 
-        for (size_t n = 0; n < descriptors.GetVectorTriggerDescriptorSize(); ++n){
-            analysis::TriggerDescriptorCollection::TriggerDescriptor pattern_struct = descriptors.GetTriggerDescriptor(n);
+        for (size_t n = 0; n < triggerDescriptors.Size(); ++n){
+            analysis::TriggerDescriptorCollection::TriggerDescriptor pattern_struct = triggerDescriptors.GetTriggerDescriptor(n);
             std::map<size_t, TriggerObjectSet> matches_first, matches_second;
             matches_first = FindMatchingTriggerObjects(pattern_struct,candidate.GetFirstDaughter().GetMomentum(),
                                                         detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),

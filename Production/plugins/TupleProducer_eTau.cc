@@ -12,7 +12,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) {
-        triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
+        triggerTools.SetTriggerAcceptBits(selection.triggerResults);
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
@@ -37,8 +37,8 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     auto selected_higgs = higgses.front();
 
     if(applyTriggerMatch)
-        triggerTools.SetTriggerMatchBits(triggerDescriptors, selection.triggerResults, selected_higgs,
-                                         cuts::H_tautau_2016::DeltaR_triggerMatch, false);
+        triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
+                                         cuts::H_tautau_2016::DeltaR_triggerMatch);
 
     selection.SetHiggsCandidate(selected_higgs);
 

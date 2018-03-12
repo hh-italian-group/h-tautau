@@ -6,8 +6,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "AnalysisTools/Core/include/ConfigReader.h"
-#include "Production/interface/TriggerFileDescriptor.h"
-#include "Production/interface/TriggerFileConfigEntryReader.h"
+#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
+#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
 
 namespace analysis {
 
@@ -62,7 +62,7 @@ TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string,
 {
     TriggerDescriptorCollection triggerDescriptors;
     for(const auto& entry : pattern_legs_map) {
-        if(!TriggerTools::channels.count(channel)) continue;
+        if(!channels.count(channel)) continue;
         const std::vector<std::string> legs = entry.second;
         std::vector<analysis::TriggerDescriptorCollection::Leg> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
@@ -131,8 +131,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
 
 
 
-void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptorCollection& descriptors,
-                                        analysis::TriggerResults& results)
+void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
 {
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
@@ -140,7 +139,7 @@ void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptorCollect
     for (size_t i = 0; i < triggerResultsHLT->size(); ++i) {
         if(triggerPrescales->getPrescaleForIndex(i) != 1) continue;
         size_t index;
-        if(descriptors.FindPatternMatch(triggerNames.triggerName(i), index))
+        if(triggerDescriptors.FindPatternMatch(triggerNames.triggerName(i), index))
             results.SetAccept(index, triggerResultsHLT->accept(i));
     }
 }
