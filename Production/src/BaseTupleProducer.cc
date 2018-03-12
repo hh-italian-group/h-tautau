@@ -13,7 +13,7 @@ bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
-BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const analysis::Channel& _channel) :
+BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel) :
     treeName(ToString(_channel)),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
     electronsMiniAOD_token(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
@@ -56,7 +56,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const ana
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
                                                     iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
-                 mayConsume<std::string>(iConfig.getParameter<std::string>("triggerCfg")),
+                 iConfig.getParameter<std::string>("triggerCfg"),
                  _channel)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
