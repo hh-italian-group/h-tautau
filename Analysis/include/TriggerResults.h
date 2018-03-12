@@ -75,9 +75,10 @@ public:
         pattern_structs.push_back(pattern_struct);
     }
 
-    bool FindPatternMatch(const std::string& path_name) const
+    bool FindPatternMatch(const std::string& path_name, size_t& index) const
     {
-        if(TriggerDescriptor::PatternMatch(path_name)) return true;
+        for(index = 0; index < pattern_structs.size(); ++index)
+            if(PatternMatch(path_name, index)) return true;
         return false;
     }
 

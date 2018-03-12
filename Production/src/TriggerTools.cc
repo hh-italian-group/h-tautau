@@ -140,7 +140,7 @@ void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptorCollect
     for (size_t i = 0; i < triggerResultsHLT->size(); ++i) {
         if(triggerPrescales->getPrescaleForIndex(i) != 1) continue;
         size_t index;
-        if(descriptors.FindPatternMatch(triggerNames.triggerName(i)))
+        if(descriptors.FindPatternMatch(triggerNames.triggerName(i), index))
             results.SetAccept(index, triggerResultsHLT->accept(i));
     }
 }
