@@ -78,7 +78,7 @@ public:
     bool FindPatternMatch(const std::string& path_name, size_t& index) const
     {
         for(index = 0; index < pattern_structs.size(); ++index)
-            if(PatternMatch(path_name, index)) return true;
+            if(PatternMatch(path_name)) return true;
         return false;
     }
 
