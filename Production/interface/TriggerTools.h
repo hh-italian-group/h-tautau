@@ -70,8 +70,7 @@ public:
 
     TriggerTools(const edm::ParameterSet& iConfig, const std::string& _triggerCfg, const analysis::Channel& _channel);
 
-    static TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
-                                                                const Channel& channel);
+    static TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,const Channel& channel);
 
     void Initialize(const edm::Event& iEvent);
 

@@ -53,11 +53,11 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
         pattern_legs_map[trigger_file_descriptor.first] = trigger_descriptor.legs;
     }
 
-    TriggerTools::CreateTriggerDescriptors(pattern_legs_map,channel);
+    triggerDescriptors = TriggerTools::CreateTriggerDescriptors(pattern_legs_map,channel);
 
 }
 
-TriggerDescriptorCollection CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
+TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const std::map<std::string, std::vector<std::string>>& pattern_legs_map,
                                                                           const Channel& channel)
 {
     TriggerDescriptorCollection triggerDescriptors;
