@@ -59,7 +59,7 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const analysi
     for(const auto& entry : trigger_file_descriptors) {
         TriggerFileDescriptor trigger_file_descriptor = entry.second;
         if(!trigger_file_descriptor.channels.count(channel)) continue;
-        const std::vector<std::string> legs = entry.second;
+        const std::vector<std::string> legs = trigger_file_descriptor.legs;
         std::vector<analysis::TriggerDescriptorCollection::Leg> legs_vector;
         for (unsigned n = 0; n < legs.size(); ++n){
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
@@ -118,7 +118,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(!passFilters(unpackedTriggerObject,leg.filters)) continue;
                 if(!hasExpectedType(leg.type,unpackedTriggerObject)) continue;
-                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(triggerObject);
+                path_legId_triggerObjPtr_map[pattern_struct.pattern][n].insert(&triggerObject);
             }
         }
     }
