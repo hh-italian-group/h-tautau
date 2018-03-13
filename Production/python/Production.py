@@ -164,6 +164,16 @@ if options.saveGenTopInfo:
     process.decaySubset.runMode = cms.string("Run2")
     process.topGenSequence += process.makeGenEvt
 
+if options.anaChannels == 'all':
+    channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
+else:
+    channels = re.split(',', options.anaChannels)
+
+if options.energyScales == 'all':
+    energyScales = [ 'Central', 'TauUp', 'TauDown', 'JetUp', 'JetDown' ]
+else:
+    energyScales = re.split(',', options.energyScales)
+
 ### Tuple production sequence
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
@@ -175,28 +185,15 @@ process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     puInfo          = cms.InputTag('slimmedAddPileupInfo'),
     taus            = cms.InputTag('slimmedTaus'),
     triggerCfg      = cms.string(triggerCfg),
-    triggerSetup    = cms.VPSet()
+    channels        = cms.vstring(channels)
 )
 
 process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
 
-if options.anaChannels == 'all':
-    channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
-else:
-    channels = re.split(',', options.anaChannels)
-
-if options.energyScales == 'all':
-    energyScales = [ 'Central', 'TauUp', 'TauDown', 'JetUp', 'JetDown' ]
-else:
-    energyScales = re.split(',', options.energyScales)
-
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
-
-    process.summaryTupleProducer.triggerSetup.append(cms.PSet(
-        channel = cms.string(channel),
-    ))
+    
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
         eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80'),
