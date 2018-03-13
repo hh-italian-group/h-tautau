@@ -174,6 +174,7 @@ process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     topGenEvent     = cms.InputTag('genEvt'),
     puInfo          = cms.InputTag('slimmedAddPileupInfo'),
     taus            = cms.InputTag('slimmedTaus'),
+    triggerCfg      = cms.string(triggerCfg),
     triggerSetup    = cms.VPSet()
 )
 
@@ -195,7 +196,6 @@ for channel in channels:
 
     process.summaryTupleProducer.triggerSetup.append(cms.PSet(
         channel = cms.string(channel),
-        triggerCfg = cms.string(triggerCfg)
     ))
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
