@@ -53,10 +53,14 @@ public:
         analysis::TriggerFileDescriptorCollection trigger_file_descriptors;
         analysis::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
         config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
-
-
+        
+        analysis::SetupDescriptorCollection setup_descriptors;
+        analysis::SetupConfigEntryReader setup_entry_reader(setup_descriptors);
+        config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
+	
         const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
-        config_reader.ReadConfig(triggerCfg);
+        const std::string triggerCfg_full = edm::FileInPath(triggerCfg).fullPath();
+        config_reader.ReadConfig(triggerCfg_full);
 
         std::map<Channel, TriggerDescriptorCollection> triggerDescriptors;
         const std::vector<std::string> channelsStrings = cfg.getParameter<std::vector<std::string>>("channels");
@@ -69,9 +73,9 @@ public:
             const Channel channel = channel_desc.first;
             const int channel_id = static_cast<int>(channel);
             const TriggerDescriptorCollection& descs = channel_desc.second;
-            for(size_t n = 0; n < descs.Size(); ++n) {
+            for(size_t n = 0; n < descs.size(); ++n) {
                 summaryTuple().triggers_channel.push_back(channel_id);
-                summaryTuple().triggers_pattern.push_back(descs.GetTriggerDescriptor(n).pattern);
+                summaryTuple().triggers_pattern.push_back(descs.at(n).pattern);
             }
         }
     }

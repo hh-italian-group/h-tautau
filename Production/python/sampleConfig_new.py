@@ -15,8 +15,8 @@ periodDict = { 'Summer16MC' : 'Run2016',
                }
 
 hltPaths = {
-    'Run2016'   : 'trigger_2016.cfg',
-    'Run2017'   : 'trigger_2017.cfg'
+    'Run2016'   : 'h-tautau/Production/data/triggers_2016.cfg',
+    'Run2017'   : 'h-tautau/Production/data/triggers_2017.cfg'
 }
 
 def IsData(sampleType):

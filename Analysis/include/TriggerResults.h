@@ -50,12 +50,12 @@ public:
 
     };
 
-    size_t Size() const
+    size_t size() const
     {
         return pattern_structs.size();
     }
 
-    TriggerDescriptorCollection::TriggerDescriptor GetTriggerDescriptor(size_t index) const
+    TriggerDescriptorCollection::TriggerDescriptor at(size_t index) const
     {
         return pattern_structs.at(index);
     }

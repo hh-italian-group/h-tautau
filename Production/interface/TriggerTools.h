@@ -85,8 +85,8 @@ public:
     template<typename HiggsCandidate>
     void SetTriggerMatchBits(analysis::TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     { 
-        for (size_t n = 0; n < triggerDescriptors.Size(); ++n){
-            analysis::TriggerDescriptorCollection::TriggerDescriptor pattern_struct = triggerDescriptors.GetTriggerDescriptor(n);
+        for (size_t n = 0; n < triggerDescriptors.size(); ++n){
+            const auto& pattern_struct = triggerDescriptors.at(n);
             std::map<size_t, TriggerObjectSet> matches_first, matches_second;
             matches_first = FindMatchingTriggerObjects(pattern_struct,candidate.GetFirstDaughter().GetMomentum(),
                                                         detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),

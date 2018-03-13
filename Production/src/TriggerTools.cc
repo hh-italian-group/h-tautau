@@ -113,7 +113,9 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
         const auto& paths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& path : paths) {
-            const TriggerDescriptorCollection::TriggerDescriptor pattern_struct = triggerDescriptors.GetTriggerDescriptor(path);
+            size_t index;
+            if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
+            const auto& pattern_struct = triggerDescriptors.at(index);
             for(unsigned n = 0; n < pattern_struct.legs_info.size(); ++n){
                 const TriggerDescriptorCollection::Leg leg = pattern_struct.legs_info.at(n);
                 if(!passFilters(unpackedTriggerObject,leg.filters)) continue;
@@ -146,7 +148,7 @@ std::map<size_t,TriggerTools::TriggerObjectSet> TriggerTools::FindMatchingTrigge
 {
     std::map<size_t,TriggerTools::TriggerObjectSet> matched_legId_triggerObjectSet_map;
     const analysis::TriggerDescriptorCollection::Pattern pattern = pattern_struct.pattern;
-    std::map<size_t,TriggerTools::TriggerObjectSet> legId_triggerObjPtr_map = path_legId_triggerObjPtr_map.at(pattern);
+    const auto& legId_triggerObjPtr_map = path_legId_triggerObjPtr_map[pattern];
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     
     for(const auto& iter : legId_triggerObjPtr_map){
