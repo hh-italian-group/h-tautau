@@ -15,8 +15,8 @@ periodDict = { 'Summer16MC' : 'Run2016',
                }
 
 hltPaths = {
-    'Run2016'   : trigger_2016.cfg,
-    'Run2017'   : trigger_2017.cfg
+    'Run2016'   : 'trigger_2016.cfg',
+    'Run2017'   : 'trigger_2017.cfg'
 }
 
 def IsData(sampleType):
@@ -31,8 +31,6 @@ def GetPeriod(sampleType):
         print "ERROR: unknown sample type = '{}'".format(sampleType)
         sys.exit(1)
     return periodDict[sampleType]
-
-period = GetPeriod(sampleType)
 
 def GetTriggerCfg(period):
     if period not in hltPaths :

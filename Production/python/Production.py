@@ -52,7 +52,8 @@ options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarPar
 
 options.parseArguments()
 
-sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
+#sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
+sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig_new')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
 triggerCfg = sampleConfig.GetTriggerCfg(period)
@@ -194,7 +195,7 @@ for channel in channels:
 
     process.summaryTupleProducer.triggerSetup.append(cms.PSet(
         channel = cms.string(channel),
-        triggerCfg = triggerCfg
+        triggerCfg = cms.string(triggerCfg)
     ))
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
