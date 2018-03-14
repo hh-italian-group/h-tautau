@@ -71,7 +71,7 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
 {
     using namespace cuts::H_tautau_2016::MuMu::muonID;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     cut(p4.pt() > pt_trailing, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -83,7 +83,7 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
     bool passMuonId = muon->isMediumMuon();
     if(productionMode == ProductionMode::hh)
         passMuonId = muon->isTightMuon(*primaryVertex);
-    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) 
+    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm)
         passMuonId = PassICHEPMuonMediumId(*muon);
     cut(passMuonId, "muonID");
 

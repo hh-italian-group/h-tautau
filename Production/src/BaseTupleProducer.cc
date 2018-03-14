@@ -257,14 +257,14 @@ bool BaseTupleProducer::PassPFLooseId(const pat::Jet& pat_jet)
 bool BaseTupleProducer::PassICHEPMuonMediumId(const pat::Muon& pat_muon){
     if(pat_muon.innerTrack().isNull()) return false;
     const double normalizedChi2 = pat_muon.globalTrack().isNull() ? 0 : pat_muon.globalTrack()->normalizedChi2();
-    bool goodGlob = pat_muon.isGlobalMuon() && 
-	            normalizedChi2 < 3 && 
-                    pat_muon.combinedQuality().chi2LocalPosition < 12 && 
-                    pat_muon.combinedQuality().trkKink < 20; 
+    bool goodGlob = pat_muon.isGlobalMuon() &&
+	            normalizedChi2 < 3 &&
+                    pat_muon.combinedQuality().chi2LocalPosition < 12 &&
+                    pat_muon.combinedQuality().trkKink < 20;
     bool isMedium = muon::isLooseMuon(pat_muon) &&
                     pat_muon.innerTrack()->validFraction() > 0.49 &&
-                    muon::segmentCompatibility(pat_muon) > (goodGlob ? 0.303 : 0.451); 
-    return isMedium; 
+                    muon::segmentCompatibility(pat_muon) > (goodGlob ? 0.303 : 0.451);
+    return isMedium;
 }
 
 void BaseTupleProducer::FillLheInfo(bool haveReference)
@@ -295,25 +295,25 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
     analysis::LorentzVectorXYZ total_p4, vis_p4;
     for(const auto& particle : *genParticles) {
         if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()|| reco::isNeutrino(particle)))
-              ||particle.isDirectHardProcessTauDecayProductFinalState()) 
+              ||particle.isDirectHardProcessTauDecayProductFinalState())
             total_p4 += particle.p4();
         if( (particle.fromHardProcessFinalState() && (particle.isMuon() || particle.isElectron()))
 	            || (particle.isDirectHardProcessTauDecayProductFinalState() && !reco::isNeutrino(particle)) )
-            vis_p4 += particle.p4(); 
+            vis_p4 += particle.p4();
     }
- 
-  
+
+
     const double genPx = total_p4.px();
     const double genPy = total_p4.py();
 
-    const double visPx = vis_p4.px();  
-    const double visPy = vis_p4.py(); 
- 
+    const double visPx = vis_p4.px();
+    const double visPy = vis_p4.py();
+
     float pfmetcorr_ex, pfmetcorr_ey;
 
     const double pfmet_ex = met->GetMomentum().px();
     const double pfmet_ey = met->GetMomentum().py();
-    
+
     int njets= nJetsRecoilCorr;
     for(const auto& jet : jets)
     {
@@ -330,7 +330,7 @@ void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& j
 	    pfmetcorr_ex, // corrected type I pf met px (float)
 	    pfmetcorr_ey  // corrected type I pf met py (float)
 	    );
-   
+
    const TVector2 met_vect(pfmetcorr_ex,pfmetcorr_ey);
    met->SetMomentum(analysis::LorentzVectorM(met_vect.Mod(),0,met_vect.Phi(),0));
 }
@@ -491,7 +491,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
     selection.jets = CollectJets(signalLeptonMomentums);
     const size_t n_jets = selection.jets.size();
     if(applyRecoilCorr)
-        ApplyRecoilCorrection(selection.jets); 
+        ApplyRecoilCorrection(selection.jets);
     if(!runKinFit || n_jets < 2) return;
 
     const auto runKinfit = [&](size_t first, size_t second) {
@@ -557,7 +557,7 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
 {
     using namespace cuts::H_tautau_2016::electronVeto;
 
-    cut(true, "gt0_ele_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -587,7 +587,7 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
 {
     using namespace cuts::H_tautau_2016::muonVeto;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -615,7 +615,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 {
     using namespace cuts::H_tautau_2016::jetID;
 
-    cut(true, "gt0_jet_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = jet.GetMomentum();
     cut(p4.Pt() > pt, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());

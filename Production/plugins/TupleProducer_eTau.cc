@@ -65,10 +65,8 @@ bool TupleProducer_eTau::SelectSpring15VetoElectron(const pat::Electron& electro
     const float ecal_energy_inverse = 1.0/electron.ecalEnergy();
     const float eSCoverP = electron.eSuperClusterOverP();
     float ooEmooP =  std::abs(1.0 - eSCoverP)*ecal_energy_inverse;
-    constexpr reco::HitPattern::HitCategory missingHitType =
-    reco::HitPattern::MISSING_INNER_HITS;
-    const unsigned mHits = 
-    electron.gsfTrack()->hitPattern().numberOfHits(missingHitType);
+    constexpr reco::HitPattern::HitCategory missingHitType = reco::HitPattern::MISSING_INNER_HITS;
+    const unsigned mHits = electron.gsfTrack()->hitPattern().numberOfHits(missingHitType);
     bool result = false;
     if(fabs(electron.superCluster()->position().eta()) <= 1.479){
 	result=full5x5_sigmaIetaIeta < 0.0114 &&
@@ -79,15 +77,16 @@ bool TupleProducer_eTau::SelectSpring15VetoElectron(const pat::Electron& electro
                mHits <= 2 &&
                electron.passConversionVeto();
     }
-    else if(fabs(electron.superCluster()->position().eta()) > 1.479 && fabs(electron.superCluster()->position().eta()) < 2.5){
+    else if(fabs(electron.superCluster()->position().eta()) > 1.479
+            && fabs(electron.superCluster()->position().eta()) < 2.5){
 	result=full5x5_sigmaIetaIeta < 0.0352 &&
                fabs(dEtaIn) < 0.0113  &&
 	       fabs(dPhiIn) < 0.237   &&
 	       hOverE < 0.116 &&
                ooEmooP < 0.174 &&
                mHits <= 3 &&
-               electron.passConversionVeto();       
-    } 
+               electron.passConversionVeto();
+    }
     return result;
 }
 
@@ -116,7 +115,7 @@ void TupleProducer_eTau::SelectZElectron(const ElectronCandidate& electron, Cutt
 {
     using namespace cuts::H_tautau_2016::ETau::ZeeVeto;
 
-    cut(true, "gt0_ele_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -135,7 +134,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
 {
     using namespace cuts::H_tautau_2016::ETau::electronID;
 
-    cut(true, "gt0_ele_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     double pt_cut = pt;
     if( productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::ETau::electronID::pt;
@@ -163,7 +162,7 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 {
     using namespace cuts::H_tautau_2016::ETau::tauID;
 
-    cut(true, "gt0_tau_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     const double pt_cut = productionMode == ProductionMode::h_tt_mssm ?  cuts::H_tautau_2016_mssm::ETau::tauID::pt : pt;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());

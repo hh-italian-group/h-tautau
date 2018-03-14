@@ -62,7 +62,7 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::TauTau::tauID;
 
-    cut(true, "gt0_tau_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     cut(p4.Pt() > pt, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
