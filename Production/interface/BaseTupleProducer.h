@@ -143,7 +143,7 @@ private:
 protected:
     const ProductionMode productionMode;
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
-    const int nJetsRecoilCorr;    
+    const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
     analysis::TriggerDescriptors triggerDescriptors;
     ntuple::EventTuple eventTuple;
@@ -263,14 +263,18 @@ protected:
     {
         static constexpr double weight = 1;
         std::ostringstream ss_suffix;
-        ss_suffix << selection_label << "_" << eventEnergyScale;
+        ss_suffix << selection_label << "_" <<  eventEnergyScale;
         const std::string suffix = ss_suffix.str();
-        cuts::ObjectSelector& objectSelector = GetAnaData().Selection(suffix);
-        if(!anaDataBeforeCut.count(suffix))
-            anaDataBeforeCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
-                                                                       treeName + "_before_cut/" + suffix);
+        auto& objectSelector = GetAnaData().Selection(suffix);
+        objectSelector.SetSave(eventEnergyScale == analysis::EventEnergyScale::Central);
 
-        SelectionManager selectionManager(anaDataBeforeCut.at(suffix)->h, weight);
+        if(!anaDataBeforeCut.count(suffix) && eventEnergyScale == analysis::EventEnergyScale::Central)
+              anaDataBeforeCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
+                                                                         treeName + "_before_cut/" + suffix);
+
+        auto entry = eventEnergyScale == analysis::EventEnergyScale::Central
+                   ? &anaDataBeforeCut.at(suffix)->h : nullptr;
+        SelectionManager selectionManager(entry, weight, selection_label);
 
         const auto selector = [&](size_t id) -> Candidate {
             const Candidate& candidate = all_candidates.at(id);
@@ -280,19 +284,24 @@ protected:
             return candidate;
         };
 
-        const auto selected = objectSelector.collect_objects<Candidate>(1, all_candidates.size(), selector, comparitor);
+        const auto selected = objectSelector.template collect_objects<Candidate>(1, all_candidates.size(), selector,
+                                                                                 comparitor);
 
-        if(!anaDataAfterCut.count(suffix))
+        if(!anaDataAfterCut.count(suffix) && eventEnergyScale == analysis::EventEnergyScale::Central)
             anaDataAfterCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                        treeName + "_after_cut/" + suffix);
 
-        SelectionManager selectionManager_afterCut(anaDataAfterCut.at(suffix)->h, weight);
+        auto entry_afterCut = eventEnergyScale == analysis::EventEnergyScale::Central
+                            ? &anaDataAfterCut.at(suffix)->h : nullptr;
+        SelectionManager selectionManager_afterCut(entry_afterCut, weight, selection_label);
+
         for(const auto& candidate : selected) {
             Cutter cut(nullptr, &selectionManager_afterCut);
             base_selector(candidate, cut);
         }
-        GetAnaData().N_objects(suffix).Fill(selected.size(), 1);
-        GetAnaData().N_objects(suffix + "_original").Fill(all_candidates.size(), weight);
+
+        if(eventEnergyScale == analysis::EventEnergyScale::Central)
+            GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
 
         return selected;
     }

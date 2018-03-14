@@ -82,7 +82,7 @@ void TupleProducer_muTau::SelectZMuon(const MuonCandidate& muon, Cutter& cut) co
 {
     using namespace cuts::H_tautau_2016::MuTau::ZmumuVeto;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -100,14 +100,14 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 {
     using namespace cuts::H_tautau_2016::MuTau::muonID;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     double pt_cut = pt;
     if(productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::MuTau::muonID::pt;
     else if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::muonID::pt;
     else if (productionMode == ProductionMode::h_tt_sm) pt_cut = cuts::H_tautau_2016_sm::MuTau::muonID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
-    const double eta_cut  = productionMode == ProductionMode::h_tt_sm ? cuts::H_tautau_2016_sm::MuTau::muonID::eta : eta; 
+    const double eta_cut  = productionMode == ProductionMode::h_tt_sm ? cuts::H_tautau_2016_sm::MuTau::muonID::eta : eta;
     cut(std::abs(p4.eta()) < eta_cut, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
     cut(muon_dxy < dxy, "dxy", muon_dxy);
@@ -116,18 +116,18 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     if(productionMode == ProductionMode::hh){
         cut(muon->isTightMuon(*primaryVertex), "muonID");
         cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
-    } 
-    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) 
-            cut(PassICHEPMuonMediumId(*muon),"muonID");  
+    }
+    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm)
+            cut(PassICHEPMuonMediumId(*muon),"muonID");
     else cut(muon->isMediumMuon(), "muonID");
-    
+
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
     using namespace cuts::H_tautau_2016::MuTau::tauID;
 
-    cut(true, "gt0_tau_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     const double pt_cut= productionMode == ProductionMode::h_tt_mssm ? cuts::H_tautau_2016_mssm::MuTau::tauID::pt : pt;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
