@@ -102,7 +102,7 @@ public:
         }
         if(n_legs_total == 2){
             std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-            std::set_union(matches_first.at(1).begin(), matches_firstat(1).end(), matches_secondat(1).begin(), matches_secondat(1).end(),
+            std::set_union(matches_first.at(1).begin(), matches_first.at(1).end(), matches_second.at(1).begin(), matches_second.at(1).end(),
                             std::back_inserter(comb_match));
 
             match_found = matches_first.at(1).size() >= 1 && matches_second.at(1).size() >= n_legs_total - 1 && comb_match.size() >= n_legs_total;
