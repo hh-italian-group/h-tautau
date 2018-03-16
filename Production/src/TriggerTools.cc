@@ -19,7 +19,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                            EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                           std::string triggerCfg) :
+                           std::string triggerCfg, Channel channel) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
     l1JetParticles_token(_l1JetParticles_token)
 {
@@ -28,7 +28,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
 
-    trigger_tools::SetupDescriptor& setup;
+    trigger_tools::SetupDescriptor setup;
     trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(triggerCfg,setup);
 
     deltaPt_map = setup.deltaPt_map;
@@ -51,11 +51,16 @@ trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg
     trigger_tools::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
     config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
 
-    trigger_tools::SetupConfigEntryReader setup_entry_reader(setup);
+    trigger_tools::SetupDescriptorCollection setup_file_descriptors;
+    trigger_tools::SetupConfigEntryReader setup_entry_reader(setupsetup_file_descriptors);
     config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
 
     const std::string triggerCfg_full = edm::FileInPath(cfg_path).fullPath();
     config_reader.ReadConfig(triggerCfg_full);
+
+    if(setup_file_descriptors.size() != 1)
+        throw exception("More than 1 setup in Reading Trigger Tools cfg");
+    setup = *setup_file_descriptors.begin();
 
     return trigger_file_descriptors;
 }
@@ -65,7 +70,7 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger
 {
     TriggerDescriptorCollection triggerDescriptors;
     for(const auto& entry : trigger_file_descriptors) {
-        TriggerFileDescriptor trigger_file_descriptor = entry.second;
+        trigger_tools::TriggerFileDescriptor trigger_file_descriptor = entry.second;
         if(!trigger_file_descriptor.channels.count(channel)) continue;
         const auto& legs = trigger_file_descriptor.legs;
         std::vector<TriggerDescriptorCollection::Leg> legs_vector;
@@ -130,7 +135,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
             if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
             const auto& descriptor = triggerDescriptors.at(index);
             for(unsigned n = 0; n < descriptor.legs_info.size(); ++n){
-                const TriggerDescriptorCollection::Leg leg = descriptor.legs_info.at(n);
+                const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
                 if(!hasExpectedType(leg.type,unpackedTriggerObject) || !passFilters(unpackedTriggerObject,leg.filters)) continue;
                 path_legId_triggerObjPtr_vector.at(index).at(n).insert(&triggerObject);
             }
@@ -152,23 +157,24 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
     }
 }
 
-std::vector<TriggerTools::TriggerObjectSet> TriggerTools::FindMatchingTriggerObjects(
+std::vector<TriggerTools::TriggerObjectSet> FindMatchingTriggerObjects(
         const size_t index, const LorentzVector& candidateMomentum, const LegType& candidate_type, double deltaR_Limit)
 {
-    std::vector<TriggerTools::TriggerObjectSet> matched_legId_triggerObjectSet_vector;
     const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(index);
+    std::vector<TriggerTools::TriggerObjectSet> matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
         const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
+        const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
+        if(candidate_type != leg.type) continue;
         for(const auto& triggerObject : triggerObjectSet){
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
-            const TriggerDescriptorCollection::Leg leg = descriptor.legs_info.at(n);
-            if(candidate_type != leg.type) continue;
             if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
             matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
-    }  
+    }
+
     return matched_legId_triggerObjectSet_vector;
 }
 

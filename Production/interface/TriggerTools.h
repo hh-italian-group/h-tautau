@@ -60,7 +60,7 @@ public:
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                 std::string triggerCfg);
+                 std::string triggerCfg, Channel channel);
 
     static trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
                                                                     trigger_tools::SetupDescriptor& setup);
@@ -71,13 +71,14 @@ public:
 
     void SetTriggerAcceptBits(TriggerResults& results);
 
-    std::vector<TriggerObjectSet> FindMatchingTriggerObjects(const size_t index,
+    std::vector<TriggerObjectSet> FindMatchingTriggerObjects(size_t desc_index,
             const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit);
 
 
     template<typename HiggsCandidate>
     void SetTriggerMatchBits(TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     { 
+        std::array<std::vector<TriggerTools::TriggerObjectSet>, 2> array_matched_legId_triggerObjectSet;
         for (size_t n = 0; n < triggerDescriptors.size(); ++n){
             const auto& descriptor = triggerDescriptors.at(n);
             std::vector<TriggerObjectSet> matches_first, matches_second;
@@ -87,27 +88,36 @@ public:
             matches_second = FindMatchingTriggerObjects(n,candidate.GetSecondDaughter().GetMomentum(),
                                                          detail::GetTriggerObjectTypes(*candidate.GetSecondDaughter()),
                                                          deltaR_Limit);
-            results.SetMatch(n, TriggerMatchFound(matches_first, matches_second, descriptor.legs_info.size()));
+            array_matched_legId_triggerObjectSet.at(0) = matches_first;
+            array_matched_legId_triggerObjectSet.at(1) = matches_second;
+            results.SetMatch(n, TriggerMatchFound(array_matched_legId_triggerObjectSet, descriptor.legs_info.size()));
         }
     }
 
-    bool TriggerMatchFound(const std::vector<TriggerObjectSet>& matches_first,
-                           const std::vector<TriggerObjectSet>& matches_second,
+    bool TriggerMatchFound(const std::array<std::vector<TriggerTools::TriggerObjectSet>, 2>& array_matched_legId_triggerObjectSet,
                            const size_t n_legs_total)
     {
-        bool match_found = false;
         if(n_legs_total == 0) return true;
-        if(n_legs_total == 1){
-            if(matches_first.at(0).size() >= n_legs_total || matches_second.at(0).size() >= n_legs_total) return true;
-        }
-        if(n_legs_total == 2){
-            std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-            std::set_union(matches_first.at(1).begin(), matches_first.at(1).end(), matches_second.at(1).begin(), matches_second.at(1).end(),
-                            std::back_inserter(comb_match));
+        if(n_legs_total == 1)
+            return matches_first.at(0).size() >= n_legs_total || matches_second.at(0).size() >= n_legs_total;
 
-            match_found = matches_first.at(1).size() >= 1 && matches_second.at(1).size() >= n_legs_total - 1 && comb_match.size() >= n_legs_total;
-            if(match_found) return true;
-        }
+        bool match_found = false;
+        for(size_t flip = 0; !match_found && flip < array_matched_legId_triggerObjectSet.size(); ++flip) {
+        const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
+            if(n_legs_total == 2){
+                std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+                std::set_union(array_matched_legId_triggerObjectSet.at(flip).at(first).begin(),
+                               array_matched_legId_triggerObjectSet.at(flip).at(first).end(),
+                               array_matched_legId_triggerObjectSet.at(flip).at(second).begin(),
+                               array_matched_legId_triggerObjectSet.at(flip).at(second).end(),
+                                std::back_inserter(comb_match));
+
+                match_found = array_matched_legId_triggerObjectSet.at(flip).at(0).size() >= 1 &&
+                        array_matched_legId_triggerObjectSet.at(flip).at(1).size() >= n_legs_total - 1 &&
+                        comb_match.size() >= n_legs_total;
+                if(match_found) return true;
+            }
+       }
         return false;
     }
 

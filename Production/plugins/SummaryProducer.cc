@@ -22,6 +22,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/TriggerFileDescriptor.h"
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
 #include "h-tautau/Production/interface/TriggerTools.h"
+#include "h-tautau/Production/src/TriggerTools.cc"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:

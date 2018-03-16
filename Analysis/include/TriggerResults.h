@@ -80,9 +80,12 @@ public:
     bool FindPatternMatch(const std::string& path_name, size_t& index) const
     {
         size_t counter = 0;
-        for(index = 0; index < descriptors.size(); ++index){
-            const TriggerDescriptor descriptor = descriptors.at(index);
-            if(descriptor.PatternMatch(path_name)) ++counter;
+        for(size_t n = 0; n < descriptors.size(); ++n){
+            const TriggerDescriptor descriptor = descriptors.at(n);
+            if(descriptor.PatternMatch(path_name)) {
+                ++counter;
+                index = n;
+            }
         }
         if (counter > 1)
             throw exception("More than 1 pattern matched.");
