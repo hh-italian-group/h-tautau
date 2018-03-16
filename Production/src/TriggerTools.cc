@@ -43,7 +43,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
 
 }
 
-trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
+trigger_tools::TriggerFileDescriptorCollection TriggerTools::ReadConfig(const std::string& cfg_path,
                                                           trigger_tools::SetupDescriptor& setup)
 {
     trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
