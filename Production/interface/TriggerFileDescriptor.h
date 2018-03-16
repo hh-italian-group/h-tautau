@@ -16,7 +16,7 @@ namespace trigger_tools {
 
 struct SetupDescriptor {
     std::string name;
-    std::map<LegType, double> deltaPt_map;
+    std::map<analysis::LegType, double> deltaPt_map;
 
 };
 
@@ -24,7 +24,7 @@ using SetupDescriptorCollection = std::unordered_map<std::string, SetupDescripto
 
 struct TriggerFileDescriptor {
     std::string name;
-    std::set<Channel> channels;
+    std::set<analysis::Channel> channels;
     std::vector<std::string> legs;
 
 };

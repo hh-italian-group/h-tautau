@@ -8,7 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace trigger_tools {
 
-class TriggerFileConfigEntryReader : public ConfigEntryReaderT<TriggerFileDescriptor> {
+class TriggerFileConfigEntryReader : public analysis::ConfigEntryReaderT<TriggerFileDescriptor> {
 public:
     using Condition = ConfigEntryReader::Condition;
     using ConfigEntryReaderT<TriggerFileDescriptor>::ConfigEntryReaderT;
@@ -30,7 +30,7 @@ public:
     }
 };
 
-class SetupConfigEntryReader : public ConfigEntryReaderT<SetupDescriptor> {
+class SetupConfigEntryReader : public analysis::ConfigEntryReaderT<SetupDescriptor> {
 public:
     using Condition = ConfigEntryReader::Condition;
     using ConfigEntryReaderT<SetupDescriptor>::ConfigEntryReaderT;
