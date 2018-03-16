@@ -37,7 +37,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
 
     path_legId_triggerObjPtr_vector.resize(triggerDescriptors.size());
     for (size_t n = 0; n < path_legId_triggerObjPtr_vector.size(); ++n){
-        const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(n);
+        auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(n);
         legId_triggerObjPtr_vector.resize(triggerDescriptors.at(n).legs_info.size(), {});
     }
 
@@ -157,11 +157,11 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
     }
 }
 
-std::vector<TriggerTools::TriggerObjectSet> FindMatchingTriggerObjects(
+VectorTriggerObjectSet FindMatchingTriggerObjects(
         const size_t index, const LorentzVector& candidateMomentum, const LegType& candidate_type, double deltaR_Limit)
 {
     const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(index);
-    std::vector<TriggerTools::TriggerObjectSet> matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
+    VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){

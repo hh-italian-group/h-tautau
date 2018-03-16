@@ -52,6 +52,7 @@ public:
     template<typename T> using EDGetTokenT = edm::EDGetTokenT<T>;
     template<typename T> using Handle = edm::Handle<T>;
     using TriggerObjectSet = std::set<const pat::TriggerObjectStandAlone*>;
+    using VectorTriggerObjectSet = std::vector<TriggerTools::TriggerObjectSet>;
 
     TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
@@ -78,7 +79,7 @@ public:
     template<typename HiggsCandidate>
     void SetTriggerMatchBits(TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     { 
-        std::array<std::vector<TriggerTools::TriggerObjectSet>, 2> array_matched_legId_triggerObjectSet;
+        std::array<VectorTriggerObjectSet, 2> array_matched_legId_triggerObjectSet;
         for (size_t n = 0; n < triggerDescriptors.size(); ++n){
             const auto& descriptor = triggerDescriptors.at(n);
             std::vector<TriggerObjectSet> matches_first, matches_second;
@@ -94,18 +95,19 @@ public:
         }
     }
 
-    bool TriggerMatchFound(const std::array<std::vector<TriggerTools::TriggerObjectSet>, 2>& array_matched_legId_triggerObjectSet,
+    bool TriggerMatchFound(const std::array<VectorTriggerObjectSet, 2>& array_matched_legId_triggerObjectSet,
                            const size_t n_legs_total)
     {
         if(n_legs_total == 0) return true;
 
-        bool match_found = false;
-        for(size_t flip = 0; !match_found && flip < array_matched_legId_triggerObjectSet.size(); ++flip) {
-            const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
-            if(n_legs_total == 1)
-                return array_matched_legId_triggerObjectSet.at(flip).at(first).size() >= n_legs_total ||
-                        array_matched_legId_triggerObjectSet.at(flip).at(second).size() >= n_legs_total;
-            if(n_legs_total == 2){
+        if(n_legs_total == 1)
+            return array_matched_legId_triggerObjectSet.at(0).at(0).size() >= n_legs_total ||
+                    array_matched_legId_triggerObjectSet.at(1).at(0).size() >= n_legs_total;
+
+        if(n_legs_total == 2){
+            bool match_found = false;
+            for(size_t flip = 0; !match_found && flip < array_matched_legId_triggerObjectSet.size(); ++flip) {
+                const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
                 std::vector<const pat::TriggerObjectStandAlone*> comb_match;
                 std::set_union(array_matched_legId_triggerObjectSet.at(flip).at(first).begin(),
                                array_matched_legId_triggerObjectSet.at(flip).at(first).end(),
@@ -118,7 +120,7 @@ public:
                         comb_match.size() >= n_legs_total;
                 if(match_found) return true;
             }
-       }
+        }
         return false;
     }
 
