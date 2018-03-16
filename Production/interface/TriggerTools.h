@@ -120,7 +120,7 @@ public:
                         comb_match.size() >= n_legs_total;
             }
         }
-        return match;
+        return match_found;
     }
 
     bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;

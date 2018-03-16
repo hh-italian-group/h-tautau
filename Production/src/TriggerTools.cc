@@ -60,7 +60,7 @@ trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg
 
     if(setup_file_descriptors.size() != 1)
         throw exception("More than 1 setup in Reading Trigger Tools cfg");
-    setup = *setup_file_descriptors.begin()->second;
+    setup = setup_file_descriptors.begin()->second;
 
     return trigger_file_descriptors;
 }
