@@ -1,5 +1,5 @@
-/*! Definition of the file descriptor for DY and Wjets sample merging.
-This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
+/*! Definition of the file descriptor for Trigger setup and descriptor.
+This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
@@ -12,11 +12,11 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 #include "h-tautau/Analysis/include/SummaryTuple.h"
 #include "AnalysisTools/Core/include/ConfigReader.h"
 
-namespace analysis {
+namespace trigger_tools {
 
 struct SetupDescriptor {
     std::string name;
-    std::map<analysis::LegType, double> deltaPt_map;
+    std::map<LegType, double> deltaPt_map;
 
 };
 

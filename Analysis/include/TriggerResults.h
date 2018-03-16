@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include <bitset>
+#include <vector>
 #include <boost/regex.hpp>
 #include "AnalysisTools/Core/include/exception.h"
 #include "AnalysisTypes.h"
@@ -52,49 +53,53 @@ public:
 
     size_t size() const
     {
-        return pattern_structs.size();
+        return descriptors.size();
     }
 
-    TriggerDescriptorCollection::TriggerDescriptor at(size_t index) const
+    const TriggerDescriptor& at(size_t index) const
     {
-        return pattern_structs.at(index);
+        if(index >= descriptors.size())
+            throw exception("Index out of pattern structs range");
+        return descriptors.at(index);
     }
 
-    TriggerDescriptorCollection::TriggerDescriptor GetTriggerDescriptor(const Pattern& pattern)
+    const TriggerDescriptor& at(const Pattern& pattern)
     {
         size_t index = GetIndex(pattern);
-        return pattern_structs.at(index);
+        return descriptors.at(index);
     }
     
-    void Add(const Pattern& pattern, std::vector<Leg> legs)
+    void Add(const Pattern& pattern, const std::vector<Leg>& legs)
     {
-        if(pattern_indices.count(pattern))
+        if(desc_indices.count(pattern))
             throw exception("Duplicated trigger pattern '%1%'.") % pattern;
-        pattern_indices[pattern] = legs.size();
-        TriggerDescriptorCollection::TriggerDescriptor pattern_struct(pattern,legs);
-        pattern_structs.push_back(pattern_struct);
+        desc_indices[pattern] = descriptors.size();
+        descriptors.emplace_back(pattern,legs);
     }
 
     bool FindPatternMatch(const std::string& path_name, size_t& index) const
     {
-        for(index = 0; index < pattern_structs.size(); ++index){
-            const TriggerDescriptorCollection::TriggerDescriptor pattern_struct = pattern_structs.at(index);
-            if(pattern_struct.PatternMatch(path_name)) return true;
+        size_t counter = 0;
+        for(index = 0; index < descriptors.size(); ++index){
+            const TriggerDescriptor descriptor = descriptors.at(index);
+            if(descriptor.PatternMatch(path_name)) ++counter;
         }
-        return false;
+        if (counter > 1)
+            throw exception("More than 1 pattern matched.");
+        return counter == 1;
     }
 
 
     size_t GetIndex(const Pattern& pattern) const
     {
-        if(!pattern_indices.count(pattern))
+        if(!desc_indices.count(pattern))
             throw exception("Trigger '%1%' not found.") % pattern;
-        return pattern_indices.at(pattern);
+        return desc_indices.at(pattern);
     }
 
 private:
-    std::vector<TriggerDescriptorCollection::TriggerDescriptor> pattern_structs;
-    std::map<Pattern, size_t> pattern_indices;
+    std::vector<TriggerDescriptor> descriptors;
+    std::map<Pattern, size_t> desc_indices;
 };
 
 class TriggerResults {

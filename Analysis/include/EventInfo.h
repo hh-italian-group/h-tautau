@@ -74,7 +74,7 @@ public:
             const int channel_id = summary.triggers_channel.at(n);
             const Channel channel = static_cast<Channel>(channel_id);
             if(!triggerDescriptors.count(channel))
-                triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptorCollection>(new TriggerDescriptorCollection());
+                triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>(new TriggerDescriptorCollection());
             triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
         }
     }

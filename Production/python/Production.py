@@ -52,8 +52,7 @@ options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarPar
 
 options.parseArguments()
 
-#sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
-sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig_new')
+sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
 triggerCfg = sampleConfig.GetTriggerCfg(period)
@@ -228,7 +227,6 @@ for channel in channels:
         productionMode          = cms.string(options.productionMode),
         period                  = cms.string(period),
         triggerCfg              = cms.string(triggerCfg),
-        channel                 = cms.string(channel),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),

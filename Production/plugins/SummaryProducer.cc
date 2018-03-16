@@ -48,19 +48,9 @@ public:
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
 
-        analysis::ConfigReader config_reader;
-
-        analysis::TriggerFileDescriptorCollection trigger_file_descriptors;
-        analysis::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
-        config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
-        
-        analysis::SetupDescriptorCollection setup_descriptors;
-        analysis::SetupConfigEntryReader setup_entry_reader(setup_descriptors);
-        config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
-	
+        trigger_tools::SetupDescriptor& setup;
         const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
-        const std::string triggerCfg_full = edm::FileInPath(triggerCfg).fullPath();
-        config_reader.ReadConfig(triggerCfg_full);
+        trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(triggerCfg,setup);
 
         std::map<Channel, TriggerDescriptorCollection> triggerDescriptors;
         const std::vector<std::string> channelsStrings = cfg.getParameter<std::vector<std::string>>("channels");
