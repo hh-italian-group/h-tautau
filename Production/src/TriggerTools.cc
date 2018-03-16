@@ -60,7 +60,7 @@ trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg
 
     if(setup_file_descriptors.size() != 1)
         throw exception("More than 1 setup in Reading Trigger Tools cfg");
-    setup = *setup_file_descriptors.begin();
+    setup = *setup_file_descriptors.second();
 
     return trigger_file_descriptors;
 }
@@ -157,11 +157,11 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
     }
 }
 
-VectorTriggerObjectSet FindMatchingTriggerObjects(
+TriggerTools::VectorTriggerObjectSet FindMatchingTriggerObjects(
         const size_t index, const LorentzVector& candidateMomentum, const LegType& candidate_type, double deltaR_Limit)
 {
     const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(index);
-    VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
+    TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
