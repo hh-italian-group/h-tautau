@@ -104,24 +104,23 @@ public:
             return array_matched_legId_triggerObjectSet.at(0).at(0).size() >= n_legs_total ||
                     array_matched_legId_triggerObjectSet.at(1).at(0).size() >= n_legs_total;
 
+        bool match_found = false;
         if(n_legs_total == 2){
-            bool match_found = false;
             for(size_t flip = 0; !match_found && flip < array_matched_legId_triggerObjectSet.size(); ++flip) {
-                const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
+                const size_t first = flip, second = ((flip + 1) % 2);
                 std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-                std::set_union(array_matched_legId_triggerObjectSet.at(flip).at(first).begin(),
-                               array_matched_legId_triggerObjectSet.at(flip).at(first).end(),
-                               array_matched_legId_triggerObjectSet.at(flip).at(second).begin(),
-                               array_matched_legId_triggerObjectSet.at(flip).at(second).end(),
+                std::set_union(array_matched_legId_triggerObjectSet.at(0).at(first).begin(),
+                               array_matched_legId_triggerObjectSet.at(0).at(first).end(),
+                               array_matched_legId_triggerObjectSet.at(1).at(second).begin(),
+                               array_matched_legId_triggerObjectSet.at(1).at(second).end(),
                                 std::back_inserter(comb_match));
 
-                match_found = array_matched_legId_triggerObjectSet.at(flip).at(0).size() >= 1 &&
-                        array_matched_legId_triggerObjectSet.at(flip).at(1).size() >= n_legs_total - 1 &&
+                match_found = array_matched_legId_triggerObjectSet.at(0).at(first).size() >= 1 &&
+                        array_matched_legId_triggerObjectSet.at(1).at(second).size() >= n_legs_total - 1 &&
                         comb_match.size() >= n_legs_total;
-                if(match_found) return true;
             }
         }
-        return false;
+        return match;
     }
 
     bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;
