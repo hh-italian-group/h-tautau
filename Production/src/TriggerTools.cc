@@ -160,18 +160,18 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
 TriggerTools::VectorTriggerObjectSet FindMatchingTriggerObjects(
         size_t index, const LorentzVector& candidateMomentum, const LegType& candidate_type, double deltaR_Limit)
 {
-    const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(index);
+    const auto& legId_triggerObjPtr_vector = TriggerTools::path_legId_triggerObjPtr_vector.at(index);
     TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
         const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
-        const auto& descriptor = triggerDescriptors.at(index);
+        const auto& descriptor = TriggerTools::triggerDescriptors.at(index);
         const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
         if(candidate_type != leg.type) continue;
         for(const auto& triggerObject : triggerObjectSet){
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
-            if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
+            if(candidateMomentum.Pt() <= leg.pt + TriggerTools::deltaPt_map.at(leg.type)) continue;
             matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
     }
