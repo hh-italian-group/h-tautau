@@ -48,7 +48,7 @@ public:
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
 
-        trigger_tools::SetupDescriptor& setup;
+        trigger_tools::SetupDescriptor setup;
         const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
         trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(triggerCfg,setup);
 
