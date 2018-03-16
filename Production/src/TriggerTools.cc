@@ -158,7 +158,7 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
 }
 
 TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
-        size_t index, const LorentzVector& candidateMomentum, const LegType& candidate_type, double deltaR_Limit) const
+        size_t index, const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit) const
 {
     const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(index);
     TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
