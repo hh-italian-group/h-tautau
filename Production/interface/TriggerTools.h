@@ -72,7 +72,7 @@ public:
 
     void SetTriggerAcceptBits(TriggerResults& results);
 
-    std::vector<TriggerObjectSet> FindMatchingTriggerObjects(size_t desc_index,
+    VectorTriggerObjectSet FindMatchingTriggerObjects(size_t desc_index,
             const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit);
 
 
