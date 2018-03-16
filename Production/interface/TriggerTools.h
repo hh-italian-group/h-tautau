@@ -98,12 +98,13 @@ public:
                            const size_t n_legs_total)
     {
         if(n_legs_total == 0) return true;
-        if(n_legs_total == 1)
-            return matches_first.at(0).size() >= n_legs_total || matches_second.at(0).size() >= n_legs_total;
 
         bool match_found = false;
         for(size_t flip = 0; !match_found && flip < array_matched_legId_triggerObjectSet.size(); ++flip) {
-        const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
+            const size_t first = (flip % 2) + 1, second = ((flip + 1) % 2) + 1;
+            if(n_legs_total == 1)
+                return array_matched_legId_triggerObjectSet.at(flip).at(first).size() >= n_legs_total ||
+                        array_matched_legId_triggerObjectSet.at(flip).at(second).size() >= n_legs_total;
             if(n_legs_total == 2){
                 std::vector<const pat::TriggerObjectStandAlone*> comb_match;
                 std::set_union(array_matched_legId_triggerObjectSet.at(flip).at(first).begin(),

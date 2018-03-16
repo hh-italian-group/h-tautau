@@ -52,7 +52,7 @@ trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg
     config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
 
     trigger_tools::SetupDescriptorCollection setup_file_descriptors;
-    trigger_tools::SetupConfigEntryReader setup_entry_reader(setupsetup_file_descriptors);
+    trigger_tools::SetupConfigEntryReader setup_entry_reader(setup_file_descriptors);
     config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
 
     const std::string triggerCfg_full = edm::FileInPath(cfg_path).fullPath();
@@ -166,6 +166,7 @@ std::vector<TriggerTools::TriggerObjectSet> FindMatchingTriggerObjects(
     
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
         const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
+        const auto& descriptor = triggerDescriptors.at(index);
         const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
         if(candidate_type != leg.type) continue;
         for(const auto& triggerObject : triggerObjectSet){
