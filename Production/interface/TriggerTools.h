@@ -73,7 +73,7 @@ public:
     void SetTriggerAcceptBits(TriggerResults& results);
 
     VectorTriggerObjectSet FindMatchingTriggerObjects(size_t desc_index,
-            const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit);
+            const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit) const;
 
 
     template<typename HiggsCandidate>
