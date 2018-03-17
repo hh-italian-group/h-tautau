@@ -35,9 +35,9 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
 
     triggerDescriptors = CreateTriggerDescriptors(trigger_file_descriptors,channel);
 
-    path_legId_triggerObjPtr_vector.resize(triggerDescriptors.size());
-    for (size_t n = 0; n < path_legId_triggerObjPtr_vector.size(); ++n){
-        auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(n);
+    pathTriggerObjects.resize(triggerDescriptors.size());
+    for (size_t n = 0; n < pathTriggerObjects.size(); ++n){
+        auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(n);
         legId_triggerObjPtr_vector.resize(triggerDescriptors.at(n).legs_info.size(), {});
     }
 
@@ -95,7 +95,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     iEvent->getByToken(triggerObjects_token, triggerObjects);
     iEvent->getByToken(l1JetParticles_token, l1JetParticles);
 
-    for (auto& desc : path_legId_triggerObjPtr_vector){
+    for (auto& desc : pathTriggerObjects){
         for(auto& leg : desc){
             leg.clear();
         }
@@ -137,7 +137,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
             for(unsigned n = 0; n < descriptor.legs_info.size(); ++n){
                 const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
                 if(!hasExpectedType(leg.type,unpackedTriggerObject) || !passFilters(unpackedTriggerObject,leg.filters)) continue;
-                path_legId_triggerObjPtr_vector.at(index).at(n).insert(&triggerObject);
+                pathTriggerObjects.at(index).at(n).insert(&triggerObject);
             }
         }
     }
@@ -160,13 +160,13 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
 TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
         size_t index, const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit) const
 {
-    const auto& legId_triggerObjPtr_vector = path_legId_triggerObjPtr_vector.at(index);
+    const auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(index);
     TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
-    
+    const auto& descriptor = triggerDescriptors.at(index);
+
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
-        const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
-        const auto& descriptor = triggerDescriptors.at(index);
+        const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);        
         const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
         if(candidate_type != leg.type) continue;
         for(const auto& triggerObject : triggerObjectSet){
@@ -177,6 +177,34 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     }
 
     return matched_legId_triggerObjectSet_vector;
+}
+
+bool TriggerMatchFound(const std::array<VectorTriggerObjectSet, 2>& matched_legIds,
+                       const size_t n_legs_total)
+{
+    if(n_legs_total == 0) return true;
+
+    if(n_legs_total == 1)
+        return matched_legIds.at(0).at(0).size() >= n_legs_total ||
+                matched_legIds.at(1).at(0).size() >= n_legs_total;
+
+    bool match_found = false;
+    if(n_legs_total == 2){
+        for(size_t flip = 0; !match_found && flip < matched_legIds.size(); ++flip) {
+            const size_t first = flip, second = ((flip + 1) % 2);
+            std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+            std::set_union(matched_legIds.at(0).at(first).begin(),
+                           matched_legIds.at(0).at(first).end(),
+                           matched_legIds.at(1).at(second).begin(),
+                           matched_legIds.at(1).at(second).end(),
+                            std::back_inserter(comb_match));
+
+            match_found = matched_legIds.at(0).at(first).size() >= 1 &&
+                    matched_legIds.at(1).at(second).size() >= n_legs_total - 1 &&
+                    comb_match.size() >= n_legs_total;
+        }
+    }
+    return match_found;
 }
 
 bool TriggerTools::TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const

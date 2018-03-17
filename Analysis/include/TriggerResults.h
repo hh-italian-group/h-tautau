@@ -81,7 +81,7 @@ public:
     {
         size_t counter = 0;
         for(size_t n = 0; n < descriptors.size(); ++n){
-            const TriggerDescriptor descriptor = descriptors.at(n);
+            const TriggerDescriptor& descriptor = descriptors.at(n);
             if(descriptor.PatternMatch(path_name)) {
                 ++counter;
                 index = n;

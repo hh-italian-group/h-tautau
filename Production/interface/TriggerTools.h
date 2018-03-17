@@ -61,7 +61,7 @@ public:
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                 std::string triggerCfg, Channel channel);
+                 const std::string& triggerCfg, Channel channel);
 
     static trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
                                                                     trigger_tools::SetupDescriptor& setup);
@@ -79,49 +79,22 @@ public:
     template<typename HiggsCandidate>
     void SetTriggerMatchBits(TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     { 
-        std::array<VectorTriggerObjectSet, 2> array_matched_legId_triggerObjectSet;
+        std::array<VectorTriggerObjectSet, 2> matched_legIds;
         for (size_t n = 0; n < triggerDescriptors.size(); ++n){
             const auto& descriptor = triggerDescriptors.at(n);
-            std::vector<TriggerObjectSet> matches_first, matches_second;
-            matches_first = FindMatchingTriggerObjects(n,candidate.GetFirstDaughter().GetMomentum(),
-                                                        detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),
-                                                        deltaR_Limit);
-            matches_second = FindMatchingTriggerObjects(n,candidate.GetSecondDaughter().GetMomentum(),
-                                                         detail::GetTriggerObjectTypes(*candidate.GetSecondDaughter()),
-                                                         deltaR_Limit);
-            array_matched_legId_triggerObjectSet.at(0) = matches_first;
-            array_matched_legId_triggerObjectSet.at(1) = matches_second;
-            results.SetMatch(n, TriggerMatchFound(array_matched_legId_triggerObjectSet, descriptor.legs_info.size()));
+            matched_legIds.at(0) = FindMatchingTriggerObjects(n,candidate.GetFirstDaughter().GetMomentum(),
+                                                              detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),
+                                                              deltaR_Limit);
+            matched_legIds.at(1) = FindMatchingTriggerObjects(n,candidate.GetSecondDaughter().GetMomentum(),
+                                                              detail::GetTriggerObjectTypes(*candidate.GetSecondDaughter()),
+                                                              deltaR_Limit);
+            results.SetMatch(n, TriggerMatchFound(matched_legIds, descriptor.legs_info.size()));
         }
     }
 
-    bool TriggerMatchFound(const std::array<VectorTriggerObjectSet, 2>& array_matched_legId_triggerObjectSet,
-                           const size_t n_legs_total)
-    {
-        if(n_legs_total == 0) return true;
+    bool TriggerMatchFound(const std::array<VectorTriggerObjectSet, 2>& matched_legIds,
+                           const size_t n_legs_total);
 
-        if(n_legs_total == 1)
-            return array_matched_legId_triggerObjectSet.at(0).at(0).size() >= n_legs_total ||
-                    array_matched_legId_triggerObjectSet.at(1).at(0).size() >= n_legs_total;
-
-        bool match_found = false;
-        if(n_legs_total == 2){
-            for(size_t flip = 0; !match_found && flip < array_matched_legId_triggerObjectSet.size(); ++flip) {
-                const size_t first = flip, second = ((flip + 1) % 2);
-                std::vector<const pat::TriggerObjectStandAlone*> comb_match;
-                std::set_union(array_matched_legId_triggerObjectSet.at(0).at(first).begin(),
-                               array_matched_legId_triggerObjectSet.at(0).at(first).end(),
-                               array_matched_legId_triggerObjectSet.at(1).at(second).begin(),
-                               array_matched_legId_triggerObjectSet.at(1).at(second).end(),
-                                std::back_inserter(comb_match));
-
-                match_found = array_matched_legId_triggerObjectSet.at(0).at(first).size() >= 1 &&
-                        array_matched_legId_triggerObjectSet.at(1).at(second).size() >= n_legs_total - 1 &&
-                        comb_match.size() >= n_legs_total;
-            }
-        }
-        return match_found;
-    }
 
     bool TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const;
     bool GetTriggerResult(CMSSW_Process process, const std::string& name) const;
@@ -142,7 +115,7 @@ private:
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
     edm::Handle<std::vector<l1extra::L1JetParticle>> l1JetParticles;
 
-    std::vector<std::vector<TriggerObjectSet>> path_legId_triggerObjPtr_vector;
+    std::vector<VectorTriggerObjectSet> pathTriggerObjects;
 };
 
 } // namespace analysis
