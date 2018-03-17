@@ -179,7 +179,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     return matched_legId_triggerObjectSet_vector;
 }
 
-bool TriggerMatchFound(const std::array<TriggerTools::VectorTriggerObjectSet, 2>& matched_legIds,
+bool TriggerTools::TriggerMatchFound(const std::array<TriggerTools::VectorTriggerObjectSet, 2>& matched_legIds,
                        const size_t n_legs_total)
 {
     if(n_legs_total == 0) return true;
