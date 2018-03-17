@@ -13,8 +13,8 @@ bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
-BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& _treeName) :
-    treeName(_treeName),
+BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel) :
+    treeName(ToString(_channel)),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
     electronsMiniAOD_token(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
     eleTightIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
@@ -55,7 +55,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<std::vector<l1extra::L1JetParticle>>(
-                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")))
+                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
+                 iConfig.getParameter<std::string>("triggerCfg"),
+                 _channel)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
@@ -63,16 +65,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     for(const auto& scaleString : energyScaleStrings) {
         const auto es = analysis::Parse<analysis::EventEnergyScale>(scaleString);
         eventEnergyScales.push_back(es);
-    }
-
-    const auto& hltPaths = iConfig.getParameterSetVector("hltPaths");
-    for(const auto& hltPath : hltPaths) {
-        const std::string pattern = hltPath.getParameter<std::string>("pattern");
-        const size_t nLegs = hltPath.getUntrackedParameter<unsigned>("nLegs", 1);
-        analysis::TriggerDescriptors::FilterContainer filters;
-        filters[1] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters1", {});
-        filters[2] = hltPath.getUntrackedParameter<std::vector<std::string>>("filters2", {});
-        triggerDescriptors.Add(pattern, nLegs, filters);
     }
 
     if(runSVfit)

@@ -10,7 +10,7 @@ public:
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
 public:
-    TupleProducer_muMu(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, "muMu") {}
+    TupleProducer_muMu(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, analysis::Channel::MuMu) {}
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;

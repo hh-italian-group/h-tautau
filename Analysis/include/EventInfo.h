@@ -70,25 +70,16 @@ public:
 
     explicit SummaryInfo(const ProdSummary& _summary) : summary(_summary)
     {
-        using FilterKey = std::pair<int, size_t>;
-        using FilterMap = std::map<FilterKey, std::map<size_t, std::vector<std::string>>>;
-        FilterMap filters;
-        for(size_t n = 0; n < summary.triggerFilters_channel.size(); ++n) {
-            const FilterKey key(summary.triggerFilters_channel.at(n), summary.triggerFilters_triggerIndex.at(n));
-            filters[key][summary.triggerFilters_LegId.at(n)].push_back(summary.triggerFilters_name.at(n));
-        }
         for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
             const int channel_id = summary.triggers_channel.at(n);
             const Channel channel = static_cast<Channel>(channel_id);
-            const FilterKey key(channel_id, summary.triggers_index.at(n));
             if(!triggerDescriptors.count(channel))
-                triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptors>(new TriggerDescriptors());
-            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), summary.triggers_n_legs.at(n),
-                                             filters[key]);
+                triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
+            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
         }
     }
 
-    std::shared_ptr<const TriggerDescriptors> GetTriggerDescriptors(Channel channel) const
+    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const
     {
         if(!triggerDescriptors.count(channel))
             throw exception("Information for channel %1% not found.") % channel;
@@ -100,7 +91,7 @@ public:
 
 private:
     ProdSummary summary;
-    std::map<Channel, std::shared_ptr<TriggerDescriptors>> triggerDescriptors;
+    std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
 };
 
 class EventInfoBase {

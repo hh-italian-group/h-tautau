@@ -12,7 +12,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) {
-        triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
+        triggerTools.SetTriggerAcceptBits(selection.triggerResults);
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
@@ -32,14 +32,14 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
             : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
     auto higgses = FindCompatibleObjects(selectedMuons, selectedTaus, DeltaR_betweenSignalObjects, "H_mu_tau");
     cut(higgses.size(), "mu_tau_pair");
-
+    
     std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
     auto selected_higgs = higgses.front();
 
     if(applyTriggerMatch)
-        triggerTools.SetTriggerMatchBits(triggerDescriptors, selection.triggerResults, selected_higgs,
-                                         cuts::H_tautau_2016::DeltaR_triggerMatch, false);
-
+        triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
+                                         cuts::H_tautau_2016::DeltaR_triggerMatch);
+ 
     selection.SetHiggsCandidate(selected_higgs);
 
     //Third-Lepton Veto

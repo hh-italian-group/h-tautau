@@ -55,6 +55,7 @@ options.parseArguments()
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
+triggerCfg = sampleConfig.GetTriggerCfg(period)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -162,21 +163,6 @@ if options.saveGenTopInfo:
     process.decaySubset.runMode = cms.string("Run2")
     process.topGenSequence += process.makeGenEvt
 
-### Tuple production sequence
-
-process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData),
-    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
-    lheEventProduct = cms.InputTag('externalLHEProducer'),
-    genEvent        = cms.InputTag('generator'),
-    topGenEvent     = cms.InputTag('genEvt'),
-    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    taus            = cms.InputTag('slimmedTaus'),
-    triggerSetup    = cms.VPSet()
-)
-
-process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
-
 if options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
 else:
@@ -187,14 +173,26 @@ if options.energyScales == 'all':
 else:
     energyScales = re.split(',', options.energyScales)
 
+### Tuple production sequence
+
+process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
+    isMC            = cms.bool(not isData),
+    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
+    lheEventProduct = cms.InputTag('externalLHEProducer'),
+    genEvent        = cms.InputTag('generator'),
+    topGenEvent     = cms.InputTag('genEvt'),
+    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
+    taus            = cms.InputTag('slimmedTaus'),
+    triggerCfg      = cms.string(triggerCfg),
+    channels        = cms.vstring(channels)
+)
+
+process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
+
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
-    hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
-    process.summaryTupleProducer.triggerSetup.append(cms.PSet(
-        channel = cms.string(channel),
-        hltPaths = hltPaths
-    ))
+    
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
         eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80'),
@@ -221,7 +219,6 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
-        hltPaths                = hltPaths,
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
@@ -229,6 +226,7 @@ for channel in channels:
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
         period                  = cms.string(period),
+        triggerCfg              = cms.string(triggerCfg),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),

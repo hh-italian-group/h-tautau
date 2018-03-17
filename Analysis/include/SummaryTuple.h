@@ -17,13 +17,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(std::vector<uint32_t>, tauId_keys) \
     /* Trigger information */ \
     VAR(std::vector<Int_t>, triggers_channel) \
-    VAR(std::vector<UInt_t>, triggers_index) \
     VAR(std::vector<std::string>, triggers_pattern) \
-    VAR(std::vector<UInt_t>, triggers_n_legs) \
-    VAR(std::vector<Int_t>, triggerFilters_channel) \
-    VAR(std::vector<UInt_t>, triggerFilters_triggerIndex) \
-    VAR(std::vector<UInt_t>, triggerFilters_LegId) \
-    VAR(std::vector<std::string>, triggerFilters_name) \
     /* Skimmer Variables */\
     VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
@@ -172,12 +166,8 @@ inline void CheckProdSummaryConsistency(const ProdSummary& s)
     if(s.tauId_keys.size() != s.tauId_names.size())
         throw analysis::exception("Inconsistent tauId info in prod summary.");
     const size_t n_trig = s.triggers_channel.size();
-    if(s.triggers_index.size() != n_trig || s.triggers_n_legs.size() != n_trig || s.triggers_pattern.size() != n_trig)
+    if(s.triggers_pattern.size() != n_trig)
         throw analysis::exception("Inconsistent trigger info in prod summary.");
-    const size_t n_filter = s.triggerFilters_channel.size();
-    if(s.triggerFilters_LegId.size() != n_filter || s.triggerFilters_name.size() != n_filter
-            || s.triggerFilters_triggerIndex.size() != n_filter)
-        throw analysis::exception("Inconsistent trigger filters info in prod summary.");
     const size_t n_lhe = s.lhe_n_partons.size();
     if(s.lhe_ht10_bin.size() != n_lhe || s.lhe_n_b_partons.size() != n_lhe || s.lhe_n_events.size() != n_lhe)
         throw analysis::exception("Inconsistent LHE info in prod summary.");
@@ -201,21 +191,11 @@ inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSumma
             return false;
         }
     }
-    if(s1.triggers_channel.size() != s2.triggers_channel.size()
-            || s1.triggerFilters_channel.size() != s2.triggerFilters_channel.size())
+    if(s1.triggers_channel.size() != s2.triggers_channel.size())
         return false;
     for(size_t n = 0; n < s1.triggers_channel.size(); ++n) {
         if(s1.triggers_channel.at(n) != s2.triggers_channel.at(n)
-                || s1.triggers_index.at(n) != s2.triggers_index.at(n)
-                || s1.triggers_n_legs.at(n) != s2.triggers_n_legs.at(n)
                 || s1.triggers_pattern.at(n) != s2.triggers_pattern.at(n))
-            return false;
-    }
-    for(size_t n = 0; n < s1.triggerFilters_channel.size(); ++n) {
-        if(s1.triggerFilters_channel.at(n) != s2.triggerFilters_channel.at(n)
-                || s1.triggerFilters_LegId.at(n) != s2.triggerFilters_LegId.at(n)
-                || s1.triggerFilters_name.at(n) != s2.triggerFilters_name.at(n)
-                || s1.triggerFilters_triggerIndex.at(n) != s2.triggerFilters_triggerIndex.at(n))
             return false;
     }
     return true;
