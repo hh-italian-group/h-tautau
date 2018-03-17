@@ -85,6 +85,7 @@ public:
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
             if(run_period == Period::Run2016 && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
             if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
+            if(event->p4_1.Pt() <= 45 || event->p4_2.Pt() <= 45) continue;
 
             if(syncMode == SyncMode::HH) {
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
