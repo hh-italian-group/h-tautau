@@ -19,7 +19,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                            EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
-                           std::string triggerCfg, Channel channel) :
+                           const std::string& triggerCfg, Channel channel) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
     l1JetParticles_token(_l1JetParticles_token)
 {
@@ -179,7 +179,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     return matched_legId_triggerObjectSet_vector;
 }
 
-bool TriggerMatchFound(const std::array<VectorTriggerObjectSet, 2>& matched_legIds,
+bool TriggerMatchFound(const std::array<TriggerTools::VectorTriggerObjectSet, 2>& matched_legIds,
                        const size_t n_legs_total)
 {
     if(n_legs_total == 0) return true;
