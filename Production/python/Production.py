@@ -54,6 +54,8 @@ options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
+period = sampleConfig.GetPeriod(options.sampleType)
+triggerCfg = sampleConfig.GetTriggerCfg(period)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -139,13 +141,16 @@ switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps
 switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 
 # define which IDs we want to produce
-id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_Trig_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff' ]
+id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
+               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
 
 #add them to the VID producer
 for idmod in id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+
+tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
+tauIdConfig.tauId_calculation_2017(process)
+#from h-tautau.Production.TauID_2017 import *
 #------------
 
 ### Top gen level info
@@ -158,21 +163,6 @@ if options.saveGenTopInfo:
     process.decaySubset.runMode = cms.string("Run2")
     process.topGenSequence += process.makeGenEvt
 
-### Tuple production sequence
-
-process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData),
-    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
-    lheEventProduct = cms.InputTag('externalLHEProducer'),
-    genEvent        = cms.InputTag('generator'),
-    topGenEvent     = cms.InputTag('genEvt'),
-    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    taus            = cms.InputTag('slimmedTaus'),
-    triggerSetup    = cms.VPSet()
-)
-
-process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
-
 if options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
 else:
@@ -183,20 +173,33 @@ if options.energyScales == 'all':
 else:
     energyScales = re.split(',', options.energyScales)
 
+### Tuple production sequence
+
+process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
+    isMC            = cms.bool(not isData),
+    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
+    lheEventProduct = cms.InputTag('externalLHEProducer'),
+    genEvent        = cms.InputTag('generator'),
+    topGenEvent     = cms.InputTag('genEvt'),
+    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
+    taus            = cms.InputTag('slimmedTaus'),
+    triggerCfg      = cms.string(triggerCfg),
+    channels        = cms.vstring(channels)
+)
+
+process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
+
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
-    hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
-    process.summaryTupleProducer.triggerSetup.append(cms.PSet(
-        channel = cms.string(channel),
-        hltPaths = hltPaths
-    ))
+    
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
-        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
-        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90'),
-        eleCutBasedVeto         = cms.InputTag('egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto'),
-        tauSrc                  = cms.InputTag('slimmedTaus'),
+        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80'),
+        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90'),
+        eleLooseIdMap         = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wpLoose'),
+        #tauSrc                  = cms.InputTag('slimmedTaus'),
+        tauSrc                  = cms.InputTag('NewTauIDsEmbedded'),
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
         jetSrc                  = JetsInputTag,
@@ -204,7 +207,8 @@ for channel in channels:
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
         prescales               = cms.InputTag('patTrigger'),
-        objects                 = cms.InputTag('selectedPatTrigger'),
+        #objects                 = cms.InputTag('selectedPatTrigger'),
+        objects                 = cms.InputTag('slimmedPatTrigger'),
         badPFMuonFilter         = cms.InputTag('BadPFMuonFilter'),
         badChCandidateFilter    = cms.InputTag('BadChargedCandidateFilter'),
         lheEventProducts        = cms.InputTag('externalLHEProducer'),
@@ -215,13 +219,14 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
-        hltPaths                = hltPaths,
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
+        period                  = cms.string(period),
+        triggerCfg              = cms.string(triggerCfg),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
@@ -231,6 +236,8 @@ for channel in channels:
 process.p = cms.Path(
     process.egmGsfElectronIDSequence *
     process.electronMVAValueMapProducer *
+    process.rerunMvaIsolation2SeqRun2 *
+    process.NewTauIDsEmbedded *
     process.JECsequence *
     process.fullPatMetSequence *
     process.BadPFMuonFilter *

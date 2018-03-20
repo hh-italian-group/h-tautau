@@ -12,7 +12,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) {
-        triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
+        triggerTools.SetTriggerAcceptBits(selection.triggerResults);
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
@@ -39,8 +39,8 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
 
     if(applyTriggerMatch)
-        triggerTools.SetTriggerMatchBits(triggerDescriptors, selection.triggerResults, selected_higgs,
-                                         cuts::H_tautau_2016::DeltaR_triggerMatch, false);
+        triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
+                                         cuts::H_tautau_2016::DeltaR_triggerMatch);
 
     selection.SetHiggsCandidate(selected_higgs);
 

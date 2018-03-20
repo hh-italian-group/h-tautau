@@ -5,6 +5,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "AnalysisTools/Core/include/RootExt.h"
+#include "AnalysisTools/Core/include/ConfigReader.h"
+#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
+#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
+#include "AnalysisTools/Core/include/PropertyConfigReader.h"
 
 namespace analysis {
 
@@ -14,7 +18,8 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
-                           EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token) :
+                           EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
+                           const std::string& triggerCfg, Channel channel) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
     l1JetParticles_token(_l1JetParticles_token)
 {
@@ -22,6 +27,63 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
+
+    trigger_tools::SetupDescriptor setup;
+    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(triggerCfg,setup);
+
+    deltaPt_map = setup.deltaPt_map;
+
+    triggerDescriptors = CreateTriggerDescriptors(trigger_file_descriptors,channel);
+
+    pathTriggerObjects.resize(triggerDescriptors.size());
+    for (size_t n = 0; n < pathTriggerObjects.size(); ++n){
+        auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(n);
+        legId_triggerObjPtr_vector.resize(triggerDescriptors.at(n).legs_info.size(), {});
+    }
+
+}
+
+trigger_tools::TriggerFileDescriptorCollection TriggerTools::ReadConfig(const std::string& cfg_path,
+                                                          trigger_tools::SetupDescriptor& setup)
+{
+    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
+    analysis::ConfigReader config_reader;
+    trigger_tools::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+    config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
+
+    trigger_tools::SetupDescriptorCollection setup_file_descriptors;
+    trigger_tools::SetupConfigEntryReader setup_entry_reader(setup_file_descriptors);
+    config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
+
+    const std::string triggerCfg_full = edm::FileInPath(cfg_path).fullPath();
+    config_reader.ReadConfig(triggerCfg_full);
+
+    if(setup_file_descriptors.size() != 1)
+        throw exception("More than 1 setup in Reading Trigger Tools cfg");
+    setup = setup_file_descriptors.begin()->second;
+
+    return trigger_file_descriptors;
+}
+
+TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger_tools::TriggerFileDescriptorCollection& trigger_file_descriptors,
+                                                                         Channel channel)
+{
+    TriggerDescriptorCollection triggerDescriptors;
+    for(const auto& entry : trigger_file_descriptors) {
+        trigger_tools::TriggerFileDescriptor trigger_file_descriptor = entry.second;
+        if(!trigger_file_descriptor.channels.count(channel)) continue;
+        const auto& legs = trigger_file_descriptor.legs;
+        std::vector<TriggerDescriptorCollection::Leg> legs_vector;
+        for (size_t n = 0; n < legs.size(); ++n){
+            const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
+            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
+            const double pt = leg_list.Get<double>("pt");
+            const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
+            legs_vector.emplace_back(type,pt,filters);
+        }
+        triggerDescriptors.Add(entry.first, legs_vector);
+    }
+    return triggerDescriptors;
 }
 
 void TriggerTools::Initialize(const edm::Event &_iEvent)
@@ -32,10 +94,57 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     iEvent->getByToken(triggerPrescales_token, triggerPrescales);
     iEvent->getByToken(triggerObjects_token, triggerObjects);
     iEvent->getByToken(l1JetParticles_token, l1JetParticles);
+
+    for (auto& desc : pathTriggerObjects){
+        for(auto& leg : desc){
+            leg.clear();
+        }
+    }
+
+    static const std::map<LegType,std::set<trigger::TriggerObjectType>> map_legType_triggerObjType
+            = {
+               { LegType::e, { trigger::TriggerElectron, trigger::TriggerCluster } },
+               { LegType::mu, { trigger::TriggerMuon } },
+               { LegType::tau, { trigger::TriggerTau } }
+              };
+
+    const auto hasExpectedType = [](LegType legType, const pat::TriggerObjectStandAlone& triggerObject) {
+            for(auto type : map_legType_triggerObjType.at(legType))
+                if(triggerObject.type(type)) return true;
+            return false;
+    };
+
+
+    const auto passFilters = [](const pat::TriggerObjectStandAlone& triggerObject,
+            const TriggerDescriptorCollection::FilterVector& filters) {
+        for(const auto& filter : filters)
+            if(!triggerObject.hasFilterLabel(filter)) return false;
+        return true;
+    };
+
+
+    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
+    const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
+    for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
+        pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
+        unpackedTriggerObject.unpackPathNames(triggerNames);
+        unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
+        const auto& paths = unpackedTriggerObject.pathNames(true, true);
+        for(const auto& path : paths) {
+            size_t index;
+            if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
+            const auto& descriptor = triggerDescriptors.at(index);
+            for(unsigned n = 0; n < descriptor.legs_info.size(); ++n){
+                const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
+                if(!hasExpectedType(leg.type,unpackedTriggerObject) || !passFilters(unpackedTriggerObject,leg.filters)) continue;
+                pathTriggerObjects.at(index).at(n).insert(&triggerObject);
+            }
+        }
+    }
+
 }
 
-void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& descriptors,
-                                        analysis::TriggerResults& results)
+void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
 {
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
@@ -43,49 +152,59 @@ void TriggerTools::SetTriggerAcceptBits(const analysis::TriggerDescriptors& desc
     for (size_t i = 0; i < triggerResultsHLT->size(); ++i) {
         if(triggerPrescales->getPrescaleForIndex(i) != 1) continue;
         size_t index;
-        if(descriptors.FindPatternMatch(triggerNames.triggerName(i), index))
+        if(triggerDescriptors.FindPatternMatch(triggerNames.triggerName(i), index))
             results.SetAccept(index, triggerResultsHLT->accept(i));
     }
 }
 
-TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
-        const TriggerDescriptors& descriptors, size_t path_index,
-        const std::set<trigger::TriggerObjectType>& objectTypes, const LorentzVector& candidateMomentum,
-        size_t leg_id, double deltaR_Limit)
+TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
+        size_t index, const LorentzVector& candidateMomentum, LegType candidate_type, double deltaR_Limit) const
 {
-    const auto hasExpectedType = [&](const pat::TriggerObjectStandAlone& triggerObject) {
-        for(auto type : objectTypes)
-            if(triggerObject.type(type)) return true;
-        return false;
-    };
-
-    const auto& filters = descriptors.GetFilters(path_index, leg_id);
-    const auto passFilters = [&](const pat::TriggerObjectStandAlone& triggerObject) {
-        for(const auto& filter : filters)
-            if(!triggerObject.hasFilterLabel(filter)) return false;
-        return true;
-    };
-
-    TriggerObjectSet matches;
-    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
+    const auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(index);
+    TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
-    const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
-    for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
-        if(!hasExpectedType(triggerObject)) continue;
-        if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
-        pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
-        unpackedTriggerObject.unpackPathNames(triggerNames);
-        if(!passFilters(unpackedTriggerObject)) continue;
-        const auto& paths = unpackedTriggerObject.pathNames(true, true);
-        for(const auto& path : paths) {
-            if(descriptors.PatternMatch(path, path_index)) {
-                matches.insert(&triggerObject);
-                break;
-            }
+    const auto& descriptor = triggerDescriptors.at(index);
+
+    for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
+        const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);        
+        const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
+        if(candidate_type != leg.type) continue;
+        for(const auto& triggerObject : triggerObjectSet){
+            if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
+            if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
+            matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
     }
 
-    return matches;
+    return matched_legId_triggerObjectSet_vector;
+}
+
+bool TriggerTools::TriggerMatchFound(const std::array<TriggerTools::VectorTriggerObjectSet, 2>& matched_legIds,
+                       const size_t n_legs_total)
+{
+    if(n_legs_total == 0) return true;
+
+    if(n_legs_total == 1)
+        return matched_legIds.at(0).at(0).size() >= n_legs_total ||
+                matched_legIds.at(1).at(0).size() >= n_legs_total;
+
+    bool match_found = false;
+    if(n_legs_total == 2){
+        for(size_t flip = 0; !match_found && flip < matched_legIds.size(); ++flip) {
+            const size_t first = flip, second = ((flip + 1) % 2);
+            std::vector<const pat::TriggerObjectStandAlone*> comb_match;
+            std::set_union(matched_legIds.at(0).at(first).begin(),
+                           matched_legIds.at(0).at(first).end(),
+                           matched_legIds.at(1).at(second).begin(),
+                           matched_legIds.at(1).at(second).end(),
+                            std::back_inserter(comb_match));
+
+            match_found = matched_legIds.at(0).at(first).size() >= 1 &&
+                    matched_legIds.at(1).at(second).size() >= n_legs_total - 1 &&
+                    comb_match.size() >= n_legs_total;
+        }
+    }
+    return match_found;
 }
 
 bool TriggerTools::TryGetTriggerResult(CMSSW_Process process, const std::string& name, bool& result) const

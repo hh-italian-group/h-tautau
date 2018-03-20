@@ -18,7 +18,7 @@ public:
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
 public:
-    TupleProducer_tauTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, "tauTau") {}
+    TupleProducer_tauTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, analysis::Channel::TauTau) {}
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;

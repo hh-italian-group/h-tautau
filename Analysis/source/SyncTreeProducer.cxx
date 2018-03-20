@@ -10,12 +10,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/McCorrections/include/EventWeights.h"
 
 struct Arguments {
     REQ_ARG(std::string, mode);
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
+    REQ_ARG(std::string, period);
     REQ_ARG(std::string, output_file);
     OPT_ARG(std::string, sample_type, "signal");
 };
@@ -43,6 +45,7 @@ public:
     {
         std::istringstream ss_mode(args.mode());
         ss_mode >> syncMode;
+        run_period = analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(args.period());
     }
 
     void Run()
@@ -68,19 +71,26 @@ public:
         const Long64_t n_entries = originalTuple.GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple.GetEntry(current_entry);
-            const auto bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
+            
+            ntuple::JetPair bjet_pair;
+            if(run_period == Period::Run2016)
+                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
                                                                  cuts::btag_2016::eta, JetOrdering::CSV);
+            if(run_period == Period::Run2017)
+                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2017::pt,
+                                                          cuts::btag_2017::eta, JetOrdering::DeepCSV);
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
+
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            if(args.sample_type() == "data" && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel)))
-                continue;
+            if(run_period == Period::Run2016 && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
+            if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
 
             if(syncMode == SyncMode::HH) {
                 if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
             }
 
-            htt_sync::FillSyncTuple(event,sync);
+            htt_sync::FillSyncTuple(event,sync,run_period);
         }
 
         sync.Write();
@@ -89,6 +99,7 @@ public:
 private:
     Arguments args;
     SyncMode syncMode;
+    analysis::Period run_period;
     mc_corrections::EventWeights eventWeights;
 };
 

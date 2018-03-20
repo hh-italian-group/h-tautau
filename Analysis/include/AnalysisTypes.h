@@ -17,6 +17,11 @@ const EnumNameMap<Channel> __Channel_names_latex("ChannelLatex", {
     { Channel::MuMu, "#mu#mu" }
 });
 
+enum class LegType { e = 0, mu = 1, tau = 2 };
+ENUM_NAMES(LegType) = {
+    { LegType::e, "e" }, { LegType::mu, "mu" }, { LegType::tau, "tau" }
+};
+
 enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, TopPtUp = 5, TopPtDown = 6 };
 ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::Central, "Central" },
@@ -43,10 +48,11 @@ ENUM_NAMES(MetType) = {
     { MetType::PF, "PF" }, { MetType::MVA, "MVA" }, { MetType::PUPPI, "PUPPI" }
 };
 
-enum class Period { Run2015, Run2016 };
+enum class Period { Run2015, Run2016, Run2017 };
 ENUM_NAMES(Period) = {
     { Period::Run2015, "Run2015" },
-    { Period::Run2016, "Run2016" }
+    { Period::Run2016, "Run2016" },
+    { Period::Run2017, "Run2017" }
 };
 
 enum class GenMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };

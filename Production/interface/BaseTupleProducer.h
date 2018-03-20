@@ -56,6 +56,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2016_mssm.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Analysis/include/EventLoader.h"
 
 //SVFit
@@ -125,7 +126,7 @@ private:
     TupleProducerData anaData;
     std::map<std::string, std::shared_ptr<SelectionData>> anaDataBeforeCut, anaDataAfterCut;
     edm::EDGetToken electronsMiniAOD_token;
-    edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token, eleCutBasedVetoMap_token;
+    edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token, eleLooseIdMapMap_token;
     edm::EDGetToken tausMiniAOD_token;
     edm::EDGetToken muonsMiniAOD_token;
     edm::EDGetToken vtxMiniAOD_token;
@@ -142,10 +143,10 @@ private:
 
 protected:
     const ProductionMode productionMode;
+    const analysis::Period period;
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
-    analysis::TriggerDescriptors triggerDescriptors;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
@@ -183,7 +184,7 @@ protected:
     edm::Ptr<reco::Vertex> primaryVertex;
     edm::Handle<std::vector<reco::GenParticle>> genParticles;
     edm::Handle<edm::View<reco::GenJet>> genJets;
-    edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions, ele_cutBased_veto;
+    edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions, loose_id_veto;
 
 private:
     void InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup);
@@ -191,17 +192,18 @@ private:
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
     virtual void endJob() override;
     virtual void ProcessEvent(Cutter& cut) = 0;
-    static double Isolation(const pat::Electron& electron);
-    static double Isolation(const pat::Muon& muon);
-    static double Isolation(const pat::Tau& tau);
+    const double Isolation(const pat::Electron& electron);
+    const double Isolation(const pat::Muon& muon);
+    const double Isolation(const pat::Tau& tau);
 
 public:
-    BaseTupleProducer(const edm::ParameterSet& iConfig, const std::string& treeName);
+    BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel);
 
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
     static bool PassPFLooseId(const pat::Jet& pat_jet);
+    static bool PassPFTightId(const pat::Jet& pat_jet);
     static bool PassICHEPMuonMediumId(const pat::Muon& pat_muon);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,

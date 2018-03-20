@@ -73,7 +73,7 @@ bool SkimFilterMiniAOD::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
     for(const pat::Electron& electron : electrons) {
         if(electron.pt() > 20.0 && std::abs(electron.eta()) < 2.0) {
             std::cout<<" Ele Missing Hits =  "<<
-                       electron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS)<<std::endl;
+                       electron.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS)<<std::endl;
             return true;}
     }
 
