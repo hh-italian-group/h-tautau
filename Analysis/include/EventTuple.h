@@ -141,7 +141,6 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
     VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
-    VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     /* Skimmer Variables */\

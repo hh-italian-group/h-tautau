@@ -16,21 +16,13 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
-    const auto trailing_muons = CollectSignalMuons();
-    cut(trailing_muons.size(), "trailing_muons");
-
-    std::vector<MuonCandidate> leading_muons;
-    for(const auto& muon : trailing_muons) {
-        if(muon.GetMomentum().pt() > muonID::pt_leading
-                && std::abs(muon.GetMomentum().eta()) < cuts::hh_bbtautau_2016::MuMu::muonID::eta_leading)
-            leading_muons.push_back(muon);
-    }
-    cut(leading_muons.size(), "leading_muons");
+    const auto selectedMuons = CollectSignalMuons();
+    cut(selectedMuons.size(), "muons");
 
     const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
             ? cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects
             : cuts::H_tautau_2016::MuMu::DeltaR_betweenSignalObjects;
-    auto higgses = FindCompatibleObjects(leading_muons, trailing_muons, DeltaR_betweenSignalObjects, "H_mu_mu");
+    auto higgses = FindCompatibleObjects(selectedMuons, selectedMuons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses.size(), "mu_mu_pair");
 
     std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
@@ -38,9 +30,11 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
 
-    if(applyTriggerMatch)
+    if(applyTriggerMatch){
         triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
-                                         cuts::H_tautau_2016::DeltaR_triggerMatch);
+                                      cuts::H_tautau_2016::DeltaR_triggerMatch);
+        cut(selection.triggerResults.AnyAcceptAndMatch(), "trigger_match");
+    }
 
     selection.SetHiggsCandidate(selected_higgs);
 
@@ -73,7 +67,7 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    cut(p4.pt() > pt_trailing, "pt", p4.pt());
+    cut(p4.pt() > cuts::hh_bbtautau_2016::MuMu::muonID::pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
     cut(muon_dxy < dxy, "dxy", muon_dxy);
@@ -83,8 +77,6 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
     bool passMuonId = muon->isMediumMuon();
     if(productionMode == ProductionMode::hh)
         passMuonId = muon->isTightMuon(*primaryVertex);
-    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm)
-        passMuonId = PassICHEPMuonMediumId(*muon);
     cut(passMuonId, "muonID");
 
     if(productionMode == ProductionMode::hh)

@@ -24,11 +24,9 @@ private:
     virtual void ProcessEvent(Cutter& cut) override;
     void FillEventTuple(const SelectionResults& selection);
 
-    std::vector<MuonCandidate> CollectZmuons();
     std::vector<MuonCandidate> CollectSignalMuons();
     std::vector<TauCandidate> CollectSignalTaus();
 
-    void SelectZMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 

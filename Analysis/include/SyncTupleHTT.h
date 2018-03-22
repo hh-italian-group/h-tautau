@@ -114,7 +114,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_DATA(b, 1) /* leading b-jet sorted by pt (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(b, 2) /* leading b-jet sorted by pt (Fill only if corrected b-jet pt>20 GeV) */ \
     /* Extra lepton vetos */ \
-    VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     VAR(Float_t, puweight) \
@@ -265,14 +264,14 @@ namespace htt_sync {
         analysis::EventInfoBase::JetPair vbf_jet_pair;
         analysis::EventInfoBase::JetCollection bjets_pt;
         analysis::EventInfoBase::JetCollection bjets_id;
-        
+
         if (run_period == analysis::Period::Run2016){
             jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, analysis::JetOrdering::Pt);
             bjets_id = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
         }
-        
+
         if (run_period == analysis::Period::Run2017){
             jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
             jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
@@ -346,12 +345,11 @@ namespace htt_sync {
             sync().jphi_vbf_2 = default_value;
         }
 
-        sync().dilepton_veto = event->dilepton_veto;
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
 
 
-        
+
         sync().nbjets = static_cast<int>(bjets_id.size());
         if(bjets_id.size() >= 1) {
             sync().bjet_pt_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Pt());
@@ -387,7 +385,7 @@ namespace htt_sync {
             sync().bjet_csv_2 = default_value;
             sync().bjet_deepcsv_2 = default_value;
         }
-        
+
         sync().ht_other_jets = event.GetHT();
 
         if(event->kinFit_convergence.size() > 0) {

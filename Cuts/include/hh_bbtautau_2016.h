@@ -11,7 +11,8 @@ constexpr double DeltaR_betweenSignalObjects = 0.1; // > Decreased to not loose 
 
 namespace MuTau {
     namespace muonID {
-        constexpr double pt = 23; // > Increased to be away from the trigger threshold.
+        //constexpr double pt = 23; // > Increased to be away from the trigger threshold.
+        constexpr double pt = 19; // > Lowest possible trigger threshold plus safetyPt.
         constexpr bool isTightMuon = true; // = Should be ok, since the HIP problem is solved.
 
         // pfRelIso should be applied at the tuple production level.
@@ -26,7 +27,8 @@ namespace MuTau {
 
 namespace ETau {
     namespace electronID {
-        constexpr double pt = 27; // > Increased to be away from the trigger threshold.
+        //constexpr double pt = 27; // > Increased to be away from the trigger threshold.
+        constexpr double pt = 25; // > Lowest possible trigger threshold plus safetyPt.
 
         // missingHits and passConversionVeto should not be applied, because they are used as inputs to the MVA id and
         // direct cut on them is not recommented by POG.
@@ -43,6 +45,7 @@ namespace ETau {
 
 namespace MuMu {
     namespace muonID {
+        constexpr double pt = 10; // >
         constexpr bool isTightMuon = true; // = Same as for muTau channel
         constexpr double eta_leading = 2.1; // < Same as for muTau channel
 

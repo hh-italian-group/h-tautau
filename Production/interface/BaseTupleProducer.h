@@ -126,7 +126,7 @@ private:
     TupleProducerData anaData;
     std::map<std::string, std::shared_ptr<SelectionData>> anaDataBeforeCut, anaDataAfterCut;
     edm::EDGetToken electronsMiniAOD_token;
-    edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token, eleLooseIdMapMap_token;
+    edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token;
     edm::EDGetToken tausMiniAOD_token;
     edm::EDGetToken muonsMiniAOD_token;
     edm::EDGetToken vtxMiniAOD_token;
@@ -184,7 +184,7 @@ protected:
     edm::Ptr<reco::Vertex> primaryVertex;
     edm::Handle<std::vector<reco::GenParticle>> genParticles;
     edm::Handle<edm::View<reco::GenJet>> genJets;
-    edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions, loose_id_veto;
+    edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions;
 
 private:
     void InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup);
@@ -202,9 +202,7 @@ public:
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
-    static bool PassPFLooseId(const pat::Jet& pat_jet);
-    static bool PassPFTightId(const pat::Jet& pat_jet);
-    static bool PassICHEPMuonMediumId(const pat::Muon& pat_muon);
+    static bool PassPFTightId(const pat::Jet& pat_jet, const analysis::Period& period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                             const std::vector<LorentzVector>& signalLeptonMomentums);
@@ -218,7 +216,7 @@ protected:
     void FillGenJetInfo();
     void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
     void FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds);
-    void FillMetFilters();
+    void FillMetFilters(const analysis::Period& period);
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
 
     std::vector<ElectronCandidate> CollectVetoElectrons(

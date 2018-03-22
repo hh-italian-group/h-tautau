@@ -50,13 +50,6 @@ public:
 
     void Run()
     {
-        static const std::map<Channel, std::vector<std::string>> triggerPaths = {
-            { Channel::ETau, { "HLT_Ele25_eta2p1_WPTight_Gsf_v" } },
-            { Channel::MuTau, { "HLT_IsoMu22_v" } },
-            { Channel::TauTau, { "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v" } },
-            { Channel::MuMu, { "HLT_IsoMu22_v" } },
-        };
-
         std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.\n")
                    % args.input_file() % args.output_file() % args.mode();
 
@@ -71,7 +64,7 @@ public:
         const Long64_t n_entries = originalTuple.GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple.GetEntry(current_entry);
-            
+
             ntuple::JetPair bjet_pair;
             if(run_period == Period::Run2016)
                 bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
@@ -83,11 +76,9 @@ public:
             EventInfoBase& event = *eventInfoPtr;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            if(run_period == Period::Run2016 && !event.GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
-            if(run_period == Period::Run2017 && !event.GetTriggerResults().AnyAcceptAndMatch()) continue;
 
             if(syncMode == SyncMode::HH) {
-                if(/*event->dilepton_veto ||*/ event->extraelec_veto || event->extramuon_veto) continue;
+                if(event->extraelec_veto || event->extramuon_veto) continue;
             }
 
             htt_sync::FillSyncTuple(event,sync,run_period);

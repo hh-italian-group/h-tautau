@@ -119,14 +119,15 @@ else:
    JetsInputTag = cms.InputTag('slimmedJets')
    MetInputTag = cms.InputTag('slimmedMETs')
 
-### MET filters
-process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
-process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
-process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+### MET filters for 2016
+if period == 'Run2016':
+    process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+    process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+    process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
-process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
-process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
-process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+    process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
+    process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
+    process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
 ## Load module for Electron MVA ID
 ## It will append a value maps the miniAOD, that it's accesible throught a well Handle
@@ -141,15 +142,21 @@ switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps
 switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 
 # define which IDs we want to produce
-id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
+
+if period == 'Run2016':
+    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_GeneralPurpose_V1_cff' ]
+
+if period == 'Run2017':
+    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
+                   'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
 
 #add them to the VID producer
-for idmod in id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+    for idmod in id_modules:
+        setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
-tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
-tauIdConfig.tauId_calculation_2017(process)
+if period == 'Run2017':
+    tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
+    tauIdConfig.tauId_calculation_2017(process)
 #from h-tautau.Production.TauID_2017 import *
 #------------
 
@@ -175,6 +182,18 @@ else:
 
 ### Tuple production sequence
 
+if period == 'Run2016':
+    eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp80')
+    eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp90')
+    tauSrc_InputTag                  = cms.InputTag('slimmedTaus')
+    objects_InputTag                 = cms.InputTag('selectedPatTrigger')
+
+if period == 'Run2017':
+    eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80')
+    eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90')
+    tauSrc_InputTag                  = cms.InputTag('NewTauIDsEmbedded')
+    objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     isMC            = cms.bool(not isData),
     saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
@@ -182,24 +201,23 @@ process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     genEvent        = cms.InputTag('generator'),
     topGenEvent     = cms.InputTag('genEvt'),
     puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    taus            = cms.InputTag('slimmedTaus'),
+    taus            = tauSrc_InputTag,
     triggerCfg      = cms.string(triggerCfg),
     channels        = cms.vstring(channels)
 )
 
 process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
 
+
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
-    
+
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
-        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80'),
-        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90'),
-        eleLooseIdMap         = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wpLoose'),
-        #tauSrc                  = cms.InputTag('slimmedTaus'),
-        tauSrc                  = cms.InputTag('NewTauIDsEmbedded'),
+        eleTightIdMap           = eleTightIdMap_InputTag,
+        eleMediumIdMap          = eleMediumIdMap_InputTag,
+        tauSrc                  = tauSrc_InputTag,
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
         jetSrc                  = JetsInputTag,
@@ -207,10 +225,7 @@ for channel in channels:
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
         prescales               = cms.InputTag('patTrigger'),
-        #objects                 = cms.InputTag('selectedPatTrigger'),
-        objects                 = cms.InputTag('slimmedPatTrigger'),
-        badPFMuonFilter         = cms.InputTag('BadPFMuonFilter'),
-        badChCandidateFilter    = cms.InputTag('BadChargedCandidateFilter'),
+        objects                 = objects_InputTag,
         lheEventProducts        = cms.InputTag('externalLHEProducer'),
         genEventInfoProduct     = cms.InputTag('generator'),
         topGenEvent             = cms.InputTag('genEvt'),
@@ -233,18 +248,30 @@ for channel in channels:
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 
-process.p = cms.Path(
-    process.egmGsfElectronIDSequence *
-    process.electronMVAValueMapProducer *
-    process.rerunMvaIsolation2SeqRun2 *
-    process.NewTauIDsEmbedded *
-    process.JECsequence *
-    process.fullPatMetSequence *
-    process.BadPFMuonFilter *
-    process.BadChargedCandidateFilter *
-    process.topGenSequence *
-    process.tupleProductionSequence
-)
+
+if period == 'Run2016':
+    process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.electronMVAValueMapProducer *
+        process.JECsequence *
+        process.fullPatMetSequence *
+        process.BadPFMuonFilter *
+        process.BadChargedCandidateFilter *
+        process.topGenSequence *
+        process.tupleProductionSequence
+    )
+
+if period == 'Run2017':
+    process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.electronMVAValueMapProducer *
+        process.rerunMvaIsolation2SeqRun2 *
+        process.NewTauIDsEmbedded *
+        process.JECsequence *
+        process.fullPatMetSequence *
+        process.topGenSequence *
+        process.tupleProductionSequence
+    )
 
 if options.dumpPython:
     print process.dumpPython()

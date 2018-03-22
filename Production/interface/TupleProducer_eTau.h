@@ -22,14 +22,11 @@ public:
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
-    static bool SelectSpring15VetoElectron(const pat::Electron& electron);
     void FillEventTuple(const SelectionResults& selection);
 
-    std::vector<ElectronCandidate> CollectZelectrons();
     std::vector<ElectronCandidate> CollectSignalElectrons();
     std::vector<TauCandidate> CollectSignalTaus();
 
-    void SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
