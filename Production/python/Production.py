@@ -91,24 +91,31 @@ if options.eventList != '':
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
 if period == 'Run2016':
-    btagDiscriminators_list = [
-        'pfDeepCSVJetTags:probudsg',
-        'pfDeepCSVJetTags:probb',
-        'pfDeepCSVJetTags:probc',
-        'pfDeepCSVJetTags:probbb',
-    ]
+    updateJetCollection(
+        process,
+        jetSource = cms.InputTag('slimmedJets'),
+        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+        svSource = cms.InputTag('slimmedSecondaryVertices'),
+        jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+        btagDiscriminators = [
+            'pfDeepCSVJetTags:probudsg',
+            'pfDeepCSVJetTags:probb',
+            'pfDeepCSVJetTags:probc',
+            'pfDeepCSVJetTags:probbb',
+        ]
+    )
 
 if period == 'Run2017':
-    btagDiscriminators_list = [ ]
+    updateJetCollection(
+        process,
+        jetSource = cms.InputTag('slimmedJets'),
+        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+        svSource = cms.InputTag('slimmedSecondaryVertices'),
+        jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    )
+    process.jecSequence = cms.Sequence(process.patJetCorrFactors * process.updatedPatJets * process.selectedUpdatedPatJets)
 
-updateJetCollection(
-    process,
-    jetSource = cms.InputTag('slimmedJets'),
-    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-    svSource = cms.InputTag('slimmedSecondaryVertices'),
-    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
-    btagDiscriminators = btagDiscriminators_list
-)
+
 
 MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
@@ -263,6 +270,7 @@ if period == 'Run2017':
     process.p = cms.Path(
         process.egmGsfElectronIDSequence *
         process.electronMVAValueMapProducer *
+        process.jecSequence *
         process.rerunMvaIsolation2SeqRun2 *
         process.NewTauIDsEmbedded *
         process.fullPatMetSequence *
