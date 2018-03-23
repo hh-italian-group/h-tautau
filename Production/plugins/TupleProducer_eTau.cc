@@ -89,9 +89,6 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     const bool isTight = (*tight_id_decisions)[electron.getPtr()];
     cut(isTight, "electronMVATightID");
     if(productionMode != ProductionMode::hh) {
-        const auto eleMissingHits =
-                electron->gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
-        cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     } else {
         if(period != analysis::Period::Run2017)

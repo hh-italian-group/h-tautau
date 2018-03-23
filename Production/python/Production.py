@@ -11,8 +11,6 @@ options.register('globalTag', '', VarParsing.multiplicity.singleton, VarParsing.
                         "Global Tag to use.")
 options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
-options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                        "Re-run Jet Energy Corrections. Default: False")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger matching for signal objects. Default: True")
 options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
@@ -89,35 +87,33 @@ if len(options.lumiFile) > 0:
 if options.eventList != '':
     process.source.eventsToProcess = cms.untracked.VEventRange(re.split(',', options.eventList))
 
-### re-run JEC and and use corrected jets for MET significance, if requested
-if options.ReRunJEC:
-    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJetCorrFactors
-    process.patJetCorrFactorsReapplyJEC = updatedPatJetCorrFactors.clone(
-        src = cms.InputTag('slimmedJets'),
-        levels = ['L1FastJet', 'L2Relative', 'L3Absolute'],
-        payload = 'AK4PFchs' # Make sure to choose the appropriate levels and payload here!
-    )
-    if isData:
-      process.patJetCorrFactorsReapplyJEC.levels.append('L2L3Residual')
+## and add btag discriminator to the event content
+from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
-    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJets
-    process.patJetsReapplyJEC = updatedPatJets.clone(
-        jetSource = cms.InputTag('slimmedJets'),
-        jetCorrFactorsSource = cms.VInputTag(cms.InputTag('patJetCorrFactorsReapplyJEC'))
-    )
+if period == 'Run2016':
+    btagDiscriminators_list = [
+        'pfDeepCSVJetTags:probudsg',
+        'pfDeepCSVJetTags:probb',
+        'pfDeepCSVJetTags:probc',
+        'pfDeepCSVJetTags:probbb',
+    ]
 
-    process.JECsequence = cms.Sequence(process.patJetCorrFactorsReapplyJEC * process.patJetsReapplyJEC)
+if period == 'Run2017':
+    btagDiscriminators_list = [ ]
 
-    JetsInputTag = cms.InputTag('patJetsReapplyJEC', '', processName)
-    MetInputTag = cms.InputTag('slimmedMETs', '', processName)
+updateJetCollection(
+    process,
+    jetSource = cms.InputTag('slimmedJets'),
+    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+    svSource = cms.InputTag('slimmedSecondaryVertices'),
+    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    btagDiscriminators = btagDiscriminators_list
+)
 
-    from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-    runMetCorAndUncFromMiniAOD(process, isData = isData)
+MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
-else:
-   process.JECsequence = cms.Sequence()
-   JetsInputTag = cms.InputTag('slimmedJets')
-   MetInputTag = cms.InputTag('slimmedMETs')
+from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+runMetCorAndUncFromMiniAOD(process, isData = isData)
 
 ### MET filters for 2016
 if period == 'Run2016':
@@ -133,13 +129,13 @@ if period == 'Run2016':
 ## It will append a value maps the miniAOD, that it's accesible throught a well Handle
 ## Example code here:
 ##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
-## process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
+process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
 ##-------------
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 # turn on VID producer, indicate data format  to be
 # DataFormat.AOD or DataFormat.MiniAOD, as appropriate
 switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
-switchOnVIDElectronIdProducer(process, DataFormat.AOD)
+#switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 
 # define which IDs we want to produce
 
@@ -151,14 +147,13 @@ if period == 'Run2017':
                    'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
 
 #add them to the VID producer
-    for idmod in id_modules:
-        setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+for idmod in id_modules:
+    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 if period == 'Run2017':
     tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
     tauIdConfig.tauId_calculation_2017(process)
-#from h-tautau.Production.TauID_2017 import *
-#------------
+
 
 ### Top gen level info
 process.topGenSequence = cms.Sequence()
@@ -220,7 +215,7 @@ for channel in channels:
         tauSrc                  = tauSrc_InputTag,
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        jetSrc                  = JetsInputTag,
+        jetSrc                  = cms.InputTag('selectedUpdatedPatJets'),
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
@@ -246,14 +241,17 @@ for channel in channels:
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
     ))
-    process.tupleProductionSequence += getattr(process, producerName)
 
+    if period == 'Run2016':
+        getattr(process, producerName).badPFMuonFilter = cms.InputTag('BadPFMuonFilter')
+        getattr(process, producerName).badChCandidateFilter = cms.InputTag('BadChargedCandidateFilter')
+
+    process.tupleProductionSequence += getattr(process, producerName)
 
 if period == 'Run2016':
     process.p = cms.Path(
         process.egmGsfElectronIDSequence *
         process.electronMVAValueMapProducer *
-        process.JECsequence *
         process.fullPatMetSequence *
         process.BadPFMuonFilter *
         process.BadChargedCandidateFilter *
@@ -267,7 +265,6 @@ if period == 'Run2017':
         process.electronMVAValueMapProducer *
         process.rerunMvaIsolation2SeqRun2 *
         process.NewTauIDsEmbedded *
-        process.JECsequence *
         process.fullPatMetSequence *
         process.topGenSequence *
         process.tupleProductionSequence

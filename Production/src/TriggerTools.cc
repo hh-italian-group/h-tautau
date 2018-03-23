@@ -10,6 +10,43 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
 #include "AnalysisTools/Core/include/PropertyConfigReader.h"
 
+namespace trigger_tools {
+
+    inline constexpr int GetCMSSWVersion()
+    {
+        int d1 =  *(PROJECT_VERSION + 6) - '0';
+        int d2 =  *(PROJECT_VERSION + 7) - '0';
+        if(d2 >= 0 && d2 <= 9) return d1 * 10 + d2;
+        return d1;
+    }
+
+    namespace detail {
+        template<typename TriggerObject, int cmssw_version>
+        struct UnpackFiltersImpl;
+
+        template<typename TriggerObject>
+        struct UnpackFiltersImpl<TriggerObject, 8>{
+            static void Unpack(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                               TriggerObject& triggerObject) {}
+        };
+
+        template<typename TriggerObject>
+        struct UnpackFiltersImpl<TriggerObject, 9>{
+            static void Unpack(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                               TriggerObject& triggerObject)
+            {
+                triggerObject.unpackFilterLabels(event, triggerResults);
+            }
+        };
+    }
+
+    inline void UnpackFilters(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                              pat::TriggerObjectStandAlone& triggerObject)
+    {
+        detail::UnpackFiltersImpl<pat::TriggerObjectStandAlone, GetCMSSWVersion()>::Unpack(event, triggerResults, triggerObject);
+    }
+}
+
 namespace analysis {
 
 TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
@@ -128,7 +165,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
-        unpackedTriggerObject.unpackFilterLabels(*iEvent,*triggerResultsHLT); //new
+        trigger_tools::UnpackFilters(*iEvent,*triggerResultsHLT,unpackedTriggerObject);
         const auto& paths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& path : paths) {
             size_t index;
@@ -166,7 +203,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     const auto& descriptor = triggerDescriptors.at(index);
 
     for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
-        const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);        
+        const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
         const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
         if(candidate_type != leg.type) continue;
         for(const auto& triggerObject : triggerObjectSet){

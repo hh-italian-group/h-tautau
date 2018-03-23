@@ -65,8 +65,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     }
 
     if(period == analysis::Period::Run2016){
-        badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("BadPFMuonFilter"));
-        badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("BadChargedCandidateFilter"));
+        badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
+        badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
     }
 
     if(runSVfit)
@@ -585,9 +585,6 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     const bool isMedium  = (*medium_id_decisions)[electron.getPtr()];
     cut(isMedium, "electronMVAMediumID");
     if(productionMode != ProductionMode::hh) {
-        const auto eleMissingHits =
-                electron->gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
-        cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     }
     if(period != analysis::Period::Run2017)
