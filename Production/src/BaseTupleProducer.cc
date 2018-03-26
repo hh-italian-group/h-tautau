@@ -560,9 +560,12 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
         const auto eta2 = std::abs(j2.GetMomentum().eta());
         if(eta1 < eta && eta2 >= eta) return true;
         if(eta1 >= eta && eta2 < eta) return false;
-        const auto csv1 = j1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        const auto csv2 = j2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        if(csv1 != csv2) return csv1 > csv2;
+        // const auto csv1 = j1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        // const auto csv2 = j2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        // if(csv1 != csv2) return csv1 > csv2;
+        const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVJetTags:probb") + j1->bDiscriminator("pfDeepCSVJetTags:probbb");
+        const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVJetTags:probb") + j2->bDiscriminator("pfDeepCSVJetTags:probbb");
+        if(deepcsv1 != deepcsv2) return deepcsv1 > deepcsv2;
         return j1.GetMomentum().pt() > j2.GetMomentum().pt();
     };
 
