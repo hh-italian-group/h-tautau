@@ -18,17 +18,15 @@ public:
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
 public:
-    TupleProducer_muTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, "muTau") {}
+    TupleProducer_muTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, analysis::Channel::MuTau) {}
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
     void FillEventTuple(const SelectionResults& selection);
 
-    std::vector<MuonCandidate> CollectZmuons();
     std::vector<MuonCandidate> CollectSignalMuons();
     std::vector<TauCandidate> CollectSignalTaus();
 
-    void SelectZMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 

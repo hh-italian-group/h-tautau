@@ -18,18 +18,15 @@ public:
     using HiggsCandidate = SelectionResults::HiggsCandidate;
 
 public:
-    TupleProducer_eTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, "eTau") {}
+    TupleProducer_eTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, analysis::Channel::ETau) {}
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
-    static bool SelectSpring15VetoElectron(const pat::Electron& electron);
     void FillEventTuple(const SelectionResults& selection);
 
-    std::vector<ElectronCandidate> CollectZelectrons();
     std::vector<ElectronCandidate> CollectSignalElectrons();
     std::vector<TauCandidate> CollectSignalTaus();
 
-    void SelectZElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 

@@ -153,7 +153,7 @@ namespace electronVeto {
     constexpr bool MVApogID90effWP = true; // =
 
     constexpr bool passConversionVeto = true; // =
-    constexpr int missingHits = 1; // <=
+    constexpr int missingHits = 1; // <= //removed this cut for hh analysis baseline
 }
 
 namespace muonVeto {

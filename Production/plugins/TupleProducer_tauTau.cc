@@ -12,7 +12,7 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) {
-        triggerTools.SetTriggerAcceptBits(triggerDescriptors, selection.triggerResults);
+        triggerTools.SetTriggerAcceptBits(selection.triggerResults);
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
@@ -30,9 +30,11 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
 
-    if(applyTriggerMatch)
-        triggerTools.SetTriggerMatchBits(triggerDescriptors, selection.triggerResults, selected_higgs,
-                                         cuts::H_tautau_2016::DeltaR_triggerMatch, true);
+    if(applyTriggerMatch){
+        triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
+                                      cuts::H_tautau_2016::DeltaR_triggerMatch);
+        cut(selection.triggerResults.AnyAcceptAndMatch(), "trigger_match");
+    }
 
     selection.SetHiggsCandidate(selected_higgs);
 
@@ -64,8 +66,10 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    cut(p4.Pt() > pt, "pt", p4.Pt());
-    cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
+    double pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::pt : cuts::H_tautau_2016::TauTau::tauID::pt;
+    cut(p4.Pt() > pt_cut, "pt", p4.Pt());
+    double eta_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::eta : cuts::H_tautau_2016::TauTau::tauID::eta;
+    cut(std::abs(p4.Eta()) < eta_cut, "eta", p4.Eta());
     const auto dmFinding = tau->tauID("decayModeFinding");
     cut(dmFinding > decayModeFinding, "oldDecayMode", dmFinding);
     const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());

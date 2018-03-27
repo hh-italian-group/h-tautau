@@ -11,8 +11,6 @@ options.register('globalTag', '', VarParsing.multiplicity.singleton, VarParsing.
                         "Global Tag to use.")
 options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
-options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                        "Re-run Jet Energy Corrections. Default: False")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger matching for signal objects. Default: True")
 options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
@@ -54,6 +52,8 @@ options.parseArguments()
 
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
+period = sampleConfig.GetPeriod(options.sampleType)
+triggerCfg = sampleConfig.GetTriggerCfg(period)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -87,66 +87,78 @@ if len(options.lumiFile) > 0:
 if options.eventList != '':
     process.source.eventsToProcess = cms.untracked.VEventRange(re.split(',', options.eventList))
 
-### re-run JEC and and use corrected jets for MET significance, if requested
-if options.ReRunJEC:
-    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJetCorrFactors
-    process.patJetCorrFactorsReapplyJEC = updatedPatJetCorrFactors.clone(
-        src = cms.InputTag('slimmedJets'),
-        levels = ['L1FastJet', 'L2Relative', 'L3Absolute'],
-        payload = 'AK4PFchs' # Make sure to choose the appropriate levels and payload here!
-    )
-    if isData:
-      process.patJetCorrFactorsReapplyJEC.levels.append('L2L3Residual')
+## and add btag discriminator to the event content
+from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
-    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff import updatedPatJets
-    process.patJetsReapplyJEC = updatedPatJets.clone(
+if period == 'Run2016':
+    updateJetCollection(
+        process,
         jetSource = cms.InputTag('slimmedJets'),
-        jetCorrFactorsSource = cms.VInputTag(cms.InputTag('patJetCorrFactorsReapplyJEC'))
+        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+        svSource = cms.InputTag('slimmedSecondaryVertices'),
+        jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+        btagDiscriminators = [
+            'pfDeepCSVJetTags:probudsg',
+            'pfDeepCSVJetTags:probb',
+            'pfDeepCSVJetTags:probc',
+            'pfDeepCSVJetTags:probbb',
+        ]
     )
 
-    process.JECsequence = cms.Sequence(process.patJetCorrFactorsReapplyJEC * process.patJetsReapplyJEC)
+if period == 'Run2017':
+    updateJetCollection(
+        process,
+        jetSource = cms.InputTag('slimmedJets'),
+        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+        svSource = cms.InputTag('slimmedSecondaryVertices'),
+        jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    )
+    process.jecSequence = cms.Sequence(process.patJetCorrFactors * process.updatedPatJets * process.selectedUpdatedPatJets)
 
-    JetsInputTag = cms.InputTag('patJetsReapplyJEC', '', processName)
-    MetInputTag = cms.InputTag('slimmedMETs', '', processName)
+from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+runMetCorAndUncFromMiniAOD(process, isData = isData)
 
-    from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-    runMetCorAndUncFromMiniAOD(process, isData = isData)
+MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
-else:
-   process.JECsequence = cms.Sequence()
-   JetsInputTag = cms.InputTag('slimmedJets')
-   MetInputTag = cms.InputTag('slimmedMETs')
+### MET filters for 2016
+if period == 'Run2016':
+    process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+    process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+    process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
-### MET filters
-process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
-process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
-process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
-
-process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
-process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
-process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+    process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
+    process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
+    process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
 ## Load module for Electron MVA ID
 ## It will append a value maps the miniAOD, that it's accesible throught a well Handle
 ## Example code here:
 ##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
-## process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
+process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
 ##-------------
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 # turn on VID producer, indicate data format  to be
 # DataFormat.AOD or DataFormat.MiniAOD, as appropriate
 switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
-switchOnVIDElectronIdProducer(process, DataFormat.AOD)
+#switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 
 # define which IDs we want to produce
-id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_Trig_V1_cff',
-               'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff' ]
+
+if period == 'Run2016':
+    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_GeneralPurpose_V1_cff' ]
+
+if period == 'Run2017':
+    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
+                   'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
 
 #add them to the VID producer
 for idmod in id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-#------------
+
+if period == 'Run2017':
+    tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
+    tauIdConfig.tauId_calculation_2017(process)
+
 
 ### Top gen level info
 process.topGenSequence = cms.Sequence()
@@ -158,21 +170,6 @@ if options.saveGenTopInfo:
     process.decaySubset.runMode = cms.string("Run2")
     process.topGenSequence += process.makeGenEvt
 
-### Tuple production sequence
-
-process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData),
-    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
-    lheEventProduct = cms.InputTag('externalLHEProducer'),
-    genEvent        = cms.InputTag('generator'),
-    topGenEvent     = cms.InputTag('genEvt'),
-    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    taus            = cms.InputTag('slimmedTaus'),
-    triggerSetup    = cms.VPSet()
-)
-
-process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
-
 if options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
 else:
@@ -183,30 +180,52 @@ if options.energyScales == 'all':
 else:
     energyScales = re.split(',', options.energyScales)
 
+### Tuple production sequence
+
+if period == 'Run2016':
+    eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp80')
+    eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp90')
+    tauSrc_InputTag                  = cms.InputTag('slimmedTaus')
+    objects_InputTag                 = cms.InputTag('selectedPatTrigger')
+
+if period == 'Run2017':
+    eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80')
+    eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90')
+    tauSrc_InputTag                  = cms.InputTag('NewTauIDsEmbedded')
+    objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+
+process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
+    isMC            = cms.bool(not isData),
+    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
+    lheEventProduct = cms.InputTag('externalLHEProducer'),
+    genEvent        = cms.InputTag('generator'),
+    topGenEvent     = cms.InputTag('genEvt'),
+    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
+    taus            = tauSrc_InputTag,
+    triggerCfg      = cms.string(triggerCfg),
+    channels        = cms.vstring(channels)
+)
+
+process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
+
+
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
-    hltPaths = sampleConfig.GetHltPaths(channel, options.sampleType)
-    process.summaryTupleProducer.triggerSetup.append(cms.PSet(
-        channel = cms.string(channel),
-        hltPaths = hltPaths
-    ))
+
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
-        eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
-        eleMediumIdMap          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90'),
-        eleCutBasedVeto         = cms.InputTag('egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto'),
-        tauSrc                  = cms.InputTag('slimmedTaus'),
+        eleTightIdMap           = eleTightIdMap_InputTag,
+        eleMediumIdMap          = eleMediumIdMap_InputTag,
+        tauSrc                  = tauSrc_InputTag,
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        jetSrc                  = JetsInputTag,
+        jetSrc                  = cms.InputTag('selectedUpdatedPatJets'),
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
         prescales               = cms.InputTag('patTrigger'),
-        objects                 = cms.InputTag('selectedPatTrigger'),
-        badPFMuonFilter         = cms.InputTag('BadPFMuonFilter'),
-        badChCandidateFilter    = cms.InputTag('BadChargedCandidateFilter'),
+        objects                 = objects_InputTag,
         lheEventProducts        = cms.InputTag('externalLHEProducer'),
         genEventInfoProduct     = cms.InputTag('generator'),
         topGenEvent             = cms.InputTag('genEvt'),
@@ -215,29 +234,47 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
-        hltPaths                = hltPaths,
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
         energyScales            = cms.vstring(energyScales),
         productionMode          = cms.string(options.productionMode),
+        period                  = cms.string(period),
+        triggerCfg              = cms.string(triggerCfg),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
     ))
+
+    if period == 'Run2016':
+        getattr(process, producerName).badPFMuonFilter = cms.InputTag('BadPFMuonFilter')
+        getattr(process, producerName).badChCandidateFilter = cms.InputTag('BadChargedCandidateFilter')
+
     process.tupleProductionSequence += getattr(process, producerName)
 
-process.p = cms.Path(
-    process.egmGsfElectronIDSequence *
-    process.electronMVAValueMapProducer *
-    process.JECsequence *
-    process.fullPatMetSequence *
-    process.BadPFMuonFilter *
-    process.BadChargedCandidateFilter *
-    process.topGenSequence *
-    process.tupleProductionSequence
-)
+if period == 'Run2016':
+    process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.electronMVAValueMapProducer *
+        process.fullPatMetSequence *
+        process.BadPFMuonFilter *
+        process.BadChargedCandidateFilter *
+        process.topGenSequence *
+        process.tupleProductionSequence
+    )
+
+if period == 'Run2017':
+    process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.electronMVAValueMapProducer *
+        process.jecSequence *
+        process.rerunMvaIsolation2SeqRun2 *
+        process.NewTauIDsEmbedded *
+        process.fullPatMetSequence *
+        process.topGenSequence *
+        process.tupleProductionSequence
+    )
 
 if options.dumpPython:
     print process.dumpPython()

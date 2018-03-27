@@ -91,7 +91,8 @@ class JobCollection:
         result = "Splitting = '{}', cfgParams = {}, lumiMask = '{}'".format(self.splitting, self.pyCfgParams,
                                                                               self.lumiMask)
         for job in self.jobs:
-            result += "\n" + str(job)
+            if len(self.jobNames) == 0 or job.jobName in self.jobNames:
+                result += "\n" + str(job)
         return result
 
     def submit(self, config, dryrunBool):

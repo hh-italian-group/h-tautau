@@ -5,20 +5,23 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 namespace cuts {
-namespace hh_bbtautau_2016 {
+namespace hh_bbtautau_2017 {
 
 constexpr double DeltaR_betweenSignalObjects = 0.1; // > Decreased to not loose efficiency for high mX.
 
 namespace MuTau {
     namespace muonID {
         //constexpr double pt = 23; // > Increased to be away from the trigger threshold.
-        constexpr double pt = 19; // > Lowest possible trigger threshold plus safetyPt.
+        constexpr double pt = 10; // > MuonID recommendation > 5 Gev in MINIAOD.
         constexpr bool isTightMuon = true; // = Should be ok, since the HIP problem is solved.
 
         // pfRelIso should be applied at the tuple production level.
     }
 
     namespace tauID {
+        //constexpr double pt = 25; // > to be fixed
+        constexpr double pt = 20; // > tauID recommendation
+                                  //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
         // againstElectronVLooseMVA6 and againstMuonTight3 should be applied at the tuple production level.
     }
 
@@ -28,7 +31,8 @@ namespace MuTau {
 namespace ETau {
     namespace electronID {
         //constexpr double pt = 27; // > Increased to be away from the trigger threshold.
-        constexpr double pt = 25; // > Lowest possible trigger threshold plus safetyPt.
+        constexpr double pt = 10; // > ElectronID recommendation
+                                  //   https://twiki.cern.ch/twiki/bin/view/CMS/MultivariateElectronIdentificationRun2#Recommended_MVA_Recipe_for_regul .
 
         // missingHits and passConversionVeto should not be applied, because they are used as inputs to the MVA id and
         // direct cut on them is not recommented by POG.
@@ -37,15 +41,27 @@ namespace ETau {
     }
 
     namespace tauID {
+        //constexpr double pt = 35; // > to be fixed
+        constexpr double pt = 20; // > tauID recommendation
+                                 //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
         // againstElectronTightMVA6 and againstMuonLoose3 should be applied at the tuple production level.
     }
 
     // ZeeVeto should not be applied.
 }
+    
+namespace TauTau {
+    namespace tauID {
+        //constexpr double pt = 45; // > to be fixed
+        constexpr double pt = 20; // > tauID recommendation
+                                  //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
+        constexpr double eta = 2.3; // > tauID recommendation
+                                    //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
+    }
+}
 
 namespace MuMu {
     namespace muonID {
-        constexpr double pt = 10; // >
         constexpr bool isTightMuon = true; // = Same as for muTau channel
         constexpr double eta_leading = 2.1; // < Same as for muTau channel
 
@@ -90,5 +106,10 @@ namespace fatJetID {
     constexpr double deltaR_subjet = 0.4;
 }
 
-} // namespace hh_bbtautau_2016
+namespace jetID {
+    constexpr double eta = 5; // <
+
+}
+
+} // namespace hh_bbtautau_2017
 } // namespace cuts

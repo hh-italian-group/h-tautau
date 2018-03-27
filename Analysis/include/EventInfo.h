@@ -62,7 +62,7 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
 };
 
 
-enum class JetOrdering { NoOrdering, Pt, CSV };
+enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
 
 class SummaryInfo {
 public:
@@ -70,25 +70,16 @@ public:
 
     explicit SummaryInfo(const ProdSummary& _summary) : summary(_summary)
     {
-        using FilterKey = std::pair<int, size_t>;
-        using FilterMap = std::map<FilterKey, std::map<size_t, std::vector<std::string>>>;
-        FilterMap filters;
-        for(size_t n = 0; n < summary.triggerFilters_channel.size(); ++n) {
-            const FilterKey key(summary.triggerFilters_channel.at(n), summary.triggerFilters_triggerIndex.at(n));
-            filters[key][summary.triggerFilters_LegId.at(n)].push_back(summary.triggerFilters_name.at(n));
-        }
         for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
             const int channel_id = summary.triggers_channel.at(n);
             const Channel channel = static_cast<Channel>(channel_id);
-            const FilterKey key(channel_id, summary.triggers_index.at(n));
             if(!triggerDescriptors.count(channel))
-                triggerDescriptors[channel] = std::shared_ptr<TriggerDescriptors>(new TriggerDescriptors());
-            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), summary.triggers_n_legs.at(n),
-                                             filters[key]);
+                triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
+            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
         }
     }
 
-    std::shared_ptr<const TriggerDescriptors> GetTriggerDescriptors(Channel channel) const
+    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const
     {
         if(!triggerDescriptors.count(channel))
             throw exception("Information for channel %1% not found.") % channel;
@@ -100,7 +91,7 @@ public:
 
 private:
     ProdSummary summary;
-    std::map<Channel, std::shared_ptr<TriggerDescriptors>> triggerDescriptors;
+    std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
 };
 
 class EventInfoBase {
@@ -112,14 +103,23 @@ public:
     using HiggsBBCandidate = CompositCandidate<JetCandidate, JetCandidate>;
 
     static JetPair SelectBjetPair(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
-                                   double eta_cut = std::numeric_limits<double>::lowest(),
+                                   double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
         const auto orderer = [&](size_t j1, size_t j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
                 return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            if(jet_ordering == JetOrdering::CSV)
-                return event.jets_csv.at(j1) > event.jets_csv.at(j2);
+            if(jet_ordering == JetOrdering::CSV){
+                if(event.jets_csv.at(j1) != event.jets_csv.at(j2))
+                    return event.jets_csv.at(j1) > event.jets_csv.at(j2);
+                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
+            }
+            if(jet_ordering == JetOrdering::DeepCSV){
+                if(event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) != event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2))
+                    return event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) > event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2);
+                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
+            }
+
             throw exception("Unsupported jet ordering for b-jet pair selection.");
         };
 
@@ -136,6 +136,23 @@ public:
             selected_pair.second = indexes.at(1);
         return selected_pair;
     }
+
+    std::array<size_t,2> GetSelectedBjetIndices() const
+    {
+        std::array<size_t,2> bjet_indexes;
+        bjet_indexes[0] = selected_bjet_pair.first;
+        bjet_indexes[1] = selected_bjet_pair.second;
+        return bjet_indexes;
+    }
+
+    std::set<size_t> GetSelectedBjetIndicesSet() const
+    {
+        std::set<size_t> bjet_indexes;
+        bjet_indexes.insert(selected_bjet_pair.first);
+        bjet_indexes.insert(selected_bjet_pair.second);
+        return bjet_indexes;
+    }
+
 
     static constexpr int verbosity = 0;
 
@@ -183,19 +200,32 @@ public:
     }
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
-                             double eta_cut = std::numeric_limits<double>::lowest(),
+                             double eta_cut = std::numeric_limits<double>::max(),
                              double csv_cut = std::numeric_limits<double>::lowest(),
-                             JetOrdering jet_ordering = JetOrdering::CSV)
+                             JetOrdering jet_ordering = JetOrdering::CSV,
+                             const std::set<size_t>& bjet_indexes = {})
     {
         const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
             if(jet_ordering == JetOrdering::Pt)
                 return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            return j1->csv() > j2->csv();
+            if(jet_ordering == JetOrdering::DeepCSV){
+                if(j1->deepcsv() != j2->deepcsv())
+                    return j1->deepcsv() > j2->deepcsv();
+                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
+            }
+            if(jet_ordering == JetOrdering::CSV){
+                if(j1->csv() != j2->csv())
+                    return j1->csv() > j2->csv();
+                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
+            }
+            throw exception("Unsupported jet ordering for jet selection.");
         };
 
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
-        for(const JetCandidate& jet : all_jets) {
+        for(size_t n = 0; n < all_jets.size(); ++n) {
+            if(bjet_indexes.count(n)) continue;
+            const JetCandidate& jet = all_jets.at(n);
             if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) < eta_cut
                     && jet->csv() > csv_cut)
                 selected_jets.push_back(jet);
@@ -205,6 +235,42 @@ public:
             std::sort(selected_jets.begin(), selected_jets.end(), orderer);
         return selected_jets;
     }
+
+    static JetPair SelectVBFJetPair(const JetCollection& jets_vbf)
+    {
+        double max_mjj = -std::numeric_limits<double>::infinity();
+        JetPair selected_pair = ntuple::UndefinedJetPair();
+        for(size_t n = 0; n < jets_vbf.size(); ++n) {
+            for(size_t h = n+1; h < jets_vbf.size(); ++h) {
+                const JetCandidate& jet_1 = jets_vbf.at(n);
+                const JetCandidate& jet_2 = jets_vbf.at(h);
+                const LorentzVector jet_12 = jet_1.GetMomentum() + jet_2.GetMomentum();
+                if(jet_12.M() > max_mjj){
+                    max_mjj = jet_12.M();
+                    if(jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt())
+                        selected_pair = std::make_pair(n,h);
+                    else
+                        selected_pair = std::make_pair(h,n);
+                }
+            }
+        }
+
+        return selected_pair;
+    }
+
+    double GetHT(bool includeHbbJets = true)
+    {
+        const JetCollection& all_jets = GetJets();
+        const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
+        double sum = 0;
+        for(unsigned n = 0; n < all_jets.size(); ++n) {
+            if(!includeHbbJets && bjet_indexes.count(n)) continue;
+            const JetCandidate& jet = all_jets.at(n);
+            sum += jet.GetMomentum().Pt();
+        }
+        return sum;
+    }
+
 
     const FatJetCollection& GetFatJets()
     {
