@@ -202,7 +202,7 @@ public:
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
-    static bool PassPFTightId(const pat::Jet& pat_jet, const analysis::Period& period);
+    static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                             const std::vector<LorentzVector>& signalLeptonMomentums);
@@ -216,7 +216,7 @@ protected:
     void FillGenJetInfo();
     void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
     void FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds);
-    void FillMetFilters(const analysis::Period& period);
+    void FillMetFilters(analysis::Period period);
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
 
     std::vector<ElectronCandidate> CollectVetoElectrons(

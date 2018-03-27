@@ -226,7 +226,7 @@ const double BaseTupleProducer::Isolation(const pat::Tau& tau)
 
 //https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017#Preliminary_Recommendations_for
 //recommended for 2017
-bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, const analysis::Period& period)
+bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period period)
 {
     const pat::Jet& patJet = pat_jet.correctedJet("Uncorrected");
     const double abs_eta = std::abs(patJet.eta());
@@ -460,7 +460,7 @@ void BaseTupleProducer::FillTauIds(size_t leg_id, const std::vector<pat::Tau::Id
     }
 }
 
-void BaseTupleProducer::FillMetFilters(const analysis::Period& period)
+void BaseTupleProducer::FillMetFilters(analysis::Period period)
 {
     using MetFilters = ntuple::MetFilters;
     using Filter = MetFilters::Filter;

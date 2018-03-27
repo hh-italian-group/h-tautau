@@ -115,12 +115,10 @@ if period == 'Run2017':
     )
     process.jecSequence = cms.Sequence(process.patJetCorrFactors * process.updatedPatJets * process.selectedUpdatedPatJets)
 
-
-
-MetInputTag = cms.InputTag('slimmedMETs', '', processName)
-
 from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
 runMetCorAndUncFromMiniAOD(process, isData = isData)
+
+MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
 ### MET filters for 2016
 if period == 'Run2016':
