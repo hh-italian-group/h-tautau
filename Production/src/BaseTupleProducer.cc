@@ -44,7 +44,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
-    eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
@@ -56,6 +55,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  iConfig.getParameter<std::string>("triggerCfg"),
                  _channel)
 {
+    eventTuple = ntuple::CreateEventTuple(tree_name,&edm::Service<TFileService>()->file(),true,ntuple::TreeState::Full);
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
     const std::vector<std::string> energyScaleStrings = iConfig.getParameter<std::vector<std::string>>("energyScales");

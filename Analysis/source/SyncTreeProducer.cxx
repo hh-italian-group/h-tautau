@@ -55,9 +55,9 @@ public:
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         auto outputFile = root_ext::CreateRootFile(args.output_file());
-        EventTuple originalTuple(args.tree_name(), originalFile.get(), true);
+        auto originalTuple = ntuple::CreateEventTuple(args.tree_name(),originalFile.get(),true,ntuple::TreeState::Full);
         SyncTuple sync(args.tree_name(), outputFile.get(), false);
-        ntuple::SummaryTuple summaryTuple("summary", originalFile.get(), true);
+        auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple.GetEntry(0);
         std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple.data()));
         const Channel channel = Parse<Channel>(args.tree_name());

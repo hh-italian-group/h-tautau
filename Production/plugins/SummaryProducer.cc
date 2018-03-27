@@ -41,9 +41,9 @@ public:
         genEvent_token(mayConsume<GenEventInfoProduct>(cfg.getParameter<edm::InputTag>("genEvent"))),
         topGenEvent_token(mayConsume<TtGenEvent>(cfg.getParameter<edm::InputTag>("topGenEvent"))),
         puInfo_token(mayConsume<std::vector<PileupSummaryInfo>>(cfg.getParameter<edm::InputTag>("puInfo"))),
-        taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus"))),
-        summaryTuple("summary", &edm::Service<TFileService>()->file(), false)
+        taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus")))
     {
+        summaryTuple = ntuple::CreateSummaryTuple("summary", &edm::Service<TFileService>()->file(), true, ntuple::TreeState::Full);
         summaryTuple().numberOfProcessedEvents = 0;
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
