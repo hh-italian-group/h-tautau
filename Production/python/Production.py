@@ -251,6 +251,9 @@ for channel in channels:
         getattr(process, producerName).badPFMuonFilter = cms.InputTag('BadPFMuonFilter')
         getattr(process, producerName).badChCandidateFilter = cms.InputTag('BadChargedCandidateFilter')
 
+    if options.runKinFit:
+        getattr(process, producerName).rho = cms.InputTag('fixedGridRhoAll')
+
     process.tupleProductionSequence += getattr(process, producerName)
 
 if period == 'Run2016':

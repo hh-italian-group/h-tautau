@@ -29,6 +29,7 @@
 <use name="HHKinFit2/HHKinFit2"/>
 <use name="JetMETCorrections/Objects"/>
 <use name="JetMETCorrections/Algorithms"/>
+<use name="JetMETCorrections/Modules"/>
 <use name="AnalysisDataFormats/TopObjects"/>
 <use name="HTT-utilities/RecoilCorrections"/>
 <export>

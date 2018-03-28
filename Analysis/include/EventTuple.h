@@ -43,6 +43,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Float_t, mva, col) /* Jet MVA id value */ \
     JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
+    JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \
     /**/
 
 #define FATJET_DATA(col) \
