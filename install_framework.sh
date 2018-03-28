@@ -108,11 +108,19 @@ if [ $MODE = "prod17" ] ; then
     cd $CMSSW_BASE/src
 fi
 
-# SVfit packages
-git clone git@github.com:hh-italian-group/SVfit_standalone.git TauAnalysis/SVfitStandalone
-cd TauAnalysis/SVfitStandalone
-git checkout hh_italian
+# old SVfit packages
+#git clone git@github.com:hh-italian-group/SVfit_standalone.git TauAnalysis/SVfitStandalone
+#cd TauAnalysis/SVfitStandalone
+#git checkout hh_italian
+#cd ../..
+
+# new SVfit packages
+git clone git@github.com:hh-italian-group/ClassicSVfit.git TauAnalysis/ClassicSVfit
+cd TauAnalysis/ClassicSVfit
+git checkout hh-italian
 cd ../..
+git clone git@github.com:hh-italian-group/SVfitTF.git TauAnalysis/SVfitTF
+
 
 # HHKinFit2 packages
 git clone git@github.com:hh-italian-group/HHKinFit2.git HHKinFit2/HHKinFit2
