@@ -70,13 +70,13 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
         badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
     }
 
+    m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
+
     if(runSVfit)
         svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
             edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
-    if(runKinFit){
+    if(runKinFit)
         kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
-        m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
-    }
 
     if(applyRecoilCorr)
         recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
@@ -527,18 +527,12 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         parameters_1.setRho(*rho);
         float resolution_1 = resolution.getResolution(parameters_1);
         float energy_resolution_1 = resolution_1 * selection.jets.at(pair.first).GetMomentum().E();
-        // std::cout << "1st jet resolution - pt: " << selection.jets.at(pair.first).GetMomentum().pt() <<
-        // ", eta: " << selection.jets.at(pair.first).GetMomentum().eta() << ", resolution: " << resolution_1 <<
-        // ", energy_res: " << energy_resolution_1 << std::endl;
         JME::JetParameters parameters_2;
         parameters_2.setJetPt(selection.jets.at(pair.second).GetMomentum().pt());
         parameters_2.setJetEta(selection.jets.at(pair.second).GetMomentum().eta());
         parameters_2.setRho(*rho);
         float resolution_2 = resolution.getResolution(parameters_2);
         float energy_resolution_2 = resolution_2 * selection.jets.at(pair.second).GetMomentum().E();
-        // std::cout << "2nd jet resolution - pt: " << selection.jets.at(pair.second).GetMomentum().pt() <<
-        // ", eta: " << selection.jets.at(pair.second).GetMomentum().eta() << ", resolution: " << resolution_2 <<
-        // ", energy_res: " << energy_resolution_2 << std::endl;
 
         const size_t pair_index = ntuple::CombinationPairToIndex(pair, n_jets);
         const auto& result = kinfitProducer->Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
@@ -576,7 +570,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         }
     } else {
         runKinfit(0, 1);
-        std::pair<size_t,size_t> selected_csv_pair = FindPair();
+        auto selected_csv_pair = FindPair();
         if((selected_csv_pair.first) != 0 && (selected_csv_pair.second) != 1){
             runKinfit(selected_csv_pair.first, selected_csv_pair.second);
         }

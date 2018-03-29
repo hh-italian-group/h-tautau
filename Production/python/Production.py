@@ -245,14 +245,12 @@ for channel in channels:
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
+        rho                     = cms.InputTag('fixedGridRhoAll'),
     ))
 
     if period == 'Run2016':
         getattr(process, producerName).badPFMuonFilter = cms.InputTag('BadPFMuonFilter')
         getattr(process, producerName).badChCandidateFilter = cms.InputTag('BadChargedCandidateFilter')
-
-    if options.runKinFit:
-        getattr(process, producerName).rho = cms.InputTag('fixedGridRhoAll')
 
     process.tupleProductionSequence += getattr(process, producerName)
 

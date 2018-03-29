@@ -44,7 +44,6 @@ public:
         taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus"))),
         summaryTuple(ntuple::CreateSummaryTuple("summary", &edm::Service<TFileService>()->file(), false, ntuple::TreeState::Full))
     {
-        std::cout << "In constructor initialized all" << std::endl;
         (*summaryTuple)().numberOfProcessedEvents = 0;
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
