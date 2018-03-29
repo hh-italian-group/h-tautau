@@ -564,10 +564,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         std::iota(indexes.begin(), indexes.end(), 0);
         std::sort(indexes.begin(), indexes.end(), csv_orderer);
 
-        std::pair<size_t, size_t> selected_pair = ntuple::UndefinedJetPair();
-        selected_pair.first = indexes.at(0);
-        selected_pair.second = indexes.at(1);
-        return selected_pair;
+        return std::make_pair(indexes.at(0), indexes.at(1));
     };
 
     if(RunKinfitForAllPairs) {
