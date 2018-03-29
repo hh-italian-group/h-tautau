@@ -527,18 +527,18 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         parameters_1.setRho(*rho);
         float resolution_1 = resolution.getResolution(parameters_1);
         float energy_resolution_1 = resolution_1 * selection.jets.at(pair.first).GetMomentum().E();
-        std::cout << "1st jet resolution - pt: " << selection.jets.at(pair.first).GetMomentum().pt() <<
-        ", eta: " << selection.jets.at(pair.first).GetMomentum().eta() << ", resolution: " << resolution_1 <<
-        ", energy_res: " << energy_resolution_1 << std::endl;
+        // std::cout << "1st jet resolution - pt: " << selection.jets.at(pair.first).GetMomentum().pt() <<
+        // ", eta: " << selection.jets.at(pair.first).GetMomentum().eta() << ", resolution: " << resolution_1 <<
+        // ", energy_res: " << energy_resolution_1 << std::endl;
         JME::JetParameters parameters_2;
         parameters_2.setJetPt(selection.jets.at(pair.second).GetMomentum().pt());
         parameters_2.setJetEta(selection.jets.at(pair.second).GetMomentum().eta());
         parameters_2.setRho(*rho);
         float resolution_2 = resolution.getResolution(parameters_2);
         float energy_resolution_2 = resolution_2 * selection.jets.at(pair.second).GetMomentum().E();
-        std::cout << "2nd jet resolution - pt: " << selection.jets.at(pair.second).GetMomentum().pt() <<
-        ", eta: " << selection.jets.at(pair.second).GetMomentum().eta() << ", resolution: " << resolution_2 <<
-        ", energy_res: " << energy_resolution_2 << std::endl;
+        // std::cout << "2nd jet resolution - pt: " << selection.jets.at(pair.second).GetMomentum().pt() <<
+        // ", eta: " << selection.jets.at(pair.second).GetMomentum().eta() << ", resolution: " << resolution_2 <<
+        // ", energy_res: " << energy_resolution_2 << std::endl;
 
         const size_t pair_index = ntuple::CombinationPairToIndex(pair, n_jets);
         const auto& result = kinfitProducer->Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
@@ -546,6 +546,28 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
                                                  selection.jets.at(pair.second).GetMomentum(), *met,energy_resolution_1,
                                                  energy_resolution_2);
         selection.kinfitResults[pair_index] = result;
+    };
+
+    const auto csv_orderer = [&](size_t j1, size_t j2) -> bool {
+        const JetCandidate& jet_1 = selection.jets.at(j1);
+        const JetCandidate& jet_2 = selection.jets.at(j2);
+
+        const auto csv1 = jet_1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        const auto csv2 = jet_2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        if(csv1 != csv2)
+            return csv1 > csv2;
+        return jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt();
+    };
+
+    const auto FindPair = [&]() -> std::pair<size_t,size_t> {
+        std::vector<size_t> indexes(selection.jets.size());
+        std::iota(indexes.begin(), indexes.end(), 0);
+        std::sort(indexes.begin(), indexes.end(), csv_orderer);
+
+        std::pair<size_t, size_t> selected_pair = ntuple::UndefinedJetPair();
+        selected_pair.first = indexes.at(0);
+        selected_pair.second = indexes.at(1);
+        return selected_pair;
     };
 
     if(RunKinfitForAllPairs) {
@@ -557,6 +579,10 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         }
     } else {
         runKinfit(0, 1);
+        std::pair<size_t,size_t> selected_csv_pair = FindPair();
+        if((selected_csv_pair.first) != 0 && (selected_csv_pair.second) != 1){
+            runKinfit(selected_csv_pair.first, selected_csv_pair.second);
+        }
     }
 }
 
@@ -747,6 +773,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
             eventTuple().jets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
             eventTuple().jets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+            eventTuple().jets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
 //            eventTuple().jets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
@@ -775,6 +802,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
             eventTuple().fatJets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
             eventTuple().fatJets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+            eventTuple().fatJets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
 //            eventTuple().fatJets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
             eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
@@ -791,6 +819,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
                             sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
                 eventTuple().subJets_deepCsv_b.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
                 eventTuple().subJets_deepCsv_bb.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+                eventTuple().subJets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
 //                eventTuple().subJets_deepCsv_b_vs_all.push_back(sub_jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
                 eventTuple().subJets_parentIndex.push_back(parentIndex);
             }

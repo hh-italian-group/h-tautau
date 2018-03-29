@@ -35,6 +35,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
     JVAR(Float_t, deepCsv_b, col) /* Jet deepCSV b value */ \
     JVAR(Float_t, deepCsv_bb, col) /* Jet deepCSV boosted value */ \
+    JVAR(Float_t, deepCsv_c, col) /* Jet deepCSV boosted value */ \
     /**/
 
 #define JET_DATA(col) \
