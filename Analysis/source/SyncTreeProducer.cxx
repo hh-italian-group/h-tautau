@@ -55,24 +55,24 @@ public:
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         auto outputFile = root_ext::CreateRootFile(args.output_file());
-        EventTuple originalTuple(args.tree_name(), originalFile.get(), true);
+        auto originalTuple = ntuple::CreateEventTuple(args.tree_name(),originalFile.get(),true,ntuple::TreeState::Full);
         SyncTuple sync(args.tree_name(), outputFile.get(), false);
-        ntuple::SummaryTuple summaryTuple("summary", originalFile.get(), true);
-        summaryTuple.GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple.data()));
+        auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
+        summaryTuple->GetEntry(0);
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
         const Channel channel = Parse<Channel>(args.tree_name());
-        const Long64_t n_entries = originalTuple.GetEntries();
+        const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
-            originalTuple.GetEntry(current_entry);
+            originalTuple->GetEntry(current_entry);
 
             ntuple::JetPair bjet_pair;
             if(run_period == Period::Run2016)
-                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2016::pt,
+                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple->data(), cuts::btag_2016::pt,
                                                                  cuts::btag_2016::eta, JetOrdering::CSV);
             if(run_period == Period::Run2017)
-                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple.data(), cuts::btag_2017::pt,
+                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple->data(), cuts::btag_2017::pt,
                                                           cuts::btag_2017::eta, JetOrdering::DeepCSV);
-            auto eventInfoPtr = MakeEventInfo(channel, originalTuple.data(), bjet_pair, summaryInfo.get());
+            auto eventInfoPtr = MakeEventInfo(channel, originalTuple->data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;

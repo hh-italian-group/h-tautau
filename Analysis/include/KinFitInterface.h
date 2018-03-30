@@ -27,7 +27,8 @@ public:
 
     template<typename LVector1, typename LVector2, typename LVector3, typename LVector4, typename Met>
     FitResults Fit(const LVector1& lepton1_p4, const LVector2& lepton2_p4,
-                   const LVector3& jet1_p4, const LVector4& jet2_p4, const Met& met)
+                   const LVector3& jet1_p4, const LVector4& jet2_p4, const Met& met,
+                   float resolution_1, float resolution_2)
     {
         const auto& met_p4 = met.GetMomentum();
         const TMatrixD met_cov = ConvertMatrix(met.GetCovMatrix());
@@ -44,9 +45,11 @@ public:
                 std::cout << "met_cov:" << met_cov << std::endl;
             }
 
+            // add here the resolution
             HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(ConvertVector(jet1_p4), ConvertVector(jet2_p4),
                                                            ConvertVector(lepton1_p4), ConvertVector(lepton2_p4),
-                                                           TVector2(met_p4.Px(), met_p4.Py()), met_cov);
+                                                           TVector2(met_p4.Px(), met_p4.Py()), met_cov,
+                                                           resolution_1, resolution_2);
             hh_kin_fit.verbosity = verbosity;
             hh_kin_fit.fit();
 

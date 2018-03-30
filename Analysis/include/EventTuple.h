@@ -35,6 +35,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
     JVAR(Float_t, deepCsv_b, col) /* Jet deepCSV b value */ \
     JVAR(Float_t, deepCsv_bb, col) /* Jet deepCSV boosted value */ \
+    JVAR(Float_t, deepCsv_c, col) /* Jet deepCSV c value */ \
     /**/
 
 #define JET_DATA(col) \
@@ -43,6 +44,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Float_t, mva, col) /* Jet MVA id value */ \
     JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
+    JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \
     /**/
 
 #define FATJET_DATA(col) \
@@ -95,6 +97,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
+    VAR(Float_t, rho) /* Jet energy density in the event */ \
 	VAR(UInt_t, n_jets) /* Number of jets in the event */\
     VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     /* Trigger results */ \
@@ -102,7 +105,9 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
     VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
+    VAR(LorentzVectorM, SVfit_p4_error) /* SVfit using integration method */ \
     VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
+    VAR(Float_t, SVfit_mt_error) /* SVfit using integration method */ \
     /* Signal leptons */ \
     LEG_DATA(1) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
     LEG_DATA(2) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \

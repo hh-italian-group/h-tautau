@@ -44,7 +44,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
-    eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
+    eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
+    eventTuple(*eventTuple_ptr),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
@@ -69,11 +70,14 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
         badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
     }
 
+    m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
+
     if(runSVfit)
         svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
             edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
     if(runKinFit)
         kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
+
     if(applyRecoilCorr)
         recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
             edm::FileInPath("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root").fullPath()));
@@ -123,9 +127,12 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
         if(saveGenTopInfo)
             iEvent.getByToken(topGenEvent_token, topGenEvent);
     }
+    iEvent.getByToken(m_rho_token, rho);
 
     iSetup.get<JetCorrectionsRecord>().get("AK5PF", jetCorParColl);
     jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
+
+    resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
 }
 
 void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScale energyScale)
@@ -513,11 +520,45 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
 
     const auto runKinfit = [&](size_t first, size_t second) {
         const ntuple::JetPair pair(first, second);
+        //jet resolution
+        JME::JetParameters parameters_1;
+        parameters_1.setJetPt(selection.jets.at(pair.first).GetMomentum().pt());
+        parameters_1.setJetEta(selection.jets.at(pair.first).GetMomentum().eta());
+        parameters_1.setRho(*rho);
+        float resolution_1 = resolution.getResolution(parameters_1);
+        float energy_resolution_1 = resolution_1 * selection.jets.at(pair.first).GetMomentum().E();
+        JME::JetParameters parameters_2;
+        parameters_2.setJetPt(selection.jets.at(pair.second).GetMomentum().pt());
+        parameters_2.setJetEta(selection.jets.at(pair.second).GetMomentum().eta());
+        parameters_2.setRho(*rho);
+        float resolution_2 = resolution.getResolution(parameters_2);
+        float energy_resolution_2 = resolution_2 * selection.jets.at(pair.second).GetMomentum().E();
+
         const size_t pair_index = ntuple::CombinationPairToIndex(pair, n_jets);
         const auto& result = kinfitProducer->Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
                                                  selection.jets.at(pair.first).GetMomentum(),
-                                                 selection.jets.at(pair.second).GetMomentum(), *met);
+                                                 selection.jets.at(pair.second).GetMomentum(), *met,energy_resolution_1,
+                                                 energy_resolution_2);
         selection.kinfitResults[pair_index] = result;
+    };
+
+    const auto csv_orderer = [&](size_t j1, size_t j2) -> bool {
+        const JetCandidate& jet_1 = selection.jets.at(j1);
+        const JetCandidate& jet_2 = selection.jets.at(j2);
+
+        const auto csv1 = jet_1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        const auto csv2 = jet_2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        if(csv1 != csv2)
+            return csv1 > csv2;
+        return jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt();
+    };
+
+    const auto FindPair = [&]() -> std::pair<size_t,size_t> {
+        std::vector<size_t> indexes(selection.jets.size());
+        std::iota(indexes.begin(), indexes.end(), 0);
+        std::sort(indexes.begin(), indexes.end(), csv_orderer);
+
+        return std::make_pair(indexes.at(0), indexes.at(1));
     };
 
     if(RunKinfitForAllPairs) {
@@ -529,6 +570,10 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         }
     } else {
         runKinfit(0, 1);
+        auto selected_csv_pair = FindPair();
+        if((selected_csv_pair.first) != 0 && (selected_csv_pair.second) != 1){
+            runKinfit(selected_csv_pair.first, selected_csv_pair.second);
+        }
     }
 }
 
@@ -702,10 +747,13 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     eventTuple().npv = vertices->size();
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
+    eventTuple().rho = *rho;
 
     // HTT candidate
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
+    eventTuple().SVfit_p4 = selection.svfitResult.momentum_error;
     eventTuple().SVfit_mt = selection.svfitResult.transverseMass;
+    eventTuple().SVfit_mt = selection.svfitResult.transverseMass_error;
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
@@ -719,11 +767,19 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
             eventTuple().jets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
             eventTuple().jets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+            eventTuple().jets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
 //            eventTuple().jets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
             eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
             eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
+            //jet resolution
+            JME::JetParameters parameters;
+            parameters.setJetPt(jet.GetMomentum().pt());
+            parameters.setJetEta(jet.GetMomentum().eta());
+            parameters.setRho(*rho);
+            float jet_resolution = resolution.getResolution(parameters);
+            eventTuple().jets_resolution.push_back(jet_resolution); // percentage
         }
     } else
         storageMode.SetPresence(EventPart::Jets, false);
@@ -740,6 +796,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
             eventTuple().fatJets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
             eventTuple().fatJets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+            eventTuple().fatJets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
 //            eventTuple().fatJets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
             eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
@@ -756,6 +813,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
                             sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
                 eventTuple().subJets_deepCsv_b.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
                 eventTuple().subJets_deepCsv_bb.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
+                eventTuple().subJets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
 //                eventTuple().subJets_deepCsv_b_vs_all.push_back(sub_jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
                 eventTuple().subJets_parentIndex.push_back(parentIndex);
             }

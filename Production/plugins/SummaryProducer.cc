@@ -42,9 +42,9 @@ public:
         topGenEvent_token(mayConsume<TtGenEvent>(cfg.getParameter<edm::InputTag>("topGenEvent"))),
         puInfo_token(mayConsume<std::vector<PileupSummaryInfo>>(cfg.getParameter<edm::InputTag>("puInfo"))),
         taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus"))),
-        summaryTuple("summary", &edm::Service<TFileService>()->file(), false)
+        summaryTuple(ntuple::CreateSummaryTuple("summary", &edm::Service<TFileService>()->file(), false, ntuple::TreeState::Full))
     {
-        summaryTuple().numberOfProcessedEvents = 0;
+        (*summaryTuple)().numberOfProcessedEvents = 0;
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
@@ -65,8 +65,8 @@ public:
             const int channel_id = static_cast<int>(channel);
             const TriggerDescriptorCollection& descs = channel_desc.second;
             for(size_t n = 0; n < descs.size(); ++n) {
-                summaryTuple().triggers_channel.push_back(channel_id);
-                summaryTuple().triggers_pattern.push_back(descs.at(n).pattern);
+                (*summaryTuple)().triggers_channel.push_back(channel_id);
+                (*summaryTuple)().triggers_pattern.push_back(descs.at(n).pattern);
             }
         }
     }
@@ -74,7 +74,7 @@ public:
 private:
     virtual void analyze(const edm::Event& event, const edm::EventSetup&) override
     {
-        summaryTuple().numberOfProcessedEvents++;
+        (*summaryTuple)().numberOfProcessedEvents++;
 
         if(!tauId_names.size()) {
             edm::Handle<std::vector<pat::Tau>> taus;
@@ -138,23 +138,23 @@ private:
     {
         for(const std::string& name : tauId_names) {
             const auto key = analysis::tools::hash(name);
-            summaryTuple().tauId_names.push_back(name);
-            summaryTuple().tauId_keys.push_back(key);
+            (*summaryTuple)().tauId_names.push_back(name);
+            (*summaryTuple)().tauId_keys.push_back(key);
         }
         for(const auto& count_entry : genEventCountMap) {
-            summaryTuple().lhe_n_partons.push_back(count_entry.first.n_partons);
-            summaryTuple().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
-            summaryTuple().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
-            summaryTuple().lhe_n_events.push_back(count_entry.second);
+            (*summaryTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
+            (*summaryTuple)().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
+            (*summaryTuple)().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
+            (*summaryTuple)().lhe_n_events.push_back(count_entry.second);
         }
         for(const auto& count_entry : genEventTypeCountMap) {
-            summaryTuple().genEventType.push_back(static_cast<int>(count_entry.first));
-            summaryTuple().genEventType_n_events.push_back(count_entry.second);
+            (*summaryTuple)().genEventType.push_back(static_cast<int>(count_entry.first));
+            (*summaryTuple)().genEventType_n_events.push_back(count_entry.second);
         }
         const auto stop = clock::now();
-        summaryTuple().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
-        summaryTuple.Fill();
-        summaryTuple.Write();
+        (*summaryTuple)().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+        summaryTuple->Fill();
+        summaryTuple->Write();
         if(expressTuple)
             expressTuple->Write();
     }
@@ -169,7 +169,7 @@ private:
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfo_token;
     edm::EDGetTokenT<std::vector<pat::Tau>> taus_token;
 
-    ntuple::SummaryTuple summaryTuple;
+    std::shared_ptr<ntuple::SummaryTuple> summaryTuple;
     std::shared_ptr<ntuple::ExpressTuple> expressTuple;
     std::unordered_set<std::string> tauId_names;
     GenEventCountMap genEventCountMap;

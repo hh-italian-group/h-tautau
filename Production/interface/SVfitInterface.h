@@ -6,7 +6,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
-#include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneLikelihood.h"
+#include "TauAnalysis/ClassicSVfit/interface/ClassicSVfit.h"
+#include "TauAnalysis/ClassicSVfit/interface/MeasuredTauLepton.h"
+#include "TauAnalysis/ClassicSVfit/interface/svFitHistogramAdapter.h"
 
 #include "h-tautau/Analysis/include/Candidate.h"
 #include "AnalysisTools/Core/include/RootExt.h"
@@ -17,37 +19,40 @@ namespace sv_fit {
 struct FitResults {
     bool has_valid_momentum;
     LorentzVectorM momentum;
+    LorentzVectorM momentum_error;
     double transverseMass;
+    double transverseMass_error;
 
-    FitResults() : has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()) {}
+    FitResults() : has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()),
+                   transverseMass_error(std::numeric_limits<double>::lowest()) {}
 };
 
 namespace detail {
 template<typename Lepton>
-inline svFitStandalone::MeasuredTauLepton CreateMeasuredLepton(const Lepton& lepton);
+inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const Lepton& lepton);
 
 template<>
-inline svFitStandalone::MeasuredTauLepton CreateMeasuredLepton(
+inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(
         const LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>& lepton)
 {
     const auto& momentum = lepton.GetMomentum();
-    return svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay,
+    return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay,
                                               momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M());
 }
 
 template<>
-inline svFitStandalone::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<pat::Muon>& lepton)
+inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<pat::Muon>& lepton)
 {
     const auto& momentum = lepton.GetMomentum();
-    return svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay,
+    return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay,
                                               momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M());
 }
 
 template<>
-inline svFitStandalone::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<pat::Tau>& lepton)
+inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<pat::Tau>& lepton)
 {
     const auto& momentum = lepton.GetMomentum();
-    return svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay,
+    return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay,
                                               momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M(),
                                               lepton->decayMode());
 }
@@ -65,7 +70,7 @@ public:
     template<typename FirstLeg, typename SecondLeg, typename MetObject>
     FitResults Fit(const CompositCandidate<FirstLeg, SecondLeg>& higgs, const MissingET<MetObject>& met) const
     {
-        std::vector<svFitStandalone::MeasuredTauLepton> measured_leptons = {
+        std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
             detail::CreateMeasuredLepton(higgs.GetFirstDaughter()),
             detail::CreateMeasuredLepton(higgs.GetSecondDaughter())
         };
@@ -74,7 +79,7 @@ public:
     }
 
 private:
-    FitResults RunAlgorithm(const std::vector<svFitStandalone::MeasuredTauLepton>& measured_leptons,
+    FitResults RunAlgorithm(const std::vector<classic_svFit::MeasuredTauLepton>& measured_leptons,
                             const LorentzVector& met_momentum, const SquareMatrix<2>& met_cov) const;
 
 private:

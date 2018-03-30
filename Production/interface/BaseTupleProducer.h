@@ -21,6 +21,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
+#include "JetMETCorrections/Modules/interface/JetResolution.h"
 
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
@@ -140,6 +141,7 @@ private:
     edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticles_token;
     edm::EDGetTokenT<edm::View<reco::GenJet>> genJets_token;
     edm::EDGetTokenT<bool> badPFMuonFilter_token, badChCandidateFilter_token;
+    edm::EDGetTokenT<double> m_rho_token;
 
 protected:
     const ProductionMode productionMode;
@@ -147,7 +149,8 @@ protected:
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
-    ntuple::EventTuple eventTuple;
+    std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+    ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
     std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
@@ -167,9 +170,11 @@ private:
     edm::Handle<LHEEventProduct> lheEventProduct;
     edm::Handle<GenEventInfoProduct> genEvt;
     edm::Handle<TtGenEvent> topGenEvent;
+    edm::Handle<double> rho;
 
     edm::ESHandle<JetCorrectorParametersCollection> jetCorParColl;
     std::shared_ptr<JetCorrectionUncertainty> jecUnc;
+    JME::JetResolution resolution;
 
     std::vector<analysis::EventEnergyScale> eventEnergyScales;
 
