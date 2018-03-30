@@ -19,9 +19,12 @@ namespace sv_fit {
 struct FitResults {
     bool has_valid_momentum;
     LorentzVectorM momentum;
+    LorentzVectorM momentum_error;
     double transverseMass;
+    double transverseMass_error;
 
-    FitResults() : has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()) {}
+    FitResults() : has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()),
+                   transverseMass_error(std::numeric_limits<double>::lowest()) {}
 };
 
 namespace detail {

@@ -21,14 +21,11 @@ FitResults FitProducer::RunAlgorithm(const std::vector<classic_svFit::MeasuredTa
 
     FitResults result;
     if(algo.isValidSolution()) {
-        auto* histoAdapter = dynamic_cast<classic_svFit::DiTauSystemHistogramAdapter*>(algo.getHistogramAdapter());
-        double pt = histoAdapter->getPt();
-        double eta = histoAdapter->getEta();
-        double phi = histoAdapter->getPhi();
-        double mass = histoAdapter->getMass();
-        result.momentum = LorentzVectorM(pt, eta, phi, mass);
-        double transverseMass = static_cast<classic_svFit::DiTauSystemHistogramAdapter*>(algo.getHistogramAdapter())->getTransverseMass();
-        result.transverseMass = transverseMass;
+        auto histoAdapter = dynamic_cast<classic_svFit::DiTauSystemHistogramAdapter*>(algo.getHistogramAdapter());
+        result.momentum = LorentzVectorM(histoAdapter->getPt(), histoAdapter->getEta(), histoAdapter->getPhi(), histoAdapter->getMass());
+        result.momentum_error = LorentzVectorM(histoAdapter->getPtErr(), histoAdapter->getEtaErr(), histoAdapter->getPhiErr(), histoAdapter->getMassErr());
+        result.transverseMass = histoAdapter->getTransverseMass();
+        result.transverseMass_error = histoAdapter->getTransverseMassErr();
         result.has_valid_momentum = true;
     }
     return result;

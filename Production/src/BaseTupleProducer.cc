@@ -747,10 +747,13 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     eventTuple().npv = vertices->size();
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
+    eventTuple().rho = *rho;
 
     // HTT candidate
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
+    eventTuple().SVfit_p4 = selection.svfitResult.momentum_error;
     eventTuple().SVfit_mt = selection.svfitResult.transverseMass;
+    eventTuple().SVfit_mt = selection.svfitResult.transverseMass_error;
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
