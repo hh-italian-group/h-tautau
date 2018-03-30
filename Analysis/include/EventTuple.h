@@ -97,7 +97,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
-    VAR(Double_t, rho) /* Jet energy density in the event */ \
+    VAR(Float_t, rho) /* Jet energy density in the event */ \
 	VAR(UInt_t, n_jets) /* Number of jets in the event */\
     VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     /* Trigger results */ \
