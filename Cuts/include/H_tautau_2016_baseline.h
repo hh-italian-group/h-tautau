@@ -167,6 +167,7 @@ namespace muonVeto {
 
 namespace jetID {
     constexpr double pt = 20; // >
+    constexpr double pt_safety = 2; // 
     constexpr double eta = 4.7; // <
     constexpr bool pfLooseID = true; // =
     constexpr double deltaR_signalObjects = 0.5; // >

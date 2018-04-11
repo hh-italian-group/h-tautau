@@ -678,7 +678,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = jet.GetMomentum();
-    cut(p4.Pt() > pt, "pt", p4.Pt());
+    cut(p4.Pt() > pt - pt_safety, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < cuts::hh_bbtautau_2017::jetID::eta, "eta", p4.Eta());
     cut(PassPFTightId(*jet,period), "jet_id");
     for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
@@ -760,8 +760,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().pfMET_cov = met->GetCovMatrix();
     FillMetFilters(period);
 
+    std::set<const pat::Jet*> selected_jets;
     if(!reference || !selection.HaveSameJets(*reference)) {
         for(const JetCandidate& jet : selection.jets) {
+            const auto selected_jet = dynamic_cast<const pat::Jet*>(jet);
+            selected_jets.insert(selected_jet);
             const LorentzVector& p4 = jet.GetMomentum();
             eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
@@ -780,6 +783,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             parameters.setRho(*rho);
             float jet_resolution = resolution.getResolution(parameters);
             eventTuple().jets_resolution.push_back(jet_resolution); // percentage
+        }
+        if(eventEnergyScale == EventEnergyScale::Central){
+            for(const auto jet_cand : jets){
+                const auto pat_jet = dynamic_cast<const pat::Jet*>(jet_cand);
+                if(selected_jets.count(pat_jet)) continue;
+                const LorentzVector& other_p4 = jet_cand.GetMomentum();
+                eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
+            }
         }
     } else
         storageMode.SetPresence(EventPart::Jets, false);
