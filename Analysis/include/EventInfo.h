@@ -64,6 +64,51 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
 
 enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
 
+namespace jet_ordering {
+
+    struct JetInfo {
+        LorentzVectorE p4;
+        size_t index;
+        double tag;
+
+        JetInfo(const LorentzVectorE _p4, size_t _index, double _tag)
+            : p4(_p4), index(_index), tag(_tag) { }
+    };
+
+    bool ComparitorStruct(const JetInfo jet_1, const JetInfo jet_2)
+    {
+        const auto eta1 = std::abs(jet_1.p4.eta());
+        const auto eta2 = std::abs(jet_2.p4.eta());
+        if(eta1 < cuts::btag_2016::eta && eta2 >= cuts::btag_2016::eta) return true;
+        if(eta1 >= cuts::btag_2016::eta && eta2 < cuts::btag_2016::eta) return false;
+        const auto pt1 = jet_1.p4.pt();
+        const auto pt2 = jet_2.p4.pt();
+        if(pt1 > cuts::btag_2016::pt && pt2 <= cuts::btag_2016::pt) return true;
+        if(pt1 <= cuts::btag_2016::pt && pt2 > cuts::btag_2016::pt) return false;
+
+        const auto tag1 = jet_1.tag;
+        const auto tag2 = jet_2.tag;
+        if(tag1 != tag2)
+            return tag1 > tag2;
+        return jet_1.p4.pt() > jet_2.p4.pt();
+    };
+
+    std::vector<JetInfo> Ordering(std::vector<JetInfo> jet_info_vector, bool apply_hard_cut,
+                                  double pt_cut = std::numeric_limits<double>::lowest(),
+                                  double eta_cut = std::numeric_limits<double>::max())
+    {
+        std::vector<JetInfo> jets_ordered;
+        for(size_t n = 0; n < jet_info_vector.size(); ++n) {
+            if(apply_hard_cut && jet_info_vector.at(n).p4.Pt() > pt_cut
+                              && std::abs(jet_info_vector.at(n).p4.eta()) < eta_cut)
+                jets_ordered.push_back(jet_info_vector.at(n));
+        }
+        std::sort(jets_ordered.begin(), jets_ordered.end(), ComparitorStruct);
+        return jets_ordered;
+    }
+
+}
+
 class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
@@ -106,34 +151,25 @@ public:
                                    double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
-        const auto orderer = [&](size_t j1, size_t j2) -> bool {
-            if(jet_ordering == JetOrdering::Pt)
-                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            if(jet_ordering == JetOrdering::CSV){
-                if(event.jets_csv.at(j1) != event.jets_csv.at(j2))
-                    return event.jets_csv.at(j1) > event.jets_csv.at(j2);
-                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            }
-            if(jet_ordering == JetOrdering::DeepCSV){
-                if(event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) != event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2))
-                    return event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) > event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2);
-                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            }
-
-            throw exception("Unsupported jet ordering for b-jet pair selection.");
-        };
-
-        std::vector<size_t> indexes;
+        std::vector<JetInfo> jet_info_vector;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(event.jets_p4.at(n).Pt() > pt_cut && std::abs(event.jets_p4.at(n).eta()) < eta_cut)
-                indexes.push_back(n);
+            double tag;
+            if(jet_ordering == JetOrdering::Pt)
+                tag = event.jets_p4.at(n).Pt();
+            else if(jet_ordering == JetOrdering::CSV)
+                tag = event.jets_csv.at(n);
+            else if(jet_ordering == JetOrdering::DeepCSV)
+                tag = event.jets_deepCsv_b.at(n)+event.jets_deepCsv_bb.at(n);
+            else
+                throw exception("Unsupported jet ordering for b-jet pair selection.");
+            const JetInfo jet_info(event.jets_p4.at(n),n,tag);
+            jet_info_vector.push_back(jet_info);
         }
-        std::sort(indexes.begin(), indexes.end(), orderer);
+
+        std::vector<JetInfo> jets_ordered jet_ordering::Ordering(jet_info_vector,true,pt_cut,eta_cut);
         JetPair selected_pair = ntuple::UndefinedJetPair();
-        if(indexes.size() >= 1)
-            selected_pair.first = indexes.at(0);
-        if(indexes.size() >= 2)
-            selected_pair.second = indexes.at(1);
+        selected_pair.first = jets_ordered.at(0).index;
+        selected_pair.second = jets_ordered.at(1).index;
         return selected_pair;
     }
 
@@ -205,34 +241,31 @@ public:
                              JetOrdering jet_ordering = JetOrdering::CSV,
                              const std::set<size_t>& bjet_indexes = {})
     {
-        const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
-            if(jet_ordering == JetOrdering::Pt)
-                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            if(jet_ordering == JetOrdering::DeepCSV){
-                if(j1->deepcsv() != j2->deepcsv())
-                    return j1->deepcsv() > j2->deepcsv();
-                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            }
-            if(jet_ordering == JetOrdering::CSV){
-                if(j1->csv() != j2->csv())
-                    return j1->csv() > j2->csv();
-                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            }
-            throw exception("Unsupported jet ordering for jet selection.");
-        };
-
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
+        std::vector<JetInfo> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
-            if(bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
-            if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) < eta_cut
-                    && jet->csv() > csv_cut)
-                selected_jets.push_back(jet);
+            double tag;
+            if(jet_ordering == JetOrdering::Pt)
+                tag = jet.GetMomentum().Pt();
+            else if(jet_ordering == JetOrdering::CSV)
+                tag = jet->csv();
+            else if(jet_ordering == JetOrdering::DeepCSV)
+                tag = jet->deepcsv();
+            else
+                throw exception("Unsupported jet ordering for jet selection.");
+            if(jet->csv() <= csv_cut) continue;
+            const JetInfo jet_info(jet.GetMomentum(),n,tag);
+            jet_info_vector.push_back(jet_info);
         }
 
-        if(jet_ordering != JetOrdering::NoOrdering)
-            std::sort(selected_jets.begin(), selected_jets.end(), orderer);
+        std::vector<JetInfo> jets_ordered jet_ordering::Ordering(jet_info_vector,true,pt_cut,eta_cut);
+        for(size_t h = 0; h < jets_ordered.size(); ++h){
+            const JetInfo jet_info = jets_ordered.at(h);
+            const JetCandidate& jet = all_jets.at(jet_info.index);
+            selected_jets.push_back(jet);
+        }
         return selected_jets;
     }
 
