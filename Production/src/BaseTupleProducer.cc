@@ -543,34 +543,6 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         selection.kinfitResults[pair_index] = result;
     };
 
-    // const auto csv_orderer = [&](size_t j1, size_t j2) -> bool {
-    //     const JetCandidate& jet_1 = selection.jets.at(j1);
-    //     const JetCandidate& jet_2 = selection.jets.at(j2);
-    //
-    //     const auto eta1 = std::abs(jet_1.GetMomentum().eta());
-    //     const auto eta2 = std::abs(jet_2.GetMomentum().eta());
-    //     if(eta1 < eta && eta2 >= eta) return true;
-    //     if(eta1 >= eta && eta2 < eta) return false;
-    //     const auto pt1 = jet_1.GetMomentum().pt();
-    //     const auto pt2 = jet_2.GetMomentum().pt();
-    //     if(pt1 > pt && pt2 <= pt) return true;
-    //     if(pt1 <= pt && pt2 > pt) return false;
-    //
-    //     const auto csv1 = jet_1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-    //     const auto csv2 = jet_2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-    //     if(csv1 != csv2)
-    //         return csv1 > csv2;
-    //     return jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt();
-    // };
-    //
-    // const std::pair<size_t,size_t> FindPair() ->  {
-    //     std::vector<size_t> indexes(selection.jets.size());
-    //     std::iota(indexes.begin(), indexes.end(), 0);
-    //     std::sort(indexes.begin(), indexes.end(), csv_orderer);
-    //
-    //     return std::make_pair(indexes.at(0), indexes.at(1));
-    // };
-
     if(RunKinfitForAllPairs) {
         for(size_t n = 0; n < n_jets; ++n) {
             for(size_t k = 0; k < n_jets; ++k) {
@@ -580,22 +552,16 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         }
     } else {
         runKinfit(0, 1);
-        // auto selected_csv_pair = FindPair();
 
-        std::vector<JetInfo> jet_info_vector;
+        std::vector<analysis::jet_ordering::JetInfo> jet_info_vector;
         for(size_t n = 0; n < selection.jets.size(); ++n) {
             const JetCandidate& jet = selection.jets.at(n);
-            double tag = jet->csv();
-            const JetInfo jet_info(jet.GetMomentum(),n,tag);
-            jet_info_vector.push_back(jet_info);
+            jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->csv());
         }
 
-        std::vector<JetInfo> jets_ordered jet_ordering::Ordering(jet_info_vector,false);
-        JetPair selected_csv_pair = ntuple::UndefinedJetPair();
-        selected_csv_pair.first = jets_ordered.at(0).index;
-        selected_csv_pair.second = jets_ordered.at(1).index;
-        if((selected_csv_pair.first) != 0 && (selected_csv_pair.second) != 1){
-            runKinfit(selected_csv_pair.first, selected_csv_pair.second);
+        std::vector<JetInfo> jets_ordered analysis::jet_ordering::Ordering(jet_info_vector,false);
+        if((jets_ordered.at(0).index) != 0 && (jets_ordered.at(1).index) != 1){
+            runKinfit(jets_ordered.at(0).index, jets_ordered.at(1).index);
         }
     }
 }
@@ -626,9 +592,9 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
     const auto comparitor = [](const JetCandidate& j1, const JetCandidate& j2) {
         const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVJetTags:probb") + j1->bDiscriminator("pfDeepCSVJetTags:probbb");
         const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVJetTags:probb") + j2->bDiscriminator("pfDeepCSVJetTags:probbb");
-        const analysis::detail::jet_ordering::JetInfo jet_info_1(j1.GetMomentum(),0,deepcsv1);
-        const analysis::detail::jet_ordering::JetInfo jet_info_2(j2.GetMomentum(),1,deepcsv2);
-        return analysis::detail::jet_ordering::ComparitorStruct(jet_info_1,jet_info_2);
+        const analysis::jet_ordering::JetInfo jet_info_1(j1.GetMomentum(),0,deepcsv1);
+        const analysis::jet_ordering::JetInfo jet_info_2(j2.GetMomentum(),1,deepcsv2);
+        return analysis::jet_ordering::CompareJets(jet_info_1,jet_info_2,cuts::btag_2016::eta,cuts::btag_2016::pt);
     };
 
     return CollectObjects("jets", baseSelector, jets, comparitor);

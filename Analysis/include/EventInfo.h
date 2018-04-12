@@ -66,44 +66,56 @@ enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
 
 namespace jet_ordering {
 
+    template<typename LorentzVector>
     struct JetInfo {
-        LorentzVectorE p4;
+        LorentzVector p4;
         size_t index;
         double tag;
 
-        JetInfo(const LorentzVectorE _p4, size_t _index, double _tag)
+        JetInfo(const LorentzVector _p4, size_t _index, double _tag)
             : p4(_p4), index(_index), tag(_tag) { }
     };
 
-    bool ComparitorStruct(const JetInfo jet_1, const JetInfo jet_2)
+    template<typename LorentzVector>
+    bool CompareJets(const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2,
+                     double eta_thr, double pt_thr)
     {
         const auto eta1 = std::abs(jet_1.p4.eta());
         const auto eta2 = std::abs(jet_2.p4.eta());
-        if(eta1 < cuts::btag_2016::eta && eta2 >= cuts::btag_2016::eta) return true;
-        if(eta1 >= cuts::btag_2016::eta && eta2 < cuts::btag_2016::eta) return false;
+        if(eta1 < eta_thr && eta2 >= eta_thr) return true;
+        if(eta1 >= eta_thr && eta2 < eta_thr) return false;
         const auto pt1 = jet_1.p4.pt();
         const auto pt2 = jet_2.p4.pt();
-        if(pt1 > cuts::btag_2016::pt && pt2 <= cuts::btag_2016::pt) return true;
-        if(pt1 <= cuts::btag_2016::pt && pt2 > cuts::btag_2016::pt) return false;
+        if(pt1 > pt_thr && pt2 <= pt_thr) return true;
+        if(pt1 <= pt_thr && pt2 > pt_thr) return false;
 
-        const auto tag1 = jet_1.tag;
-        const auto tag2 = jet_2.tag;
-        if(tag1 != tag2)
-            return tag1 > tag2;
-        return jet_1.p4.pt() > jet_2.p4.pt();
+        if(jet_1.tag != jet_2.tag)
+            return jet_1.tag > jet_2.tag;
+        return pt1 > pt2;
     };
 
-    std::vector<JetInfo> Ordering(std::vector<JetInfo> jet_info_vector, bool apply_hard_cut,
+    template<typename LorentzVector>
+    std::vector<JetInfo<LorentzVector>> OrderJets(
+                                  const std::vector<JetInfo<LorentzVector>>& jet_info_vector,
+                                  bool apply_hard_cut,
                                   double pt_cut = std::numeric_limits<double>::lowest(),
                                   double eta_cut = std::numeric_limits<double>::max())
     {
-        std::vector<JetInfo> jets_ordered;
-        for(size_t n = 0; n < jet_info_vector.size(); ++n) {
-            if(apply_hard_cut && jet_info_vector.at(n).p4.Pt() > pt_cut
-                              && std::abs(jet_info_vector.at(n).p4.eta()) < eta_cut)
-                jets_ordered.push_back(jet_info_vector.at(n));
+        const auto comparitor = [](const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2) {
+            return analysis::jet_ordering::CompareJets(jet_info_1, jet_info_2, eta_cut, pt_cut);
+        };
+
+        std::vector<JetInfo<LorentzVector>> jets_ordered;
+        if(apply_hard_cut){
+            for(size_t n = 0; n < jet_info_vector.size(); ++n) {
+                if(jet_info_vector.at(n).p4.Pt() > pt_cut && std::abs(jet_info_vector.at(n).p4.eta()) < eta_cut)
+                    jets_ordered.push_back(jet_info_vector.at(n));
+            }
         }
-        std::sort(jets_ordered.begin(), jets_ordered.end(), ComparitorStruct);
+        else
+            jets_ordered = jet_info_vector;
+
+        std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
         return jets_ordered;
     }
 
@@ -262,7 +274,7 @@ public:
 
         std::vector<JetInfo> jets_ordered jet_ordering::Ordering(jet_info_vector,true,pt_cut,eta_cut);
         for(size_t h = 0; h < jets_ordered.size(); ++h){
-            const JetInfo jet_info = jets_ordered.at(h);
+            const JetInfo& jet_info = jets_ordered.at(h);
             const JetCandidate& jet = all_jets.at(jet_info.index);
             selected_jets.push_back(jet);
         }
