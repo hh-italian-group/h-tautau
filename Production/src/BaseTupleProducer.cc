@@ -557,10 +557,11 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < selection.jets.size(); ++n) {
             const JetCandidate& jet = selection.jets.at(n);
-            jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->csv());
+            jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
         }
 
-        std::vector<JetInfo<LorentzVector>> jets_ordered analysis::jet_ordering::OrderJets<LorentzVector>(jet_info_vector,false);
+        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,std::numeric_limits<double>::lowest(),
+                                                              std::numeric_limits<double>::max());
         if((jets_ordered.at(0).index) != 0 && (jets_ordered.at(1).index) != 1){
             runKinfit(jets_ordered.at(0).index, jets_ordered.at(1).index);
         }
@@ -593,9 +594,9 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
     const auto comparitor = [](const JetCandidate& j1, const JetCandidate& j2) {
         const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVJetTags:probb") + j1->bDiscriminator("pfDeepCSVJetTags:probbb");
         const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVJetTags:probb") + j2->bDiscriminator("pfDeepCSVJetTags:probbb");
-        const analysis::jet_ordering::JetInfo jet_info_1(j1.GetMomentum(),0,deepcsv1);
-        const analysis::jet_ordering::JetInfo jet_info_2(j2.GetMomentum(),1,deepcsv2);
-        return analysis::jet_ordering::CompareJets<LorentzVector>(jet_info_1,jet_info_2,cuts::btag_2016::eta,cuts::btag_2016::pt);
+        const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_1(j1.GetMomentum(),0,deepcsv1);
+        const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_2(j2.GetMomentum(),1,deepcsv2);
+        return analysis::jet_ordering::CompareJets(jet_info_1,jet_info_2,cuts::btag_2016::eta,cuts::btag_2016::pt);
     };
 
     return CollectObjects("jets", baseSelector, jets, comparitor);

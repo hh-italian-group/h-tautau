@@ -72,8 +72,24 @@ namespace jet_ordering {
         size_t index;
         double tag;
 
+        JetInfo() : index(0), tag(0.0) { }
+
+        // JetInfo(const JetInfo<LorentzVector>& other)
+        //     : p4(other.p4), index(other.index), tag(other.tag) { }
+        //
+        // JetInfo(JetInfo<LorentzVector>&& other)
+        //     : p4(other.p4), index(other.index), tag(other.tag) { }
+
         JetInfo(const LorentzVector _p4, size_t _index, double _tag)
             : p4(_p4), index(_index), tag(_tag) { }
+
+        // JetInfo<LorentzVector>& operator=(const JetInfo<LorentzVector>& other)
+        // {
+        //     p4 = other.p4;
+        //     index = other.index;
+        //     tag = other.tag;
+        //     return *this;
+        // }
     };
 
     template<typename LorentzVector>
@@ -101,7 +117,8 @@ namespace jet_ordering {
                                   double pt_cut = std::numeric_limits<double>::lowest(),
                                   double eta_cut = std::numeric_limits<double>::max())
     {
-        const auto comparitor = [eta_cut,pt_cut](const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2) {
+        const auto comparitor = [&](const JetInfo<LorentzVector>& jet_1,
+                                    const JetInfo<LorentzVector>& jet_2) -> bool {
             return analysis::jet_ordering::CompareJets(jet_1, jet_2, eta_cut, pt_cut);
         };
 
@@ -163,7 +180,7 @@ public:
                                    double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
-        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
+        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             double tag;
             if(jet_ordering == JetOrdering::Pt)
@@ -177,7 +194,7 @@ public:
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
         }
 
-        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jets_ordered jet_ordering::OrderJets<LorentzVector>(jet_info_vector,true,pt_cut,eta_cut);
+        auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
         JetPair selected_pair = ntuple::UndefinedJetPair();
         selected_pair.first = jets_ordered.at(0).index;
         selected_pair.second = jets_ordered.at(1).index;
@@ -270,10 +287,9 @@ public:
             jet_info_vector.emplace_back(jet.GetMomentum(),n,tag);
         }
 
-        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jets_ordered jet_ordering::OrderJets<LorentzVector>(jet_info_vector,true,pt_cut,eta_cut);
+        auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
         for(size_t h = 0; h < jets_ordered.size(); ++h){
-            const analysis::jet_ordering::JetInfo& jet_info = jets_ordered.at(h);
-            const JetCandidate& jet = all_jets.at(jet_info.index);
+            const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
             selected_jets.push_back(jet);
         }
         return selected_jets;
