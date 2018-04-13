@@ -7,7 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <algorithm>
 #include "EventTuple.h"
 #include "AnalysisTypes.h"
-#include "RootExt.h"
+#include "AnalysisTools/Core/include/RootExt.h"
 #include "KinFitInterface.h"
 #include "Candidate.h"
 #include "TupleObjects.h"
@@ -101,8 +101,8 @@ namespace jet_ordering {
                                   double pt_cut = std::numeric_limits<double>::lowest(),
                                   double eta_cut = std::numeric_limits<double>::max())
     {
-        const auto comparitor = [](const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2) {
-            return analysis::jet_ordering::CompareJets(jet_info_1, jet_info_2, eta_cut, pt_cut);
+        const auto comparitor = [eta_cut,pt_cut](const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2) {
+            return analysis::jet_ordering::CompareJets(jet_1, jet_2, eta_cut, pt_cut);
         };
 
         std::vector<JetInfo<LorentzVector>> jets_ordered;
@@ -163,7 +163,7 @@ public:
                                    double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
-        std::vector<JetInfo> jet_info_vector;
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             double tag;
             if(jet_ordering == JetOrdering::Pt)
@@ -174,11 +174,10 @@ public:
                 tag = event.jets_deepCsv_b.at(n)+event.jets_deepCsv_bb.at(n);
             else
                 throw exception("Unsupported jet ordering for b-jet pair selection.");
-            const JetInfo jet_info(event.jets_p4.at(n),n,tag);
-            jet_info_vector.push_back(jet_info);
+            jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
         }
 
-        std::vector<JetInfo> jets_ordered jet_ordering::Ordering(jet_info_vector,true,pt_cut,eta_cut);
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jets_ordered jet_ordering::OrderJets<LorentzVector>(jet_info_vector,true,pt_cut,eta_cut);
         JetPair selected_pair = ntuple::UndefinedJetPair();
         selected_pair.first = jets_ordered.at(0).index;
         selected_pair.second = jets_ordered.at(1).index;
@@ -255,7 +254,7 @@ public:
     {
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
-        std::vector<JetInfo> jet_info_vector;
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
             double tag;
@@ -268,13 +267,12 @@ public:
             else
                 throw exception("Unsupported jet ordering for jet selection.");
             if(jet->csv() <= csv_cut) continue;
-            const JetInfo jet_info(jet.GetMomentum(),n,tag);
-            jet_info_vector.push_back(jet_info);
+            jet_info_vector.emplace_back(jet.GetMomentum(),n,tag);
         }
 
-        std::vector<JetInfo> jets_ordered jet_ordering::Ordering(jet_info_vector,true,pt_cut,eta_cut);
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jets_ordered jet_ordering::OrderJets<LorentzVector>(jet_info_vector,true,pt_cut,eta_cut);
         for(size_t h = 0; h < jets_ordered.size(); ++h){
-            const JetInfo& jet_info = jets_ordered.at(h);
+            const analysis::jet_ordering::JetInfo& jet_info = jets_ordered.at(h);
             const JetCandidate& jet = all_jets.at(jet_info.index);
             selected_jets.push_back(jet);
         }
