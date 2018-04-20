@@ -15,6 +15,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SummaryTuple.h"
 #include "AnalysisTools/Core/include/EventIdentifier.h"
 #include "hh-bbtautau/Analysis/include/MT2.h"
+#include "h-tautau/McCorrections/include/JECUncertaintiesWrapper.h"
 
 namespace analysis {
 
@@ -142,7 +143,8 @@ class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary) : summary(_summary)
+    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source)
+        : summary(_summary), jecUncertainties(_uncertainties_source)
     {
         for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
             const int channel_id = summary.triggers_channel.at(n);
@@ -163,9 +165,16 @@ public:
     const ProdSummary& operator*() const { return summary; }
     const ProdSummary* operator->() const { return &summary; }
 
+    const JECUncertaintiesWrapper& GetJecUncertainties()
+    {
+        return jecUncertainties;
+    }
+
 private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
+    JECUncertaintiesWrapper jecUncertainties;
+
 };
 
 class EventInfoBase {
@@ -261,6 +270,12 @@ public:
             }
         }
         return *jets;
+    }
+
+    void SetJets(const JetCollection& new_jets)
+    {
+        jets = std::make_shared<JetCollection>();
+        jets = new_jets;
     }
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
@@ -444,9 +459,9 @@ private:
     JetPair selected_bjet_pair;
     bool has_bjet_pair;
 
-    std::list<ntuple::TupleJet> tuple_jets;
+    std::shared_ptr<std::list<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<JetCollection> jets;
-    std::list<ntuple::TupleFatJet> tuple_fatJets;
+    std::shared_ptr<std::list<ntuple::TupleFatJet>> tuple_fatJets;
     std::shared_ptr<FatJetCollection> fatJets;
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
     std::shared_ptr<ntuple::TupleMet> tuple_met;
@@ -519,6 +534,18 @@ public:
     virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) override
     {
         return GetHiggsTT(useSVfit).GetMomentum();
+    }
+
+    EventInfo<FirstLeg, SecondLeg>& ApplyShift(analysis::UncertaintySource uncertainty_source,
+        analysis::UncertaintyScale scale)
+    {
+        EventInfo<FirstLeg, SecondLeg>& shifted_event_info(*this);
+        const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
+        const JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
+        const JetCollection& jets = shifted_event_info.GetJets();
+        const JetCollection& corrected_jets = jecUncertainties.ApplyShift<JetCollection,MET>(jets,uncertainty_source,scale,*shifted_event_info.GetMET());
+        shifted_event_info.SetJets(corrected_jets);
+        return shifted_event_info;
     }
 
 private:

@@ -35,6 +35,52 @@ ENUM_NAMES(UncertaintyScale) = {
     { UncertaintyScale::Central, "Central" }, { UncertaintyScale::Up, "Up" }, { UncertaintyScale::Down, "Down" }
 };
 
+enum class UncertaintySource { None = 0, TauES = 1, JetTotal = 2, TopPt = 3, JetAbsolute = 4,
+    JetHighPtExtra = 5, JetSinglePionECAL = 6, JetSinglePionHCAL = 7, JetFlavorQCD = 8, JetTime = 9,
+   JetRelativeJEREC1 = 10, JetRelativeJEREC2 = 11, JetRelativeJERHF = 12,
+   JetRelativePtBB = 13, JetRelativePtEC1 = 14, JetRelativePtEC2 = 15, JetRelativePtHF = 16,
+   JetRelativeFSR = 17, JetRelativeStatEC2 = 18, JetRelativeStatHF = 19, JetPileUpDataMC = 20,
+   JetPileUpPtBB = 21, JetPileUpPtEC = 22, JetPileUpPtHF = 23, JetPileUpBias = 24,
+   JetSubTotalPileUp = 25, JetSubTotalRelative = 26, JetSubTotalPt = 27, JetSubTotalMC = 28,
+   JetTotalNoFlavor = 29, JetFlavorZJet = 30, JetFlavorPhotonJet = 31, JetFlavorPureGluon = 32,
+   JetFlavorPureQuark = 33, JetFlavorPureCharm = 34, JetFlavorPureBottom = 35 };
+ENUM_NAMES(UncertaintySource) = {
+    { UncertaintySource::None, "None" }, { UncertaintySource::TauES, "TauES" },
+    { UncertaintySource::JetTotal, "JetTotal" }, { UncertaintySource::TopPt, "TopPt" },
+    { UncertaintySource::JetAbsolute, "JetAbsolute" },
+    { UncertaintySource::JetHighPtExtra, "JetHighPtExtra" },
+    { UncertaintySource::JetSinglePionECAL, "JetSinglePionECAL" },
+    { UncertaintySource::JetSinglePionHCAL, "JetSinglePionHCAL" },
+    { UncertaintySource::JetFlavorQCD, "JetFlavorQCD" }, { UncertaintySource::JetTime, "JetTime" },
+    { UncertaintySource::JetRelativeJEREC1, "JetRelativeJEREC1" },
+    { UncertaintySource::JetRelativeJEREC2, "JetRelativeJEREC2" },
+    { UncertaintySource::JetRelativeJERHF, "JetRelativeJERHF" },
+    { UncertaintySource::JetRelativePtBB, "JetRelativePtBB" },
+    { UncertaintySource::JetRelativePtEC1, "JetRelativePtEC1" },
+    { UncertaintySource::JetRelativePtEC2, "JetRelativePtEC2" },
+    { UncertaintySource::JetRelativePtHF, "JetRelativePtHF" },
+    { UncertaintySource::JetRelativeFSR, "JetRelativeFSR" },
+    { UncertaintySource::JetRelativeStatEC2, "JetRelativeStatEC2" },
+    { UncertaintySource::JetRelativeStatHF, "JetRelativeStatHF" },
+    { UncertaintySource::JetPileUpDataMC, "JetPileUpDataMC" },
+    { UncertaintySource::JetPileUpPtBB, "JetPileUpPtBB" },
+    { UncertaintySource::JetPileUpPtEC, "JetPileUpPtEC" },
+    { UncertaintySource::JetPileUpPtHF, "JetPileUpPtHF" },
+    { UncertaintySource::JetPileUpBias, "JetPileUpBias" },
+    { UncertaintySource::JetSubTotalPileUp, "JetSubTotalPileUp" },
+    { UncertaintySource::JetSubTotalRelative, "JetSubTotalRelative" },
+    { UncertaintySource::JetSubTotalPt, "JetSubTotalPt" },
+    { UncertaintySource::JetSubTotalMC, "JetSubTotalMC" },
+    { UncertaintySource::JetTotalNoFlavor, "JetTotalNoFlavor" },
+    { UncertaintySource::JetFlavorZJet, "JetFlavorZJet" },
+    { UncertaintySource::JetFlavorPhotonJet, "JetFlavorPhotonJet" },
+    { UncertaintySource::JetFlavorPureGluon, "JetFlavorPureGluon" },
+    { UncertaintySource::JetFlavorPureQuark, "JetFlavorPureQuark" },
+    { UncertaintySource::JetFlavorPureCharm, "JetFlavorPureCharm" },
+    { UncertaintySource::JetFlavorPureBottom, "JetFlavorPureBottom" }
+
+};
+
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
 enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight, VVTight };

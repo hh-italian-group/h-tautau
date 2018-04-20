@@ -18,7 +18,10 @@ struct Arguments {
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
-    REQ_ARG(std::string, output_file);
+    REQ_ARG(std::string, unc_source);
+    REQ_ARG(std::string, uncertainty);
+    OPT_ARG(std::string, scale);
+    OPT_ARG(std::string, output_file);
     OPT_ARG(std::string, sample_type, "signal");
 };
 
@@ -59,7 +62,7 @@ public:
         SyncTuple sync(args.tree_name(), outputFile.get(), false);
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data(),args.unc_source()));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
@@ -75,13 +78,17 @@ public:
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple->data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
 
-            if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-
-            if(syncMode == SyncMode::HH) {
-                if(event->extraelec_veto || event->extramuon_veto) continue;
+            if(args.scale() == EventEnergyScale::Central){
+                if(syncMode == SyncMode::HH) {
+                    if(event->extraelec_veto || event->extramuon_veto) continue;
+                }
+                htt_sync::FillSyncTuple(event,sync,run_period);
+            }
+            else {
+                auto new_event_info = ApplyShift(args.uncertainty(),args.scale());
+                htt_sync::FillSyncTuple(new_event_info,sync,run_period);
             }
 
-            htt_sync::FillSyncTuple(event,sync,run_period);
         }
 
         sync.Write();
