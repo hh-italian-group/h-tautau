@@ -165,7 +165,7 @@ public:
     const ProdSummary& operator*() const { return summary; }
     const ProdSummary* operator->() const { return &summary; }
 
-    const JECUncertaintiesWrapper& GetJecUncertainties()
+    jec::JECUncertaintiesWrapper GetJecUncertainties() const
     {
         return jecUncertainties;
     }
@@ -173,7 +173,7 @@ public:
 private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
-    JECUncertaintiesWrapper jecUncertainties;
+    jec::JECUncertaintiesWrapper jecUncertainties;
 
 };
 
@@ -265,8 +265,8 @@ public:
         if(!jets) {
             jets = std::shared_ptr<JetCollection>(new JetCollection());
             for(size_t n = 0; n < GetNJets(); ++n) {
-                tuple_jets.push_back(ntuple::TupleJet(*event, n));
-                jets->push_back(JetCandidate(tuple_jets.back()));
+                tuple_jets->push_back(ntuple::TupleJet(*event, n));
+                jets->push_back(JetCandidate(tuple_jets->back()));
             }
         }
         return *jets;
@@ -274,8 +274,7 @@ public:
 
     void SetJets(const JetCollection& new_jets)
     {
-        jets = std::make_shared<JetCollection>();
-        jets = new_jets;
+        jets = std::make_shared<JetCollection>(new_jets);
     }
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
@@ -351,8 +350,8 @@ public:
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
             for(size_t n = 0; n < GetNFatJets(); ++n) {
-                tuple_fatJets.push_back(ntuple::TupleFatJet(*event, n));
-                fatJets->push_back(FatJetCandidate(tuple_fatJets.back()));
+                tuple_fatJets->push_back(ntuple::TupleFatJet(*event, n));
+                fatJets->push_back(FatJetCandidate(tuple_fatJets->back()));
             }
         }
         return *fatJets;
@@ -449,6 +448,9 @@ public:
     void SetMvaScore(double _mva_score) { mva_score = _mva_score; }
     double GetMvaScore() const { return mva_score; }
 
+    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(analysis::UncertaintySource uncertainty_source,
+        analysis::UncertaintyScale scale);
+
 protected:
     const Event* event;
     const SummaryInfo* summaryInfo;
@@ -536,12 +538,19 @@ public:
         return GetHiggsTT(useSVfit).GetMomentum();
     }
 
-    EventInfo<FirstLeg, SecondLeg>& ApplyShift(analysis::UncertaintySource uncertainty_source,
+    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(analysis::UncertaintySource uncertainty_source,
         analysis::UncertaintyScale scale)
     {
-        EventInfo<FirstLeg, SecondLeg>& shifted_event_info(*this);
+        EventInfo<FirstLeg, SecondLeg> event_info = ApplyShift(uncertainty_source, scale);
+        return std::make_shared<EventInfoBase>(event_info);
+    }
+
+    EventInfo<FirstLeg, SecondLeg> ApplyShift(analysis::UncertaintySource uncertainty_source,
+        analysis::UncertaintyScale scale)
+    {
+        EventInfo<FirstLeg, SecondLeg> shifted_event_info(*this);
         const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
-        const JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
+        const jec::JECUncertaintiesWrapper jecUncertainties = summaryInfo.GetJecUncertainties();
         const JetCollection& jets = shifted_event_info.GetJets();
         const JetCollection& corrected_jets = jecUncertainties.ApplyShift<JetCollection,MET>(jets,uncertainty_source,scale,*shifted_event_info.GetMET());
         shifted_event_info.SetJets(corrected_jets);

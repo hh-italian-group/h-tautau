@@ -20,7 +20,6 @@ struct Arguments {
     REQ_ARG(std::string, period);
     REQ_ARG(std::string, unc_source);
     REQ_ARG(std::string, uncertainty);
-    OPT_ARG(std::string, scale);
     OPT_ARG(std::string, output_file);
     OPT_ARG(std::string, sample_type, "signal");
 };
@@ -78,16 +77,20 @@ public:
             auto eventInfoPtr = MakeEventInfo(channel, originalTuple->data(), bjet_pair, summaryInfo.get());
             EventInfoBase& event = *eventInfoPtr;
 
-            if(args.scale() == EventEnergyScale::Central){
-                if(syncMode == SyncMode::HH) {
-                    if(event->extraelec_veto || event->extramuon_veto) continue;
-                }
-                htt_sync::FillSyncTuple(event,sync,run_period);
+            if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
+
+            if(syncMode == SyncMode::HH) {
+                if(event->extraelec_veto || event->extramuon_veto) continue;
             }
-            else {
-                auto new_event_info = ApplyShift(args.uncertainty(),args.scale());
-                htt_sync::FillSyncTuple(new_event_info,sync,run_period);
-            }
+
+            auto new_event_info_up = ApplyShift(args.uncertainty(),analysis::Up);
+            auto new_event_info_down = ApplyShift(args.uncertainty(),analysis::Down);
+
+            htt_sync::FillSyncTuple(event,new_event_info_up,new_event_info_down,sync,run_period);
+
+
+
+
 
         }
 

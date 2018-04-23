@@ -78,6 +78,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, mt_sv) /* using MarkovChain MC integration svfit.transverseMass() */ \
     /* MET */ \
     VAR(Float_t, met) /* type 1 corrected PF MET */  \
+    VAR(Float_t, met_up) /* PF MET after up jec unc*/  \
+    VAR(Float_t, met_down) /* PF MET after down jec unc */  \
     VAR(Float_t, metphi) /* type 1 corrected PF MET phi */  \
     VAR(Float_t, puppimet) /* Puppi corrrected MET */  \
     VAR(Float_t, puppimetphi) /* Puppi corrected MET phi */  \
@@ -170,7 +172,8 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period)
+    void FillSyncTuple(analysis::EventInfoBase& event, analysis::EventInfo& new_event_up,
+        analysis::EventInfo& new_event_down, htt_sync::SyncTuple& sync, analysis::Period run_period)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -250,6 +253,9 @@ namespace htt_sync {
         sync().mt_sv = event->SVfit_mt;
 
         sync().met = event->pfMET_p4.Pt();
+        sync().met_up = new_event_up.pfMET_p4.Pt();
+        sync().met_down = new_event_up.pfMET_p4.Pt();
+        sync().shifted_met = event->pfMET_p4.Pt();
         sync().metphi = static_cast<float>(TVector2::Phi_0_2pi(event->pfMET_p4.Phi()));
         sync().pzetavis = static_cast<float>(analysis::Calculate_visiblePzeta(event->p4_1, event->p4_2));
 
