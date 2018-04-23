@@ -19,8 +19,8 @@ struct Arguments {
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
     REQ_ARG(std::string, unc_source);
-    REQ_ARG(std::string, uncertainty);
-    OPT_ARG(std::string, output_file);
+    OPT_ARG(std::string, uncertainty, "");
+    OPT_ARG(std::string, output_file, "");
     OPT_ARG(std::string, sample_type, "signal");
 };
 
@@ -83,10 +83,15 @@ public:
                 if(event->extraelec_veto || event->extramuon_veto) continue;
             }
 
-            auto new_event_info_up = ApplyShift(args.uncertainty(),analysis::Up);
-            auto new_event_info_down = ApplyShift(args.uncertainty(),analysis::Down);
+            if(args.uncertainty().empty())
+                htt_sync::FillSyncTuple(event,sync,run_period);
+            else {
+                auto new_event_info_up = event.ApplyShiftBase(args.uncertainty(),analysis::Up);
+                auto new_event_info_down = event.ApplyShift(args.uncertainty(),analysis::Down);
 
-            htt_sync::FillSyncTuple(event,new_event_info_up,new_event_info_down,sync,run_period);
+                htt_sync::FillSyncTuple(event,sync,run_period,&new_event_info_up,&new_event_info_down);
+            }
+
 
 
 

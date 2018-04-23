@@ -165,7 +165,7 @@ public:
     const ProdSummary& operator*() const { return summary; }
     const ProdSummary* operator->() const { return &summary; }
 
-    jec::JECUncertaintiesWrapper GetJecUncertainties() const
+    const jec::JECUncertaintiesWrapper& GetJecUncertainties() const
     {
         return jecUncertainties;
     }
@@ -380,6 +380,15 @@ public:
         return *met;
     }
 
+    template<typename LorentzVector>
+    void SetMetMomentum(const LorentzVector& new_met_p4)
+    {
+        if(!tuple_met)
+            tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
+        met = std::make_shared<MET>(*tuple_met, tuple_met->cov());
+        met->SetMomentum(new_met_p4);
+    }
+
     const kin_fit::FitResults& GetKinFitResults()
     {
         if(!HasBjetPair())
@@ -542,7 +551,7 @@ public:
         analysis::UncertaintyScale scale)
     {
         EventInfo<FirstLeg, SecondLeg> event_info = ApplyShift(uncertainty_source, scale);
-        return std::make_shared<EventInfoBase>(event_info);
+        return std::make_shared<EventInfo<FirstLeg, SecondLeg>>(std::move(event_info));
     }
 
     EventInfo<FirstLeg, SecondLeg> ApplyShift(analysis::UncertaintySource uncertainty_source,
@@ -550,10 +559,12 @@ public:
     {
         EventInfo<FirstLeg, SecondLeg> shifted_event_info(*this);
         const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
-        const jec::JECUncertaintiesWrapper jecUncertainties = summaryInfo.GetJecUncertainties();
+        const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
         const JetCollection& jets = shifted_event_info.GetJets();
-        const JetCollection& corrected_jets = jecUncertainties.ApplyShift<JetCollection,MET>(jets,uncertainty_source,scale,*shifted_event_info.GetMET());
+        auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
+        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&shifted_met_p4);
         shifted_event_info.SetJets(corrected_jets);
+        shifted_event_info.SetMetMomentum(shifted_met_p4);
         return shifted_event_info;
     }
 

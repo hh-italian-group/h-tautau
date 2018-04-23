@@ -77,17 +77,17 @@ namespace jec {
            for (const auto jet_unc : JetUncertainties_withTotal()) {
                std::string full_name = analysis::ToString(jet_unc);
                const std::string name = full_name.substr(3);
-               std::shared_ptr<JetCorrectorParameters> p = std::make_shared<JetCorrectorParameters>(uncertainties_source, name);
-               std::shared_ptr<JetCorrectionUncertainty> unc = std::make_shared<JetCorrectionUncertainty>(p);
+               JetCorrectorParameters p(uncertainties_source, name);
+               auto unc = std::make_shared<JetCorrectionUncertainty>(p);
 
                uncertainty_map[analysis::Parse<analysis::UncertaintySource>(full_name)] = unc;
            } // for unc
 
         }
 
-        template<typename JetCollection, typename MET>
+        template<typename JetCollection, typename LorentzVector>
         JetCollection ApplyShift(const JetCollection& jet_candidates, analysis::UncertaintySource uncertainty_source,
-            analysis::UncertaintyScale scale, MET* met = nullptr)
+            analysis::UncertaintyScale scale, LorentzVector* met = nullptr) const
         {
             static const std::map<UncertaintyScale, bool> scales = {
                 { UncertaintyScale::Up, true }, { UncertaintyScale::Down, false }
@@ -103,8 +103,8 @@ namespace jec {
             if(scale == analysis::UncertaintyScale::Central)
                 throw analysis::exception("Uncertainty scale Central.");
             std::shared_ptr<JetCorrectionUncertainty> unc = uncertainty_map.at(uncertainty_source);
-            double shifted_met_px = met->px();
-            double shifted_met_py = met->py();
+            double shifted_met_px = 0;
+            double shifted_met_py = 0;
 
             for (const auto& jet : jet_candidates){
                 unc->setJetPt(jet.GetMomentum().pt());
@@ -116,14 +116,16 @@ namespace jec {
                 JetCandidate corr_jet(jet);
                 corr_jet.SetMomentum(shiftedMomentum);
                 corrected_jets.push_back(corr_jet);
-                if (met != nullptr){
-                    shifted_met_px += jet.GetMomentum().px() - corr_jet.GetMomentum().px();
-                    shifted_met_py += jet.GetMomentum().py() - corr_jet.GetMomentum().py();
-                }
+                shifted_met_px += jet.GetMomentum().px() - corr_jet.GetMomentum().px();
+                shifted_met_py += jet.GetMomentum().py() - corr_jet.GetMomentum().py();
             }
 
-            double E = std::sqrt(shifted_met_px*shifted_met_px + shifted_met_py*shifted_met_py);
-            met->SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+            if(met){
+                shifted_met_px += met->px();
+                shifted_met_py += met->py();
+                double E = std::hypot(shifted_met_px,shifted_met_py);
+                met->SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+            }
 
             return corrected_jets;
 
