@@ -86,8 +86,8 @@ public:
             if(args.uncertainty().empty())
                 htt_sync::FillSyncTuple(event,sync,run_period);
             else {
-                auto new_event_info_up = event.ApplyShiftBase(args.uncertainty(),analysis::Up);
-                auto new_event_info_down = event.ApplyShiftBase(args.uncertainty(),analysis::Down);
+                auto new_event_info_up = event.ApplyShiftBase(analysis::Parse<analysis::UncertaintySource>(args.uncertainty()),analysis::UncertaintyScale::Up);
+                auto new_event_info_down = event.ApplyShiftBase(analysis::Parse<analysis::UncertaintySource>(args.uncertainty()),analysis::UncertaintyScale::Down);
 
                 htt_sync::FillSyncTuple(event,sync,run_period,new_event_info_up.get(),new_event_info_down.get());
             }

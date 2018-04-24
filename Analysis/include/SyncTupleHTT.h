@@ -176,8 +176,8 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 namespace htt_sync {
 
     void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync,
-        analysis::Period run_period, analysis::EventInfo* new_event_up = nullptr,
-            analysis::EventInfo* new_event_down = nullptr)
+        analysis::Period run_period, analysis::EventInfoBase* new_event_up = nullptr,
+            analysis::EventInfoBase* new_event_down = nullptr)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
