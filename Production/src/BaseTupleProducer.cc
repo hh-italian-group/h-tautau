@@ -560,8 +560,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
             jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
         }
 
-        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,std::numeric_limits<double>::lowest(),
-                                                              std::numeric_limits<double>::max());
+        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,20,2.4);
         if((jets_ordered.at(0).index) != 0 && (jets_ordered.at(1).index) != 1){
             runKinfit(jets_ordered.at(0).index, jets_ordered.at(1).index);
         }

@@ -75,22 +75,9 @@ namespace jet_ordering {
 
         JetInfo() : index(0), tag(0.0) { }
 
-        // JetInfo(const JetInfo<LorentzVector>& other)
-        //     : p4(other.p4), index(other.index), tag(other.tag) { }
-        //
-        // JetInfo(JetInfo<LorentzVector>&& other)
-        //     : p4(other.p4), index(other.index), tag(other.tag) { }
-
         JetInfo(const LorentzVector _p4, size_t _index, double _tag)
             : p4(_p4), index(_index), tag(_tag) { }
 
-        // JetInfo<LorentzVector>& operator=(const JetInfo<LorentzVector>& other)
-        // {
-        //     p4 = other.p4;
-        //     index = other.index;
-        //     tag = other.tag;
-        //     return *this;
-        // }
     };
 
     template<typename LorentzVector>
@@ -142,6 +129,18 @@ namespace jet_ordering {
 class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
+
+    explicit SummaryInfo(const ProdSummary& _summary)
+        : summary(_summary)
+    {
+        for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
+            const int channel_id = summary.triggers_channel.at(n);
+            const Channel channel = static_cast<Channel>(channel_id);
+            if(!triggerDescriptors.count(channel))
+                triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
+            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
+        }
+    }
 
     explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source)
         : summary(_summary), jecUncertainties(_uncertainties_source)
@@ -205,8 +204,10 @@ public:
 
         auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
         JetPair selected_pair = ntuple::UndefinedJetPair();
-        selected_pair.first = jets_ordered.at(0).index;
-        selected_pair.second = jets_ordered.at(1).index;
+        if(jets_ordered.size() >= 1)
+            selected_pair.first = jets_ordered.at(0).index;
+        if(jets_ordered.size() >= 2)
+            selected_pair.second = jets_ordered.at(1).index;
         return selected_pair;
     }
 
@@ -264,6 +265,7 @@ public:
     {
         if(!jets) {
             jets = std::shared_ptr<JetCollection>(new JetCollection());
+            tuple_jets = std::make_shared<std::list<ntuple::TupleJet>>();
             for(size_t n = 0; n < GetNJets(); ++n) {
                 tuple_jets->push_back(ntuple::TupleJet(*event, n));
                 jets->push_back(JetCandidate(tuple_jets->back()));
@@ -349,6 +351,7 @@ public:
     {
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
+            tuple_fatJets = std::make_shared<std::list<ntuple::TupleFatJet>>();
             for(size_t n = 0; n < GetNFatJets(); ++n) {
                 tuple_fatJets->push_back(ntuple::TupleFatJet(*event, n));
                 fatJets->push_back(FatJetCandidate(tuple_fatJets->back()));
@@ -458,7 +461,7 @@ public:
     double GetMvaScore() const { return mva_score; }
 
     virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(analysis::UncertaintySource uncertainty_source,
-        analysis::UncertaintyScale scale);
+        analysis::UncertaintyScale scale) = 0;
 
 protected:
     const Event* event;
@@ -547,22 +550,23 @@ public:
         return GetHiggsTT(useSVfit).GetMomentum();
     }
 
-    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(analysis::UncertaintySource uncertainty_source,
-        analysis::UncertaintyScale scale)
+    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
+        UncertaintyScale scale) override
     {
         EventInfo<FirstLeg, SecondLeg> event_info = ApplyShift(uncertainty_source, scale);
         return std::make_shared<EventInfo<FirstLeg, SecondLeg>>(std::move(event_info));
     }
 
-    EventInfo<FirstLeg, SecondLeg> ApplyShift(analysis::UncertaintySource uncertainty_source,
-        analysis::UncertaintyScale scale)
+    EventInfo<FirstLeg, SecondLeg> ApplyShift(UncertaintySource uncertainty_source,
+        UncertaintyScale scale)
     {
         EventInfo<FirstLeg, SecondLeg> shifted_event_info(*this);
         const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
         const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
         const JetCollection& jets = shifted_event_info.GetJets();
+        auto other_jets_p4 = event->other_jets_p4;
         auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
-        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&shifted_met_p4);
+        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,other_jets_p4,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
         shifted_event_info.SetJets(corrected_jets);
         shifted_event_info.SetMetMomentum(shifted_met_p4);
         return shifted_event_info;
