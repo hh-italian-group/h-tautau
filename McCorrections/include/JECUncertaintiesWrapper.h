@@ -111,9 +111,18 @@ namespace jec {
                 shifted_met_py += jet.GetMomentum().py() - corr_jet.GetMomentum().py();
             }
 
-            for (const auto other_jet : other_jets_p4){
-                shifted_met_px -= other_jet->px();
-                shifted_met_py -= other_jet->py();
+            if(met){
+                for (size_t n = 0; n < other_jets_p4->size(); ++n){
+                    LorentzVector1 other_jet = other_jets_p4->at(n);
+                    unc->setJetPt(other_jet.pt());
+                    unc->setJetEta(other_jet.eta());
+                    const double unc_var = unc->getUncertainty(scales.at(scale));
+                    const int sign = scales_variation.at(scale);
+                    const double sf = 1.0 + (sign * unc_var);
+                    const auto shiftedMomentum = other_jet * sf;
+                    shifted_met_px -= shiftedMomentum.px();
+                    shifted_met_py -= shiftedMomentum.py();
+                }
             }
 
             if(met){

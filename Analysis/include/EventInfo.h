@@ -130,7 +130,7 @@ class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary)
+    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source = "")
         : summary(_summary)
     {
         for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
@@ -140,18 +140,8 @@ public:
                 triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
             triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
         }
-    }
-
-    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source)
-        : summary(_summary), jecUncertainties(_uncertainties_source)
-    {
-        for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
-            const int channel_id = summary.triggers_channel.at(n);
-            const Channel channel = static_cast<Channel>(channel_id);
-            if(!triggerDescriptors.count(channel))
-                triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
-            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
-        }
+        if(!_uncertainties_source.empty())
+            jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
     }
 
     std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const
@@ -166,13 +156,13 @@ public:
 
     const jec::JECUncertaintiesWrapper& GetJecUncertainties() const
     {
-        return jecUncertainties;
+        return *jecUncertainties;
     }
 
 private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
-    jec::JECUncertaintiesWrapper jecUncertainties;
+    std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
 
 };
 
@@ -566,7 +556,7 @@ public:
         const JetCollection& jets = shifted_event_info.GetJets();
         auto other_jets_p4 = event->other_jets_p4;
         auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
-        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,other_jets_p4,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
+        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
         shifted_event_info.SetJets(corrected_jets);
         shifted_event_info.SetMetMomentum(shifted_met_p4);
         return shifted_event_info;
