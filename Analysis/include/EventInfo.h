@@ -82,7 +82,7 @@ namespace jet_ordering {
 
     template<typename LorentzVector>
     bool CompareJets(const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2,
-                     double eta_thr, double pt_thr)
+                     double pt_thr, double eta_thr)
     {
         const auto eta1 = std::abs(jet_1.p4.eta());
         const auto eta2 = std::abs(jet_2.p4.eta());
@@ -107,7 +107,7 @@ namespace jet_ordering {
     {
         const auto comparitor = [&](const JetInfo<LorentzVector>& jet_1,
                                     const JetInfo<LorentzVector>& jet_2) -> bool {
-            return analysis::jet_ordering::CompareJets(jet_1, jet_2, eta_cut, pt_cut);
+            return analysis::jet_ordering::CompareJets(jet_1, jet_2, pt_cut, eta_cut);
         };
 
         std::vector<JetInfo<LorentzVector>> jets_ordered;
@@ -156,6 +156,8 @@ public:
 
     const jec::JECUncertaintiesWrapper& GetJecUncertainties() const
     {
+        if(!jecUncertainties)
+            throw exception("Jec Uncertainties not stored.");
         return *jecUncertainties;
     }
 

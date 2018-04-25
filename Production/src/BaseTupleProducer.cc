@@ -5,6 +5,7 @@
 #include "../interface/GenTruthTools.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 
 
@@ -560,7 +561,8 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
             jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
         }
 
-        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,20,2.4);
+        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,cuts::btag_2017::pt,
+                                                              cuts::btag_2017::eta);
         if((jets_ordered.at(0).index) != 0 && (jets_ordered.at(1).index) != 1){
             runKinfit(jets_ordered.at(0).index, jets_ordered.at(1).index);
         }
@@ -595,7 +597,7 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
         const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVJetTags:probb") + j2->bDiscriminator("pfDeepCSVJetTags:probbb");
         const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_1(j1.GetMomentum(),0,deepcsv1);
         const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_2(j2.GetMomentum(),1,deepcsv2);
-        return analysis::jet_ordering::CompareJets(jet_info_1,jet_info_2,cuts::btag_2016::eta,cuts::btag_2016::pt);
+        return analysis::jet_ordering::CompareJets(jet_info_1,jet_info_2,cuts::btag_2016::pt,cuts::btag_2016::eta);
     };
 
     return CollectObjects("jets", baseSelector, jets, comparitor);
