@@ -137,7 +137,7 @@ fi
 # Install analysis packages
 declare -A ANA_PACKAGES
 ANA_PACKAGES=( ["AnalysisTools"]="prod16:prod_v4 prod17:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4_2017 ana:ana_v3 ana_osx:ana_v3" \
+               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4 ana:ana_v3 ana_osx:ana_v3" \
                ["hh-bbtautau"]="prod16:ana_v3 prod17:ana_v4 ana:ana_v3 ana_osx:ana_v3" )
 GITHUB_USER=$(git config user.github)
 
