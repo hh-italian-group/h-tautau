@@ -3,6 +3,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include "AnalysisTools/Core/include/EventIdentifier.h"
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "WeightProvider.h"
@@ -133,17 +134,27 @@ public:
 
     double GetIdIsoWeight(const Event& event) const
     {
-        const Channel channel = static_cast<Channel>(event.channelId);
-        if(channel == Channel::ETau) return electronSF.GetIdIsoSF(event.p4_1);
-        if(channel == Channel::MuTau) return muonSF.GetIdIsoSF(event.p4_1);
+        try {
+            const Channel channel = static_cast<Channel>(event.channelId);
+            if(channel == Channel::ETau) return electronSF.GetIdIsoSF(event.p4_1);
+            if(channel == Channel::MuTau) return muonSF.GetIdIsoSF(event.p4_1);
+        } catch(std::runtime_error& e) {
+            const EventIdentifier id(event);
+            std::cerr << id << " ERROR: " << e.what() << std::endl;
+        }
         return 1.0;
     }
 
     double GetTriggerWeight(const Event& event) const
     {
-        const Channel channel = static_cast<Channel>(event.channelId);
-        if(channel == Channel::ETau) return electronSF.GetTriggerSF(event.p4_1);
-        if(channel == Channel::MuTau) return muonSF.GetTriggerSF(event.p4_1);
+        try {
+            const Channel channel = static_cast<Channel>(event.channelId);
+            if(channel == Channel::ETau) return electronSF.GetTriggerSF(event.p4_1);
+            if(channel == Channel::MuTau) return muonSF.GetTriggerSF(event.p4_1);
+        } catch(std::runtime_error& e) {
+            const EventIdentifier id(event);
+            std::cerr << id << " ERROR: " << e.what() << std::endl;
+        }
         return 1.0;
     }
 
