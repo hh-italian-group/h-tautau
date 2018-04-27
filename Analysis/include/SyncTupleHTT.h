@@ -35,11 +35,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     LVAR(Float_t, againstMuonLoose3, pref) \
     LVAR(Float_t, againstMuonTight3, pref) \
     LVAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits, pref) \
-    LVAR(Float_t, byIsolationMVA3newDMwoLTraw, pref) \
-    LVAR(Float_t, byIsolationMVA3oldDMwoLTraw, pref) \
-    LVAR(Float_t, byIsolationMVA3newDMwLTraw, pref) \
-    LVAR(Float_t, byIsolationMVA3oldDMwLTraw, pref) \
-    LVAR(Float_t, byIsolationMVArun2v1DBoldDMwLTrawNew, pref) \
+    LVAR(Float_t, byIsolationMVArun2v1DBoldDMwLTraw, pref) \
+    LVAR(Float_t, byIsolationMVArun2017v2DBoldDMwLTraw2017, pref) \
     LVAR(Float_t, chargedIsoPtSum, pref) \
     LVAR(Float_t, decayModeFindingOldDMs, pref) \
     LVAR(Float_t, neutralIsoPtSum, pref) \
@@ -176,17 +173,6 @@ namespace htt_sync {
         static constexpr float default_value = std::numeric_limits<float>::lowest();
         static constexpr int default_int_value = std::numeric_limits<int>::lowest();
 
-        const auto GetTauID = [&](size_t leg_id, const std::string& id_name) -> float {
-            const auto& id_keys = leg_id == 1 ? event->tauId_keys_1 : event->tauId_keys_2;
-            const auto& id_values = leg_id == 1 ? event->tauId_values_1 : event->tauId_values_2;
-            const uint32_t key = analysis::tools::hash(id_name);
-            const auto iter = std::find(id_keys.begin(), id_keys.end(), key);
-            if(iter == id_keys.end()) return default_value;
-            const size_t index = static_cast<size_t>(std::distance(id_keys.begin(), iter));
-            return id_values.at(index);
-        };
-
-
         sync().run = event->run;
         sync().lumi = event->lumi;
         sync().evt = event->evt;
@@ -204,20 +190,18 @@ namespace htt_sync {
         sync().pfmt_1 = static_cast<float>(analysis::Calculate_MT(event->p4_1, event->pfMET_p4));
         sync().iso_1 =  event->iso_1;
         sync().gen_match_1 = event->gen_match_1;
-        sync().againstElectronLooseMVA6_1 = GetTauID(1, "againstElectronLooseMVA6");
-        sync().againstElectronMediumMVA6_1 = GetTauID(1, "againstElectronMediumMVA6");
-        sync().againstElectronTightMVA6_1 = GetTauID(1, "againstElectronTightMVA6");
-        sync().againstElectronVLooseMVA6_1 = GetTauID(1, "againstElectronVLooseMVA6");
-        sync().againstElectronVTightMVA6_1 = GetTauID(1, "againstElectronVTightMVA6");
-        sync().againstMuonLoose3_1 = GetTauID(1, "againstMuonLoose3");
-        sync().againstMuonTight3_1 = GetTauID(1, "againstMuonTight3");
-        sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = GetTauID(1, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
-        sync().byIsolationMVA3newDMwoLTraw_1 = GetTauID(1, "byIsolationMVA3newDMwoLTraw");
-        sync().byIsolationMVA3oldDMwoLTraw_1 = GetTauID(1, "byIsolationMVA3oldDMwoLTraw");
-        sync().byIsolationMVA3newDMwLTraw_1 = GetTauID(1, "byIsolationMVA3newDMwLTraw");
-        sync().byIsolationMVA3oldDMwLTraw_1 = GetTauID(1, "byIsolationMVA3oldDMwLTraw");
-        sync().decayModeFindingOldDMs_1 = GetTauID(1, "decayModeFindingOldDMs");
-        if (run_period == analysis::Period::Run2017) sync().byIsolationMVArun2v1DBoldDMwLTrawNew_1 = GetTauID(1, "byIsolationMVArun2v1DBoldDMwLTrawNew");
+
+        const analysis::TauIdResults tauId_1(event->tauId_flags_1);
+        sync().againstElectronLooseMVA6_1 = tauId_1.Result("againstElectronLooseMVA6");
+        sync().againstElectronMediumMVA6_1 = tauId_1.Result("againstElectronMediumMVA6");
+        sync().againstElectronTightMVA6_1 = tauId_1.Result("againstElectronTightMVA6");
+        sync().againstElectronVLooseMVA6_1 = tauId_1.Result("againstElectronVLooseMVA6");
+        sync().againstElectronVTightMVA6_1 = tauId_1.Result("againstElectronVTightMVA6");
+        sync().againstMuonLoose3_1 = tauId_1.Result("againstMuonLoose3");
+        sync().againstMuonTight3_1 = tauId_1.Result("againstMuonTight3");
+        sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_1 = event->tauId_byCombinedIsolationDeltaBetaCorrRaw3Hits_1;
+        sync().byIsolationMVArun2v1DBoldDMwLTraw_1 = event->tauId_byIsolationMVArun2v1DBoldDMwLTraw_1;
+        sync().byIsolationMVArun2017v2DBoldDMwLTraw2017_1 = event->tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_1;
 
         sync().pt_2 = event->p4_2.Pt();
         sync().phi_2 = event->p4_2.Phi();
@@ -229,20 +213,18 @@ namespace htt_sync {
         sync().pfmt_2 = static_cast<float>(analysis::Calculate_MT(event->p4_2, event->pfMET_p4));
         sync().iso_2 =  event->iso_2;
         sync().gen_match_2 = event->gen_match_2;
-        sync().againstElectronLooseMVA6_2 = GetTauID(2, "againstElectronLooseMVA6");
-        sync().againstElectronMediumMVA6_2 = GetTauID(2, "againstElectronMediumMVA6");
-        sync().againstElectronTightMVA6_2 = GetTauID(2, "againstElectronTightMVA6");
-        sync().againstElectronVLooseMVA6_2 = GetTauID(2, "againstElectronVLooseMVA6");
-        sync().againstElectronVTightMVA6_2 = GetTauID(2, "againstElectronVTightMVA6");
-        sync().againstMuonLoose3_2 = GetTauID(2, "againstMuonLoose3");
-        sync().againstMuonTight3_2 = GetTauID(2, "againstMuonTight3");
-        sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = GetTauID(2, "byCombinedIsolationDeltaBetaCorrRaw3Hits");
-        sync().byIsolationMVA3newDMwoLTraw_2 = GetTauID(2, "byIsolationMVA3newDMwoLTraw");
-        sync().byIsolationMVA3oldDMwoLTraw_2 = GetTauID(2, "byIsolationMVA3oldDMwoLTraw");
-        sync().byIsolationMVA3newDMwLTraw_2 = GetTauID(2, "byIsolationMVA3newDMwLTraw");
-        sync().byIsolationMVA3oldDMwLTraw_2 = GetTauID(2, "byIsolationMVA3oldDMwLTraw");
-        sync().decayModeFindingOldDMs_2 = GetTauID(2, "decayModeFindingOldDMs");
-        if (run_period == analysis::Period::Run2017) sync().byIsolationMVArun2v1DBoldDMwLTrawNew_2 = GetTauID(2, "byIsolationMVArun2v1DBoldDMwLTrawNew");
+
+        const analysis::TauIdResults tauId_2(event->tauId_flags_2);
+        sync().againstElectronLooseMVA6_2 = tauId_2.Result("againstElectronLooseMVA6");
+        sync().againstElectronMediumMVA6_2 = tauId_2.Result("againstElectronMediumMVA6");
+        sync().againstElectronTightMVA6_2 = tauId_2.Result("againstElectronTightMVA6");
+        sync().againstElectronVLooseMVA6_2 = tauId_2.Result("againstElectronVLooseMVA6");
+        sync().againstElectronVTightMVA6_2 = tauId_2.Result("againstElectronVTightMVA6");
+        sync().againstMuonLoose3_2 = tauId_2.Result("againstMuonLoose3");
+        sync().againstMuonTight3_2 = tauId_2.Result("againstMuonTight3");
+        sync().byCombinedIsolationDeltaBetaCorrRaw3Hits_2 = event->tauId_byCombinedIsolationDeltaBetaCorrRaw3Hits_2;
+        sync().byIsolationMVArun2v1DBoldDMwLTraw_2 = event->tauId_byIsolationMVArun2v1DBoldDMwLTraw_2;
+        sync().byIsolationMVArun2017v2DBoldDMwLTraw2017_2 = event->tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_2;
 
         sync().pt_tt = (event->p4_1 + event->p4_2 + event->pfMET_p4).Pt();
         sync().m_vis = (event->p4_1 + event->p4_2).M();

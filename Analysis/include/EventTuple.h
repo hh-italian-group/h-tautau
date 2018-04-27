@@ -12,8 +12,19 @@ using LorentzVectorM = analysis::LorentzVectorM_Float;
 using MetCovMatrix = analysis::SquareMatrix<2>;
 }
 
-
 #define LVAR(type, name, n) VAR(type, name##_##n)
+#define RAW_ID(name, n) VAR(Float_t, tauId_##name##_##n)
+
+#define RAW_TAU_IDS(n) \
+    RAW_ID(againstElectronMVA6Raw, n) /* */ \
+    RAW_ID(againstElectronMVA6category, n) /* */ \
+    RAW_ID(byCombinedIsolationDeltaBetaCorrRaw3Hits, n) /* */ \
+    RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw, n) /* */ \
+    RAW_ID(byIsolationMVArun2v1DBdR03oldDMwLTraw, n) /* */ \
+    RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw2016, n) /* */ \
+    RAW_ID(byIsolationMVArun2017v2DBoldDMwLTraw2017, n) /* */ \
+    RAW_ID(byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017, n) /* */ \
+    /**/
 
 #define LEG_DATA(n) \
     LVAR(LorentzVectorM, p4, n) /* 4-momentum */ \
@@ -23,9 +34,9 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     LVAR(Int_t, gen_match, n) /* Generator matching, see Htautau Twiki*/\
     LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
-    LVAR(std::vector<uint32_t>, tauId_keys, n) /* keys for tau ID variables */ \
-    LVAR(std::vector<float>, tauId_values, n) /* values of tau ID variables */ \
     LVAR(Int_t, decayMode, n) /* tau decay mode */ \
+    LVAR(ULong64_t, tauId_flags, n) /* boolean tau id variables */ \
+    RAW_TAU_IDS(n) /* raw values of tau ID discriminators */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -170,6 +181,7 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef JVAR
 #undef MET_DATA
 #undef MVAR
+#undef RAW_ID
 
 namespace ntuple {
 template<typename T>
@@ -213,23 +225,18 @@ inline JetPair UndefinedJetPair()
 }
 
 inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory* directory,
-                                                    bool readMode, TreeState treeState,
-                                                    bool ignore_trigger_branches = false)
+                                                    bool readMode, TreeState treeState)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
         { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
                              "weight_tau_id", "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy",
                              "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs",
                              "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt", "file_desc_id",
-                             "split_id", "decayMode_1", "decayMode_2" } },
+                             "split_id" } },
         { TreeState::Skimmed, { } }
     };
 
-    static const std::set<std::string> trigger_branches = { "trigger_accepts", "trigger_matches" };
-    auto disabled = disabled_branches.at(treeState);
-    if(ignore_trigger_branches)
-        disabled.insert(trigger_branches.begin(), trigger_branches.end());
-
+    const auto& disabled = disabled_branches.at(treeState);
     return std::make_shared<EventTuple>(name, directory, readMode, disabled);
 }
 

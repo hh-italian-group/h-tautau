@@ -29,6 +29,7 @@ private:
 };
 
 #define CP_BR(br) event.br = ref->br
+#define RAW_ID(name, n) CP_BR(tauId_##name##_##n);
 
 class EventLoader {
 public:
@@ -47,13 +48,11 @@ public:
             throw analysis::exception("Incomplete reference event. Ref event storage mode = %1%") % ref_mode.Mode();
 
         if(mode.IsMissing(EventPart::FirstTauIds)) {
-            CP_BR(tauId_keys_1);
-            CP_BR(tauId_values_1);
+            RAW_TAU_IDS(1)
         }
 
         if(mode.IsMissing(EventPart::SecondTauIds)) {
-            CP_BR(tauId_keys_2);
-            CP_BR(tauId_values_2);
+            RAW_TAU_IDS(2)
         }
 
         if(mode.IsMissing(EventPart::Jets)) {
@@ -108,5 +107,6 @@ public:
 };
 
 #undef CP_BR
+#undef RAW_ID
 
 } // namespace nutple

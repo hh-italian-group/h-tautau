@@ -7,7 +7,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-#include "DataFormats/PatCandidates/interface/Tau.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
@@ -22,7 +21,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/TriggerFileDescriptor.h"
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
 #include "h-tautau/Production/interface/TriggerTools.h"
-#include "h-tautau/Production/src/TriggerTools.cc"
+#include "h-tautau/Analysis/include/TauIdResults.h"
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
@@ -41,8 +40,8 @@ public:
         genEvent_token(mayConsume<GenEventInfoProduct>(cfg.getParameter<edm::InputTag>("genEvent"))),
         topGenEvent_token(mayConsume<TtGenEvent>(cfg.getParameter<edm::InputTag>("topGenEvent"))),
         puInfo_token(mayConsume<std::vector<PileupSummaryInfo>>(cfg.getParameter<edm::InputTag>("puInfo"))),
-        taus_token(mayConsume<std::vector<pat::Tau>>(cfg.getParameter<edm::InputTag>("taus"))),
-        summaryTuple(ntuple::CreateSummaryTuple("summary", &edm::Service<TFileService>()->file(), false, ntuple::TreeState::Full))
+        summaryTuple(ntuple::CreateSummaryTuple("summary", &edm::Service<TFileService>()->file(), false,
+                                                ntuple::TreeState::Full))
     {
         (*summaryTuple)().numberOfProcessedEvents = 0;
         if(isMC)
@@ -75,16 +74,6 @@ private:
     virtual void analyze(const edm::Event& event, const edm::EventSetup&) override
     {
         (*summaryTuple)().numberOfProcessedEvents++;
-
-        if(!tauId_names.size()) {
-            edm::Handle<std::vector<pat::Tau>> taus;
-            event.getByToken(taus_token, taus);
-            for(const auto& tau : *taus) {
-                for(const auto& id : tau.tauIDs()) {
-                    tauId_names.insert(id.first);
-                }
-            }
-        }
 
         if(!isMC)
             return;
@@ -136,10 +125,8 @@ private:
 
     virtual void endJob() override
     {
-        for(const std::string& name : tauId_names) {
-            const auto key = analysis::tools::hash(name);
-            (*summaryTuple)().tauId_names.push_back(name);
-            (*summaryTuple)().tauId_keys.push_back(key);
+        for(const auto& desc : analysis::TauIdResults::GetResultDescriptors()) {
+            (*summaryTuple)().tauId_names.push_back(desc.ToString());
         }
         for(const auto& count_entry : genEventCountMap) {
             (*summaryTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
@@ -167,11 +154,9 @@ private:
     edm::EDGetTokenT<GenEventInfoProduct> genEvent_token;
     edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfo_token;
-    edm::EDGetTokenT<std::vector<pat::Tau>> taus_token;
 
     std::shared_ptr<ntuple::SummaryTuple> summaryTuple;
     std::shared_ptr<ntuple::ExpressTuple> expressTuple;
-    std::unordered_set<std::string> tauId_names;
     GenEventCountMap genEventCountMap;
     GenEventTypeCountMap genEventTypeCountMap;
 };

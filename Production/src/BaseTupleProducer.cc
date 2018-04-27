@@ -226,9 +226,22 @@ const double BaseTupleProducer::Isolation(const pat::Muon& muon)
 
 const double BaseTupleProducer::Isolation(const pat::Tau& tau)
 {
-    if (period == analysis::Period::Run2017)
-        return tau.tauID("byIsolationMVArun2v1DBoldDMwLTrawNew");
-    return tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+    static const std::map<analysis::Period, analysis::TauIdDiscriminator> discriminators = {
+        { analysis::Period::Run2016, analysis::TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT },
+        { analysis::Period::Run2017, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 }
+    };
+    const auto& desc = analysis::tau_id::GetTauIdDescriptors().at(discriminators.at(period));
+    return tau.tauID(desc.ToStringRaw());
+}
+
+analysis::TauIdResults BaseTupleProducer::CreateTauIdResults(const pat::Tau& tau)
+{
+    analysis::TauIdResults results;
+    const auto& descs = analysis::TauIdResults::GetResultDescriptors();
+    for(size_t n = 0; n < descs.size(); ++n) {
+        results.SetResult(n, tau.tauID(descs.at(n).ToString()) > .5f);
+    }
+    return results;
 }
 
 //https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017#Preliminary_Recommendations_for
@@ -450,20 +463,6 @@ void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVe
     } else {
         gen_match = default_int_value;
         gen_p4 = ntuple::LorentzVectorM();
-    }
-}
-
-void BaseTupleProducer::FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds)
-{
-    using namespace analysis;
-
-    std::vector<uint32_t>& keys = leg_id == 1 ? eventTuple().tauId_keys_1 : eventTuple().tauId_keys_2;
-    std::vector<float>& values = leg_id == 1 ? eventTuple().tauId_values_1 : eventTuple().tauId_values_2;
-
-    for(const auto& tauId : tauIds) {
-        const uint32_t key = tools::hash(tauId.first);
-        keys.push_back(key);
-        values.push_back(tauId.second);
     }
 }
 
@@ -691,6 +690,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 
 
 #define GET_LEG(x) (leg_id == 1 ? eventTuple().x##_1 : eventTuple().x##_2)
+#define RAW_ID(name, n) GET_LEG(tauId_##name) = fill_tauIds ? tau->tauID(#name) : default_value;
 
 void BaseTupleProducer::FillElectronLeg(size_t leg_id, const ElectronCandidate& electron)
 {
@@ -716,6 +716,8 @@ void BaseTupleProducer::FillMuonLeg(size_t leg_id, const MuonCandidate& muon)
 
 void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool fill_tauIds)
 {
+    static const float default_value = ntuple::DefaultFillValue<float>();
+
     GET_LEG(p4) = ntuple::LorentzVectorM(tau.GetMomentum());
     GET_LEG(q) = tau.GetCharge();
     const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
@@ -724,11 +726,12 @@ void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool 
     GET_LEG(iso) = tau.GetIsolation();
     GET_LEG(decayMode) = tau->decayMode();
     FillLegGenMatch(leg_id, tau->p4());
-    if(fill_tauIds)
-        FillTauIds(leg_id, tau->tauIDs());
+    GET_LEG(tauId_flags) = CreateTauIdResults(*tau).GetResultBits();
+    RAW_TAU_IDS(leg_id)
 }
 
 #undef GET_LEG
+#undef RAW_ID
 
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection,
                                        const analysis::SelectionResultsBase* reference)
