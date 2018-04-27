@@ -22,6 +22,19 @@ ENUM_NAMES(LegType) = {
     { LegType::e, "e" }, { LegType::mu, "mu" }, { LegType::tau, "tau" }
 };
 
+using ChannelLegTypes = std::pair<LegType, LegType>;
+inline const ChannelLegTypes GetChannelLegTypes(Channel channel)
+{
+    static const std::map<Channel, ChannelLegTypes> leg_types {
+        { Channel::ETau, { LegType::e, LegType::tau } }, { Channel::MuTau, { LegType::mu, LegType::tau } },
+        { Channel::TauTau, { LegType::tau, LegType::tau } }, { Channel::MuMu, { LegType::mu, LegType::mu } },
+    };
+    auto iter = leg_types.find(channel);
+    if(iter == leg_types.end())
+        throw exception("Leg types are not defined for channel '%1%'") % channel;
+    return iter->second;
+}
+
 enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, TopPtUp = 5, TopPtDown = 6 };
 ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::Central, "Central" },
@@ -37,27 +50,29 @@ ENUM_NAMES(UncertaintyScale) = {
 
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
-enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight, VVTight };
+enum class DiscriminatorWP { VVLoose, VLoose, Loose, Medium, Tight, VTight, VVTight };
 ENUM_NAMES(DiscriminatorWP) = {
-    { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" }, { DiscriminatorWP::Medium, "Medium" },
-    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" }
+    { DiscriminatorWP::VVLoose, "VVLoose" }, { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" },
+    { DiscriminatorWP::Medium, "Medium" }, { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" },
+    { DiscriminatorWP::VVTight, "VVTight" }
 };
 const EnumNameMap<DiscriminatorWP> __DiscriminatorWP_short_names("ShortWPNames", {
-    { DiscriminatorWP::VLoose, "VL" }, { DiscriminatorWP::Loose, "L" }, { DiscriminatorWP::Medium, "M" },
-    { DiscriminatorWP::Tight, "T" }, { DiscriminatorWP::VTight, "VT" }, { DiscriminatorWP::VVTight, "VVT" }
+    { DiscriminatorWP::VVLoose, "VVL" }, { DiscriminatorWP::VLoose, "VL" }, { DiscriminatorWP::Loose, "L" },
+    { DiscriminatorWP::Medium, "M" }, { DiscriminatorWP::Tight, "T" }, { DiscriminatorWP::VTight, "VT" },
+    { DiscriminatorWP::VVTight, "VVT" }
 });
-
 
 enum class MetType { PF, MVA, PUPPI };
 ENUM_NAMES(MetType) = {
     { MetType::PF, "PF" }, { MetType::MVA, "MVA" }, { MetType::PUPPI, "PUPPI" }
 };
 
-enum class Period { Run2015, Run2016, Run2017 };
+enum class Period { Run2015, Run2016, Run2017, Run2018 };
 ENUM_NAMES(Period) = {
     { Period::Run2015, "Run2015" },
     { Period::Run2016, "Run2016" },
-    { Period::Run2017, "Run2017" }
+    { Period::Run2017, "Run2017" },
+    { Period::Run2018, "Run2018" },
 };
 
 enum class GenMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };

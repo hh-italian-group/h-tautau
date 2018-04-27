@@ -14,7 +14,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Double_t, totalShapeWeight_withTopPt) \
     /* Tau ID information */ \
     VAR(std::vector<std::string>, tauId_names) \
-    VAR(std::vector<uint32_t>, tauId_keys) \
     /* Trigger information */ \
     VAR(std::vector<Int_t>, triggers_channel) \
     VAR(std::vector<std::string>, triggers_pattern) \
@@ -141,8 +140,7 @@ inline void ConvertGenEventTypeCountMap(ProdSummary& s, const GenEventTypeCountM
 
 
 inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
-                                                        bool readMode, TreeState treeState,
-                                                        bool ignore_trigger_branches = false)
+                                                        bool readMode, TreeState treeState)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
         { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt",
@@ -150,23 +148,13 @@ inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name,
         { TreeState::Skimmed, { } }
     };
 
-    static const std::set<std::string> trigger_branches = {
-        "triggers_channel", "triggers_index", "triggers_pattern", "triggers_n_legs", "triggerFilters_channel",
-        "triggerFilters_triggerIndex", "triggerFilters_LegId", "triggerFilters_name"
-    };
-    auto disabled = disabled_branches.at(treeState);
-    if(ignore_trigger_branches)
-        disabled.insert(trigger_branches.begin(), trigger_branches.end());
-
+    const auto& disabled = disabled_branches.at(treeState);
     return std::make_shared<SummaryTuple>(name, directory, readMode, disabled);
 }
 
 inline void CheckProdSummaryConsistency(const ProdSummary& s)
 {
-    if(s.tauId_keys.size() != s.tauId_names.size())
-        throw analysis::exception("Inconsistent tauId info in prod summary.");
-    const size_t n_trig = s.triggers_channel.size();
-    if(s.triggers_pattern.size() != n_trig)
+    if(s.triggers_pattern.size() != s.triggers_channel.size())
         throw analysis::exception("Inconsistent trigger info in prod summary.");
     const size_t n_lhe = s.lhe_n_partons.size();
     if(s.lhe_ht10_bin.size() != n_lhe || s.lhe_n_b_partons.size() != n_lhe || s.lhe_n_events.size() != n_lhe)
@@ -178,16 +166,15 @@ inline void CheckProdSummaryConsistency(const ProdSummary& s)
 
 inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os = nullptr)
 {
-    if(s1.tauId_keys.size() != s2.tauId_keys.size()) {
-        if(os) *os << "Number of tou id keys are not compatible: " << s1.tauId_keys.size() << "!="
-                   << s2.tauId_keys.size() << "." << std::endl;
+    if(s1.tauId_names.size() != s2.tauId_names.size()) {
+        if(os) *os << "Number of tou id are not compatible: " << s1.tauId_names.size() << "!="
+                   << s2.tauId_names.size() << "." << std::endl;
         return false;
     }
-    for(size_t n = 0; n < s1.tauId_keys.size(); ++n) {
-        if(s1.tauId_keys.at(n) != s2.tauId_keys.at(n) || s1.tauId_names.at(n) != s2.tauId_names.at(n)) {
-            if(os) *os << "Tau id key is not compatible: (" << s1.tauId_keys.at(n) << ", "
-                       << s1.tauId_names.at(n) << ") != (" << s2.tauId_keys.at(n) << ", "
-                       << s1.tauId_names.at(n) << ")." << std::endl;
+    for(size_t n = 0; n < s1.tauId_names.size(); ++n) {
+        if(s1.tauId_names.at(n) != s2.tauId_names.at(n)) {
+            if(os) *os << "Tau id is not compatible: '" << s1.tauId_names.at(n) << "' != '"
+                       << s2.tauId_names.at(n) << "'." << std::endl;
             return false;
         }
     }
