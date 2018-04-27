@@ -18,6 +18,8 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 #define RAW_TAU_IDS(n) \
     RAW_ID(againstElectronMVA6Raw, n) /* */ \
     RAW_ID(againstElectronMVA6category, n) /* */ \
+    RAW_ID(againstElectronMVA6RawNew, n) /* */ \
+    RAW_ID(againstElectronMVA6categoryNew, n) /* */ \
     RAW_ID(byCombinedIsolationDeltaBetaCorrRaw3Hits, n) /* */ \
     RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw, n) /* */ \
     RAW_ID(byIsolationMVArun2v1DBdR03oldDMwLTraw, n) /* */ \

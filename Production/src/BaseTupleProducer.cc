@@ -227,19 +227,29 @@ const double BaseTupleProducer::Isolation(const pat::Muon& muon)
 const double BaseTupleProducer::Isolation(const pat::Tau& tau)
 {
     static const std::map<analysis::Period, analysis::TauIdDiscriminator> discriminators = {
-        { analysis::Period::Run2016, analysis::TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT },
+        { analysis::Period::Run2016, analysis::TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016 },
         { analysis::Period::Run2017, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 }
     };
     const auto& desc = analysis::tau_id::GetTauIdDescriptors().at(discriminators.at(period));
     return tau.tauID(desc.ToStringRaw());
 }
 
-analysis::TauIdResults BaseTupleProducer::CreateTauIdResults(const pat::Tau& tau)
+analysis::TauIdResults BaseTupleProducer::CreateTauIdResults(const pat::Tau& tau, analysis::Period period)
 {
+    using analysis::Period;
+    using analysis::TauIdDiscriminator;
+    using analysis::TauIdResults;
+    static const std::map<Period, std::set<TauIdDiscriminator>> ignore_list {
+        { Period::Run2016, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
+                             TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMdR0p3wLT2017 } },
+        { Period::Run2017, {} }
+    };
     analysis::TauIdResults results;
     const auto& descs = analysis::TauIdResults::GetResultDescriptors();
+    const auto& ignore = ignore_list.at(period);
     for(size_t n = 0; n < descs.size(); ++n) {
-        results.SetResult(n, tau.tauID(descs.at(n).ToString()) > .5f);
+        if(!ignore.count(descs.at(n).discriminator))
+            results.SetResult(n, tau.tauID(descs.at(n).ToString()) > .5f);
     }
     return results;
 }
@@ -690,7 +700,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 
 
 #define GET_LEG(x) (leg_id == 1 ? eventTuple().x##_1 : eventTuple().x##_2)
-#define RAW_ID(name, n) GET_LEG(tauId_##name) = fill_tauIds ? tau->tauID(#name) : default_value;
+#define RAW_ID(name, n) GET_LEG(tauId_##name) = fill_tauIds && !ignore.count(#name) ? tau->tauID(#name) : default_value;
 
 void BaseTupleProducer::FillElectronLeg(size_t leg_id, const ElectronCandidate& electron)
 {
@@ -717,6 +727,13 @@ void BaseTupleProducer::FillMuonLeg(size_t leg_id, const MuonCandidate& muon)
 void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool fill_tauIds)
 {
     static const float default_value = ntuple::DefaultFillValue<float>();
+    using analysis::Period;
+    static const std::map<Period, std::set<std::string>> ignore_list {
+        { Period::Run2016, { "byIsolationMVArun2017v2DBoldDMwLTraw2017",
+                             "byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017" } },
+        { Period::Run2017, { "againstElectronMVA6RawNew", "againstElectronMVA6categoryNew" } }
+    };
+    const auto& ignore = ignore_list.at(period);
 
     GET_LEG(p4) = ntuple::LorentzVectorM(tau.GetMomentum());
     GET_LEG(q) = tau.GetCharge();
@@ -726,7 +743,7 @@ void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool 
     GET_LEG(iso) = tau.GetIsolation();
     GET_LEG(decayMode) = tau->decayMode();
     FillLegGenMatch(leg_id, tau->p4());
-    GET_LEG(tauId_flags) = CreateTauIdResults(*tau).GetResultBits();
+    GET_LEG(tauId_flags) = CreateTauIdResults(*tau, period).GetResultBits();
     RAW_TAU_IDS(leg_id)
 }
 

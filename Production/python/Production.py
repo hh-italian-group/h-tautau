@@ -160,11 +160,19 @@ for idmod in id_modules:
 #    tauIdConfig.tauId_calculation_2017(process)
 
 tauIdConfig = importlib.import_module('h-tautau.Production.runTauIdMVA')
+tauIdList = {
+    'Run2016': [ "2016v1" ],
+    'Run2017': [ "2017v2", "dR0p32017v2", "2016v1" ]
+}
 tauIdEmbedder = tauIdConfig.TauIDEmbedder(process, cms, debug = True,
-                    toKeep = [ "2017v2", "dR0p32017v2", "2016v1" ])
+                    toKeep = tauIdList[period])
                     #toKeep = [ "2017v1", "2017v2", "newDM2017v2", "dR0p32017v2", "2016v1", "newDM2016v1" ])
 tauIdEmbedder.runTauID()
 tauSrc_InputTag = cms.InputTag('NewTauIDsEmbedded')
+
+if period == 'Run2016':
+    tauAntiEle = importlib.import_module('h-tautau.Production.runTauAgainstElectron')
+    tauAntiEle.rerunAgainstElectron(process, process.NewTauIDsEmbedded)
 
 
 ### Top gen level info
@@ -268,6 +276,9 @@ if period == 'Run2016':
         process.BadPFMuonFilter *
         process.BadChargedCandidateFilter *
         process.topGenSequence *
+        process.rerunMvaIsolationSequence *
+        process.rerunDiscriminationAgainstElectronMVA6 *
+        process.NewTauIDsEmbedded *
         process.tupleProductionSequence
     )
 

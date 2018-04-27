@@ -25,7 +25,7 @@ ENUM_NAMES(LegType) = {
 using ChannelLegTypes = std::pair<LegType, LegType>;
 inline const ChannelLegTypes GetChannelLegTypes(Channel channel)
 {
-    static const std::unordered_map<Channel, ChannelLegTypes> leg_types {
+    static const std::map<Channel, ChannelLegTypes> leg_types {
         { Channel::ETau, { LegType::e, LegType::tau } }, { Channel::MuTau, { LegType::mu, LegType::tau } },
         { Channel::TauTau, { LegType::tau, LegType::tau } }, { Channel::MuMu, { LegType::mu, LegType::mu } },
     };

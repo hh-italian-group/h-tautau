@@ -208,7 +208,7 @@ public:
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
-    static analysis::TauIdResults CreateTauIdResults(const pat::Tau& tau);
+    static analysis::TauIdResults CreateTauIdResults(const pat::Tau& tau, analysis::Period period);
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
