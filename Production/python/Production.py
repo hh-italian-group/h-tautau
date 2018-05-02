@@ -155,9 +155,24 @@ if period == 'Run2017':
 for idmod in id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
-if period == 'Run2017':
-    tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
-    tauIdConfig.tauId_calculation_2017(process)
+#if period == 'Run2017':
+#    tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
+#    tauIdConfig.tauId_calculation_2017(process)
+
+tauIdConfig = importlib.import_module('h-tautau.Production.runTauIdMVA')
+tauIdList = {
+    'Run2016': [ "2016v1" ],
+    'Run2017': [ "2017v2", "dR0p32017v2", "2016v1" ]
+}
+tauIdEmbedder = tauIdConfig.TauIDEmbedder(process, cms, debug = True,
+                    toKeep = tauIdList[period])
+                    #toKeep = [ "2017v1", "2017v2", "newDM2017v2", "dR0p32017v2", "2016v1", "newDM2016v1" ])
+tauIdEmbedder.runTauID()
+tauSrc_InputTag = cms.InputTag('NewTauIDsEmbedded')
+
+if period == 'Run2016':
+    tauAntiEle = importlib.import_module('h-tautau.Production.runTauAgainstElectron')
+    tauAntiEle.rerunAgainstElectron(process, process.NewTauIDsEmbedded)
 
 
 ### Top gen level info
@@ -185,13 +200,13 @@ else:
 if period == 'Run2016':
     eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp80')
     eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp90')
-    tauSrc_InputTag                  = cms.InputTag('slimmedTaus')
+#    tauSrc_InputTag                  = cms.InputTag('slimmedTaus')
     objects_InputTag                 = cms.InputTag('selectedPatTrigger')
 
 if period == 'Run2017':
     eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80')
     eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90')
-    tauSrc_InputTag                  = cms.InputTag('NewTauIDsEmbedded')
+#    tauSrc_InputTag                  = cms.InputTag('NewTauIDsEmbedded')
     objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
@@ -201,7 +216,6 @@ process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     genEvent        = cms.InputTag('generator'),
     topGenEvent     = cms.InputTag('genEvt'),
     puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    taus            = tauSrc_InputTag,
     triggerCfg      = cms.string(triggerCfg),
     channels        = cms.vstring(channels)
 )
@@ -262,6 +276,9 @@ if period == 'Run2016':
         process.BadPFMuonFilter *
         process.BadChargedCandidateFilter *
         process.topGenSequence *
+        process.rerunMvaIsolationSequence *
+        process.rerunDiscriminationAgainstElectronMVA6 *
+        process.NewTauIDsEmbedded *
         process.tupleProductionSequence
     )
 
@@ -270,7 +287,7 @@ if period == 'Run2017':
         process.egmGsfElectronIDSequence *
         process.electronMVAValueMapProducer *
         process.jecSequence *
-        process.rerunMvaIsolation2SeqRun2 *
+        process.rerunMvaIsolationSequence *
         process.NewTauIDsEmbedded *
         process.fullPatMetSequence *
         process.topGenSequence *

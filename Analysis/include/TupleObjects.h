@@ -7,6 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTypes.h"
 #include "EventTuple.h"
+#include "TauIdResults.h"
 
 namespace ntuple {
 
@@ -56,111 +57,61 @@ public:
 
 class TupleTau : public TupleLepton {
 public:
-    using IdKey = uint32_t;
-    using TupleLepton::TupleLepton;
-    using ValueKeyPair = std::pair<std::string, IdKey>;
+    TupleTau(const ntuple::Event& _event, size_t _leg_id)
+        : TupleLepton(_event, _leg_id), tauIds(leg_id == 1 ? event->tauId_flags_1 : event->tauId_flags_2)
+    {
+    }
 
 public:
-    static ValueKeyPair GetNameKeyPair(const std::string& discriminator)
+    const analysis::TauIdResults& tauIDs() const { return tauIds; }
+
+    bool tauID(analysis::TauIdDiscriminator discriminator, analysis::DiscriminatorWP wp) const
     {
-        static std::map<std::string, IdKey> hashes;
-        auto iter = hashes.find(discriminator);
-        if(iter == hashes.end()) {
-            const IdKey key = analysis::tools::hash(discriminator);
-            iter = hashes.emplace(discriminator, key).first;
-        }
-        return *iter;
+        return tauIds.Result(discriminator, wp);
     }
 
-    DiscriminatorResult tauID(const std::string& discriminator) const
+    DiscriminatorResult tauIDraw(analysis::TauIdDiscriminator discriminator) const
     {
-        const IdKey key = GetNameKeyPair(discriminator).second;
-        return _tauID(key, discriminator);
-    }
-
-    bool tauID(IdKey key, DiscriminatorResult& result) const
-    {
-        if(!tauIds.size()) {
-            const auto& keys = leg_id == 1 ? event->tauId_keys_1 :event->tauId_keys_2;
-            const auto& values = leg_id == 1 ? event->tauId_values_1 :event->tauId_values_2;
-            if(keys.size() != values.size())
-                throw analysis::exception("Invalid tauID data");
-            for(size_t n = 0; n < keys.size(); ++n)
-                tauIds[keys.at(n)] = values.at(n);
-        }
-        auto result_iter = tauIds.find(key);
-        bool has_result = result_iter != tauIds.end();
-        if(has_result)
-            result = result_iter->second;
-        return has_result;
-    }
-
-    DiscriminatorResult againstElectronMVA6(DiscriminatorWP wp) const
-    {
-        std::ostringstream ss_name;
-        ss_name << "againstElectron" << wp << "MVA6";
-        return tauID(ss_name.str());
-    }
-
-    DiscriminatorResult againstMuon3(DiscriminatorWP wp) const
-    {
-        std::ostringstream ss_name;
-        ss_name << "againstMuon" << wp << "3";
-        return tauID(ss_name.str());
-    }
-
-    DiscriminatorResult byIsolationMVAraw(bool use_new_dm = false, bool use_lifetime = true) const
-    {
-        using IsoKey = std::tuple<bool, bool>;
-        static std::map<IsoKey, ValueKeyPair> keys;
-        auto iso_key = std::make_tuple(use_new_dm, use_lifetime);
-        auto iter = keys.find(iso_key);
-        if(iter == keys.end()) {
-            const std::string discriminator = GetByIsolationName(use_new_dm, use_lifetime, true);
-            iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
-        }
-        return _tauID(iter->second.second, iter->second.first);
-    }
-
-    bool byIsolationMVA(DiscriminatorWP wp, bool use_new_dm = false, bool use_lifetime = true) const
-    {
-        using IsoKey = std::tuple<DiscriminatorWP, bool, bool>;
-        static std::map<IsoKey, ValueKeyPair> keys;
-        auto iso_key = std::make_tuple(wp, use_new_dm, use_lifetime);
-        auto iter = keys.find(iso_key);
-        if(iter == keys.end()) {
-            const std::string discriminator = GetByIsolationName(use_new_dm, use_lifetime, false, wp);
-            iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
-        }
-        return _tauID(iter->second.second, iter->second.first) > 0.5;
+        using RawValuePtr = const DiscriminatorResult Event::*;
+        using TauIdDiscriminator = analysis::TauIdDiscriminator;
+        using Key = std::pair<TauIdDiscriminator, size_t>;
+        static const std::map<Key, RawValuePtr> raw_values = {
+            { { TauIdDiscriminator::againstElectronMVA6, 1 }, &Event::tauId_againstElectronMVA6Raw_1 },
+            { { TauIdDiscriminator::againstElectronMVA6, 2 }, &Event::tauId_againstElectronMVA6Raw_2 },
+            { { TauIdDiscriminator::byCombinedIsolationDeltaBetaCorr3Hits, 1 },
+                &Event::tauId_byCombinedIsolationDeltaBetaCorrRaw3Hits_1 },
+            { { TauIdDiscriminator::byCombinedIsolationDeltaBetaCorr3Hits, 2 },
+                &Event::tauId_byCombinedIsolationDeltaBetaCorrRaw3Hits_2 },
+            { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT, 1 },
+                &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw_1 },
+            { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT, 2 },
+                &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw_2 },
+            { { TauIdDiscriminator::byIsolationMVArun2v1DBdR03oldDMwLT, 1 },
+                &Event::tauId_byIsolationMVArun2v1DBdR03oldDMwLTraw_1 },
+            { { TauIdDiscriminator::byIsolationMVArun2v1DBdR03oldDMwLT, 2 },
+                &Event::tauId_byIsolationMVArun2v1DBdR03oldDMwLTraw_2 },
+            { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016, 1 },
+                &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw2016_1 },
+            { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016, 2 },
+                &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw2016_2 },
+            { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, 1 },
+                &Event::tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_1 },
+            { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, 2 },
+                &Event::tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_2 },
+            { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMdR0p3wLT2017, 1 },
+                &Event::tauId_byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017_1 },
+            { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMdR0p3wLT2017, 2 },
+                &Event::tauId_byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017_2 }
+        };
+        const Key key(discriminator, leg_id);
+        auto iter = raw_values.find(key);
+        if(iter == raw_values.end())
+            throw analysis::exception("Raw value not found for tau ID discriminator '%1%'.") % discriminator;
+        return event->*(iter->second);
     }
 
 private:
-    DiscriminatorResult _tauID(IdKey key, const std::string& discriminator) const
-    {
-        DiscriminatorResult result;
-        if(!tauID(key, result))
-            throw analysis::exception("TauID discriminator '%1%' not found.") % discriminator;
-        return result;
-    }
-
-    static std::string GetByIsolationName(bool use_new_dm, bool use_lifetime, bool raw,
-                                          DiscriminatorWP wp = DiscriminatorWP::Medium)
-    {
-        const std::string dm_str = use_new_dm ? "new" : "old";
-        const std::string lt_str = use_lifetime ? "w" : "wo";
-        std::ostringstream ss_name;
-        ss_name << "by";
-        if(!raw)
-            ss_name << wp;
-        ss_name << "IsolationMVArun2v1DB" << dm_str << "DM" << lt_str << "LT";
-        if(raw)
-            ss_name << "raw";
-        return ss_name.str();
-    }
-
-private:
-    mutable std::map<IdKey, DiscriminatorResult> tauIds;
+    analysis::TauIdResults tauIds;
 };
 
 class TupleJet : public TupleObject {

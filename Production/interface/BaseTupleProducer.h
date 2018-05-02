@@ -59,6 +59,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Analysis/include/EventLoader.h"
+#include "h-tautau/Analysis/include/TauIdResults.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -207,6 +208,7 @@ public:
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
+    static analysis::TauIdResults CreateTauIdResults(const pat::Tau& tau, analysis::Period period);
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
@@ -220,7 +222,6 @@ protected:
     void FillGenParticleInfo();
     void FillGenJetInfo();
     void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
-    void FillTauIds(size_t leg_id, const std::vector<pat::Tau::IdPair>& tauIds);
     void FillMetFilters(analysis::Period period);
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
 

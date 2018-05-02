@@ -25,9 +25,8 @@ public:
         double pt;
         FilterVector filters;
 
-        Leg(const LegType _type, const double _pt, const TriggerDescriptorCollection::FilterVector _filters)
+        Leg(const LegType _type, const double _pt, const TriggerDescriptorCollection::FilterVector& _filters)
             : type(_type), pt(_pt), filters(_filters) { }
-
     };
 
     struct TriggerDescriptor{
@@ -47,8 +46,6 @@ public:
         {
             return boost::regex_match(path_name, regex);
         }
-
-
     };
 
     size_t size() const
@@ -63,35 +60,41 @@ public:
         return descriptors.at(index);
     }
 
-    const TriggerDescriptor& at(const Pattern& pattern)
+    const TriggerDescriptor& at(const Pattern& pattern) const
     {
         size_t index = GetIndex(pattern);
         return descriptors.at(index);
     }
-    
+
     void Add(const Pattern& pattern, const std::vector<Leg>& legs)
     {
         if(desc_indices.count(pattern))
             throw exception("Duplicated trigger pattern '%1%'.") % pattern;
         desc_indices[pattern] = descriptors.size();
         descriptors.emplace_back(pattern,legs);
+        path_index_cache.clear();
     }
 
-    bool FindPatternMatch(const std::string& path_name, size_t& index) const
+    bool FindPatternMatch(const std::string& path_name, size_t& index)
     {
-        size_t counter = 0;
-        for(size_t n = 0; n < descriptors.size(); ++n){
-            const TriggerDescriptor& descriptor = descriptors.at(n);
-            if(descriptor.PatternMatch(path_name)) {
-                ++counter;
-                index = n;
+        auto iter = path_index_cache.find(path_name);
+        if(iter == path_index_cache.end()) {
+            size_t counter = 0;
+            for(size_t n = 0; n < descriptors.size(); ++n){
+                const TriggerDescriptor& descriptor = descriptors.at(n);
+                if(descriptor.PatternMatch(path_name)) {
+                    ++counter;
+                    index = n;
+                }
             }
+            if (counter > 1)
+                throw exception("More than 1 pattern matched.");
+            path_index_cache[path_name] = counter == 1 ? index : descriptors.size();
+            iter = path_index_cache.find(path_name);
         }
-        if (counter > 1)
-            throw exception("More than 1 pattern matched.");
-        return counter == 1;
+        index = iter->second;
+        return index < descriptors.size();
     }
-
 
     size_t GetIndex(const Pattern& pattern) const
     {
@@ -102,7 +105,8 @@ public:
 
 private:
     std::vector<TriggerDescriptor> descriptors;
-    std::map<Pattern, size_t> desc_indices;
+    std::unordered_map<Pattern, size_t> desc_indices;
+    std::unordered_map<std::string, size_t> path_index_cache;
 };
 
 class TriggerResults {

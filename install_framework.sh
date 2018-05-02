@@ -85,6 +85,9 @@ if [ $MODE = "prod16" ] ; then
     # MET corrections
     #git cms-merge-topic cms-met:METRecipe_8020
     git cms-merge-topic cms-met:METRecipe_8020_for80Xintegration
+
+    # Tau ID
+    git cms-merge-topic -u cms-tau-pog:CMSSW_8_0_X_tau-pog_tauIDOnMiniAOD-legacy-backport-81Xv2
 fi
 
 if [ $MODE = "prod17" ] ; then
@@ -136,9 +139,9 @@ fi
 
 # Install analysis packages
 declare -A ANA_PACKAGES
-ANA_PACKAGES=( ["AnalysisTools"]="prod16:prod_v4 prod17:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4_2017 ana:ana_v3 ana_osx:ana_v3" \
-               ["hh-bbtautau"]="prod16:ana_v3 prod17:ana_v4 ana:ana_v3 ana_osx:ana_v3" )
+ANA_PACKAGES=( ["AnalysisTools"]="prod16:master prod17:master ana:master ana_osx:master" \
+               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4 ana:ana_v3 ana_osx:ana_v3" \
+               ["hh-bbtautau"]="prod16:ana_v4 prod17:ana_v4 ana:ana_v3 ana_osx:ana_v3" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do
