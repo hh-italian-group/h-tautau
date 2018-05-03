@@ -8,6 +8,7 @@
 #define JetCorrectorParameters_h
 
 #include "h-tautau/McCorrections/include/Serializable.h"
+#include "h-tautau/McCorrections/include/Utilities.h"
 
 #include <string>
 #include <vector>
@@ -235,7 +236,7 @@ namespace jec{
         //------------------------------------------------------------------------
         //--- returns the number of bins in the direction of fVar ----------------
         //------------------------------------------------------------------------
-        unsigned JetCorrectorParameters::size(unsigned fVar) const
+        unsigned size(unsigned fVar) const
         {
           if (fVar >= mDefinitions.nBinVar())
             {
