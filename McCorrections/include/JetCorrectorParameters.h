@@ -176,7 +176,7 @@ namespace jec{
         //-------- Constructors --------------
         JetCorrectorParameters() { valid_ = false;}
 
-        JetCorrectorParameters(const std::string& fFile, const std::string& fSection = "")
+        JetCorrectorParameters(const std::string& fFile, const std::string& fSection)
         {
           std::ifstream input(fFile.c_str());
           std::string currentSection = "";
@@ -549,7 +549,7 @@ namespace jec{
       JetCorrectorParametersCollection() { corrections_.clear(); correctionsL5_.clear(); correctionsL7_.clear(); }
 
       // Add a JetCorrectorParameter object, possibly with flavor.
-      void push_back( key_type i, value_type const & j, label_type const & flav = "") {
+      void push_back( key_type i, value_type const & j, label_type const & flav) {
         std::cout << "i    = " << i << std::endl;
         std::cout << "flav = " << flav << std::endl;
         if ( isL5(i) ) {
