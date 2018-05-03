@@ -131,7 +131,7 @@ namespace
     sserr<<fClass<<" ERROR: "<<fMessage;
     throw std::runtime_error(sserr.str());
 #else
-    edm::LogError(fClass) << fMessage;
+    std::cout << fClass << ", " << fMessage << std::endl;
 #endif
   }
   //----------------------------------------------------------------------

@@ -37,7 +37,7 @@ class JetCorrectorParameters;
         float result = 1.;
         int bin = mParameters->binIndex(fX);
         if (bin<0) {
-          edm::LogError("SimpleJetCorrectionUncertainty")<<" bin variables out of range";
+          std::cout << "SimpleJetCorrectionUncertainty bin variables out of range" << std::endl;
           result = -999.0;
         } else
           result = uncertaintyBin((unsigned)bin,fY,fDirection);
@@ -66,7 +66,7 @@ class JetCorrectorParameters;
       float uncertaintyBin(unsigned fBin, float fY, bool fDirection) const
       {
         if (fBin >= mParameters->size()) {
-          edm::LogError("SimpleJetCorrectionUncertainty")<<" wrong bin: "<<fBin<<": only "<<mParameters->size()<<" are available";
+          std::cout << "SimpleJetCorrectionUncertainty:  wrong bin: "<<fBin<<": only "<<mParameters->size()<<" are available" << std::endl;
           return -999.0;
         }
         const std::vector<float>& p = mParameters->record(fBin).parameters();
@@ -112,7 +112,7 @@ class JetCorrectorParameters;
             if (fY[0] == fY[1])
               r = fY[0];
             else {
-          edm::LogError("SimpleJetCorrectionUncertainty")<<" interpolation error";
+          std::cout << "SimpleJetCorrectionUncertainty: interpolation error" << std::endl;
           return -999.0;
             }
           }

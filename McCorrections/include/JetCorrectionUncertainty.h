@@ -178,7 +178,7 @@ namespace jec {
                     if (fNames[i] == "JetEta")
                       {
                         if (!mIsJetEtaset) {
-                      edm::LogError("JetCorrectionUncertainty::")<<" jet eta is not set";
+                      std::cout << "JetCorrectionUncertainty: jet eta is not set" << std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mJetEta);
@@ -187,7 +187,7 @@ namespace jec {
                     else if (fNames[i] == "JetPt")
                       {
                         if (!mIsJetPtset){
-                      edm::LogError("JetCorrectionUncertainty::")<<" jet pt is not set";
+                      std::cout << "JetCorrectionUncertainty: jet pt is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mJetPt);
@@ -196,7 +196,7 @@ namespace jec {
                     else if (fNames[i] == "JetPhi")
                       {
                         if (!mIsJetPhiset) {
-                      edm::LogError("JetCorrectionUncertainty::")<<" jet phi is not set";
+                      std::cout << "JetCorrectionUncertainty: jet phi is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mJetPt);
@@ -205,7 +205,7 @@ namespace jec {
                     else if (fNames[i] == "JetE")
                       {
                         if (!mIsJetEset) {
-                      edm::LogError("JetCorrectionUncertainty::")<<" jet energy is not set";
+                      std::cout << "JetCorrectionUncertainty: jet energy is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mJetE);
@@ -214,7 +214,7 @@ namespace jec {
                     else if (fNames[i] == "JetEMF")
                       {
                         if (!mIsJetEMFset) {
-                      edm::LogError("JetCorrectionUncertainty::")<<" jet emf is not set";
+                      std::cout << "JetCorrectionUncertainty: jet emf is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mJetEMF);
@@ -223,7 +223,7 @@ namespace jec {
                     else if (fNames[i] == "LepPx")
                       {
                         if (!mIsLepPxset){
-                      edm::LogError("JetCorrectionUncertainty::")<<" lepton px is not set";
+                      std::cout << "JetCorrectionUncertainty: lepton px is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mLepPx);
@@ -232,7 +232,7 @@ namespace jec {
                     else if (fNames[i] == "LepPy")
                       {
                         if (!mIsLepPyset){
-                      edm::LogError("JetCorrectionUncertainty::")<<" lepton py is not set";
+                      std::cout << "JetCorrectionUncertainty: lepton py is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mLepPy);
@@ -241,7 +241,7 @@ namespace jec {
                     else if (fNames[i] == "LepPz")
                       {
                         if (!mIsLepPzset){
-                      edm::LogError("JetCorrectionUncertainty::")<<" lepton pz is not set";
+                      std::cout << "JetCorrectionUncertainty: lepton pz is not set"<< std::endl;
                       result.push_back(-999.0);
                     } else {
                       result.push_back(mLepPz);
@@ -249,7 +249,7 @@ namespace jec {
                       }
 
                     else {
-                  edm::LogError("JetCorrectionUncertainty::")<<" unknown parameter "<<fNames[i];
+                  std::cout << "JetCorrectionUncertainty: unknown parameter "<<fNames[i] << std::endl;
                   result.push_back(-999.0);
                     }
                   }
@@ -285,7 +285,7 @@ namespace jec {
                   // lep2 = pTrel2 + pLrel2
                   pTrel2 = lep2-pLrel2;
                 } else
-                  edm::LogError("JetCorrectionUncertainty")<<" not positive lepton-jet momentum: "<<lj2;
+                  std::cout << "JetCorrectionUncertainty not positive lepton-jet momentum: "<<lj2 << std::endl;
                 return (pTrel2 > 0) ? std::sqrt(pTrel2) : 0.0;
               }
 

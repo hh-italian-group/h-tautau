@@ -728,10 +728,10 @@ namespace jec{
 
     };
 
-#include "FWCore/Utilities/interface/typelookup.h"
+//#include "FWCore/Utilities/interface/typelookup.h"
 
-TYPELOOKUP_DATA_REG(JetCorrectorParameters);
-TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
+//TYPELOOKUP_DATA_REG(JetCorrectorParameters);
+//TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
 
 }
 
