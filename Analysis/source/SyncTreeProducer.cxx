@@ -52,6 +52,10 @@ public:
 
     void Run()
     {
+//        static const std::vector<std::string> trigger_patterns = {
+//            "HLT_VBF_DoubleLooseChargedIsoPFTau20_Trk1_eta2p1_Reg_v"
+//        };
+        
         std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.\n")
                    % args.input_file() % args.output_file() % args.mode();
 
@@ -78,6 +82,8 @@ public:
             EventInfoBase& event = *eventInfoPtr;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
+//            if(!event.GetTriggerResults().AnyAcceptAndMatch(trigger_patterns))
+//                continue;
 
             if(syncMode == SyncMode::HH) {
                 if(event->extraelec_veto || event->extramuon_veto) continue;
