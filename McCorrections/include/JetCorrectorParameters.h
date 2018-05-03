@@ -7,7 +7,7 @@
 #ifndef JetCorrectorParameters_h
 #define JetCorrectorParameters_h
 
-//#include "CondFormats/Serialization/interface/Serializable.h"
+#include "h-tautau/McCorrections/include/Serializable.h"
 
 #include <string>
 #include <vector>
@@ -727,12 +727,14 @@ namespace jec{
 
     };
 
-}
-
 #include "FWCore/Utilities/interface/typelookup.h"
 
 TYPELOOKUP_DATA_REG(JetCorrectorParameters);
 TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
+
+}
+
+
 
 #endif
 

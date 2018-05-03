@@ -1,7 +1,7 @@
 #ifndef SimpleJetCorrectionUncertainty_h
 #define SimpleJetCorrectionUncertainty_h
 
-//#include "CondFormats/Serialization/interface/Serializable.h"
+#include "h-tautau/McCorrections/include/Serializable.h"
 
 #include "h-tautau/McCorrections/include/JetCorrectorParameters.h"
 #include <vector>
