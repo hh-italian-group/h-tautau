@@ -166,7 +166,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
         trigger_tools::UnpackFilters(*iEvent,*triggerResultsHLT,unpackedTriggerObject);
-        const auto& paths = unpackedTriggerObject.pathNames(true, true);
+        const auto& paths = unpackedTriggerObject.pathNames(false, true); //isLastFilter=false
         for(const auto& path : paths) {
             size_t index;
             if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
