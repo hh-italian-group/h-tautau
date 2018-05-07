@@ -587,8 +587,7 @@ namespace jec{
         for ( ; i != iend; ++i ) {
           if ( k == i->first ) return i->second;
         }
-        throw cms::Exception("InvalidInput") << " cannot find key " << static_cast<int>(k)
-                             << " in the JEC payload, this usually means you have to change the global tag" << std::endl;
+        throw analysis::exception("InvalidInput, cannot find key '%1%' in the JEC payload, this usually means you have to change the global tag") % static_cast<int>(k);
       }
 
       // Access the JetCorrectorParameter via a string.
@@ -716,7 +715,7 @@ namespace jec{
         }
 
         // Didn't find default corrections, throw exception
-        throw cms::Exception("InvalidInput") << " Cannot find label " << label << std::endl;
+        throw analysis::exception("InvalidInput, Cannot find label '%1%' ") % label;
 
       }
 

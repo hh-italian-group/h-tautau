@@ -71,7 +71,7 @@ class JetCorrectorParameters;
         }
         const std::vector<float>& p = mParameters->record(fBin).parameters();
         if ((p.size() % 3) != 0)
-          throw cms::Exception ("SimpleJetCorrectionUncertainty")<<"wrong # of parameters: multiple of 3 expected, "<<p.size()<< " got";
+          throw analysis::exception("SimpleJetCorrectionUncertainty, wrong # of parameters: multiple of 3 expected, '%1%' got") % p.size();
         std::vector<float> yGrid,value;
         unsigned int N = p.size()/3;
         float result = -1.0;
