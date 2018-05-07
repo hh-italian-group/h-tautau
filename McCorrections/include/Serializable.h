@@ -15,6 +15,8 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/unordered_map.hpp>
 
+#include "AnalysisTools/Core/include/exception.h"
+
 // We cannot include Equal.h here since it is C++11
 namespace cond_standalone {
 namespace serialization {
@@ -34,23 +36,3 @@ namespace serialization {
         template <typename CondSerializationT, typename Enabled> friend struct cond_standalone::serialization::access; \
         friend class boost::serialization::access;
 
-// Same, but does *not* automatically generate the serialization code.
-// This is useful when special features are required, e.g. versioning
-// or using non-deducible contexts.
-#define COND_SERIALIZABLE_MANUAL \
-    COND_SERIALIZABLE_STANDALONE; \
-    void cond_serialization_manual();
-
-// Polymorphic classes must be tagged as such
-#define COND_SERIALIZABLE_POLYMORPHIC(T) \
-   BOOST_CLASS_EXPORT(T);
-
-// Marks a member as transient, i.e. not included in the automatically
-// generated serialization code. All variables in the same 'statement'
-// (up to the ';') will be marked as transient, so please avoid declaring
-// more than one transient member per 'statement'/line. In order to
-// avoid that, in the future we may be able to use custom C++11 attributes
-// like [[cond::serialization::transient]]
-#define COND_TRANSIENT
-
-#endif /* !defined(__GCCXML__) */
