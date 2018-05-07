@@ -93,8 +93,8 @@ namespace jec{
             }
 
             //-------- Member functions ----------
-            unsigned nBinVar()                  const {return mBinVar.size(); }
-            unsigned nParVar()                  const {return mParVar.size(); }
+            unsigned nBinVar()                  const {return unsigned(mBinVar.size()); }
+            unsigned nParVar()                  const {return unsigned(mParVar.size()); }
             std::vector<std::string> parVar()   const {return mParVar;        }
             std::vector<std::string> binVar()   const {return mBinVar;        }
             std::string parVar(unsigned fIndex) const {return mParVar[fIndex];}
@@ -110,7 +110,7 @@ namespace jec{
             std::vector<std::string> mParVar;
             std::vector<std::string> mBinVar;
 
-        COND_SERIALIZABLE_STANDALONE;
+        COND_SERIALIZABLE_STANDALONE
     };
         //---------------- Record class --------------------------------
         //-- Each Record holds the properties of a bin -----------------
@@ -158,10 +158,10 @@ namespace jec{
             //-------- Member functions ----------
             float xMin(unsigned fVar)           const {return mMin[fVar];                 }
             float xMax(unsigned fVar)           const {return mMax[fVar];                 }
-            float xMiddle(unsigned fVar)        const {return 0.5*(xMin(fVar)+xMax(fVar));}
+            float xMiddle(unsigned fVar)        const {return float(0.5*(xMin(fVar)+xMax(fVar)));}
             float parameter(unsigned fIndex)    const {return mParameters[fIndex];        }
             std::vector<float> parameters()     const {return mParameters;                }
-            unsigned nParameters()              const {return mParameters.size();         }
+            unsigned nParameters()              const {return unsigned(mParameters.size());         }
             int operator< (const Record& other) const {return xMin(0) < other.xMin(0);    }
           private:
             //-------- Member variables ----------
@@ -170,7 +170,7 @@ namespace jec{
             std::vector<float> mMax;
             std::vector<float> mParameters;
 
-        COND_SERIALIZABLE_STANDALONE;
+        COND_SERIALIZABLE_STANDALONE
     };
 
         //-------- Constructors --------------
@@ -231,7 +231,7 @@ namespace jec{
         //-------- Member functions ----------
         const Record& record(unsigned fBin)                          const {return mRecords[fBin]; }
         const Definitions& definitions()                             const {return mDefinitions;   }
-        unsigned size()                                              const {return mRecords.size();}
+        unsigned size()                                              const {return unsigned(mRecords.size());}
 
         //------------------------------------------------------------------------
         //--- returns the number of bins in the direction of fVar ----------------
@@ -278,7 +278,7 @@ namespace jec{
                   tmp+=1;
               if (tmp==N)
                 {
-                  result = i;
+                  result = int(i);
                   break;
                 }
             }
@@ -321,7 +321,7 @@ namespace jec{
                 }
               if (tmp==N)
                 {
-                  result = i;
+                  result = int(i);
                   break;
                 }
             }
@@ -392,7 +392,7 @@ namespace jec{
           txtFile<<definitions().nParVar()<<std::setw(15);
           for(unsigned i=0;i<definitions().nParVar();i++)
             txtFile<<definitions().parVar(i)<<std::setw(15);
-          txtFile<<std::setw(definitions().formula().size()+15)<<definitions().formula()<<std::setw(15);
+          txtFile<<std::setw(int(definitions().formula().size()+15))<<definitions().formula()<<std::setw(15);
           if (definitions().isResponse())
             txtFile<<"Response"<<std::setw(15);
           else
@@ -418,7 +418,7 @@ namespace jec{
         std::vector<JetCorrectorParameters::Record> mRecords;
         bool                                        valid_; /// is this a valid set?
 
-      COND_SERIALIZABLE_STANDALONE;
+      COND_SERIALIZABLE_STANDALONE
     };
 
 
@@ -644,7 +644,7 @@ namespace jec{
         std::vector<std::string>::const_iterator found =
           find( l5Flavors_.begin(), l5Flavors_.end(), flav );
         if ( found != l5Flavors_.end() ) {
-          return (found - l5Flavors_.begin() + 1) * 100;
+          return key_type((found - l5Flavors_.begin() + 1) * 100);
         }
         else return L5Flavor;
       }
@@ -654,7 +654,7 @@ namespace jec{
         std::vector<std::string>::const_iterator found =
           find( l7Partons_.begin(), l7Partons_.end(), flav );
         if ( found != l7Partons_.end() ) {
-          return (found - l7Partons_.begin() + 1) * 1000;
+          return key_type((found - l7Partons_.begin() + 1) * 1000);
         }
         else return L7Parton;
       }
@@ -673,19 +673,19 @@ namespace jec{
       static std::string findL5Flavor( key_type k ){
         if ( k == L5Flavor ) return labels_[L5Flavor];
         else
-          return l5Flavors_[k / 100 - 1];
+            return l5Flavors_[size_t(k / 100 - 1)];
       }
 
       static std::string findL7Parton( key_type k ){
         if ( k == L7Parton ) return labels_[L7Parton];
         else
-          return l7Partons_[k / 1000 - 1];
+          return l7Partons_[size_t(k / 1000 - 1)];
       }
 
       static std::string findLabel( key_type k ){
         if      ( isL5(k) ) return findL5Flavor(k);
         else if ( isL7(k) ) return findL7Parton(k);
-        else                return labels_[k];
+        else                return labels_[size_t(k)];
       }
 
      protected:
@@ -723,7 +723,7 @@ namespace jec{
       collection_type                        correctionsL5_;
       collection_type                        correctionsL7_;
 
-     COND_SERIALIZABLE_STANDALONE;
+     COND_SERIALIZABLE_STANDALONE
 
     };
 

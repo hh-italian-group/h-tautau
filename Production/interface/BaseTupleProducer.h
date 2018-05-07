@@ -18,8 +18,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 
-#include "h-tautau/McCorrections/include/JetCorrectionUncertainty.h"
-#include "h-tautau/McCorrections/include/JetCorrectorParameters.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 #include "JetMETCorrections/Modules/interface/JetResolution.h"
 
@@ -173,8 +173,8 @@ private:
     edm::Handle<TtGenEvent> topGenEvent;
     edm::Handle<double> rho;
 
-    edm::ESHandle<jec::JetCorrectorParametersCollection> jetCorParColl;
-    std::shared_ptr<jec::JetCorrectionUncertainty> jecUnc;
+    edm::ESHandle<JetCorrectorParametersCollection> jetCorParColl;
+    std::shared_ptr<JetCorrectionUncertainty> jecUnc;
     JME::JetResolution resolution;
 
     std::vector<analysis::EventEnergyScale> eventEnergyScales;

@@ -132,7 +132,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(m_rho_token, rho);
 
     iSetup.get<JetCorrectionsRecord>().get("AK4PFchs", jetCorParColl);
-    jecUnc = std::shared_ptr<jec::JetCorrectionUncertainty>(new jec::JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
+    jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
 
     resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
 }

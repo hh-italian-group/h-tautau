@@ -240,13 +240,13 @@ namespace htt_sync {
 
         sync().met = event->pfMET_p4.Pt();
         if(new_event_up){
-            sync().met_up = new_event_up->GetMET().GetMomentum().Pt();
-            sync().metphi_up = new_event_up->GetMET().GetMomentum().Phi();
+            sync().met_up = static_cast<float>(new_event_up->GetMET().GetMomentum().Pt());
+            sync().metphi_up = static_cast<float>(new_event_up->GetMET().GetMomentum().Phi());
         }
 
         if(new_event_down){
-            sync().met_down = new_event_down->GetMET().GetMomentum().Pt();
-            sync().metphi_down = new_event_down->GetMET().GetMomentum().Phi();
+            sync().met_down = static_cast<float>(new_event_down->GetMET().GetMomentum().Pt());
+            sync().metphi_down = static_cast<float>(new_event_down->GetMET().GetMomentum().Phi());
         }
 
         sync().metphi = static_cast<float>(TVector2::Phi_0_2pi(event->pfMET_p4.Phi()));

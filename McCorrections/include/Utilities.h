@@ -117,7 +117,7 @@ namespace std
     typedef std::size_t result_type;
     result_type operator()(const argument_type& t) const
     {
-      return -1;
+      return result_type(-1);
     }
   };
 }
@@ -138,7 +138,7 @@ namespace
   inline float getFloat(const std::string& token)
   {
     char* endptr;
-    float result = strtod (token.c_str(), &endptr);
+    float result = float(strtod (token.c_str(), &endptr));
     if (endptr == token.c_str())
       {
         std::stringstream sserr;
@@ -151,7 +151,7 @@ namespace
   inline unsigned getUnsigned(const std::string& token)
   {
     char* endptr;
-    unsigned result = strtoul (token.c_str(), &endptr, 0);
+    unsigned result = unsigned(strtoul (token.c_str(), &endptr, 0));
     if (endptr == token.c_str())
       {
         std::stringstream sserr;
@@ -163,7 +163,7 @@ namespace
   inline long int getSigned(const std::string& token)
   {
     char* endptr;
-    unsigned result = strtol (token.c_str(), &endptr, 0);
+    unsigned result = unsigned(strtol (token.c_str(), &endptr, 0));
     if (endptr == token.c_str())
       {
         std::stringstream sserr;
@@ -221,7 +221,7 @@ namespace
     float D[4],a[3];
     D[0] = fX[0]*fX[1]*(fX[0]-fX[1])+fX[1]*fX[2]*(fX[1]-fX[2])+fX[2]*fX[0]*(fX[2]-fX[0]);
     D[3] = fY[0]*(fX[1]-fX[2])+fY[1]*(fX[2]-fX[0])+fY[2]*(fX[0]-fX[1]);
-    D[2] = fY[0]*(pow(fX[2],2)-pow(fX[1],2))+fY[1]*(pow(fX[0],2)-pow(fX[2],2))+fY[2]*(pow(fX[1],2)-pow(fX[0],2));
+    D[2] = float(fY[0]*(pow(fX[2],2)-pow(fX[1],2))+fY[1]*(pow(fX[0],2)-pow(fX[2],2))+fY[2]*(pow(fX[1],2)-pow(fX[0],2)));
     D[1] = fY[0]*fX[1]*fX[2]*(fX[1]-fX[2])+fY[1]*fX[0]*fX[2]*(fX[2]-fX[0])+fY[2]*fX[0]*fX[1]*(fX[0]-fX[1]);
     if (D[0] != 0)
       {

@@ -40,7 +40,7 @@ class JetCorrectorParameters;
           std::cout << "SimpleJetCorrectionUncertainty bin variables out of range" << std::endl;
           result = -999.0;
         } else
-          result = uncertaintyBin((unsigned)bin,fY,fDirection);
+          result = uncertaintyBin(unsigned(bin),fY,fDirection);
         return result;
       }
 
@@ -50,15 +50,15 @@ class JetCorrectorParameters;
 
       int findBin(const std::vector<float>& v, float x) const
       {
-        int i;
-        int n = v.size()-1;
+        size_t i;
+        size_t n = v.size()-1;
         if (n<=0) return -1;
         if (x<v[0] || x>=v[n])
           return -1;
         for(i=0;i<n;i++)
          {
-           if (x>=v[i] && x<v[i+1])
-             return i;
+           if (x>=v[size_t(i)] && x<v[size_t(i+1)])
+             return int(i);
          }
         return 0;
       }
@@ -73,7 +73,7 @@ class JetCorrectorParameters;
         if ((p.size() % 3) != 0)
           throw analysis::exception("SimpleJetCorrectionUncertainty, wrong # of parameters: multiple of 3 expected, '%1%' got") % p.size();
         std::vector<float> yGrid,value;
-        unsigned int N = p.size()/3;
+        unsigned int N = unsigned(p.size()/3);
         float result = -1.0;
         for(unsigned i=0;i<N;i++)
           {
@@ -90,9 +90,9 @@ class JetCorrectorParameters;
           result = value[N-1];
         else
           {
-            int bin = findBin(yGrid,fY);
+            size_t bin = size_t(findBin(yGrid,fY));
             float vx[2],vy[2];
-            for(int i=0;i<2;i++)
+            for(size_t i=0;i<2;i++)
               {
                 vx[i] = yGrid[bin+i];
                 vy[i] = value[bin+i];
