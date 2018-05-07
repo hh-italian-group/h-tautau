@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include <list>
+#include <numeric>
 #include <algorithm>
 #include "EventTuple.h"
 #include "AnalysisTypes.h"
@@ -328,6 +329,29 @@ public:
 
     double GetMvaScore() const { return mva_score; }
 
+    double CalculateGenHT(size_t first_jet_id = 0)
+    {
+        static constexpr double b_Flavour = 5;
+        auto cmp_jets = [&](size_t a, size_t b) {
+            const int hf_a = event->genJets_hadronFlavour.at(a);
+            const int hf_b = event->genJets_hadronFlavour.at(b);
+            const double pt_a = event->genJets_p4.at(a).pt();
+            const double pt_b = event->genJets_p4.at(b).pt();
+            if(hf_a == b_Flavour && hf_b != b_Flavour) return true;
+            if(hf_a != b_Flavour && hf_b == b_Flavour) return false;
+            return pt_a > pt_b;
+        };
+
+        std::vector<size_t> genJetIds(event->genJets_p4.size());
+        std::iota(genJetIds.begin(), genJetIds.end(), 0);
+        std::sort(genJetIds.begin(), genJetIds.end(), cmp_jets);
+
+        double HT = 0;
+        for(size_t n = first_jet_id; n < genJetIds.size(); ++n)
+            HT += event->genJets_p4.at(genJetIds.at(n)).pt();
+        return HT;
+    }
+
 protected:
     const Event* event;
     const SummaryInfo* summaryInfo;
@@ -366,8 +390,9 @@ public:
               const SummaryInfo* _summaryInfo = nullptr) :
         EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
     {
-        if(summaryInfo)
+        if(summaryInfo){
             triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
+        }
     }
 
     using EventInfoBase::EventInfoBase;
