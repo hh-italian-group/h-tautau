@@ -1,12 +1,5 @@
 #pragma once
 
-#if defined(__GCCXML__)
-
-#define COND_SERIALIZABLE
-#define COND_TRANSIENT
-
-#else
-
 // The archives must be listed before any boost/serialization header.
 // Otherwise, in some cases the export macros trigger compilation errors.
 // #include "CondFormats/Serialization/interface/Archive.h"
@@ -23,7 +16,7 @@
 #include <boost/serialization/unordered_map.hpp>
 
 // We cannot include Equal.h here since it is C++11
-namespace cond {
+namespace cond_standalone {
 namespace serialization {
     template <typename CondSerializationT, typename Enabled = void>
     struct access;
@@ -35,17 +28,17 @@ namespace serialization {
 // changing the default access specifier.
 // Note: the serialization code generator script depends on
 //       the implementation of the macro.
-#define COND_SERIALIZABLE \
+#define COND_SERIALIZABLE_STANDALONE \
     private: \
         template <class Archive> void serialize(Archive & ar, const unsigned int version); \
-        template <typename CondSerializationT, typename Enabled> friend struct cond::serialization::access; \
+        template <typename CondSerializationT, typename Enabled> friend struct cond_standalone::serialization::access; \
         friend class boost::serialization::access;
 
 // Same, but does *not* automatically generate the serialization code.
 // This is useful when special features are required, e.g. versioning
 // or using non-deducible contexts.
 #define COND_SERIALIZABLE_MANUAL \
-    COND_SERIALIZABLE; \
+    COND_SERIALIZABLE_STANDALONE; \
     void cond_serialization_manual();
 
 // Polymorphic classes must be tagged as such

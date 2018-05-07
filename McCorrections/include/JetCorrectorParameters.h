@@ -110,7 +110,7 @@ namespace jec{
             std::vector<std::string> mParVar;
             std::vector<std::string> mBinVar;
 
-        COND_SERIALIZABLE;
+        COND_SERIALIZABLE_STANDALONE;
     };
         //---------------- Record class --------------------------------
         //-- Each Record holds the properties of a bin -----------------
@@ -170,7 +170,7 @@ namespace jec{
             std::vector<float> mMax;
             std::vector<float> mParameters;
 
-        COND_SERIALIZABLE;
+        COND_SERIALIZABLE_STANDALONE;
     };
 
         //-------- Constructors --------------
@@ -418,7 +418,7 @@ namespace jec{
         std::vector<JetCorrectorParameters::Record> mRecords;
         bool                                        valid_; /// is this a valid set?
 
-      COND_SERIALIZABLE;
+      COND_SERIALIZABLE_STANDALONE;
     };
 
 
@@ -723,7 +723,7 @@ namespace jec{
       collection_type                        correctionsL5_;
       collection_type                        correctionsL7_;
 
-     COND_SERIALIZABLE;
+     COND_SERIALIZABLE_STANDALONE;
 
     };
 
