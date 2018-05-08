@@ -95,7 +95,7 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
         InitializeCandidateCollections(energyScale);
         try {
             Cutter cut(&GetAnaData().Selection(energyScales));
-            cut(true,energyScales);
+            cut(true,"events");
             ProcessEvent(cut);
         } catch(cuts::cut_failed&){}
 
