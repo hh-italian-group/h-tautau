@@ -21,22 +21,45 @@ namespace jec {
         static const std::set<UncertaintySource>& JetUncertainties()
         {
             static const std::set<UncertaintySource> jetUncertainties = {
-                UncertaintySource::JetAbsolute, UncertaintySource::JetHighPtExtra,
-                UncertaintySource::JetSinglePionECAL, UncertaintySource::JetSinglePionHCAL,
-                UncertaintySource::JetFlavorQCD, UncertaintySource::JetTime,
-                UncertaintySource::JetRelativeJEREC1, UncertaintySource::JetRelativeJEREC2,
-                UncertaintySource::JetRelativeJERHF, UncertaintySource::JetRelativePtBB,
-                UncertaintySource::JetRelativePtEC1, UncertaintySource::JetRelativePtEC2,
-                UncertaintySource::JetRelativePtHF, UncertaintySource::JetRelativeFSR,
-                UncertaintySource::JetRelativeStatEC2, UncertaintySource::JetRelativeStatHF,
-                UncertaintySource::JetPileUpDataMC, UncertaintySource::JetPileUpPtBB,
-                UncertaintySource::JetPileUpPtEC, UncertaintySource::JetPileUpPtHF,
-                UncertaintySource::JetPileUpBias, UncertaintySource::JetSubTotalPileUp,
-                UncertaintySource::JetSubTotalRelative, UncertaintySource::JetSubTotalPt,
-                UncertaintySource::JetSubTotalMC, UncertaintySource::JetTotalNoFlavor,
-                UncertaintySource::JetFlavorZJet, UncertaintySource::JetFlavorPhotonJet,
-                UncertaintySource::JetFlavorPureGluon, UncertaintySource::JetFlavorPureQuark,
-                UncertaintySource::JetFlavorPureCharm, UncertaintySource::JetFlavorPureBottom
+                UncertaintySource::AbsoluteStat,
+                UncertaintySource::AbsoluteScale,
+                UncertaintySource::AbsoluteMPFBias,
+                UncertaintySource::AbsoluteFlavMap,
+                UncertaintySource::Fragmentation,
+                UncertaintySource::SinglePionECAL,
+                UncertaintySource::SinglePionHCAL,
+                UncertaintySource::FlavorQCD,
+                UncertaintySource::FlavorZJet,
+                UncertaintySource::FlavorPhotonJet,
+                UncertaintySource::FlavorPureGluon,
+                UncertaintySource::FlavorPureQuark,
+                UncertaintySource::FlavorPureCharm,
+                UncertaintySource::FlavorPureBottom,
+                UncertaintySource::TimePtEta,
+                UncertaintySource::RelativeJEREC1,
+                UncertaintySource::RelativeJEREC2,
+                UncertaintySource::RelativeJERHF,
+                UncertaintySource::RelativePtBB,
+                UncertaintySource::RelativePtEC1,
+                UncertaintySource::RelativePtEC2,
+                UncertaintySource::RelativePtHF,
+                UncertaintySource::RelativeBal,
+                UncertaintySource::RelativeFSR,
+                UncertaintySource::PileUpDataMC,
+                UncertaintySource::PileUpPtRef,
+                UncertaintySource::PileUpPtBB,
+                UncertaintySource::PileUpPtEC1,
+                UncertaintySource::PileUpPtEC2,
+                UncertaintySource::PileUpPtHF,
+                UncertaintySource::SubTotalPileUp,
+                UncertaintySource::SubTotalRelative,
+                UncertaintySource::SubTotalPt,
+                UncertaintySource::SubTotalScale,
+                UncertaintySource::SubTotalAbsolute,
+                UncertaintySource::SubTotalMC,
+                UncertaintySource::TotalNoFlavor,
+                UncertaintySource::TotalNoTime,
+                UncertaintySource::TotalNoFlavorNoTime
             };
             return jetUncertainties;
         }
@@ -45,7 +68,7 @@ namespace jec {
         {
             auto createUncSet = []() {
                 std::set<UncertaintySource> jetUncertainties = JetUncertainties();
-                jetUncertainties.insert(UncertaintySource::JetTotal);
+                jetUncertainties.insert(UncertaintySource::Total);
                 return jetUncertainties;
              };
 
@@ -57,8 +80,8 @@ namespace jec {
 
             for (const auto jet_unc : JetUncertainties_withTotal()) {
                 std::string full_name = analysis::ToString(jet_unc);
-                const std::string name = full_name.substr(3);
-                JetCorrectorParameters p(uncertainties_source, name);
+//                const std::string name = full_name.substr(3);
+                JetCorrectorParameters p(uncertainties_source, full_name);
                 auto unc = std::make_shared<JetCorrectionUncertainty>(p);
            
                 uncertainty_map[jet_unc] = unc;
