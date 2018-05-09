@@ -88,14 +88,18 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     InitializeAODCollections(iEvent, iSetup);
     primaryVertex = vertices->ptrAt(0);
     for(auto energyScale : eventEnergyScales) {
+
+        std::ostringstream ss_energyScales;
+        ss_energyScales << "events_" << energyScale;
+        const std::string energyScales = ss_energyScales.str();
         InitializeCandidateCollections(energyScale);
         try {
-            Cutter cut(&GetAnaData().Selection("events"));
-            cut(true, "events");
+            Cutter cut(&GetAnaData().Selection(energyScales));
+            cut(true,"events");
             ProcessEvent(cut);
         } catch(cuts::cut_failed&){}
 
-        GetAnaData().Selection("events").fill_selection();
+        GetAnaData().Selection(energyScales).fill_selection();
     }
 }
 
