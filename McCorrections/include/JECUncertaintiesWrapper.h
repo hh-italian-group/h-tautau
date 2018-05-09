@@ -1,7 +1,12 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include "h-tautau/McCorrections/include/JetCorrectorParameters.h"
 #include "h-tautau/McCorrections/include/JetCorrectionUncertainty.h"
+//#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+//#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+
 #include "h-tautau/Analysis/include/Candidate.h"
 #include "h-tautau/Analysis/include/TupleObjects.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
@@ -80,10 +85,8 @@ namespace jec {
 
             for (const auto jet_unc : JetUncertainties_withTotal()) {
                 std::string full_name = analysis::ToString(jet_unc);
-//                const std::string name = full_name.substr(3);
                 JetCorrectorParameters p(uncertainties_source, full_name);
                 auto unc = std::make_shared<JetCorrectionUncertainty>(p);
-           
                 uncertainty_map[jet_unc] = unc;
             } // for unc
 
@@ -113,15 +116,16 @@ namespace jec {
              double shifted_met_px = 0;
              double shifted_met_py = 0;
             
-             const double unc_var = unc->getUncertainty(scales.at(scale));
-             const int sign = scales_variation.at(scale);
+            
             
              for (const auto& jet : jet_candidates){
                  unc->setJetPt(static_cast<float>(jet.GetMomentum().pt()));
                  unc->setJetEta(static_cast<float>(jet.GetMomentum().eta()));
-                 const double sf = 1.0 + (sign * unc_var);
-                 const auto shiftedMomentum = jet.GetMomentum() * sf;
-                 JetCandidate corr_jet(jet);
+                 const double unc_var = unc->getUncertainty(scales.at(scale));
+                 const int sign = scales_variation.at(scale);
+                 const double sf = double(1.0 + (sign * unc_var));
+                 const auto shiftedMomentum = jet.GetMomentum() * float(sf);
+                 auto corr_jet(jet);
                  corr_jet.SetMomentum(shiftedMomentum);
                  corrected_jets.push_back(corr_jet);
                  shifted_met_px += jet.GetMomentum().px() - corr_jet.GetMomentum().px();
