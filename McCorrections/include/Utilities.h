@@ -10,9 +10,9 @@
 #include <cmath>
 #include <utility>
 
-namespace
+namespace jec
 {
-  void handleError(const std::string& fClass, const std::string& fMessage)
+  inline void handleError(const std::string& fClass, const std::string& fMessage)
   {
 #ifdef STANDALONE
     std::stringstream sserr;
