@@ -7,9 +7,6 @@
 
 #pragma once
 
-#ifndef JetCorrectorParameters_h
-#define JetCorrectorParameters_h
-
 #include "h-tautau/McCorrections/include/Serializable.h"
 #include "h-tautau/McCorrections/include/Utilities.h"
 
@@ -737,8 +734,5 @@ namespace jec{
 
 }
 
-
-
-#endif
 
 

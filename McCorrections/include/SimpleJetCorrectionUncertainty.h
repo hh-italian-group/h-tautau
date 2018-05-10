@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef SimpleJetCorrectionUncertainty_h
-#define SimpleJetCorrectionUncertainty_h
-
 #include "h-tautau/McCorrections/include/Serializable.h"
 
 #include "h-tautau/McCorrections/include/JetCorrectorParameters.h"
@@ -134,4 +131,3 @@ class JetCorrectorParameters;
 
 }
 
-#endif
