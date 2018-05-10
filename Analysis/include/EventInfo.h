@@ -235,7 +235,6 @@ public:
         triggerResults.SetMatchBits(event->trigger_matches);
     }
     
-    EventInfoBase() {} //constructor
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
     virtual ~EventInfoBase(){} //destructor
     
@@ -277,6 +276,7 @@ public:
 
     void SetJets(const JetCollection& new_jets)
     {
+        Lock lock(*mutex);
         jets = std::make_shared<JetCollection>(new_jets);
     }
 
@@ -391,6 +391,7 @@ public:
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
     {
+        Lock lock(*mutex);
         if(!tuple_met)
             tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
         met = std::make_shared<MET>(*tuple_met, tuple_met->cov());
@@ -474,8 +475,8 @@ public:
 
     double GetMvaScore() const { return mva_score; }
 
-    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(analysis::UncertaintySource uncertainty_source,
-        analysis::UncertaintyScale scale) = 0;
+    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
+        UncertaintyScale scale) = 0;
 
 protected:
     const Event* event;
@@ -582,7 +583,7 @@ public:
         const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
         const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
         const JetCollection& jets = shifted_event_info.GetJets();
-        auto other_jets_p4 = event->other_jets_p4;
+        const auto& other_jets_p4 = event->other_jets_p4;
         auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
         const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
         shifted_event_info.SetJets(corrected_jets);

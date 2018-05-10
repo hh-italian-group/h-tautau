@@ -4,6 +4,9 @@
 //
 // Generic parameters for Jet corrections
 //
+
+#pragma once
+
 #ifndef JetCorrectorParameters_h
 #define JetCorrectorParameters_h
 

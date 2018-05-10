@@ -18,8 +18,8 @@ struct Arguments {
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
-    REQ_ARG(std::string, unc_source);
     REQ_ARG(std::string, output_file);
+    OPT_ARG(std::string, unc_source, "");
     OPT_ARG(std::string, uncertainty, "");
     OPT_ARG(std::string, sample_type, "signal");
 };

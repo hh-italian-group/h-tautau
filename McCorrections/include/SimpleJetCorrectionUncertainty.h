@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef SimpleJetCorrectionUncertainty_h
 #define SimpleJetCorrectionUncertainty_h
 

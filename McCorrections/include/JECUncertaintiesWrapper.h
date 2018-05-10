@@ -124,7 +124,7 @@ namespace jec {
                  const double unc_var = unc->getUncertainty(scales.at(scale));
                  const int sign = scales_variation.at(scale);
                  const auto sf = static_cast<typename LorentzVector1::Scalar>(1.0 + (sign * unc_var));
-                 const auto shiftedMomentum = jet.GetMomentum() * float(sf);
+                 const auto shiftedMomentum = jet.GetMomentum() * sf;
                  auto corr_jet(jet);
                  corr_jet.SetMomentum(shiftedMomentum);
                  corrected_jets.push_back(corr_jet);

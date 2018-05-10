@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef CondFormats_JetMETObjects_Utilities_h
 #define CondFormats_JetMETObjects_Utilities_h
 
