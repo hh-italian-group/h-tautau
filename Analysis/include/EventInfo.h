@@ -235,7 +235,12 @@ public:
         triggerResults.SetMatchBits(event->trigger_matches);
     }
     
-    virtual ~EventInfoBase() {}
+    EventInfoBase() {} //constructor
+    EventInfoBase(const EventInfoBase& ) = default; //copy constructor
+    virtual ~EventInfoBase(){} //destructor
+    
+    EventInfoBase& operator= ( const EventInfoBase& ) = default; //assignment
+
 
     const Event& operator*() const { return *event; }
     const Event* operator->() const { return event; }
@@ -287,6 +292,7 @@ public:
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
+            if(bjet_indexes.count(n) || jet->csv() <= csv_cut) continue;
             double tag;
             if(jet_ordering == JetOrdering::Pt)
                 tag = jet.GetMomentum().Pt();
@@ -296,7 +302,6 @@ public:
                 tag = jet->deepcsv();
             else
                 throw exception("Unsupported jet ordering for jet selection.");
-            if(jet->csv() <= csv_cut) continue;
             jet_info_vector.emplace_back(jet.GetMomentum(),n,tag);
         }
 

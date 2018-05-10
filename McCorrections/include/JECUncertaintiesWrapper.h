@@ -123,7 +123,7 @@ namespace jec {
                  unc->setJetEta(static_cast<float>(jet.GetMomentum().eta()));
                  const double unc_var = unc->getUncertainty(scales.at(scale));
                  const int sign = scales_variation.at(scale);
-                 const double sf = double(1.0 + (sign * unc_var));
+                 const auto sf = static_cast<typename LorentzVector1::Scalar>(1.0 + (sign * unc_var));
                  const auto shiftedMomentum = jet.GetMomentum() * float(sf);
                  auto corr_jet(jet);
                  corr_jet.SetMomentum(shiftedMomentum);
@@ -140,7 +140,7 @@ namespace jec {
                          unc->setJetEta(other_jet.eta());
                          const double unc_var = unc->getUncertainty(scales.at(scale));
                          const int sign = scales_variation.at(scale);
-                         const double sf = 1.0 + (sign * unc_var);
+                         const auto sf = static_cast<typename LorentzVector1::Scalar>(1.0 + (sign * unc_var));
                          const auto shiftedMomentum = other_jet * sf;
                          shifted_met_px += other_jet.px() - shiftedMomentum.px();
                          shifted_met_py += other_jet.py() - shiftedMomentum.py();
