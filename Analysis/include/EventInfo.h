@@ -7,7 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <algorithm>
 #include "EventTuple.h"
 #include "AnalysisTypes.h"
-#include "RootExt.h"
+#include "AnalysisTools/Core/include/RootExt.h"
 #include "KinFitInterface.h"
 #include "Candidate.h"
 #include "TupleObjects.h"
@@ -15,6 +15,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SummaryTuple.h"
 #include "AnalysisTools/Core/include/EventIdentifier.h"
 #include "hh-bbtautau/Analysis/include/MT2.h"
+#include "h-tautau/McCorrections/include/JECUncertaintiesWrapper.h"
 
 namespace analysis {
 
@@ -64,11 +65,73 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
 
 enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
 
+namespace jet_ordering {
+
+    template<typename LorentzVector>
+    struct JetInfo {
+        LorentzVector p4;
+        size_t index;
+        double tag;
+
+        JetInfo() : index(0), tag(0.0) { }
+
+        JetInfo(const LorentzVector _p4, size_t _index, double _tag)
+            : p4(_p4), index(_index), tag(_tag) { }
+
+    };
+
+    template<typename LorentzVector>
+    bool CompareJets(const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2,
+                     double pt_thr, double eta_thr)
+    {
+        const auto eta1 = std::abs(jet_1.p4.eta());
+        const auto eta2 = std::abs(jet_2.p4.eta());
+        if(eta1 < eta_thr && eta2 >= eta_thr) return true;
+        if(eta1 >= eta_thr && eta2 < eta_thr) return false;
+        const auto pt1 = jet_1.p4.pt();
+        const auto pt2 = jet_2.p4.pt();
+        if(pt1 > pt_thr && pt2 <= pt_thr) return true;
+        if(pt1 <= pt_thr && pt2 > pt_thr) return false;
+
+        if(jet_1.tag != jet_2.tag)
+            return jet_1.tag > jet_2.tag;
+        return pt1 > pt2;
+    };
+
+    template<typename LorentzVector>
+    std::vector<JetInfo<LorentzVector>> OrderJets(
+                                  const std::vector<JetInfo<LorentzVector>>& jet_info_vector,
+                                  bool apply_hard_cut,
+                                  double pt_cut = std::numeric_limits<double>::lowest(),
+                                  double eta_cut = std::numeric_limits<double>::max())
+    {
+        const auto comparitor = [&](const JetInfo<LorentzVector>& jet_1,
+                                    const JetInfo<LorentzVector>& jet_2) -> bool {
+            return analysis::jet_ordering::CompareJets(jet_1, jet_2, pt_cut, eta_cut);
+        };
+
+        std::vector<JetInfo<LorentzVector>> jets_ordered;
+        if(apply_hard_cut){
+            for(size_t n = 0; n < jet_info_vector.size(); ++n) {
+                if(jet_info_vector.at(n).p4.Pt() > pt_cut && std::abs(jet_info_vector.at(n).p4.eta()) < eta_cut)
+                    jets_ordered.push_back(jet_info_vector.at(n));
+            }
+        }
+        else
+            jets_ordered = jet_info_vector;
+
+        std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
+        return jets_ordered;
+    }
+
+}
+
 class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary) : summary(_summary)
+    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source = "")
+        : summary(_summary)
     {
         for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
             const int channel_id = summary.triggers_channel.at(n);
@@ -77,6 +140,8 @@ public:
                 triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
             triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
         }
+        if(!_uncertainties_source.empty())
+            jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
     }
 
     std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const
@@ -89,9 +154,18 @@ public:
     const ProdSummary& operator*() const { return summary; }
     const ProdSummary* operator->() const { return &summary; }
 
+    const jec::JECUncertaintiesWrapper& GetJecUncertainties() const
+    {
+        if(!jecUncertainties)
+            throw exception("Jec Uncertainties not stored.");
+        return *jecUncertainties;
+    }
+
 private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
+    std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
+
 };
 
 class EventInfoBase {
@@ -108,34 +182,26 @@ public:
                                    double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
-        const auto orderer = [&](size_t j1, size_t j2) -> bool {
-            if(jet_ordering == JetOrdering::Pt)
-                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            if(jet_ordering == JetOrdering::CSV){
-                if(event.jets_csv.at(j1) != event.jets_csv.at(j2))
-                    return event.jets_csv.at(j1) > event.jets_csv.at(j2);
-                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            }
-            if(jet_ordering == JetOrdering::DeepCSV){
-                if(event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) != event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2))
-                    return event.jets_deepCsv_b.at(j1)+event.jets_deepCsv_bb.at(j1) > event.jets_deepCsv_b.at(j2)+event.jets_deepCsv_bb.at(j2);
-                return event.jets_p4.at(j1).Pt() > event.jets_p4.at(j2).Pt();
-            }
-
-            throw exception("Unsupported jet ordering for b-jet pair selection.");
-        };
-
-        std::vector<size_t> indexes;
+        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(event.jets_p4.at(n).Pt() > pt_cut && std::abs(event.jets_p4.at(n).eta()) < eta_cut)
-                indexes.push_back(n);
+            double tag;
+            if(jet_ordering == JetOrdering::Pt)
+                tag = event.jets_p4.at(n).Pt();
+            else if(jet_ordering == JetOrdering::CSV)
+                tag = event.jets_csv.at(n);
+            else if(jet_ordering == JetOrdering::DeepCSV)
+                tag = event.jets_deepCsv_b.at(n)+event.jets_deepCsv_bb.at(n);
+            else
+                throw exception("Unsupported jet ordering for b-jet pair selection.");
+            jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
         }
-        std::sort(indexes.begin(), indexes.end(), orderer);
+
+        auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
         JetPair selected_pair = ntuple::UndefinedJetPair();
-        if(indexes.size() >= 1)
-            selected_pair.first = indexes.at(0);
-        if(indexes.size() >= 2)
-            selected_pair.second = indexes.at(1);
+        if(jets_ordered.size() >= 1)
+            selected_pair.first = jets_ordered.at(0).index;
+        if(jets_ordered.size() >= 2)
+            selected_pair.second = jets_ordered.at(1).index;
         return selected_pair;
     }
 
@@ -164,14 +230,16 @@ public:
         selected_bjet_pair(_selected_bjet_pair),
         has_bjet_pair(selected_bjet_pair.first < GetNJets() && selected_bjet_pair.second < GetNJets())
     {
+        mutex = std::make_shared<Mutex>();
         triggerResults.SetAcceptBits(event->trigger_accepts);
         triggerResults.SetMatchBits(event->trigger_matches);
     }
+    
+    EventInfoBase(const EventInfoBase& ) = default; //copy constructor
+    virtual ~EventInfoBase(){} //destructor
+    
+    EventInfoBase& operator= ( const EventInfoBase& ) = default; //assignment
 
-    EventInfoBase(const EventInfoBase&) = delete;
-    EventInfoBase& operator=(const EventInfoBase&) = delete;
-
-    virtual ~EventInfoBase() {}
 
     const Event& operator*() const { return *event; }
     const Event* operator->() const { return event; }
@@ -194,15 +262,22 @@ public:
 
     const JetCollection& GetJets()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!jets) {
             jets = std::shared_ptr<JetCollection>(new JetCollection());
+            tuple_jets = std::make_shared<std::list<ntuple::TupleJet>>();
             for(size_t n = 0; n < GetNJets(); ++n) {
-                tuple_jets.push_back(ntuple::TupleJet(*event, n));
-                jets->push_back(JetCandidate(tuple_jets.back()));
+                tuple_jets->push_back(ntuple::TupleJet(*event, n));
+                jets->push_back(JetCandidate(tuple_jets->back()));
             }
         }
         return *jets;
+    }
+
+    void SetJets(const JetCollection& new_jets)
+    {
+        Lock lock(*mutex);
+        jets = std::make_shared<JetCollection>(new_jets);
     }
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
@@ -211,35 +286,30 @@ public:
                              JetOrdering jet_ordering = JetOrdering::CSV,
                              const std::set<size_t>& bjet_indexes = {})
     {
-        Lock lock(mutex);
-        const auto orderer = [&](const JetCandidate& j1, const JetCandidate& j2) -> bool {
-            if(jet_ordering == JetOrdering::Pt)
-                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            if(jet_ordering == JetOrdering::DeepCSV){
-                if(j1->deepcsv() != j2->deepcsv())
-                    return j1->deepcsv() > j2->deepcsv();
-                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            }
-            if(jet_ordering == JetOrdering::CSV){
-                if(j1->csv() != j2->csv())
-                    return j1->csv() > j2->csv();
-                return j1.GetMomentum().Pt() > j2.GetMomentum().Pt();
-            }
-            throw exception("Unsupported jet ordering for jet selection.");
-        };
-
+        Lock lock(*mutex);
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
-            if(bjet_indexes.count(n)) continue;
             const JetCandidate& jet = all_jets.at(n);
-            if(jet.GetMomentum().Pt() > pt_cut && std::abs(jet.GetMomentum().eta()) < eta_cut
-                    && jet->csv() > csv_cut)
-                selected_jets.push_back(jet);
+            if(bjet_indexes.count(n) || jet->csv() <= csv_cut) continue;
+            double tag;
+            if(jet_ordering == JetOrdering::Pt)
+                tag = jet.GetMomentum().Pt();
+            else if(jet_ordering == JetOrdering::CSV)
+                tag = jet->csv();
+            else if(jet_ordering == JetOrdering::DeepCSV)
+                tag = jet->deepcsv();
+            else
+                throw exception("Unsupported jet ordering for jet selection.");
+            jet_info_vector.emplace_back(jet.GetMomentum(),n,tag);
         }
 
-        if(jet_ordering != JetOrdering::NoOrdering)
-            std::sort(selected_jets.begin(), selected_jets.end(), orderer);
+        auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
+        for(size_t h = 0; h < jets_ordered.size(); ++h){
+            const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
+            selected_jets.push_back(jet);
+        }
         return selected_jets;
     }
 
@@ -281,12 +351,13 @@ public:
 
     const FatJetCollection& GetFatJets()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
+            tuple_fatJets = std::make_shared<std::list<ntuple::TupleFatJet>>();
             for(size_t n = 0; n < GetNFatJets(); ++n) {
-                tuple_fatJets.push_back(ntuple::TupleFatJet(*event, n));
-                fatJets->push_back(FatJetCandidate(tuple_fatJets.back()));
+                tuple_fatJets->push_back(ntuple::TupleFatJet(*event, n));
+                fatJets->push_back(FatJetCandidate(tuple_fatJets->back()));
             }
         }
         return *fatJets;
@@ -296,7 +367,7 @@ public:
 
     const HiggsBBCandidate& GetHiggsBB()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!HasBjetPair())
             throw exception("Can't create H->bb candidate.");
         if(!higgs_bb) {
@@ -309,7 +380,7 @@ public:
 
     const MET& GetMET()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!met) {
             tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
             met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
@@ -317,9 +388,19 @@ public:
         return *met;
     }
 
+    template<typename LorentzVector>
+    void SetMetMomentum(const LorentzVector& new_met_p4)
+    {
+        Lock lock(*mutex);
+        if(!tuple_met)
+            tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
+        met = std::make_shared<MET>(*tuple_met, tuple_met->cov());
+        met->SetMomentum(new_met_p4);
+    }
+
     const kin_fit::FitResults& GetKinFitResults()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!HasBjetPair())
             throw exception("Can't retrieve KinFit results.");
         if(!kinfit_results) {
@@ -340,7 +421,7 @@ public:
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET)
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(useSVfit && addMET)
             throw exception("Can't add MET and with SVfit applied.");
         LorentzVector p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum();
@@ -351,7 +432,7 @@ public:
 
     double GetMT2()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!mt2.is_initialized()) {
             mt2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
                                                GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
@@ -361,7 +442,7 @@ public:
 
     const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut)
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         using FatJet = ntuple::TupleFatJet;
         using SubJet = ntuple::TupleSubJet;
         if(!HasBjetPair()) return nullptr;
@@ -388,26 +469,29 @@ public:
 
     void SetMvaScore(double _mva_score)
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         mva_score = _mva_score;
     }
 
     double GetMvaScore() const { return mva_score; }
 
+    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
+        UncertaintyScale scale) = 0;
+
 protected:
     const Event* event;
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
-    Mutex mutex;
+    std::shared_ptr<Mutex> mutex;
 
 private:
     EventIdentifier eventIdentifier;
     JetPair selected_bjet_pair;
     bool has_bjet_pair;
 
-    std::list<ntuple::TupleJet> tuple_jets;
+    std::shared_ptr<std::list<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<JetCollection> jets;
-    std::list<ntuple::TupleFatJet> tuple_fatJets;
+    std::shared_ptr<std::list<ntuple::TupleFatJet>> tuple_fatJets;
     std::shared_ptr<FatJetCollection> fatJets;
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
     std::shared_ptr<ntuple::TupleMet> tuple_met;
@@ -440,7 +524,7 @@ public:
 
     const FirstLeg& GetFirstLeg()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!leg1) {
             tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, 1));
             leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1, tuple_leg1->iso()));
@@ -450,7 +534,7 @@ public:
 
     const SecondLeg& GetSecondLeg()
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(!leg2) {
             tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, 2));
             leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2, tuple_leg2->iso()));
@@ -467,7 +551,7 @@ public:
 
     const HiggsTTCandidate& GetHiggsTT(bool useSVfit)
     {
-        Lock lock(mutex);
+        Lock lock(*mutex);
         if(useSVfit) {
             if(!higgs_tt_sv) {
                 higgs_tt_sv = std::shared_ptr<HiggsTTCandidate>(
@@ -483,6 +567,28 @@ public:
     virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) override
     {
         return GetHiggsTT(useSVfit).GetMomentum();
+    }
+
+    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
+        UncertaintyScale scale) override
+    {
+        EventInfo<FirstLeg, SecondLeg> event_info = ApplyShift(uncertainty_source, scale);
+        return std::make_shared<EventInfo<FirstLeg, SecondLeg>>(std::move(event_info));
+    }
+
+    EventInfo<FirstLeg, SecondLeg> ApplyShift(UncertaintySource uncertainty_source,
+        UncertaintyScale scale)
+    {
+        EventInfo<FirstLeg, SecondLeg> shifted_event_info(*this);
+        const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
+        const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
+        const JetCollection& jets = shifted_event_info.GetJets();
+        const auto& other_jets_p4 = event->other_jets_p4;
+        auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
+        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
+        shifted_event_info.SetJets(corrected_jets);
+        shifted_event_info.SetMetMomentum(shifted_met_p4);
+        return shifted_event_info;
     }
 
 private:

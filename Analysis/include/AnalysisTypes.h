@@ -48,6 +48,57 @@ ENUM_NAMES(UncertaintyScale) = {
     { UncertaintyScale::Central, "Central" }, { UncertaintyScale::Up, "Up" }, { UncertaintyScale::Down, "Down" }
 };
 
+enum class UncertaintySource { None = 0, TauES = 1, Total = 2, TopPt = 3, AbsoluteStat = 4, AbsoluteScale = 5,
+     AbsoluteMPFBias = 6, AbsoluteFlavMap = 7, Fragmentation = 8, SinglePionECAL = 9, SinglePionHCAL = 10,
+     FlavorQCD = 11, FlavorZJet = 12, FlavorPhotonJet = 13, FlavorPureGluon = 14, FlavorPureQuark = 15, FlavorPureCharm = 16,
+     FlavorPureBottom = 17, TimePtEta = 18, RelativeJEREC1 = 19, RelativeJEREC2 = 20, RelativeJERHF = 21,
+     RelativePtBB = 22, RelativePtEC1 = 23, RelativePtEC2 = 24, RelativePtHF = 25, RelativeBal = 26,
+     RelativeFSR = 27, PileUpDataMC = 28, PileUpPtRef = 29, PileUpPtBB = 30, PileUpPtEC1 = 31, PileUpPtEC2 = 32,
+     PileUpPtHF = 33, SubTotalPileUp = 34, SubTotalRelative = 35, SubTotalPt = 36, SubTotalScale = 37,
+     SubTotalAbsolute = 38, SubTotalMC = 39, TotalNoFlavor = 40, TotalNoTime = 41, TotalNoFlavorNoTime = 42};
+ENUM_NAMES(UncertaintySource) = {
+    { UncertaintySource::None, "None" }, { UncertaintySource::TauES, "TauES" },
+    { UncertaintySource::Total, "Total" }, { UncertaintySource::TopPt, "TopPt" },
+    { UncertaintySource::AbsoluteStat, "AbsoluteStat" },
+    { UncertaintySource::AbsoluteScale, "AbsoluteScale" },
+    { UncertaintySource::AbsoluteMPFBias, "AbsoluteMPFBias" },
+    { UncertaintySource::AbsoluteFlavMap, "AbsoluteFlavMap" },
+    { UncertaintySource::Fragmentation, "Fragmentation" }, { UncertaintySource::SinglePionECAL, "SinglePionECAL" },
+    { UncertaintySource::SinglePionHCAL, "SinglePionHCAL" },
+    { UncertaintySource::FlavorQCD, "FlavorQCD" },
+    { UncertaintySource::FlavorZJet, "FlavorZJet" },
+    { UncertaintySource::FlavorPhotonJet, "FlavorPhotonJet" },
+    { UncertaintySource::FlavorPureGluon, "FlavorPureGluon" },
+    { UncertaintySource::FlavorPureQuark, "FlavorPureQuark" },
+    { UncertaintySource::FlavorPureCharm, "FlavorPureCharm" },
+    { UncertaintySource::FlavorPureBottom, "FlavorPureBottom" },
+    { UncertaintySource::TimePtEta, "TimePtEta" },
+    { UncertaintySource::RelativeJEREC1, "RelativeJEREC1" },
+    { UncertaintySource::RelativeJEREC2, "RelativeJEREC2" },
+    { UncertaintySource::RelativeJERHF, "RelativeJERHF" },
+    { UncertaintySource::RelativePtBB, "RelativePtBB" },
+    { UncertaintySource::RelativePtEC1, "RelativePtEC1" },
+    { UncertaintySource::RelativePtEC2, "RelativePtEC2" },
+    { UncertaintySource::RelativePtHF, "RelativePtHF" },
+    { UncertaintySource::RelativeBal, "RelativeBal" },
+    { UncertaintySource::RelativeFSR, "RelativeFSR" },
+    { UncertaintySource::PileUpDataMC, "PileUpDataMC" },
+    { UncertaintySource::PileUpPtRef, "PileUpPtRef" },
+    { UncertaintySource::PileUpPtBB, "PileUpPtBB" },
+    { UncertaintySource::PileUpPtEC1, "PileUpPtEC1" },
+    { UncertaintySource::PileUpPtEC2, "PileUpPtEC2" },
+    { UncertaintySource::PileUpPtHF, "PileUpPtHF" },
+    { UncertaintySource::SubTotalPileUp, "SubTotalPileUp" },
+    { UncertaintySource::SubTotalRelative, "SubTotalRelative" },
+    { UncertaintySource::SubTotalPt, "SubTotalPt" },
+    { UncertaintySource::SubTotalScale, "SubTotalScale" },
+    { UncertaintySource::SubTotalAbsolute, "SubTotalAbsolute" },
+    { UncertaintySource::SubTotalMC, "SubTotalMC" },
+    { UncertaintySource::TotalNoFlavor, "TotalNoFlavor"},
+    { UncertaintySource::TotalNoTime, "TotalNoTime"},
+    { UncertaintySource::TotalNoFlavorNoTime, "TotalNoFlavorNoTime"}
+};
+
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
 enum class DiscriminatorWP { VVLoose, VLoose, Loose, Medium, Tight, VTight, VVTight };

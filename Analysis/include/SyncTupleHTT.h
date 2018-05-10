@@ -53,6 +53,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, mva, suff, pref) /* pu Jet id score */ \
     JVAR(Float_t, csv, suff, pref) \
     JVAR(Float_t, deepcsv, suff, pref) \
+    JVAR(Float_t, resolution, suff, pref) /* Jet energy resolution in percentage */ \
     /**/
 
 #define SYNC_DATA() \
@@ -75,6 +76,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, mt_sv) /* using MarkovChain MC integration svfit.transverseMass() */ \
     /* MET */ \
     VAR(Float_t, met) /* type 1 corrected PF MET */  \
+    VAR(Float_t, met_up) /* PF MET after up jec unc*/  \
+    VAR(Float_t, met_down) /* PF MET after down jec unc */  \
+    VAR(Float_t, metphi_up) /* PF MET phi after up jec unc*/  \
+    VAR(Float_t, metphi_down) /* PF MET phi after down jec unc */  \
     VAR(Float_t, metphi) /* type 1 corrected PF MET phi */  \
     VAR(Float_t, puppimet) /* Puppi corrrected MET */  \
     VAR(Float_t, puppimetphi) /* Puppi corrected MET phi */  \
@@ -167,7 +172,9 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
-    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period)
+    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync,
+        analysis::Period run_period, analysis::EventInfoBase* new_event_up = nullptr,
+            analysis::EventInfoBase* new_event_down = nullptr)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -232,6 +239,16 @@ namespace htt_sync {
         sync().mt_sv = event->SVfit_mt;
 
         sync().met = event->pfMET_p4.Pt();
+        if(new_event_up){
+            sync().met_up = static_cast<float>(new_event_up->GetMET().GetMomentum().Pt());
+            sync().metphi_up = static_cast<float>(TVector2::Phi_0_2pi(new_event_up->GetMET().GetMomentum().Phi()));
+        }
+
+        if(new_event_down){
+            sync().met_down = static_cast<float>(new_event_down->GetMET().GetMomentum().Pt());
+            sync().metphi_down = static_cast<float>(TVector2::Phi_0_2pi(new_event_down->GetMET().GetMomentum().Phi()));
+        }
+
         sync().metphi = static_cast<float>(TVector2::Phi_0_2pi(event->pfMET_p4.Phi()));
         sync().pzetavis = static_cast<float>(analysis::Calculate_visiblePzeta(event->p4_1, event->p4_2));
 
@@ -341,6 +358,7 @@ namespace htt_sync {
             sync().bjet_mva_1 = bjets_id.at(0)->mva();
             sync().bjet_csv_1 = bjets_id.at(0)->csv();
             sync().bjet_deepcsv_1 = bjets_id.at(0)->deepcsv();
+            sync().bjet_resolution_1 = bjets_id.at(0)->resolution() * static_cast<float>(bjets_id.at(0).GetMomentum().E());
         } else {
             sync().bjet_pt_1 = default_value;
             sync().bjet_eta_1 = default_value;
@@ -349,6 +367,7 @@ namespace htt_sync {
             sync().bjet_mva_1 = default_value;
             sync().bjet_csv_1 = default_value;
             sync().bjet_deepcsv_1 = default_value;
+            sync().bjet_resolution_1 = default_value;
         }
         if(bjets_id.size() >= 2) {
             sync().bjet_pt_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Pt());
@@ -358,6 +377,7 @@ namespace htt_sync {
             sync().bjet_mva_2 = bjets_id.at(1)->mva();
             sync().bjet_csv_2 = bjets_id.at(1)->csv();
             sync().bjet_deepcsv_2 = bjets_id.at(1)->deepcsv();
+            sync().bjet_resolution_2 = bjets_id.at(1)->resolution()* static_cast<float>(bjets_id.at(1).GetMomentum().E());
         } else {
             sync().bjet_pt_2 = default_value;
             sync().bjet_eta_2 = default_value;
@@ -366,6 +386,7 @@ namespace htt_sync {
             sync().bjet_mva_2 = default_value;
             sync().bjet_csv_2 = default_value;
             sync().bjet_deepcsv_2 = default_value;
+            sync().bjet_resolution_2 = default_value;
         }
 
         sync().ht_other_jets = event.GetHT();

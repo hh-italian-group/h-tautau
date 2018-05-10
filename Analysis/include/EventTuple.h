@@ -129,6 +129,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, metFilters) \
     /* Candidate Jets: jets after applying Jet energy corrections (excluding hadronic Tau) */ \
     JET_DATA(jets) \
+    VAR(std::vector<LorentzVectorE>, other_jets_p4) /* Other Jet 4-momentum */\
     FATJET_DATA(fatJets) \
     SUBJET_DATA(subJets) \
     /* KinFit Variables */ \

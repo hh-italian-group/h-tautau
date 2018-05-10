@@ -5,6 +5,8 @@
 #include "../interface/GenTruthTools.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2017.h"
+#include "h-tautau/Analysis/include/EventInfo.h"
 
 
 namespace {
@@ -133,7 +135,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     }
     iEvent.getByToken(m_rho_token, rho);
 
-    iSetup.get<JetCorrectionsRecord>().get("AK5PF", jetCorParColl);
+    iSetup.get<JetCorrectionsRecord>().get("AK4PFchs", jetCorParColl);
     jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
 
     resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
@@ -524,6 +526,7 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
                         const std::vector<LorentzVector>& signalLeptonMomentums)
 {
     static constexpr bool RunKinfitForAllPairs = false;
+    using namespace cuts::btag_2016;
 
     selection.jets = CollectJets(signalLeptonMomentums);
     const size_t n_jets = selection.jets.size();
@@ -555,25 +558,6 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         selection.kinfitResults[pair_index] = result;
     };
 
-    const auto csv_orderer = [&](size_t j1, size_t j2) -> bool {
-        const JetCandidate& jet_1 = selection.jets.at(j1);
-        const JetCandidate& jet_2 = selection.jets.at(j2);
-
-        const auto csv1 = jet_1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        const auto csv2 = jet_2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        if(csv1 != csv2)
-            return csv1 > csv2;
-        return jet_1.GetMomentum().Pt() > jet_2.GetMomentum().Pt();
-    };
-
-    const auto FindPair = [&]() -> std::pair<size_t,size_t> {
-        std::vector<size_t> indexes(selection.jets.size());
-        std::iota(indexes.begin(), indexes.end(), 0);
-        std::sort(indexes.begin(), indexes.end(), csv_orderer);
-
-        return std::make_pair(indexes.at(0), indexes.at(1));
-    };
-
     if(RunKinfitForAllPairs) {
         for(size_t n = 0; n < n_jets; ++n) {
             for(size_t k = 0; k < n_jets; ++k) {
@@ -583,9 +567,17 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
         }
     } else {
         runKinfit(0, 1);
-        auto selected_csv_pair = FindPair();
-        if((selected_csv_pair.first) != 0 && (selected_csv_pair.second) != 1){
-            runKinfit(selected_csv_pair.first, selected_csv_pair.second);
+
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
+        for(size_t n = 0; n < selection.jets.size(); ++n) {
+            const JetCandidate& jet = selection.jets.at(n);
+            jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        }
+
+        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,cuts::btag_2017::pt,
+                                                              cuts::btag_2017::eta);
+        if((jets_ordered.at(0).index) != 0 && (jets_ordered.at(1).index) != 1){
+            runKinfit(jets_ordered.at(0).index, jets_ordered.at(1).index);
         }
     }
 }
@@ -614,17 +606,11 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
     const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2, signalLeptonMomentums);
 
     const auto comparitor = [](const JetCandidate& j1, const JetCandidate& j2) {
-        const auto eta1 = std::abs(j1.GetMomentum().eta());
-        const auto eta2 = std::abs(j2.GetMomentum().eta());
-        if(eta1 < eta && eta2 >= eta) return true;
-        if(eta1 >= eta && eta2 < eta) return false;
-        // const auto csv1 = j1->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        // const auto csv2 = j2->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        // if(csv1 != csv2) return csv1 > csv2;
         const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVJetTags:probb") + j1->bDiscriminator("pfDeepCSVJetTags:probbb");
         const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVJetTags:probb") + j2->bDiscriminator("pfDeepCSVJetTags:probbb");
-        if(deepcsv1 != deepcsv2) return deepcsv1 > deepcsv2;
-        return j1.GetMomentum().pt() > j2.GetMomentum().pt();
+        const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_1(j1.GetMomentum(),0,deepcsv1);
+        const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_2(j2.GetMomentum(),1,deepcsv2);
+        return analysis::jet_ordering::CompareJets(jet_info_1,jet_info_2,cuts::btag_2016::pt,cuts::btag_2016::eta);
     };
 
     return CollectObjects("jets", baseSelector, jets, comparitor);
@@ -691,7 +677,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = jet.GetMomentum();
-    cut(p4.Pt() > pt, "pt", p4.Pt());
+    cut(p4.Pt() > pt - pt_safety, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < cuts::hh_bbtautau_2017::jetID::eta, "eta", p4.Eta());
     cut(PassPFTightId(*jet,period), "jet_id");
     for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
@@ -784,8 +770,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().pfMET_cov = met->GetCovMatrix();
     FillMetFilters(period);
 
+    std::set<const pat::Jet*> selected_jets;
     if(!reference || !selection.HaveSameJets(*reference)) {
         for(const JetCandidate& jet : selection.jets) {
+            const auto selected_jet = jet.getPtr();
+            selected_jets.insert(selected_jet);
             const LorentzVector& p4 = jet.GetMomentum();
             eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
@@ -804,6 +793,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             parameters.setRho(*rho);
             float jet_resolution = resolution.getResolution(parameters);
             eventTuple().jets_resolution.push_back(jet_resolution); // percentage
+        }
+        if(eventEnergyScale == EventEnergyScale::Central){
+            for(const auto jet_cand : jets){
+                const auto pat_jet = jet_cand.getPtr();
+                if(selected_jets.count(pat_jet)) continue;
+                const LorentzVector& other_p4 = jet_cand.GetMomentum();
+                eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
+            }
         }
     } else
         storageMode.SetPresence(EventPart::Jets, false);

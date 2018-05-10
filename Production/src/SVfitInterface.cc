@@ -16,6 +16,7 @@ FitResults FitProducer::RunAlgorithm(const std::vector<classic_svFit::MeasuredTa
     const TMatrixD met_cov_t = ConvertMatrix(met_cov);
     ClassicSVfit algo(verbosity);
     algo.addLogM_fixed(false);
+    algo.addLogM_dynamic(false);
     // algo.setDiTauMassConstraint(-1.0);
     algo.integrate(measured_leptons, met_momentum.Px(), met_momentum.Py(), met_cov_t);
 

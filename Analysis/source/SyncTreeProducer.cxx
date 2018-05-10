@@ -19,6 +19,8 @@ struct Arguments {
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
     REQ_ARG(std::string, output_file);
+    OPT_ARG(std::string, unc_source, "");
+    OPT_ARG(std::string, uncertainty, "");
     OPT_ARG(std::string, sample_type, "signal");
 };
 
@@ -50,6 +52,10 @@ public:
 
     void Run()
     {
+//        static const std::vector<std::string> trigger_patterns = {
+//            "HLT_VBF_DoubleLooseChargedIsoPFTau20_Trk1_eta2p1_Reg_v"
+//        };
+        
         std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.\n")
                    % args.input_file() % args.output_file() % args.mode();
 
@@ -59,7 +65,7 @@ public:
         SyncTuple sync(args.tree_name(), outputFile.get(), false);
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data(),args.unc_source()));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
@@ -76,12 +82,27 @@ public:
             EventInfoBase& event = *eventInfoPtr;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
+//            if(!event.GetTriggerResults().AnyAcceptAndMatch(trigger_patterns))
+//                continue;
 
             if(syncMode == SyncMode::HH) {
                 if(event->extraelec_veto || event->extramuon_veto) continue;
             }
 
-            htt_sync::FillSyncTuple(event,sync,run_period);
+            if(args.uncertainty().empty())
+                htt_sync::FillSyncTuple(event,sync,run_period);
+            else {
+                auto new_event_info_up = event.ApplyShiftBase(analysis::Parse<analysis::UncertaintySource>(args.uncertainty()),analysis::UncertaintyScale::Up);
+                auto new_event_info_down = event.ApplyShiftBase(analysis::Parse<analysis::UncertaintySource>(args.uncertainty()),analysis::UncertaintyScale::Down);
+
+                htt_sync::FillSyncTuple(event,sync,run_period,new_event_info_up.get(),new_event_info_down.get());
+            }
+
+
+
+
+
+
         }
 
         sync.Write();

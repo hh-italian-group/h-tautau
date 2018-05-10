@@ -4,7 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "AnalysisTools/Core/include/Tools.h"
-#include "AnalysisMath.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTypes.h"
 #include "EventTuple.h"
 #include "TauIdResults.h"
@@ -132,6 +132,7 @@ public:
     Integer partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
     Integer hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
     RealNumber rawf() const { return event->jets_rawf.at(jet_id); }
+    RealNumber resolution() const { return event->jets_resolution.at(jet_id); }
 
 private:
     size_t jet_id;
