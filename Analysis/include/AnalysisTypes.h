@@ -17,9 +17,9 @@ const EnumNameMap<Channel> __Channel_names_latex("ChannelLatex", {
     { Channel::MuMu, "#mu#mu" }
 });
 
-enum class LegType { e = 0, mu = 1, tau = 2 };
+enum class LegType { e = 0, mu = 1, tau = 2, jet = 3 };
 ENUM_NAMES(LegType) = {
-    { LegType::e, "e" }, { LegType::mu, "mu" }, { LegType::tau, "tau" }
+    { LegType::e, "e" }, { LegType::mu, "mu" }, { LegType::tau, "tau" }, { LegType::jet, "jet" }
 };
 
 using ChannelLegTypes = std::pair<LegType, LegType>;

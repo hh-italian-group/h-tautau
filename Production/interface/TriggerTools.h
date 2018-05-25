@@ -52,7 +52,8 @@ public:
     template<typename T> using EDGetTokenT = edm::EDGetTokenT<T>;
     template<typename T> using Handle = edm::Handle<T>;
     using TriggerObjectSet = std::set<const pat::TriggerObjectStandAlone*>;
-    using VectorTriggerObjectSet = std::vector<TriggerTools::TriggerObjectSet>;
+    using VectorTriggerObjectSet = std::vector<TriggerObjectSet>;
+    using BitsContainer = analysis::TriggerDescriptorCollection::BitsContainer;
 
     TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
@@ -78,9 +79,9 @@ public:
 
     template<typename HiggsCandidate>
     void SetTriggerMatchBits(TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
-    { 
+    {
         std::array<VectorTriggerObjectSet, 2> matched_legIds;
-        for (size_t n = 0; n < triggerDescriptors.size(); ++n){
+        for (size_t n = 0; n < triggerDescriptors.size(); ++n) {
             const auto& descriptor = triggerDescriptors.at(n);
             matched_legIds.at(0) = FindMatchingTriggerObjects(n,candidate.GetFirstDaughter().GetMomentum(),
                                                               detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),
@@ -88,7 +89,7 @@ public:
             matched_legIds.at(1) = FindMatchingTriggerObjects(n,candidate.GetSecondDaughter().GetMomentum(),
                                                               detail::GetTriggerObjectTypes(*candidate.GetSecondDaughter()),
                                                               deltaR_Limit);
-            results.SetMatch(n, TriggerMatchFound(matched_legIds, descriptor.legs_info.size()));
+            results.SetMatch(n, TriggerMatchFound(matched_legIds, descriptor.lepton_legs.size()));
         }
     }
 
@@ -100,6 +101,22 @@ public:
     bool GetTriggerResult(CMSSW_Process process, const std::string& name) const;
     bool TryGetAnyTriggerResult(const std::string& name, bool& result) const;
     bool GetAnyTriggerResult(const std::string& name) const;
+
+    template<typename LVector>
+    BitsContainer GetJetMatchBits(const LVector& reco_jet_p4, double deltaR_Limit) const
+    {
+        auto trig_objs = jetTriggerObjects;
+        const auto& jet_filters = triggerDescriptors.GetJetFilters();
+        const double deltaR2 = std::pow(deltaR_Limit, 2);
+        for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
+            for(size_t jet_index = 0; jet_index < trig_objs.momentums.size(); ++jet_index) {
+                const bool match = trig_objs.GetJetFilterMatchBit(filter_index, jet_index)
+                    && ROOT::Math::VectorUtil::DeltaR2(trig_objs.momentums.at(jet_index), reco_jet_p4) < deltaR2;
+                trig_objs.SetJetFilterMatchBit(filter_index, jet_index, match);
+            }
+        }
+        return trig_objs.match_bits;
+    }
 
 private:
     std::map<CMSSW_Process, EDGetTokenT<edm::TriggerResults>> triggerResults_tokens;
@@ -116,6 +133,7 @@ private:
     edm::Handle<std::vector<l1extra::L1JetParticle>> l1JetParticles;
 
     std::vector<VectorTriggerObjectSet> pathTriggerObjects;
+    analysis::TriggerDescriptorCollection::JetTriggerObjectCollection jetTriggerObjects;
 };
 
 } // namespace analysis

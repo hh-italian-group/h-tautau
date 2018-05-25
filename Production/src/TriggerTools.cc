@@ -73,15 +73,14 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerDescriptors = CreateTriggerDescriptors(trigger_file_descriptors,channel);
 
     pathTriggerObjects.resize(triggerDescriptors.size());
-    for (size_t n = 0; n < pathTriggerObjects.size(); ++n){
+    for (size_t n = 0; n < pathTriggerObjects.size(); ++n) {
         auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(n);
-        legId_triggerObjPtr_vector.resize(triggerDescriptors.at(n).legs_info.size(), {});
+        legId_triggerObjPtr_vector.resize(triggerDescriptors.at(n).lepton_legs.size(), {});
     }
-
 }
 
 trigger_tools::TriggerFileDescriptorCollection TriggerTools::ReadConfig(const std::string& cfg_path,
-                                                          trigger_tools::SetupDescriptor& setup)
+                                                                        trigger_tools::SetupDescriptor& setup)
 {
     trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
     analysis::ConfigReader config_reader;
@@ -137,13 +136,14 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
             leg.clear();
         }
     }
+    jetTriggerObjects = TriggerDescriptorCollection::JetTriggerObjectCollection();
 
-    static const std::map<LegType,std::set<trigger::TriggerObjectType>> map_legType_triggerObjType
-            = {
-               { LegType::e, { trigger::TriggerElectron, trigger::TriggerCluster } },
-               { LegType::mu, { trigger::TriggerMuon } },
-               { LegType::tau, { trigger::TriggerTau } }
-              };
+    static const std::map<LegType, std::set<trigger::TriggerObjectType>> map_legType_triggerObjType = {
+        { LegType::e, { trigger::TriggerElectron, trigger::TriggerCluster } },
+        { LegType::mu, { trigger::TriggerMuon } },
+        { LegType::tau, { trigger::TriggerTau } },
+        { LegType::jet, { trigger::TriggerJet } }
+    };
 
     const auto hasExpectedType = [](LegType legType, const pat::TriggerObjectStandAlone& triggerObject) {
             for(auto type : map_legType_triggerObjType.at(legType))
@@ -151,14 +151,12 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
             return false;
     };
 
-
     const auto passFilters = [](const pat::TriggerObjectStandAlone& triggerObject,
-            const TriggerDescriptorCollection::FilterVector& filters) {
+                                const TriggerDescriptorCollection::FilterVector& filters) {
         for(const auto& filter : filters)
             if(!triggerObject.hasFilterLabel(filter)) return false;
         return true;
     };
-
 
     const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
@@ -167,18 +165,32 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         unpackedTriggerObject.unpackPathNames(triggerNames);
         trigger_tools::UnpackFilters(*iEvent,*triggerResultsHLT,unpackedTriggerObject);
         const auto& paths = unpackedTriggerObject.pathNames(false, true); //isLastFilter=false
-        for(const auto& path : paths) {
-            size_t index;
-            if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
-            const auto& descriptor = triggerDescriptors.at(index);
-            for(unsigned n = 0; n < descriptor.legs_info.size(); ++n){
-                const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
-                if(!hasExpectedType(leg.type,unpackedTriggerObject) || !passFilters(unpackedTriggerObject,leg.filters)) continue;
-                pathTriggerObjects.at(index).at(n).insert(&triggerObject);
+        if(hasExpectedType(LegType::jet, unpackedTriggerObject)) {
+            const auto& jet_filters = triggerDescriptors.GetJetFilters();
+            bool jet_added = false;
+            size_t jet_index;
+            for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
+                if(!unpackedTriggerObject.hasFilterLabel(jet_filters.at(filter_index))) continue;
+                if(!jet_added) {
+                    jet_index = jetTriggerObjects.Add(unpackedTriggerObject.p4());
+                    jet_added = true;
+                }
+                jetTriggerObjects.SetJetFilterMatchBit(filter_index, jet_index, true);
+            }
+        } else {
+            for(const auto& path : paths) {
+                size_t index;
+                if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
+                const auto& descriptor = triggerDescriptors.at(index);
+                for(unsigned n = 0; n < descriptor.lepton_legs.size(); ++n){
+                    const TriggerDescriptorCollection::Leg& leg = descriptor.lepton_legs.at(n);
+                    if(!hasExpectedType(leg.type, unpackedTriggerObject)
+                        || !passFilters(unpackedTriggerObject,leg.filters)) continue;
+                    pathTriggerObjects.at(index).at(n).insert(&triggerObject);
+                }
             }
         }
     }
-
 }
 
 void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
@@ -202,11 +214,11 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     const auto& descriptor = triggerDescriptors.at(index);
 
-    for(size_t n= 0; n < legId_triggerObjPtr_vector.size(); ++n){
+    for(size_t n = 0; n < legId_triggerObjPtr_vector.size(); ++n) {
         const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
-        const TriggerDescriptorCollection::Leg& leg = descriptor.legs_info.at(n);
+        const TriggerDescriptorCollection::Leg& leg = descriptor.lepton_legs.at(n);
         if(candidate_type != leg.type) continue;
-        for(const auto& triggerObject : triggerObjectSet){
+        for(const auto& triggerObject : triggerObjectSet) {
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
             if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
             matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
@@ -222,11 +234,10 @@ bool TriggerTools::TriggerMatchFound(const std::array<TriggerTools::VectorTrigge
     if(n_legs_total == 0) return true;
 
     if(n_legs_total == 1)
-        return matched_legIds.at(0).at(0).size() >= n_legs_total ||
-                matched_legIds.at(1).at(0).size() >= n_legs_total;
+        return matched_legIds.at(0).at(0).size() >= n_legs_total || matched_legIds.at(1).at(0).size() >= n_legs_total;
 
     bool match_found = false;
-    if(n_legs_total == 2){
+    if(n_legs_total == 2) {
         for(size_t flip = 0; !match_found && flip < matched_legIds.size(); ++flip) {
             const size_t first = flip, second = ((flip + 1) % 2);
             std::vector<const pat::TriggerObjectStandAlone*> comb_match;
@@ -234,7 +245,7 @@ bool TriggerTools::TriggerMatchFound(const std::array<TriggerTools::VectorTrigge
                            matched_legIds.at(0).at(first).end(),
                            matched_legIds.at(1).at(second).begin(),
                            matched_legIds.at(1).at(second).end(),
-                            std::back_inserter(comb_match));
+                           std::back_inserter(comb_match));
 
             match_found = matched_legIds.at(0).at(first).size() >= 1 &&
                     matched_legIds.at(1).at(second).size() >= n_legs_total - 1 &&

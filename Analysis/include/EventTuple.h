@@ -49,6 +49,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Float_t, deepCsv_b, col) /* Jet deepCSV b value */ \
     JVAR(Float_t, deepCsv_bb, col) /* Jet deepCSV boosted value */ \
     JVAR(Float_t, deepCsv_c, col) /* Jet deepCSV c value */ \
+    JVAR(Float_t, deepCsv_udsg, col) /* Jet deepCSV udsg value */ \
     /**/
 
 #define JET_DATA(col) \
@@ -58,6 +59,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
     JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \
+    JVAR(ULong64_t, triggerFilterMatch, col) /* Trigger filters matching bits */ \
     /**/
 
 #define FATJET_DATA(col) \
