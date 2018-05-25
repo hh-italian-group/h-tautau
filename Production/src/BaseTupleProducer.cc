@@ -781,18 +781,22 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().jets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
             eventTuple().jets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
             eventTuple().jets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
+            eventTuple().jets_deepCsv_udsg.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probudsg")); //new
 //            eventTuple().jets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
             eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
             eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
-            //jet resolution
+            // Jet resolution
             JME::JetParameters parameters;
             parameters.setJetPt(jet.GetMomentum().pt());
             parameters.setJetEta(jet.GetMomentum().eta());
             parameters.setRho(*rho);
             float jet_resolution = resolution.getResolution(parameters);
             eventTuple().jets_resolution.push_back(jet_resolution); // percentage
+
+            eventTuple().jets_triggerFilterMatch.push_back(triggerTools.GetJetMatchBits(p4,
+                                                           cuts::H_tautau_2016::DeltaR_triggerMatch));
         }
         if(eventEnergyScale == EventEnergyScale::Central){
             for(const auto jet_cand : jets){
