@@ -61,8 +61,8 @@ inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandida
 
 class FitProducer {
 public:
-    explicit FitProducer(const std::string& visPtResolutionFileName, int _verbosity = 0)
-        : visPtResolutionFile(root_ext::OpenRootFile(visPtResolutionFileName)), verbosity(_verbosity)
+    explicit FitProducer(int _verbosity = 0)
+        : verbosity(_verbosity)
     {
         TH1::AddDirectory(false);
     }
@@ -83,7 +83,6 @@ private:
                             const LorentzVector& met_momentum, const SquareMatrix<2>& met_cov) const;
 
 private:
-    std::shared_ptr<TFile> visPtResolutionFile;
     int verbosity;
 };
 

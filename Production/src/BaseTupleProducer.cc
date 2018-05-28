@@ -75,8 +75,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
 
     if(runSVfit)
-        svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
-            edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
+//        svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
+//            edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
+        svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer());
     if(runKinFit)
         kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
 
