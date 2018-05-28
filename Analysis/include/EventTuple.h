@@ -46,10 +46,15 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 #define JET_COMMON_DATA(col) \
     JVAR(LorentzVectorE, p4, col) /* Jet 4-momentum */ \
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
-    JVAR(Float_t, deepCsv_b, col) /* Jet deepCSV b value */ \
-    JVAR(Float_t, deepCsv_bb, col) /* Jet deepCSV boosted value */ \
-    JVAR(Float_t, deepCsv_c, col) /* Jet deepCSV c value */ \
-    JVAR(Float_t, deepCsv_udsg, col) /* Jet deepCSV udsg value */ \
+    JVAR(Float_t, deepCsv_BvsAll, col) /* Jet deepCSV b+bb value */ \
+    JVAR(Float_t, deepCsv_CvsB, col) /* Jet deepCSV c vs b value */ \
+    JVAR(Float_t, deepCsv_CvsL, col) /* Jet deepCSV c vs l value */ \
+    JVAR(Float_t, deepFlavour_b, col) /* Jet deepFlavour b value */ \
+    JVAR(Float_t, deepFlavour_bb, col) /* Jet deepFlavour bb value */ \
+    JVAR(Float_t, deepFlavour_lepb, col) /* Jet deepFlavour lepb value */ \
+    JVAR(Float_t, deepFlavour_c, col) /* Jet deepFlavour c value */ \
+    JVAR(Float_t, deepFlavour_uds, col) /* Jet deepFlavour uds value */ \
+    JVAR(Float_t, deepFlavour_g, col) /* Jet deepFlavour g value */ \
     /**/
 
 #define JET_DATA(col) \
