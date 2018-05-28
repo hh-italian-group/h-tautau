@@ -1,4 +1,4 @@
-EventAwareLumiBased
+Automatic
 globalTag=94X_mc2017_realistic_v14 sampleType=Fall17MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 GluGluToBulkGravitonToHHTo2B2Tau_M-250_narrow	1000	/GluGluToBulkGravitonToHHTo2B2Tau_M-250_narrow_13TeV-madgraph/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM				

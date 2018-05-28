@@ -1,4 +1,4 @@
-EventAwareLumiBased
+Automatic
 globalTag=94X_mc2017_realistic_v14 sampleType=Fall17MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 EWKWMinus2Jets_WToLNu_M-50_TuneCP5	1000	/EWKWMinus2Jets_WToLNu_M-50_TuneCP5_13TeV-madgraph-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM			
