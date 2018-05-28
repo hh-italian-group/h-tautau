@@ -761,9 +761,9 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     // HTT candidate
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
-    eventTuple().SVfit_p4 = selection.svfitResult.momentum_error;
+    eventTuple().SVfit_p4_error = selection.svfitResult.momentum_error;
     eventTuple().SVfit_mt = selection.svfitResult.transverseMass;
-    eventTuple().SVfit_mt = selection.svfitResult.transverseMass_error;
+    eventTuple().SVfit_mt_error = selection.svfitResult.transverseMass_error;
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
