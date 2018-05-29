@@ -158,6 +158,20 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         { EventEnergyScale::JetDown, METUncertainty::JetEnDown }
     };
 
+    static const std::map<analysis::Period, std::map<int, double>> tau_correction_factor = {
+        { analysis::Period::Run2016, { {0, analysis::uncertainties::tau_2016::sf_1prong},
+                                       {1, analysis::uncertainties::tau_2016::sf_1prongPi0},
+                                       {10, analysis::uncertainties::tau_2016::sf_3prong} }},
+        { analysis::Period::Run2017, { {0, analysis::uncertainties::tau_2017::sf_1prong},
+                                       {1, analysis::uncertainties::tau_2017::sf_1prongPi0},
+                                       {10, analysis::uncertainties::tau_2017::sf_3prong} } }
+    };
+
+    static const std::map<analysis::Period, double> tau_energyUncertainty = {
+        { analysis::Period::Run2016, analysis::uncertainties::tau_2016::energyUncertainty},
+        { analysis::Period::Run2017, analysis::uncertainties::tau_2017::energyUncertainty}
+    };
+
     eventEnergyScale = energyScale;
 
     electrons.clear();
@@ -179,7 +193,10 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
                     analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
             if(result.first == analysis::GenMatch::Tau){
                 const int sign = tauEnergyScales.at(energyScale);
-                const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
+                double corr_factor = 1;
+                if(tau_correction_factor.at(period).count(tau.decayMode()))
+                    corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
+                const double sf = corr_factor + sign * tau_energyUncertainty.at(period);
                 const auto shiftedMomentum = tau.p4() * sf;
                 tauCandidate.SetMomentum(shiftedMomentum);
             }
