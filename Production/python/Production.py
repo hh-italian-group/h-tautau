@@ -136,27 +136,25 @@ if period == 'Run2016':
 ##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
 process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
 ##-------------
-
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 # turn on VID producer, indicate data format  to be
 # DataFormat.AOD or DataFormat.MiniAOD, as appropriate
-
+switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
 #switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 
 # define which IDs we want to produce
 
 if period == 'Run2016':
-    from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-    switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
     id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_GeneralPurpose_V1_cff' ]
-    #add them to the VID producer
-    for idmod in id_modules:
-        setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-
-#if period == 'Run2017':
-#    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
-#                   'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
 
 
+if period == 'Run2017':
+    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
+                   'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
+
+#add them to the VID producer
+for idmod in id_modules:
+    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 #if period == 'Run2017':
 #    tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
@@ -287,6 +285,8 @@ if period == 'Run2016':
 
 if period == 'Run2017':
     process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.electronMVAValueMapProducer *
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         process.NewTauIDsEmbedded *
