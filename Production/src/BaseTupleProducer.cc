@@ -188,19 +188,23 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
-        if(tauEnergyScales.count(energyScale)) {
-            const analysis::gen_truth::MatchResult result =
+        const analysis::gen_truth::MatchResult result =
                     analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
-            if(result.first == analysis::GenMatch::Tau){
-                const int sign = tauEnergyScales.at(energyScale);
-                double corr_factor = 1;
-                if(tau_correction_factor.at(period).count(tau.decayMode()))
-                    corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
-                const double sf = corr_factor + sign * tau_energyUncertainty.at(period);
-                const auto shiftedMomentum = tau.p4() * sf;
-                tauCandidate.SetMomentum(shiftedMomentum);
+        if(result.first == analysis::GenMatch::Tau){
+            double corr_factor = 1;
+            double sf = 1;
+            if(tau_correction_factor.at(period).count(tau.decayMode())){
+                corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
+                sf = corr_factor;
+                if(tauEnergyScales.count(energyScale)) {
+                    const int sign = tauEnergyScales.at(energyScale);
+                    sf = corr_factor + sign * tau_energyUncertainty.at(period);
+                }
             }
+            const auto shiftedMomentum = tau.p4() * sf;
+            tauCandidate.SetMomentum(shiftedMomentum);
         }
+
         taus.push_back(tauCandidate);
     }
 
