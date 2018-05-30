@@ -158,6 +158,20 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         { EventEnergyScale::JetDown, METUncertainty::JetEnDown }
     };
 
+    static const std::map<analysis::Period, std::map<int, double>> tau_correction_factor = {
+        { analysis::Period::Run2016, { {0, analysis::uncertainties::tau_2016::sf_1prong},
+                                       {1, analysis::uncertainties::tau_2016::sf_1prongPi0},
+                                       {10, analysis::uncertainties::tau_2016::sf_3prong} }},
+        { analysis::Period::Run2017, { {0, analysis::uncertainties::tau_2017::sf_1prong},
+                                       {1, analysis::uncertainties::tau_2017::sf_1prongPi0},
+                                       {10, analysis::uncertainties::tau_2017::sf_3prong} } }
+    };
+
+    static const std::map<analysis::Period, double> tau_energyUncertainty = {
+        { analysis::Period::Run2016, analysis::uncertainties::tau_2016::energyUncertainty},
+        { analysis::Period::Run2017, analysis::uncertainties::tau_2017::energyUncertainty}
+    };
+
     eventEnergyScale = energyScale;
 
     electrons.clear();
@@ -174,16 +188,25 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
-        if(tauEnergyScales.count(energyScale)) {
+        if(isMC) {
             const analysis::gen_truth::MatchResult result =
-                    analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
+                        analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
             if(result.first == analysis::GenMatch::Tau){
-                const int sign = tauEnergyScales.at(energyScale);
-                const double sf = 1.0 + sign * analysis::uncertainties::tau::energyUncertainty;
+                double corr_factor = 1;
+                double sf = 1;
+                if(tau_correction_factor.at(period).count(tau.decayMode())){
+                    corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
+                    sf = corr_factor;
+                    if(tauEnergyScales.count(energyScale)) {
+                        const int sign = tauEnergyScales.at(energyScale);
+                        sf = corr_factor + sign * tau_energyUncertainty.at(period);
+                    }
+                }
                 const auto shiftedMomentum = tau.p4() * sf;
                 tauCandidate.SetMomentum(shiftedMomentum);
             }
         }
+
         taus.push_back(tauCandidate);
     }
 
@@ -430,7 +453,7 @@ void BaseTupleProducer::FillGenParticleInfo()
 void BaseTupleProducer::FillGenJetInfo()
 {
     static constexpr int b_flavour = 5, c_flavour = 4;
-    static constexpr double pt_cut = 20, eta_cut = 2.5;
+    static constexpr double pt_cut = 5;
     eventTuple().genJets_nTotal = genJets->size();
 
     std::map<int, size_t> pf_counts, hf_counts;
@@ -447,7 +470,7 @@ void BaseTupleProducer::FillGenJetInfo()
     if(!saveGenJetInfo) return;
 
     for(const reco::GenJet& gen_jet : *genJets) {
-        if(gen_jet.pt() <= pt_cut || std::abs(gen_jet.eta()) >= eta_cut) continue;
+        if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
 
         const auto findRecoJetFlavours = [&]() -> std::pair<int, int> {
@@ -607,8 +630,8 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
     const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2, signalLeptonMomentums);
 
     const auto comparitor = [](const JetCandidate& j1, const JetCandidate& j2) {
-        const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVJetTags:probb") + j1->bDiscriminator("pfDeepCSVJetTags:probbb");
-        const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVJetTags:probb") + j2->bDiscriminator("pfDeepCSVJetTags:probbb");
+        const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll");
+        const auto deepcsv2 = j2->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll");
         const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_1(j1.GetMomentum(),0,deepcsv1);
         const analysis::jet_ordering::JetInfo<LorentzVector> jet_info_2(j2.GetMomentum(),1,deepcsv2);
         return analysis::jet_ordering::CompareJets(jet_info_1,jet_info_2,cuts::btag_2016::pt,cuts::btag_2016::eta);
@@ -779,11 +802,15 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             const LorentzVector& p4 = jet.GetMomentum();
             eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-            eventTuple().jets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
-            eventTuple().jets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
-            eventTuple().jets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
-            eventTuple().jets_deepCsv_udsg.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probudsg")); //new
-//            eventTuple().jets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+            eventTuple().jets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+            eventTuple().jets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
+            eventTuple().jets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
+            eventTuple().jets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
+            eventTuple().jets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
+            eventTuple().jets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
+            eventTuple().jets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
+            eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
+            eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
             eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
@@ -820,10 +847,15 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             const LorentzVector& p4 = jet.GetMomentum();
             eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(p4));
             eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-            eventTuple().fatJets_deepCsv_b.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
-            eventTuple().fatJets_deepCsv_bb.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
-            eventTuple().fatJets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
-//            eventTuple().fatJets_deepCsv_b_vs_all.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+            eventTuple().fatJets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+            eventTuple().fatJets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
+            eventTuple().fatJets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
+            eventTuple().fatJets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
+            eventTuple().fatJets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
+            eventTuple().fatJets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
+            eventTuple().fatJets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
+            eventTuple().fatJets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
+            eventTuple().fatJets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
             eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
             eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
             eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
@@ -837,10 +869,15 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
                 eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
                 eventTuple().subJets_csv.push_back(
                             sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-                eventTuple().subJets_deepCsv_b.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probb")); //new
-                eventTuple().subJets_deepCsv_bb.push_back(sub_jet->bDiscriminator("pfDeepCSVJetTags:probbb")); //new
-                eventTuple().subJets_deepCsv_c.push_back(jet->bDiscriminator("pfDeepCSVJetTags:probc")); //new
-//                eventTuple().subJets_deepCsv_b_vs_all.push_back(sub_jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+                eventTuple().subJets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+                eventTuple().subJets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
+                eventTuple().subJets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
+                eventTuple().subJets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
+                eventTuple().subJets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
+                eventTuple().subJets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
+                eventTuple().subJets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
+                eventTuple().subJets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
+                eventTuple().subJets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
                 eventTuple().subJets_parentIndex.push_back(parentIndex);
             }
         }

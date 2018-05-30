@@ -4,7 +4,7 @@
 
 declare -A INSTALL_MODES
 INSTALL_MODES=( ["prod16"]="CMSSW_8_0_30 slc6_amd64_gcc530" \
-                ["prod17"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
+                ["prod17"]="CMSSW_9_4_8 slc6_amd64_gcc630" \
                 ["ana"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=8
@@ -94,19 +94,19 @@ if [ $MODE = "prod17" ] ; then
     git cms-init
 
     # Electron MVA identification
-    git cms-merge-topic guitargeek:ElectronID_MVA2017_940pre3
-    scram b -j 8
+#git cms-merge-topic guitargeek:ElectronID_MVA2017_940pre3
+#scram b -j 8
 
     # Add the area containing the MVA weights (from cms-data, to appear in “external”).
     # Note: the “external” area appears after “scram build” is run at least once, as above
-    cd $CMSSW_BASE/external/$SCRAM_ARCH
-    git clone https://github.com/lsoffi/RecoEgamma-PhotonIdentification.git data/RecoEgamma/PhotonIdentification/data
-    cd data/RecoEgamma/PhotonIdentification/data
-    git checkout CMSSW_9_4_0_pre3_TnP
-    cd $CMSSW_BASE/external/$SCRAM_ARCH
-    git clone https://github.com/lsoffi/RecoEgamma-ElectronIdentification.git data/RecoEgamma/ElectronIdentification/data
-    cd data/RecoEgamma/ElectronIdentification/data
-    git checkout CMSSW_9_4_0_pre3_TnP
+#cd $CMSSW_BASE/external/$SCRAM_ARCH
+#git clone https://github.com/lsoffi/RecoEgamma-PhotonIdentification.git data/RecoEgamma/PhotonIdentification/data
+#cd data/RecoEgamma/PhotonIdentification/data
+#git checkout CMSSW_9_4_0_pre3_TnP
+#cd $CMSSW_BASE/external/$SCRAM_ARCH
+#git clone https://github.com/lsoffi/RecoEgamma-ElectronIdentification.git data/RecoEgamma/ElectronIdentification/data
+#    cd data/RecoEgamma/ElectronIdentification/data
+#    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
     cd $CMSSW_BASE/src
 fi

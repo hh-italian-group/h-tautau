@@ -147,6 +147,7 @@ switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps
 if period == 'Run2016':
     id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_GeneralPurpose_V1_cff' ]
 
+
 if period == 'Run2017':
     id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
                    'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]

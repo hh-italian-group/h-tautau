@@ -190,7 +190,7 @@ public:
             else if(jet_ordering == JetOrdering::CSV)
                 tag = event.jets_csv.at(n);
             else if(jet_ordering == JetOrdering::DeepCSV)
-                tag = event.jets_deepCsv_b.at(n)+event.jets_deepCsv_bb.at(n);
+                tag = event.jets_deepCsv_BvsAll.at(n);
             else
                 throw exception("Unsupported jet ordering for b-jet pair selection.");
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);

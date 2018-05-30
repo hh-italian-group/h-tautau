@@ -30,6 +30,9 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
         selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
 
+    cut(selected_higgs.GetFirstDaughter().GetIsolation() < muonID::pfRelIso04 ||
+        selected_higgs.GetSecondDaughter().GetIsolation() < muonID::pfRelIso04, "iso_of_1_daughter");
+
     if(applyTriggerMatch){
         triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
                                       cuts::H_tautau_2016::DeltaR_triggerMatch);
@@ -79,8 +82,8 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
         passMuonId = muon->isTightMuon(*primaryVertex);
     cut(passMuonId, "muonID");
 
-    if(productionMode == ProductionMode::hh)
-        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+//    if(productionMode == ProductionMode::hh)
+//        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
 }
 
 void TupleProducer_muMu::FillEventTuple(const SelectionResults& selection)
