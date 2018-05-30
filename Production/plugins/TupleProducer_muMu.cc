@@ -25,6 +25,9 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     auto higgses = FindCompatibleObjects(selectedMuons, selectedMuons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses.size(), "mu_mu_pair");
 
+    cut(selected_higgs.GetFirstDaughter() < muonID::pfRelIso04 ||
+        selected_higgs.GetSecondDaughter() < muonID::pfRelIso04, "iso_of_1_daughter");
+
     std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
     auto selected_higgs = higgses.front();
     if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
@@ -79,8 +82,8 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
         passMuonId = muon->isTightMuon(*primaryVertex);
     cut(passMuonId, "muonID");
 
-    if(productionMode == ProductionMode::hh)
-        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
+//    if(productionMode == ProductionMode::hh)
+//        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
 }
 
 void TupleProducer_muMu::FillEventTuple(const SelectionResults& selection)

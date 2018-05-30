@@ -447,7 +447,7 @@ void BaseTupleProducer::FillGenParticleInfo()
 void BaseTupleProducer::FillGenJetInfo()
 {
     static constexpr int b_flavour = 5, c_flavour = 4;
-    static constexpr double pt_cut = 20, eta_cut = 2.5;
+    static constexpr double pt_cut = 5;
     eventTuple().genJets_nTotal = genJets->size();
 
     std::map<int, size_t> pf_counts, hf_counts;
@@ -464,7 +464,7 @@ void BaseTupleProducer::FillGenJetInfo()
     if(!saveGenJetInfo) return;
 
     for(const reco::GenJet& gen_jet : *genJets) {
-        if(gen_jet.pt() <= pt_cut || std::abs(gen_jet.eta()) >= eta_cut) continue;
+        if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
 
         const auto findRecoJetFlavours = [&]() -> std::pair<int, int> {
