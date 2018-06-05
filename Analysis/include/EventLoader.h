@@ -59,7 +59,7 @@ public:
             CP_BR(jets_p4);
             CP_BR(jets_csv);
             CP_BR(jets_rawf);
-            CP_BR(jets_mva);
+            CP_BR(jets_pu_id);
             CP_BR(jets_partonFlavour);
             CP_BR(jets_hadronFlavour);
         }

@@ -47,7 +47,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     OTHERVAR(Int_t, q, col) /* Charge */ \
     OTHERVAR(Int_t, type, col) /* Type */ \
     OTHERVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/ \
-    OTHERVAR(LorentzVectorM, gen_p4, 4) /* 4-momentum of the matched gen particle */ \
+    OTHERVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
