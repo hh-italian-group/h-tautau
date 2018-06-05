@@ -52,7 +52,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, eta, suff, pref) \
     JVAR(Float_t, phi, suff, pref) \
     JVAR(Float_t, rawf, suff, pref) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    JVAR(Float_t, mva, suff, pref) /* pu Jet id score */ \
     JVAR(Float_t, csv, suff, pref) \
     JVAR(Float_t, deepcsv, suff, pref) \
     JVAR(Float_t, resolution, suff, pref) /* Jet energy resolution in percentage */ \
@@ -344,12 +343,10 @@ namespace htt_sync {
         sync().jeta_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Eta());
         sync().jrawf_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Phi());
         sync().jrawf_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0)->rawf());
-        sync().jmva_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0)->mva());
         sync().jpt_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
         sync().jeta_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Eta());
         sync().jphi_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Phi());
         sync().jrawf_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1)->rawf());
-        sync().jmva_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1)->mva());
 
         sync().njets_vbf = static_cast<int>(jets_vbf.size());
         sync().isVBF = jets_vbf.size() >= 2;
@@ -374,7 +371,6 @@ namespace htt_sync {
         sync().bjet_eta_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Eta());
         sync().bjet_phi_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Phi());
         sync().bjet_rawf_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->rawf());
-        sync().bjet_mva_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->mva());
         sync().bjet_csv_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->csv());
         sync().bjet_deepcsv_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->deepcsv());
         sync().bjet_resolution_1 = COND_VAL(bjets_id.size() >= 1,
@@ -383,7 +379,6 @@ namespace htt_sync {
         sync().bjet_eta_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Eta());
         sync().bjet_phi_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Phi());
         sync().bjet_rawf_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->rawf());
-        sync().bjet_mva_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->mva());
         sync().bjet_csv_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->csv());
         sync().bjet_deepcsv_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->deepcsv());
         sync().bjet_resolution_2 = COND_VAL(bjets_id.size() >= 2,
