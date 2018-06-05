@@ -19,9 +19,10 @@ struct Arguments {
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
     REQ_ARG(std::string, output_file);
-    OPT_ARG(std::string, unc_source, "");
-    OPT_ARG(std::string, uncertainty, "");
-    OPT_ARG(std::string, sample_type, "signal");
+    OPT_ARG(bool, fill_tau_es_vars, false);
+    OPT_ARG(bool, fill_jet_es_vars, false);
+    OPT_ARG(std::string, jet_unc_source, "");
+    OPT_ARG(std::string, jet_uncertainty, "");
 };
 
 namespace analysis {
@@ -61,56 +62,84 @@ public:
         SyncTuple sync(args.tree_name(), outputFile.get(), false);
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data(),args.unc_source()));
+        SummaryInfo summaryInfo(summaryTuple->data(), args.jet_unc_source());
+        EventIdentifier current_id = EventIdentifier::Undef_event();
+        std::map<EventEnergyScale, ntuple::Event> events;
+        // std::map<EventEnergyScale, std::shared_ptr<EventInfoBase>> event_infos;
+        for(const auto& event : *originalTuple) {
+            EventIdentifier event_id(event);
+            if(event_id != current_id && !events.empty()) {
+                FillSyncTuple(sync, events, summaryInfo);
+                current_id = event_id;
+                events.clear();
+            }
+            events[static_cast<EventEnergyScale>(event.eventEnergyScale)] = event;
+        }
+        if(!events.empty())
+            FillSyncTuple(sync, events, summaryInfo);
+
+        sync.Write();
+    }
+
+private:
+    void FillSyncTuple(SyncTuple& sync, const std::map<EventEnergyScale, ntuple::Event>& events,
+                       const SummaryInfo& summaryInfo) const
+    {
         const Channel channel = Parse<Channel>(args.tree_name());
-        const Long64_t n_entries = originalTuple->GetEntries();
-        for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
-            originalTuple->GetEntry(current_entry);
+        std::map<EventEnergyScale, std::shared_ptr<EventInfoBase>> event_infos;
+        for(const auto& entry : events) {
+            const auto es = entry.first;
+            const auto& event = entry.second;
+
+            if(!args.fill_tau_es_vars() && (es == EventEnergyScale::TauUp || es == EventEnergyScale::TauDown)) continue;
+            if((!args.fill_jet_es_vars() || !args.jet_uncertainty().empty())
+                    && (es == EventEnergyScale::JetUp || es == EventEnergyScale::JetDown)) continue;
+            if(syncMode == SyncMode::HH && (event.extraelec_veto || event.extramuon_veto)) continue;
 
             ntuple::JetPair bjet_pair;
             if(run_period == Period::Run2016)
-                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple->data(), cuts::btag_2016::pt,
-                                                                 cuts::btag_2016::eta, JetOrdering::CSV);
+                bjet_pair = EventInfoBase::SelectBjetPair(event, cuts::btag_2016::pt, cuts::btag_2016::eta,
+                                                          JetOrdering::CSV);
             if(run_period == Period::Run2017)
-                bjet_pair = EventInfoBase::SelectBjetPair(originalTuple->data(), cuts::btag_2017::pt,
-                                                          cuts::btag_2017::eta, JetOrdering::DeepCSV);
-            auto eventInfoPtr = MakeEventInfo(channel, originalTuple->data(), bjet_pair, summaryInfo.get());
-            EventInfoBase& event = *eventInfoPtr;
-
-            if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-/*
+                bjet_pair = EventInfoBase::SelectBjetPair(event, cuts::btag_2017::pt, cuts::btag_2017::eta,
+                                                          JetOrdering::DeepCSV);
+            auto event_info =  MakeEventInfo(channel, event, bjet_pair, &summaryInfo);
+            /*
             static const std::vector<std::string> trigger_patterns = {
                 "HLT_VBF_DoubleLooseChargedIsoPFTau20_Trk1_eta2p1_Reg_v"
             };
             analysis::EventInfoBase::JetCollection jets_vbf;
             analysis::EventInfoBase::JetPair vbf_jet_pair;
-            jets_vbf = event.SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt,
-                                        event.GetSelectedBjetIndicesSet());
-            vbf_jet_pair = event.SelectVBFJetPair(jets_vbf);
-            if(vbf_jet_pair.first >= event->jets_p4.size() || vbf_jet_pair.second >= event->jets_p4.size()) continue;
-            std::vector<ULong64_t> jet_trigger_match = {
-                event->jets_triggerFilterMatch.at(vbf_jet_pair.first),
-                event->jets_triggerFilterMatch.at(vbf_jet_pair.second)
-            };
-            if(!event.GetTriggerResults().AnyAcceptAndMatchEx(trigger_patterns, jet_trigger_match))
+            jets_vbf = event_info->SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt,
+                                              event.GetSelectedBjetIndicesSet());
+            vbf_jet_pair = event_info->SelectVBFJetPair(jets_vbf);
+            if(vbf_jet_pair.first >= (*event_info)->jets_p4.size()
+                    || vbf_jet_pair.second >= (*event_info)->jets_p4.size())
                 continue;
-*/
-            if(syncMode == SyncMode::HH) {
-                if(event->extraelec_veto || event->extramuon_veto) continue;
-            }
-
-            if(args.uncertainty().empty())
-                htt_sync::FillSyncTuple(event,sync,run_period);
-            else {
-                auto new_event_info_up = event.ApplyShiftBase(analysis::Parse<analysis::UncertaintySource>(args.uncertainty()),analysis::UncertaintyScale::Up);
-                auto new_event_info_down = event.ApplyShiftBase(analysis::Parse<analysis::UncertaintySource>(args.uncertainty()),analysis::UncertaintyScale::Down);
-
-                htt_sync::FillSyncTuple(event,sync,run_period,new_event_info_up.get(),new_event_info_down.get());
-            }
-
+            std::vector<ULong64_t> jet_trigger_match = {
+                (*event_info)->jets_triggerFilterMatch.at(vbf_jet_pair.first),
+                (*event_info)->jets_triggerFilterMatch.at(vbf_jet_pair.second)
+            };
+            if(!event_info->GetTriggerResults().AnyAcceptAndMatchEx(trigger_patterns, jet_trigger_match))
+                continue;
+            */
+            event_infos[entry.first] = event_info;
         }
 
-        sync.Write();
+        if(!event_infos.count(EventEnergyScale::Central)) return;
+
+        if(!args.jet_uncertainty().empty()) {
+            event_infos[EventEnergyScale::JetUp] = event_infos[EventEnergyScale::Central]
+                    ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Up);
+            event_infos[EventEnergyScale::JetDown] = event_infos[EventEnergyScale::Central]
+                    ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Down);
+        }
+
+        htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period,
+                                event_infos[EventEnergyScale::TauUp].get(),
+                                event_infos[EventEnergyScale::TauDown].get(),
+                                event_infos[EventEnergyScale::JetUp].get(),
+                                event_infos[EventEnergyScale::JetDown].get());
     }
 
 private:

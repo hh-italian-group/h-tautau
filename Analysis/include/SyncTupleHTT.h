@@ -15,6 +15,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #define LEG_DATA(pref) \
     LVAR(Float_t, pt, pref) \
+    LVAR(Float_t, pt_tau_ES_up, pref) \
+    LVAR(Float_t, pt_tau_ES_down, pref) \
     LVAR(Float_t, phi, pref) \
     LVAR(Float_t, eta, pref) \
     LVAR(Float_t, m, pref) \
@@ -54,6 +56,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JVAR(Float_t, csv, suff, pref) \
     JVAR(Float_t, deepcsv, suff, pref) \
     JVAR(Float_t, resolution, suff, pref) /* Jet energy resolution in percentage */ \
+    JVAR(Float_t, pt_tau_ES_up, suff, pref) \
+    JVAR(Float_t, pt_tau_ES_down, suff, pref) \
+    JVAR(Float_t, pt_jet_ES_up, suff, pref) \
+    JVAR(Float_t, pt_jet_ES_down, suff, pref) \
     /**/
 
 #define SYNC_DATA() \
@@ -73,14 +79,22 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, mt_tot) /* Use MVA MET (see HiggsToTauTauWorking2016#Synchronisation_Ntuple) */  \
     VAR(Float_t, m_vis) \
     VAR(Float_t, m_sv) /* using MarkovChain MC integration svfit.mass() */ \
+    VAR(Float_t, m_sv_tau_ES_up) /*  */ \
+    VAR(Float_t, m_sv_tau_ES_down) /*  */ \
+    VAR(Float_t, m_sv_jet_ES_up) /*  */ \
+    VAR(Float_t, m_sv_jet_ES_down) /*  */ \
     VAR(Float_t, mt_sv) /* using MarkovChain MC integration svfit.transverseMass() */ \
     /* MET */ \
     VAR(Float_t, met) /* type 1 corrected PF MET */  \
-    VAR(Float_t, met_up) /* PF MET after up jec unc*/  \
-    VAR(Float_t, met_down) /* PF MET after down jec unc */  \
-    VAR(Float_t, metphi_up) /* PF MET phi after up jec unc*/  \
-    VAR(Float_t, metphi_down) /* PF MET phi after down jec unc */  \
+    VAR(Float_t, met_tau_ES_up) /* */  \
+    VAR(Float_t, met_tau_ES_down) /* */  \
+    VAR(Float_t, met_jet_ES_up) /* */  \
+    VAR(Float_t, met_jet_ES_down) /* */  \
     VAR(Float_t, metphi) /* type 1 corrected PF MET phi */  \
+    VAR(Float_t, metphi_tau_ES_up) /* */  \
+    VAR(Float_t, metphi_tau_ES_down) /* */  \
+    VAR(Float_t, metphi_jet_ES_up) /* */  \
+    VAR(Float_t, metphi_jet_ES_down) /* */  \
     VAR(Float_t, puppimet) /* Puppi corrrected MET */  \
     VAR(Float_t, puppimetphi) /* Puppi corrected MET phi */  \
     VAR(Float_t, mvamet) /* mva met */  \
@@ -170,11 +184,15 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 #undef JET_DATA
 #undef JVAR
 
+#define COND_VAL(cond, val) cond ? static_cast<float>(val) : default_value
+
 namespace htt_sync {
 
-    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync,
-        analysis::Period run_period, analysis::EventInfoBase* new_event_up = nullptr,
-            analysis::EventInfoBase* new_event_down = nullptr)
+    void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period,
+                       analysis::EventInfoBase* event_tau_up = nullptr,
+                       analysis::EventInfoBase* event_tau_down = nullptr,
+                       analysis::EventInfoBase* event_jet_up = nullptr,
+                       analysis::EventInfoBase* event_jet_down = nullptr)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -188,6 +206,8 @@ namespace htt_sync {
         sync().npu = event->npu;
 
         sync().pt_1 = event->p4_1.Pt();
+        sync().pt_tau_ES_up_1 = COND_VAL(event_tau_up, (*event_tau_up)->p4_1.Pt());
+        sync().pt_tau_ES_down_1 = COND_VAL(event_tau_down, (*event_tau_down)->p4_1.Pt());
         sync().phi_1 = event->p4_1.Phi();
         sync().eta_1 = event->p4_1.Eta();
         sync().m_1 = event->p4_1.mass();
@@ -211,6 +231,8 @@ namespace htt_sync {
         sync().byIsolationMVArun2017v2DBoldDMwLTraw2017_1 = event->tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_1;
 
         sync().pt_2 = event->p4_2.Pt();
+        sync().pt_tau_ES_up_2 = COND_VAL(event_tau_up, (*event_tau_up)->p4_2.Pt());
+        sync().pt_tau_ES_down_2 = COND_VAL(event_tau_down, (*event_tau_down)->p4_2.Pt());
         sync().phi_2 = event->p4_2.Phi();
         sync().eta_2 = event->p4_2.Eta();
         sync().m_2 = event->p4_2.mass();
@@ -236,20 +258,25 @@ namespace htt_sync {
         sync().pt_tt = (event->p4_1 + event->p4_2 + event->pfMET_p4).Pt();
         sync().m_vis = (event->p4_1 + event->p4_2).M();
         sync().m_sv = event->SVfit_p4.M();
+        sync().m_sv_tau_ES_up = COND_VAL(event_tau_up, (*event_tau_up)->SVfit_p4.M());
+        sync().m_sv_tau_ES_down = COND_VAL(event_tau_down, (*event_tau_down)->SVfit_p4.M());
+        sync().m_sv_jet_ES_up = COND_VAL(event_jet_up, (*event_jet_up)->SVfit_p4.M());
+        sync().m_sv_jet_ES_down = COND_VAL(event_jet_down, (*event_jet_down)->SVfit_p4.M());
         sync().mt_sv = event->SVfit_mt;
 
         sync().met = event->pfMET_p4.Pt();
-        if(new_event_up){
-            sync().met_up = static_cast<float>(new_event_up->GetMET().GetMomentum().Pt());
-            sync().metphi_up = static_cast<float>(TVector2::Phi_0_2pi(new_event_up->GetMET().GetMomentum().Phi()));
-        }
-
-        if(new_event_down){
-            sync().met_down = static_cast<float>(new_event_down->GetMET().GetMomentum().Pt());
-            sync().metphi_down = static_cast<float>(TVector2::Phi_0_2pi(new_event_down->GetMET().GetMomentum().Phi()));
-        }
+        sync().met_tau_ES_up = COND_VAL(event_tau_up, (*event_tau_up)->pfMET_p4.Pt());
+        sync().met_tau_ES_down = COND_VAL(event_tau_down, (*event_tau_down)->pfMET_p4.Pt());
+        sync().met_jet_ES_up = COND_VAL(event_jet_up, event_jet_up->GetMET().GetMomentum().Pt());
+        sync().met_jet_ES_down = COND_VAL(event_jet_down, event_jet_down->GetMET().GetMomentum().Pt());
 
         sync().metphi = static_cast<float>(TVector2::Phi_0_2pi(event->pfMET_p4.Phi()));
+        sync().metphi_tau_ES_up = COND_VAL(event_tau_up, TVector2::Phi_0_2pi((*event_tau_up)->pfMET_p4.Phi()));
+        sync().metphi_tau_ES_down = COND_VAL(event_tau_down, TVector2::Phi_0_2pi((*event_tau_down)->pfMET_p4.Phi()));
+        sync().metphi_jet_ES_up = COND_VAL(event_jet_up,
+                                           TVector2::Phi_0_2pi(event_jet_up->GetMET().GetMomentum().Phi()));
+        sync().metphi_jet_ES_down = COND_VAL(event_jet_down,
+                                             TVector2::Phi_0_2pi(event_jet_down->GetMET().GetMomentum().Phi()));
         sync().pzetavis = static_cast<float>(analysis::Calculate_visiblePzeta(event->p4_1, event->p4_2));
 
         sync().metcov00 = static_cast<float>(event->pfMET_cov[0][0]);
@@ -264,182 +291,133 @@ namespace htt_sync {
         analysis::EventInfoBase::JetCollection bjets_pt;
         analysis::EventInfoBase::JetCollection bjets_id;
 
-        if (run_period == analysis::Period::Run2016){
-            jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-            jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-            bjets_pt = event.SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M, analysis::JetOrdering::Pt);
-            bjets_id = event.SelectJets(cuts::btag_2016::pt,cuts::btag_2016::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
-        }
+        auto select_jets = [&](analysis::EventInfoBase* event_info) {
+            jets_pt20.clear();
+            jets_pt30.clear();
+            jets_vbf.clear();
+            vbf_jet_pair = ntuple::UndefinedJetPair();
+            bjets_pt.clear();
+            bjets_id.clear();
+            if(!event_info) return;
 
-        if (run_period == analysis::Period::Run2017){
-            jets_pt20 = event.SelectJets(20, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-            jets_pt30 = event.SelectJets(30, 4.7, std::numeric_limits<double>::lowest(), analysis::JetOrdering::Pt);
-            jets_vbf = event.SelectJets(30, 5, std::numeric_limits<double>::lowest(),analysis::JetOrdering::Pt,
-                                        event.GetSelectedBjetIndicesSet());
-            vbf_jet_pair = event.SelectVBFJetPair(jets_vbf);
-            bjets_pt = event.SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M, analysis::JetOrdering::Pt);
-            bjets_id = event.SelectJets(cuts::btag_2017::pt,cuts::btag_2017::eta,std::numeric_limits<double>::lowest(), analysis::JetOrdering::DeepCSV);
-        }
+            if (run_period == analysis::Period::Run2016) {
+                jets_pt20 = event_info->SelectJets(20, 4.7, std::numeric_limits<double>::lowest(),
+                                                   analysis::JetOrdering::Pt);
+                jets_pt30 = event_info->SelectJets(30, 4.7, std::numeric_limits<double>::lowest(),
+                                                   analysis::JetOrdering::Pt);
+                bjets_pt = event_info->SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M,
+                                                  analysis::JetOrdering::Pt);
+                bjets_id = event_info->SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta,
+                                                  std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
+            }
 
-        if(jets_pt20.size() >= 2) {
-            sync().mjj = static_cast<float>((jets_pt20.at(0).GetMomentum() + jets_pt20.at(1).GetMomentum()).M());
-            sync().jdeta = static_cast<float>(jets_pt20.at(0).GetMomentum().Eta()
-                                              - jets_pt20.at(1).GetMomentum().Eta());
-            sync().jdphi = static_cast<float>(TVector2::Phi_mpi_pi(jets_pt20.at(0).GetMomentum().Phi()
-                                                                   - jets_pt20.at(1).GetMomentum().Phi()));
-        } else {
-            sync().mjj = default_value;
-            sync().jdeta = default_value;
-            sync().jdphi = default_value;
-        }
+            if (run_period == analysis::Period::Run2017) {
+                jets_pt20 = event_info->SelectJets(20, 4.7, std::numeric_limits<double>::lowest(),
+                                                   analysis::JetOrdering::Pt);
+                jets_pt30 = event_info->SelectJets(30, 4.7, std::numeric_limits<double>::lowest(),
+                                                   analysis::JetOrdering::Pt);
+                jets_vbf = event_info->SelectJets(30, 5, std::numeric_limits<double>::lowest(),
+                                                  analysis::JetOrdering::Pt, event_info->GetSelectedBjetIndicesSet());
+                vbf_jet_pair = event_info->SelectVBFJetPair(jets_vbf);
+                bjets_pt = event_info->SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M,
+                                                  analysis::JetOrdering::Pt);
+                bjets_id = event_info->SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta,
+                                                  std::numeric_limits<double>::lowest(),
+                                                  analysis::JetOrdering::DeepCSV);
+            }
+        };
+
+        select_jets(&event);
+
+        sync().mjj = COND_VAL(jets_pt20.size() >= 2, (jets_pt20.at(0).GetMomentum()
+                   + jets_pt20.at(1).GetMomentum()).M());
+        sync().jdeta = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(0).GetMomentum().Eta()
+                     - jets_pt20.at(1).GetMomentum().Eta());
+        sync().jdphi = COND_VAL(jets_pt20.size() >= 2, TVector2::Phi_mpi_pi(jets_pt20.at(0).GetMomentum().Phi()
+                     - jets_pt20.at(1).GetMomentum().Phi()));
 
         sync().nbtag = static_cast<int>(bjets_pt.size());
         sync().njets = static_cast<int>(jets_pt30.size());
         sync().njetspt20 = static_cast<int>(jets_pt20.size());
-        if(jets_pt20.size() >= 1) {
-            sync().jpt_1 = static_cast<float>(jets_pt20.at(0).GetMomentum().Pt());
-            sync().jeta_1 = static_cast<float>(jets_pt20.at(0).GetMomentum().Eta());
-            sync().jphi_1 = static_cast<float>(jets_pt20.at(0).GetMomentum().Phi());
-            sync().jrawf_1 = jets_pt20.at(0)->rawf();
-            sync().jmva_1 = jets_pt20.at(0)->mva();
-        } else {
-            sync().jpt_1 = default_value;
-            sync().jeta_1 = default_value;
-            sync().jphi_1 = default_value;
-            sync().jrawf_1 = default_value;
-            sync().jmva_1 = default_value;
-        }
-        if(jets_pt20.size() >= 2) {
-            sync().jpt_2 = static_cast<float>(jets_pt20.at(1).GetMomentum().Pt());
-            sync().jeta_2 = static_cast<float>(jets_pt20.at(1).GetMomentum().Eta());
-            sync().jphi_2 = static_cast<float>(jets_pt20.at(1).GetMomentum().Phi());
-            sync().jrawf_2 = jets_pt20.at(1)->rawf();
-            sync().jmva_2 = jets_pt20.at(1)->mva();
-        } else {
-            sync().jpt_2 = default_value;
-            sync().jeta_2 = default_value;
-            sync().jphi_2 = default_value;
-            sync().jrawf_2 = default_value;
-            sync().jmva_2 = default_value;
-        }
+
+        sync().jpt_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
+        sync().jeta_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Eta());
+        sync().jrawf_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Phi());
+        sync().jrawf_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0)->rawf());
+        sync().jmva_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0)->mva());
+        sync().jpt_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
+        sync().jeta_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Eta());
+        sync().jphi_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Phi());
+        sync().jrawf_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1)->rawf());
+        sync().jmva_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1)->mva());
 
         sync().njets_vbf = static_cast<int>(jets_vbf.size());
-        sync().isVBF = jets_vbf.size()>=2;
-        if(vbf_jet_pair.first < jets_vbf.size()) {
-            sync().jpt_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
-            sync().jeta_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Eta());
-            sync().jphi_vbf_1 = static_cast<float>(jets_vbf.at(vbf_jet_pair.first).GetMomentum().Phi());
-        } else {
-            sync().jpt_vbf_1 = default_value;
-            sync().jeta_vbf_1 = default_value;
-            sync().jphi_vbf_1 = default_value;
-        }
-        if(vbf_jet_pair.second < jets_vbf.size()) {
-            sync().jpt_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
-            sync().jeta_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Eta());
-            sync().jphi_vbf_2 = static_cast<float>(jets_vbf.at(vbf_jet_pair.second).GetMomentum().Phi());
-        } else {
-            sync().jpt_vbf_2 = default_value;
-            sync().jeta_vbf_2 = default_value;
-            sync().jphi_vbf_2 = default_value;
-        }
+        sync().isVBF = jets_vbf.size() >= 2;
+        sync().jpt_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                    jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
+        sync().jeta_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                     jets_vbf.at(vbf_jet_pair.first).GetMomentum().Eta());
+        sync().jphi_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                     jets_vbf.at(vbf_jet_pair.first).GetMomentum().Phi());
+        sync().jpt_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                    jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+        sync().jeta_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                     jets_vbf.at(vbf_jet_pair.second).GetMomentum().Eta());
+        sync().jphi_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                     jets_vbf.at(vbf_jet_pair.second).GetMomentum().Phi());
 
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
 
-
-
         sync().nbjets = static_cast<int>(bjets_id.size());
-        if(bjets_id.size() >= 1) {
-            sync().bjet_pt_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Pt());
-            sync().bjet_eta_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Eta());
-            sync().bjet_phi_1 = static_cast<float>(bjets_id.at(0).GetMomentum().Phi());
-            sync().bjet_rawf_1 = bjets_id.at(0)->rawf();
-            sync().bjet_mva_1 = bjets_id.at(0)->mva();
-            sync().bjet_csv_1 = bjets_id.at(0)->csv();
-            sync().bjet_deepcsv_1 = bjets_id.at(0)->deepcsv();
-            sync().bjet_resolution_1 = bjets_id.at(0)->resolution() * static_cast<float>(bjets_id.at(0).GetMomentum().E());
-        } else {
-            sync().bjet_pt_1 = default_value;
-            sync().bjet_eta_1 = default_value;
-            sync().bjet_phi_1 = default_value;
-            sync().bjet_rawf_1 = default_value;
-            sync().bjet_mva_1 = default_value;
-            sync().bjet_csv_1 = default_value;
-            sync().bjet_deepcsv_1 = default_value;
-            sync().bjet_resolution_1 = default_value;
-        }
-        if(bjets_id.size() >= 2) {
-            sync().bjet_pt_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Pt());
-            sync().bjet_eta_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Eta());
-            sync().bjet_phi_2 = static_cast<float>(bjets_id.at(1).GetMomentum().Phi());
-            sync().bjet_rawf_2 = bjets_id.at(1)->rawf();
-            sync().bjet_mva_2 = bjets_id.at(1)->mva();
-            sync().bjet_csv_2 = bjets_id.at(1)->csv();
-            sync().bjet_deepcsv_2 = bjets_id.at(1)->deepcsv();
-            sync().bjet_resolution_2 = bjets_id.at(1)->resolution()* static_cast<float>(bjets_id.at(1).GetMomentum().E());
-        } else {
-            sync().bjet_pt_2 = default_value;
-            sync().bjet_eta_2 = default_value;
-            sync().bjet_phi_2 = default_value;
-            sync().bjet_rawf_2 = default_value;
-            sync().bjet_mva_2 = default_value;
-            sync().bjet_csv_2 = default_value;
-            sync().bjet_deepcsv_2 = default_value;
-            sync().bjet_resolution_2 = default_value;
-        }
+        sync().bjet_pt_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
+        sync().bjet_eta_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Eta());
+        sync().bjet_phi_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Phi());
+        sync().bjet_rawf_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->rawf());
+        sync().bjet_mva_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->mva());
+        sync().bjet_csv_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->csv());
+        sync().bjet_deepcsv_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->deepcsv());
+        sync().bjet_resolution_1 = COND_VAL(bjets_id.size() >= 1,
+                                            bjets_id.at(0)->resolution() * bjets_id.at(0).GetMomentum().E());
+        sync().bjet_pt_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
+        sync().bjet_eta_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Eta());
+        sync().bjet_phi_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Phi());
+        sync().bjet_rawf_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->rawf());
+        sync().bjet_mva_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->mva());
+        sync().bjet_csv_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->csv());
+        sync().bjet_deepcsv_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->deepcsv());
+        sync().bjet_resolution_2 = COND_VAL(bjets_id.size() >= 2,
+                                            bjets_id.at(1)->resolution() * bjets_id.at(1).GetMomentum().E());
 
         sync().ht_other_jets = event.GetHT();
 
-        if(event->kinFit_convergence.size() > 0) {
-            if(bjets_id.size() >= 2)
-                sync().kinfit_convergence = event.GetKinFitResults().convergence;
-            else
-                sync().kinfit_convergence = default_int_value;
-
-            if(bjets_id.size() >= 2 && event.GetKinFitResults().HasValidMass())
+        sync().kinfit_convergence = default_int_value;
+        sync().m_kinfit = default_value;
+        if(event->kinFit_convergence.size() > 0 && bjets_id.size() >= 2) {
+            sync().kinfit_convergence = event.GetKinFitResults().convergence;
+            if(event.GetKinFitResults().HasValidMass())
                 sync().m_kinfit = static_cast<float>(event.GetKinFitResults().mass);
-            else
-                sync().m_kinfit = default_value;
         }
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
         sync().nFatJets = static_cast<unsigned>(event.GetFatJets().size());
-        const analysis::FatJetCandidate* fatJetPtr = event.SelectFatJet(30, 0.4);
-        sync().hasFatJet = bjets_id.size() >= 2 ? fatJetPtr != nullptr : -1;
-        if(fatJetPtr) {
-            const analysis::FatJetCandidate& fatJet = *fatJetPtr;
-            sync().fatJet_pt = static_cast<float>(fatJet.GetMomentum().Pt());
-            sync().fatJet_eta = static_cast<float>(fatJet.GetMomentum().Eta());
-            sync().fatJet_phi = static_cast<float>(fatJet.GetMomentum().Phi());
-            sync().fatJet_energy = static_cast<float>(fatJet.GetMomentum().E());
-            sync().fatJet_m_pruned = fatJet->m(ntuple::TupleFatJet::MassType::Pruned);
-            //                sync().fatJet_m_filtered = fatJet->m(ntuple::TupleFatJet::MassType::Filtered);
-            //                sync().fatJet_m_trimmed = fatJet->m(ntuple::TupleFatJet::MassType::Trimmed);
-            sync().fatJet_m_softDrop = fatJet->m(ntuple::TupleFatJet::MassType::SoftDrop);
-            sync().fatJet_n_subjets = static_cast<int>(fatJet->subJets().size());
-            sync().fatJet_n_subjettiness_tau1 = fatJet->n_subjettiness(1);
-            sync().fatJet_n_subjettiness_tau2 = fatJet->n_subjettiness(2);
-            sync().fatJet_n_subjettiness_tau3 = fatJet->n_subjettiness(3);
-        } else {
-            sync().fatJet_pt = default_value;
-            sync().fatJet_eta = default_value;
-            sync().fatJet_phi = default_value;
-            sync().fatJet_energy = default_value;
-            sync().fatJet_m_pruned = default_value;
-            sync().fatJet_m_filtered = default_value;
-            sync().fatJet_m_trimmed = default_value;
-            sync().fatJet_m_softDrop = default_value;
-            sync().fatJet_n_subjets = default_int_value;
-            sync().fatJet_n_subjettiness_tau1 = default_value;
-            sync().fatJet_n_subjettiness_tau2 = default_value;
-            sync().fatJet_n_subjettiness_tau3 = default_value;
-        }
+        const auto fatJet = event.SelectFatJet(30, 0.4);
+        sync().hasFatJet = bjets_id.size() >= 2 ? fatJet != nullptr : -1;
+        sync().fatJet_pt = COND_VAL(fatJet, fatJet->GetMomentum().Pt());
+        sync().fatJet_eta = COND_VAL(fatJet, fatJet->GetMomentum().Eta());
+        sync().fatJet_phi = COND_VAL(fatJet, fatJet->GetMomentum().Phi());
+        sync().fatJet_energy = COND_VAL(fatJet, fatJet->GetMomentum().E());
+        sync().fatJet_m_pruned = COND_VAL(fatJet, (*fatJet)->m(ntuple::TupleFatJet::MassType::Pruned));
+        sync().fatJet_m_softDrop = COND_VAL(fatJet, (*fatJet)->m(ntuple::TupleFatJet::MassType::SoftDrop));
+        sync().fatJet_n_subjettiness_tau1 = COND_VAL(fatJet, (*fatJet)->n_subjettiness(1));
+        sync().fatJet_n_subjettiness_tau2 = COND_VAL(fatJet, (*fatJet)->n_subjettiness(2));
+        sync().fatJet_n_subjettiness_tau3 = COND_VAL(fatJet, (*fatJet)->n_subjettiness(3));
+        sync().fatJet_n_subjets = fatJet ? static_cast<int>((*fatJet)->subJets().size()) : default_int_value;
 
         sync().topWeight = static_cast<Float_t>(event->weight_top_pt);
-        sync().shapeWeight = static_cast<Float_t>(event->weight_pu * event->weight_bsm_to_sm * event->weight_dy * event->weight_ttbar *
-                                                  event->weight_wjets*event->weight_xs);
+        sync().shapeWeight = static_cast<Float_t>(event->weight_pu * event->weight_bsm_to_sm * event->weight_dy
+                           * event->weight_ttbar * event->weight_wjets * event->weight_xs);
         sync().btagWeight = static_cast<Float_t>(event->weight_btag);
 
         sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
@@ -459,6 +437,48 @@ namespace htt_sync {
         sync().jets_nSelected_hadronFlavour_c = static_cast<unsigned>(
                     std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
 
+        select_jets(event_tau_up);
+        sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                              jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                              jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+
+        select_jets(event_tau_down);
+        sync().jpt_tau_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                                jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                                jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+
+        select_jets(event_jet_up);
+        sync().jpt_jet_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                              jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                              jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+
+        select_jets(event_jet_down);
+        sync().jpt_jet_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
+                                                jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
+                                                jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+
         sync.Fill();
     }
 }
+
+#undef COND_VAL
