@@ -64,7 +64,7 @@ class JobCollection:
         if len(header_items) == 0 or len(header_items) > 2:
             raise RuntimeError("invalid jobs file header '{}' in file '{}'".fromat(lines[0], file_name))
         self.splitting = header_items[0]
-        known_splittings = Set(['FileBased', 'LumiBased', 'EventAwareLumiBased'])
+        known_splittings = Set(['FileBased', 'LumiBased', 'EventAwareLumiBased','Automatic'])
         if not self.splitting in known_splittings:
             raise RuntimeError("unknown splitting = '{}' in file '{}'".format(self.splitting, file_name))
         self.lumiMask =  ''
