@@ -41,10 +41,10 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     selection.SetHiggsCandidate(selected_higgs);
 
     //Third-Lepton Veto
-    const auto electronVetoCollection = CollectVetoElectrons({ &selection.higgs->GetFirstDaughter() });
-    const auto muonVetoCollection = CollectVetoMuons();
-    selection.electronVeto = electronVetoCollection.size();
-    selection.muonVeto = muonVetoCollection.size();
+    selection.other_electrons = CollectVetoElectrons({ &selection.higgs->GetFirstDaughter() });
+    selection.other_muons = CollectVetoMuons();
+    selection.electronVeto = selection.other_electrons.size();
+    selection.muonVeto = selection.other_muons.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
     if(runSVfit)

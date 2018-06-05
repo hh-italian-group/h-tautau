@@ -487,6 +487,44 @@ void BaseTupleProducer::FillGenJetInfo()
     }
 }
 
+void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons,
+                                         const std::vector<MuonCandidate>& other_muons)
+{
+    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
+
+    for (const auto electron : other_electrons){
+        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
+        eventTuple().other_lepton_q.push_back(electron.GetCharge());
+        eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::e));
+        if(isMC) {
+            const auto match = analysis::gen_truth::LeptonGenMatch(electron.GetMomentum(), *genParticles);
+            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
+            const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
+            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+        } else {
+            eventTuple().other_lepton_gen_match.push_back(default_int_value);
+            eventTuple().other_lepton_gen_p4.push_back(gen_p4 = ntuple::LorentzVectorM());
+        }
+    }
+
+    for (const auto muon : other_muons){
+        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
+        eventTuple().other_lepton_q.push_back(muon.GetCharge());
+        eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::mu));
+        if(isMC) {
+            const auto match = analysis::gen_truth::LeptonGenMatch(muon.GetMomentum(), *genParticles);
+            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
+            const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
+            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+        } else {
+            eventTuple().other_lepton_gen_match.push_back(default_int_value);
+            eventTuple().other_lepton_gen_p4.push_back(gen_p4 = ntuple::LorentzVectorM());
+        }
+    }
+}
+
+
+
 void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4)
 {
     using namespace analysis;
@@ -898,6 +936,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     eventTuple().extraelec_veto = selection.electronVeto;
     eventTuple().extramuon_veto = selection.muonVeto;
+    FillOtherLeptons(selection.other_electrons,selection.other_muons);
 
     eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
     eventTuple().trigger_accepts = selection.triggerResults.GetAcceptBits();

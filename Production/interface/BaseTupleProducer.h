@@ -224,6 +224,7 @@ protected:
     void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
     void FillMetFilters(analysis::Period period);
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
+    void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
 
     std::vector<ElectronCandidate> CollectVetoElectrons(
             const std::vector<const ElectronCandidate*>& signalElectrons = {});

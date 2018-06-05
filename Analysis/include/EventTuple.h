@@ -13,6 +13,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 }
 
 #define LVAR(type, name, n) VAR(type, name##_##n)
+#define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 #define RAW_ID(name, n) VAR(Float_t, tauId_##name##_##n)
 
 #define RAW_TAU_IDS(n) \
@@ -39,6 +40,14 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     LVAR(Int_t, decayMode, n) /* tau decay mode */ \
     LVAR(ULong64_t, tauId_flags, n) /* boolean tau id variables */ \
     RAW_TAU_IDS(n) /* raw values of tau ID discriminators */ \
+    /**/
+
+#define OTHER_LEPTON_DATA(col) \
+    OTHERVAR(LorentzVectorM, p4, col) /* 4-momentum */ \
+    OTHERVAR(Int_t, q, col) /* Charge */ \
+    OTHERVAR(Int_t, type, col) /* Type */ \
+    OTHERVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/ \
+    OTHERVAR(LorentzVectorM, gen_p4, 4) /* 4-momentum of the matched gen particle */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -169,6 +178,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
+    OTHER_LEPTON_DATA(other_lepton) \
     /* Skimmer Variables */\
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
