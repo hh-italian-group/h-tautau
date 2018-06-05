@@ -53,6 +53,10 @@ struct SelectionResultsBase {
     using TauCandidate = LeptonCandidate<pat::Tau>;
     using JetCandidate = Candidate<pat::Jet>;
     using JetCandidateVector = std::vector<JetCandidate>;
+    using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
+    using MuonCandidate = analysis::LeptonCandidate<pat::Muon>;
+    using ElectronCandidateVector = std::vector<ElectronCandidate>;
+    using MuonCandidateVector = std::vector<MuonCandidate>;
     using Vertex = reco::Vertex;
 
     edm::EventID eventId;
@@ -62,6 +66,8 @@ struct SelectionResultsBase {
     sv_fit::FitResults svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;
+    ElectronCandidateVector other_electrons;
+    MuonCandidateVector other_muons;
     const Vertex* primaryVertex;
     TriggerResults triggerResults;
 

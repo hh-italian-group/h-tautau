@@ -487,6 +487,36 @@ void BaseTupleProducer::FillGenJetInfo()
     }
 }
 
+void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons,
+                                         const std::vector<MuonCandidate>& other_muons)
+{
+    for (const auto electron : other_electrons){
+        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
+        eventTuple().other_lepton_q.push_back(electron.GetCharge());
+        eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::e));
+        if(isMC) {
+            const auto match = analysis::gen_truth::LeptonGenMatch(electron.GetMomentum(), *genParticles);
+            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
+            const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
+            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+        }
+    }
+
+    for (const auto muon : other_muons){
+        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
+        eventTuple().other_lepton_q.push_back(muon.GetCharge());
+        eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::mu));
+        if(isMC) {
+            const auto match = analysis::gen_truth::LeptonGenMatch(muon.GetMomentum(), *genParticles);
+            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
+            const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
+            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+        }
+    }
+}
+
+
+
 void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4)
 {
     using namespace analysis;
@@ -812,7 +842,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
             eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-            eventTuple().jets_mva.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
+            eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
             eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
             eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
             // Jet resolution
@@ -898,6 +928,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     eventTuple().extraelec_veto = selection.electronVeto;
     eventTuple().extramuon_veto = selection.muonVeto;
+    FillOtherLeptons(selection.other_electrons,selection.other_muons);
 
     eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
     eventTuple().trigger_accepts = selection.triggerResults.GetAcceptBits();
