@@ -490,8 +490,6 @@ void BaseTupleProducer::FillGenJetInfo()
 void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons,
                                          const std::vector<MuonCandidate>& other_muons)
 {
-    static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
-
     for (const auto electron : other_electrons){
         eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
         eventTuple().other_lepton_q.push_back(electron.GetCharge());
@@ -501,9 +499,6 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
             eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
             const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
             eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
-        } else {
-            eventTuple().other_lepton_gen_match.push_back(default_int_value);
-            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM());
         }
     }
 
@@ -516,9 +511,6 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
             eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
             const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
             eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
-        } else {
-            eventTuple().other_lepton_gen_match.push_back(default_int_value);
-            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM());
         }
     }
 }
