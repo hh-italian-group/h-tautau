@@ -53,6 +53,15 @@ public:
 
     void Run()
     {
+        static const std::map<Channel, std::vector<std::string>> triggerPaths = {
+                    { Channel::ETau, { "HLT_Ele32_WPTight_Gsf_v", "HLT_Ele35_WPTight_Gsf_v", "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1_v" } },
+                    { Channel::MuTau, { "HLT_IsoMu24_v", "HLT_IsoMu27_v", "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1_v" } },
+                    { Channel::TauTau, { "HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_v",
+                                         "HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg_v",
+                                           "HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg_v"} },
+                    { Channel::MuMu, { "HLT_IsoMu24_v", "HLT_IsoMu27_v" } },
+                };
+
         std::cout << boost::format("Processing input file '%1%' into output file '%2%' using %3% mode.\n")
                    % args.input_file() % args.output_file() % args.mode();
 
@@ -127,6 +136,7 @@ private:
         }
 
         if(!event_infos.count(EventEnergyScale::Central)) return;
+        if(!event_infos.at(EventEnergyScale::Central)->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
 
         if(!args.jet_uncertainty().empty()) {
             event_infos[EventEnergyScale::JetUp] = event_infos[EventEnergyScale::Central]

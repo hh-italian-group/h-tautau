@@ -83,6 +83,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, m_sv_jet_ES_up) /*  */ \
     VAR(Float_t, m_sv_jet_ES_down) /*  */ \
     VAR(Float_t, mt_sv) /* using MarkovChain MC integration svfit.transverseMass() */ \
+    /* MT2 */ \
+    VAR(Double_t, mt2) /* MT2 */ \
+    VAR(Double_t, mt2_tau_ES_up) /*  */ \
+    VAR(Double_t, mt2_tau_ES_down) /*  */ \
+    VAR(Double_t, mt2_jet_ES_up) /*  */ \
+    VAR(Double_t, mt2_jet_ES_down) /*  */ \
     /* MET */ \
     VAR(Float_t, met) /* type 1 corrected PF MET */  \
     VAR(Float_t, met_tau_ES_up) /* */  \
@@ -144,6 +150,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     VAR(Double_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     VAR(Float_t, m_kinfit) \
+    VAR(Float_t, m_kinfit_tau_ES_up) \
+    VAR(Float_t, m_kinfit_tau_ES_down) \
+    VAR(Float_t, m_kinfit_jet_ES_up) \
+    VAR(Float_t, m_kinfit_jet_ES_down ) \
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
     VAR(UInt_t, nFatJets) \
@@ -269,6 +279,12 @@ namespace htt_sync {
         sync().met_jet_ES_up = COND_VAL(event_jet_up, event_jet_up->GetMET().GetMomentum().Pt());
         sync().met_jet_ES_down = COND_VAL(event_jet_down, event_jet_down->GetMET().GetMomentum().Pt());
 
+        sync().mt2 = COND_VAL(event.HasBjetPair(), event.GetMT2());
+        sync().mt2_tau_ES_up = COND_VAL(event_tau_up && event_tau_up->HasBjetPair(), event_tau_up->GetMT2());
+        sync().mt2_tau_ES_down = COND_VAL(event_tau_down && event_tau_down->HasBjetPair(), event_tau_down->GetMT2());
+        sync().mt2_jet_ES_up = COND_VAL(event_jet_up && event_jet_up->HasBjetPair(), event_jet_up->GetMT2());
+        sync().mt2_jet_ES_down = COND_VAL(event_jet_down && event_jet_down->HasBjetPair(), event_jet_down->GetMT2());
+
         sync().metphi = static_cast<float>(TVector2::Phi_0_2pi(event->pfMET_p4.Phi()));
         sync().metphi_tau_ES_up = COND_VAL(event_tau_up, TVector2::Phi_0_2pi((*event_tau_up)->pfMET_p4.Phi()));
         sync().metphi_tau_ES_down = COND_VAL(event_tau_down, TVector2::Phi_0_2pi((*event_tau_down)->pfMET_p4.Phi()));
@@ -386,13 +402,26 @@ namespace htt_sync {
 
         sync().ht_other_jets = event.GetHT();
 
-        sync().kinfit_convergence = default_int_value;
-        sync().m_kinfit = default_value;
-        if(event->kinFit_convergence.size() > 0 && bjets_id.size() >= 2) {
-            sync().kinfit_convergence = event.GetKinFitResults().convergence;
-            if(event.GetKinFitResults().HasValidMass())
-                sync().m_kinfit = static_cast<float>(event.GetKinFitResults().mass);
-        }
+        sync().kinfit_convergence = COND_VAL(event->kinFit_convergence.size() > 0 && event.HasBjetPair(), event.GetKinFitResults().convergence);
+        sync().m_kinfit = COND_VAL(event.GetKinFitResults().HasValidMass() && event->kinFit_convergence.size() > 0 && event.HasBjetPair(), static_cast<float>(event.GetKinFitResults().mass));
+        sync().m_kinfit_tau_ES_up = COND_VAL(event_tau_up &&
+                                             event_tau_up->GetKinFitResults().HasValidMass() &&
+                                             event_tau_up->GetKinFitResults().convergence > 0 &&
+                                             event_tau_up->HasBjetPair(), event_tau_up->GetKinFitResults().mass);
+        sync().m_kinfit_tau_ES_down = COND_VAL(event_tau_down &&
+                                               event_tau_down->GetKinFitResults().HasValidMass() &&
+                                               event_tau_down->GetKinFitResults().convergence > 0 &&
+                                               event_tau_down->HasBjetPair(), event_tau_down->GetKinFitResults().mass);
+        sync().m_kinfit_jet_ES_up = COND_VAL(event_jet_up &&
+                                             event_jet_up->GetKinFitResults().HasValidMass() &&
+                                             event_jet_up->GetKinFitResults().convergence > 0 &&
+                                             event_jet_up->HasBjetPair(), event_jet_up->GetKinFitResults().mass);
+        sync().m_kinfit_jet_ES_down = COND_VAL(event_jet_down &&
+                                               event_jet_down->GetKinFitResults().HasValidMass() &&
+                                               event_jet_down->GetKinFitResults().convergence > 0 &&
+                                               event_jet_down->HasBjetPair(), event_jet_down->GetKinFitResults().mass);
+
+
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
