@@ -184,9 +184,12 @@ public:
         JetPair selectedVBFjetPair;
     };
 
-    static SelectedSignalJets SelectSignalJets(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
-                                   double eta_cut = std::numeric_limits<double>::max(),
-                                   JetOrdering jet_ordering = JetOrdering::CSV)
+    static SelectedSignalJets SelectSignalJets(const Event& event,
+                                               double pt_cut = std::numeric_limits<double>::lowest(),
+                                               double eta_cut = std::numeric_limits<double>::max(),
+                                               double pt_cut_vbf = std::numeric_limits<double>::lowest(),
+                                               double eta_cut_vbf = std::numeric_limits<double>::max(),
+                                               JetOrdering jet_ordering = JetOrdering::CSV)
     {
         SelectedSignalJets selected_signal_jets;
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
@@ -210,20 +213,37 @@ public:
             selected_signal_jets.selectedBjetPair.second = jets_ordered.at(1).index;
         }
         else {
+            std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector_vbf;
+            for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+                if(selected_signal_jets.selectedBjetPair.first == n) continue;
+                double tag;
+                if(jet_ordering == JetOrdering::Pt)
+                    tag = event.jets_p4.at(n).Pt();
+                else if(jet_ordering == JetOrdering::CSV)
+                    tag = event.jets_csv.at(n);
+                else if(jet_ordering == JetOrdering::DeepCSV)
+                    tag = event.jets_deepCsv_BvsAll.at(n);
+                else
+                    throw exception("Unsupported jet ordering for jet selection.");
+                jet_info_vector_vbf.emplace_back(jet.GetMomentum(),n,tag);
+            }
+
+            auto jets_ordered_vbf = jet_ordering::OrderJets(jet_info_vector_vbf,true,pt_cut_vbf,eta_cut_vbf);
+
             double max_mjj = -std::numeric_limits<double>::infinity();
-            for(size_t n = 1; n < jets_ordered.size(); ++n) {
-                for(size_t h = n+1; h < jets_ordered.size(); ++h) {
-                    const analysis::jet_ordering::JetInfo& jet_1 = jets_ordered.at(n);
-                    const analysis::jet_ordering::JetInfo& jet_2 = jets_ordered.at(h);
+            for(size_t n = 1; n < jets_ordered_vbf.size(); ++n) {
+                for(size_t h = n+1; h < jets_ordered_vbf.size(); ++h) {
+                    const analysis::jet_ordering::JetInfo& jet_1 = jets_ordered_vbf.at(n);
+                    const analysis::jet_ordering::JetInfo& jet_2 = jets_ordered_vbf.at(h);
                     const LorentzVector jet_12 = jet_1.p4 + jet_2.p4;
                     if(jet_12.M() > max_mjj){
                         max_mjj = jet_12.M();
                         if(jet_1.p4.Pt() > jet_2.p4)
-                            selected_signal_jets.selectedVBFjetPair = std::make_pair(jets_ordered.at(n).index,
-                                                                                     jets_ordered.at(h).index);
+                            selected_signal_jets.selectedVBFjetPair = std::make_pair(jets_ordered_vbf.at(n).index,
+                                                                                     jets_ordered_vbf.at(h).index);
                         else
-                            selected_signal_jets.selectedVBFjetPair = std::make_pair(jets_ordered.at(h).index,
-                                                                                     jets_ordered.at(n).index);
+                            selected_signal_jets.selectedVBFjetPair = std::make_pair(jets_ordered_vbf.at(h).index,
+                                                                                     jets_ordered_vbf.at(n).index);
                     }
                 }
             }
