@@ -184,12 +184,11 @@ public:
         JetPair selectedVBFjetPair;
     };
 
-    SelectedSignalJets SelectSignalJets(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
+    static SelectedSignalJets SelectSignalJets(const Event& event, double pt_cut = std::numeric_limits<double>::lowest(),
                                    double eta_cut = std::numeric_limits<double>::max(),
                                    JetOrdering jet_ordering = JetOrdering::CSV)
     {
         SelectedSignalJets selected_signal_jets;
-        const JetCollection& all_jets = GetJets();
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             double tag;
@@ -207,8 +206,7 @@ public:
         auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
         if(jets_ordered.size() >= 1)
             selected_signal_jets.selectedBjetPair.first = jets_ordered.at(0).index;
-        const JetCandidate& bjet_2 = all_jets.at(jets_ordered.at(1).index);
-        if(jets_ordered.size() >= 2 && bjet_2->deepcsv() > cuts::btag_2017::deepCSVv2M ){
+        if(jets_ordered.size() >= 2 && event.jets_deepCsv_BvsAll.at(jets_ordered.at(1).index) > cuts::btag_2017::deepCSVv2M ){
             selected_signal_jets.selectedBjetPair.second = jets_ordered.at(1).index;
         }
         else {
