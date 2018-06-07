@@ -237,7 +237,7 @@ public:
         if(bjets_ordered.size() >= 1)
             selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
         double tag_second_bjet = period == analysis::Period::Run2017 ?
-                    event.jets_deepCsv_BvsAll.at(jets_ordered.at(1).index) : event.jets_csv.at(jets_ordered.at(1).index);
+                    event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
         double btag_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::deepCSVv2M : cuts::btag_2016::CSVv2M ;
         if(bjets_ordered.size() >= 2 &&  tag_second_bjet > btag_cut ){
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
@@ -245,7 +245,7 @@ public:
 
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector_vbf;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(selected_signal_jets.IsSelectedBjet(n)) continue;
+            if(selected_signal_jets.isSelectedBjet(n)) continue;
             double tag = event.jets_p4.at(n).Pt();
             jet_info_vector_vbf.emplace_back(event.jets_p4.at(n),n,tag);
         }
@@ -254,9 +254,9 @@ public:
 
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
-            const analysis::jet_ordering::JetInfo& jet_1 = vbf_jets_ordered.at(n);
+            const analysis::jet_ordering::JetInfo<LorentzVector>& jet_1 = vbf_jets_ordered.at(n);
             for(size_t h = n+1; h < vbf_jets_ordered.size(); ++h) {
-                const analysis::jet_ordering::JetInfo& jet_2 = vbf_jets_ordered.at(h);
+                const analysis::jet_ordering::JetInfo<LorentzVector>& jet_2 = vbf_jets_ordered.at(h);
                 const LorentzVector jet_12 = jet_1.p4 + jet_2.p4;
                 if(jet_12.M() > max_mjj){
                     max_mjj = jet_12.M();
@@ -272,8 +272,8 @@ public:
 
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_new;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(selected_signal_jets.IsSelectedBjet(n)) continue;
-            if(selected_signal_jets.IsSelectedVBFJEt(n)) continue;
+            if(selected_signal_jets.isSelectedBjet(n)) continue;
+            if(selected_signal_jets.isSelectedVBFJEt(n)) continue;
             double tag;
             if(jet_ordering == JetOrdering::Pt)
                 tag = event.jets_p4.at(n).Pt();
