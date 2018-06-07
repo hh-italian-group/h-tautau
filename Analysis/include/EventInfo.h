@@ -243,7 +243,7 @@ public:
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
         }
 
-        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector_vbf;
+        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_vbf;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             double tag = event.jets_p4.at(n).Pt();
