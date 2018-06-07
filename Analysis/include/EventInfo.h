@@ -273,7 +273,7 @@ public:
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_new;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
-            if(selected_signal_jets.isSelectedVBFJEt(n)) continue;
+            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             double tag;
             if(jet_ordering == JetOrdering::Pt)
                 tag = event.jets_p4.at(n).Pt();
@@ -301,16 +301,16 @@ public:
     std::array<size_t,2> GetSelectedBjetIndices() const
     {
         std::array<size_t,2> bjet_indexes;
-        bjet_indexes[0] = selected_bjet_pair.first;
-        bjet_indexes[1] = selected_bjet_pair.second;
+        bjet_indexes[0] = selected_signal_jets.selectedBjetPair.first;
+        bjet_indexes[1] = selected_signal_jets.selectedBjetPair.second;
         return bjet_indexes;
     }
 
     std::set<size_t> GetSelectedBjetIndicesSet() const
     {
         std::set<size_t> bjet_indexes;
-        bjet_indexes.insert(selected_bjet_pair.first);
-        bjet_indexes.insert(selected_bjet_pair.second);
+        bjet_indexes.insert(selected_signal_jets.selectedBjetPair.first);
+        bjet_indexes.insert(selected_signal_jets.selectedBjetPair.second);
         return bjet_indexes;
     }
 
@@ -458,7 +458,7 @@ public:
         if(!higgs_bb) {
             const auto& jets = GetJets();
             higgs_bb = std::shared_ptr<HiggsBBCandidate>(
-                       new HiggsBBCandidate(jets.at(selected_bjet_pair.first), jets.at(selected_bjet_pair.second)));
+                       new HiggsBBCandidate(jets.at(selected_signal_jets.selectedBjetPair.first), jets.at(selected_signal_jets.selectedBjetPair.second)));
         }
         return *higgs_bb;
     }
@@ -489,7 +489,7 @@ public:
         if(!HasBjetPair())
             throw exception("Can't retrieve KinFit results.");
         if(!kinfit_results) {
-            const size_t pairId = ntuple::CombinationPairToIndex(selected_bjet_pair, GetNJets());
+            const size_t pairId = ntuple::CombinationPairToIndex(selected_signal_jets.selectedBjetPair, GetNJets());
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
             if(iter == event->kinFit_jetPairId.end())
                 throw exception("Kinfit information for jet pair (%1%, %2%) is not stored for event %3%.")
@@ -598,9 +598,9 @@ public:
 
     static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
 
-    EventInfo(const Event& _event, const JetPair& _selected_bjet_pair = JetPair(0, 1),
+    EventInfo(const Event& _event, const analysis::Period& _period, JetOrdering _jet_ordering,
               const SummaryInfo* _summaryInfo = nullptr) :
-        EventInfoBase(_event, _selected_bjet_pair, _summaryInfo)
+        EventInfoBase(_event, _period, _jet_ordering, _summaryInfo)
     {
         if(summaryInfo)
             triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
@@ -687,21 +687,21 @@ private:
 
 inline std::shared_ptr<EventInfoBase> MakeEventInfo(
         Channel channel, const EventInfoBase::Event& event,
-        const EventInfoBase::JetPair& selected_bjet_pair = EventInfoBase::JetPair(0, 1),
+        const analysis::Period& period, JetOrdering jet_ordering,
         const SummaryInfo* summaryInfo = nullptr)
 {
     if(channel == Channel::ETau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
-                event, selected_bjet_pair, summaryInfo));
+                event, period, jet_ordering, summaryInfo));
     if(channel == Channel::MuTau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, TauCandidate>(
-                event, selected_bjet_pair, summaryInfo));
+                event, period, jet_ordering, summaryInfo));
     if(channel == Channel::TauTau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<TauCandidate, TauCandidate>(
-                event, selected_bjet_pair, summaryInfo));
+                event, period, jet_ordering, summaryInfo));
     if(channel == Channel::MuMu)
         return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, MuonCandidate>(
-                event, selected_bjet_pair, summaryInfo));
+                event, period, jet_ordering, summaryInfo));
     throw exception("Unsupported channel %1%.") % channel;
 }
 
