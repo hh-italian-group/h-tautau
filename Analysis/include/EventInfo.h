@@ -493,7 +493,7 @@ public:
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
             if(iter == event->kinFit_jetPairId.end())
                 throw exception("Kinfit information for jet pair (%1%, %2%) is not stored for event %3%.")
-                    % selected_bjet_pair.first % selected_bjet_pair.second % eventIdentifier;
+                    % selected_signal_jets.selectedBjetPair.first % selected_signal_jets.selectedBjetPair.second % eventIdentifier;
             const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
             kinfit_results->convergence = event->kinFit_convergence.at(index);
