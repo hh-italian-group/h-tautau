@@ -254,10 +254,10 @@ public:
 
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
-            const analysis::jet_ordering::JetInfo<LorentzVector>& jet_1 = vbf_jets_ordered.at(n);
+            const analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>& jet_1 = vbf_jets_ordered.at(n);
             for(size_t h = n+1; h < vbf_jets_ordered.size(); ++h) {
-                const analysis::jet_ordering::JetInfo<LorentzVector>& jet_2 = vbf_jets_ordered.at(h);
-                const LorentzVector jet_12 = jet_1.p4 + jet_2.p4;
+                const analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>& jet_2 = vbf_jets_ordered.at(h);
+                const LorentzVectorE_Float jet_12 = jet_1.p4 + jet_2.p4;
                 if(jet_12.M() > max_mjj){
                     max_mjj = jet_12.M();
                     selected_signal_jets.selectedVBFjetPair = std::make_pair(vbf_jets_ordered.at(n).index,
