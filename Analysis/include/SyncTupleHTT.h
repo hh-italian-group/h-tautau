@@ -301,18 +301,19 @@ namespace htt_sync {
 
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
+        analysis::JetOrdering jet_ordering;
         analysis::EventInfoBase::JetCollection jets_vbf;
-        analysis::EventInfoBase::JetPair vbf_jet_pair;
+//        analysis::EventInfoBase::JetPair vbf_jet_pair;
         analysis::EventInfoBase::JetCollection bjets_pt;
-        analysis::EventInfoBase::JetCollection bjets_id;
+//        analysis::EventInfoBase::JetCollection bjets_id;
 
         auto select_jets = [&](analysis::EventInfoBase* event_info) {
             jets_pt20.clear();
             jets_pt30.clear();
             jets_vbf.clear();
-            vbf_jet_pair = ntuple::UndefinedJetPair();
+//            vbf_jet_pair = ntuple::UndefinedJetPair();
             bjets_pt.clear();
-            bjets_id.clear();
+//            bjets_id.clear();
             if(!event_info) return;
 
             if (run_period == analysis::Period::Run2016) {
@@ -324,6 +325,7 @@ namespace htt_sync {
                                                   analysis::JetOrdering::Pt);
                 bjets_id = event_info->SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta,
                                                   std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
+                jet_ordering = analysis::JetOrdering::CSV;
             }
 
             if (run_period == analysis::Period::Run2017) {
@@ -333,13 +335,16 @@ namespace htt_sync {
                                                    analysis::JetOrdering::Pt);
                 jets_vbf = event_info->SelectJets(30, 5, std::numeric_limits<double>::lowest(),
                                                   analysis::JetOrdering::Pt, event_info->GetSelectedBjetIndicesSet());
-                vbf_jet_pair = event_info->SelectVBFJetPair(jets_vbf);
+//                vbf_jet_pair = event_info->SelectVBFJetPair(jets_vbf);
                 bjets_pt = event_info->SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M,
                                                   analysis::JetOrdering::Pt);
                 bjets_id = event_info->SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta,
                                                   std::numeric_limits<double>::lowest(),
                                                   analysis::JetOrdering::DeepCSV);
+                jet_ordering = analysis::JetOrdering::DeepCSV;
             }
+
+            const analysis::EventInfoBase::SelectedSignalJets selected_signal_jets = event_info->SelectSignalJets(event,run_period,jet_ordering);
         };
 
         select_jets(&event);
