@@ -223,7 +223,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, phi_2_sv) \
     VAR(Float_t, costheta_METhtautau_sv) \
     VAR(Float_t, costheta_METhbb) \
-    VAR(Float_t, costheta_b1hbbv) \
+    VAR(Float_t, costheta_b1hbb) \
     VAR(Float_t, costheta_htautau_svhhMET) \
     /**/
 
@@ -556,7 +556,7 @@ namespace htt_sync {
         sync().costheta_METhtautau_sv = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Htt_sv);
         sync().costheta_METhbb = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Hbb);
         sync().costheta_b1hbb = analysis::four_bodies::Calculate_cosTheta_2bodies(b1, Hbb);
-        sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, eventbase.GetResonanceMomentum(false,true));
+        sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, event.GetResonanceMomentum(false,true));
 
         select_jets(event_tau_up);
         sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
