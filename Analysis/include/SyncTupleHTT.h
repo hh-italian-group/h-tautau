@@ -123,7 +123,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, njetingap20) /* Number of jets passing pfJetID and pt > 20 GeV, in pseudorapidity gap between the jets */ \
     VAR(Float_t, jdphi) /* delta phi between leading jet and subleading jet */ \
     /* additional jets */ \
-    VAR(Int_t, nbtag) /* pt>20 and abs(eta)<2.4 */ \
     VAR(Int_t, njets) /* pt>30 and abs(eta)<4.7 */ \
     VAR(Int_t, njetspt20) /* pt>20 and abs(eta)<4.7 */ \
     VAR(Int_t, njets_vbf) /* pt>10 and no eta cut for vbf selection */ \
@@ -302,18 +301,11 @@ namespace htt_sync {
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
         analysis::JetOrdering jet_ordering;
-        analysis::EventInfoBase::JetCollection jets_vbf;
-//        analysis::EventInfoBase::JetPair vbf_jet_pair;
-        analysis::EventInfoBase::JetCollection bjets_pt;
-//        analysis::EventInfoBase::JetCollection bjets_id;
+        analysis::EventInfoBase::SelectedSignalJets selected_signal_jets;
 
         auto select_jets = [&](analysis::EventInfoBase* event_info) {
             jets_pt20.clear();
             jets_pt30.clear();
-            jets_vbf.clear();
-//            vbf_jet_pair = ntuple::UndefinedJetPair();
-            bjets_pt.clear();
-//            bjets_id.clear();
             if(!event_info) return;
 
             if (run_period == analysis::Period::Run2016) {
@@ -321,31 +313,22 @@ namespace htt_sync {
                                                    analysis::JetOrdering::Pt);
                 jets_pt30 = event_info->SelectJets(30, 4.7, std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
-                bjets_pt = event_info->SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta, cuts::btag_2016::CSVv2M,
-                                                  analysis::JetOrdering::Pt);
-                bjets_id = event_info->SelectJets(cuts::btag_2016::pt, cuts::btag_2016::eta,
-                                                  std::numeric_limits<double>::lowest(), analysis::JetOrdering::CSV);
                 jet_ordering = analysis::JetOrdering::CSV;
             }
 
             if (run_period == analysis::Period::Run2017) {
                 jets_pt20 = event_info->SelectJets(20, 4.7, std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
-                jets_pt30 = event_info->SelectJets(30, 4.7, std::numeric_limits<double>::lowest(),
+                jets_pt30 = event_info->SelectJets(30, std::numeric_limits<double>::max(),
+                                                   std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
-                jets_vbf = event_info->SelectJets(30, 5, std::numeric_limits<double>::lowest(),
-                                                  analysis::JetOrdering::Pt, event_info->GetSelectedBjetIndicesSet());
-//                vbf_jet_pair = event_info->SelectVBFJetPair(jets_vbf);
-                bjets_pt = event_info->SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta, cuts::btag_2017::CSVv2M,
-                                                  analysis::JetOrdering::Pt);
-                bjets_id = event_info->SelectJets(cuts::btag_2017::pt, cuts::btag_2017::eta,
-                                                  std::numeric_limits<double>::lowest(),
-                                                  analysis::JetOrdering::DeepCSV);
                 jet_ordering = analysis::JetOrdering::DeepCSV;
             }
 
-            const analysis::EventInfoBase::SelectedSignalJets selected_signal_jets = event_info->SelectSignalJets(event,run_period,jet_ordering);
+            selected_signal_jets = event_info->SelectSignalJets(event,run_period,jet_ordering);
         };
+
+
 
         select_jets(&event);
 
@@ -356,7 +339,6 @@ namespace htt_sync {
         sync().jdphi = COND_VAL(jets_pt20.size() >= 2, TVector2::Phi_mpi_pi(jets_pt20.at(0).GetMomentum().Phi()
                      - jets_pt20.at(1).GetMomentum().Phi()));
 
-        sync().nbtag = static_cast<int>(bjets_pt.size());
         sync().njets = static_cast<int>(jets_pt30.size());
         sync().njetspt20 = static_cast<int>(jets_pt20.size());
 
@@ -369,41 +351,41 @@ namespace htt_sync {
         sync().jphi_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Phi());
         sync().jrawf_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1)->rawf());
 
-        sync().njets_vbf = static_cast<int>(jets_vbf.size());
-        sync().isVBF = jets_vbf.size() >= 2;
-        sync().jpt_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                    jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
-        sync().jeta_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                     jets_vbf.at(vbf_jet_pair.first).GetMomentum().Eta());
-        sync().jphi_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                     jets_vbf.at(vbf_jet_pair.first).GetMomentum().Phi());
-        sync().jpt_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                    jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
-        sync().jeta_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                     jets_vbf.at(vbf_jet_pair.second).GetMomentum().Eta());
-        sync().jphi_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                     jets_vbf.at(vbf_jet_pair.second).GetMomentum().Phi());
+        sync().njets_vbf = static_cast<int>(jets_pt30.size());
+        sync().isVBF = jets_pt30.size() >= 2;
+        sync().jpt_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                    event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
+        sync().jeta_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Eta());
+        sync().jphi_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Phi());
+        sync().jpt_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                    event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
+        sync().jeta_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Eta());
+        sync().jphi_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Phi());
 
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
 
-        sync().nbjets = static_cast<int>(bjets_id.size());
-        sync().bjet_pt_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
-        sync().bjet_eta_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Eta());
-        sync().bjet_phi_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Phi());
-        sync().bjet_rawf_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->rawf());
-        sync().bjet_csv_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->csv());
-        sync().bjet_deepcsv_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0)->deepcsv());
-        sync().bjet_resolution_1 = COND_VAL(bjets_id.size() >= 1,
-                                            bjets_id.at(0)->resolution() * bjets_id.at(0).GetMomentum().E());
-        sync().bjet_pt_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
-        sync().bjet_eta_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Eta());
-        sync().bjet_phi_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Phi());
-        sync().bjet_rawf_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->rawf());
-        sync().bjet_csv_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->csv());
-        sync().bjet_deepcsv_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1)->deepcsv());
-        sync().bjet_resolution_2 = COND_VAL(bjets_id.size() >= 2,
-                                            bjets_id.at(1)->resolution() * bjets_id.at(1).GetMomentum().E());
+        sync().nbjets = static_cast<int>(selected_signal_jets.n_bjets);
+        sync().bjet_pt_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
+        sync().bjet_eta_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Eta());
+        sync().bjet_phi_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Phi());
+        sync().bjet_rawf_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first)->rawf());
+        sync().bjet_csv_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first)->csv());
+        sync().bjet_deepcsv_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first)->deepcsv());
+        sync().bjet_resolution_1 = COND_VAL(selected_signal_jets.n_bjets >= 1,
+                                            event.GetBJet(selected_signal_jets.selectedBjetPair.first)->resolution() * event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().E());
+        sync().bjet_pt_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
+        sync().bjet_eta_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Eta());
+        sync().bjet_phi_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Phi());
+        sync().bjet_rawf_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second)->rawf());
+        sync().bjet_csv_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second)->csv());
+        sync().bjet_deepcsv_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second)->deepcsv());
+        sync().bjet_resolution_2 = COND_VAL(selected_signal_jets.n_bjets >= 2,
+                                            event.GetBJet(selected_signal_jets.selectedBjetPair.second)->resolution() * event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().E());
 
         sync().ht_other_jets = event.GetHT();
 
@@ -432,7 +414,7 @@ namespace htt_sync {
 
         sync().nFatJets = static_cast<unsigned>(event.GetFatJets().size());
         const auto fatJet = event.SelectFatJet(30, 0.4);
-        sync().hasFatJet = bjets_id.size() >= 2 ? fatJet != nullptr : -1;
+        sync().hasFatJet = selected_signal_jets.n_bjets >= 2 ? fatJet != nullptr : -1;
         sync().fatJet_pt = COND_VAL(fatJet, fatJet->GetMomentum().Pt());
         sync().fatJet_eta = COND_VAL(fatJet, fatJet->GetMomentum().Eta());
         sync().fatJet_phi = COND_VAL(fatJet, fatJet->GetMomentum().Phi());
@@ -469,42 +451,42 @@ namespace htt_sync {
         select_jets(event_tau_up);
         sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_up_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_up_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
-        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                              jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
-        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                              jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_tau_up->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_tau_up->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                              event_tau_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                              event_tau_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
 
         select_jets(event_tau_down);
         sync().jpt_tau_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_down_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_down_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
-        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                                jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
-        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                                jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_tau_down->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_tau_down->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                                event_tau_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                                event_tau_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
 
         select_jets(event_jet_up);
         sync().jpt_jet_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_jet_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_up_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_up_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
-        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                              jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
-        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                              jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_jet_up->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_jet_up->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                              event_jet_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                              event_jet_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
 
         select_jets(event_jet_down);
         sync().jpt_jet_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_jet_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_down_1 = COND_VAL(bjets_id.size() >= 1, bjets_id.at(0).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_down_2 = COND_VAL(bjets_id.size() >= 2, bjets_id.at(1).GetMomentum().Pt());
-        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(vbf_jet_pair.first < jets_vbf.size(),
-                                                jets_vbf.at(vbf_jet_pair.first).GetMomentum().Pt());
-        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(vbf_jet_pair.second < jets_vbf.size(),
-                                                jets_vbf.at(vbf_jet_pair.second).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_jet_down->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_jet_down->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
+                                                event_jet_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
+                                                event_jet_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
 
         sync.Fill();
     }

@@ -183,9 +183,10 @@ public:
     struct SelectedSignalJets{
         JetPair selectedBjetPair;
         JetPair selectedVBFjetPair;
+        size_t n_bjets;
 
         SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedJetPair()),
-            selectedVBFjetPair(ntuple::UndefinedJetPair()) { }
+            selectedVBFjetPair(ntuple::UndefinedJetPair()), n_bjets(0) { }
 
         bool HasBjetPair(const Size_t njets) const
         {
@@ -234,6 +235,7 @@ public:
         }
 
         auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
+        selected_signal_jets.n_bjets = bjets_ordered.size();
         if(bjets_ordered.size() >= 1)
             selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
         double tag_second_bjet = period == analysis::Period::Run2017 ?
@@ -446,6 +448,13 @@ public:
     const JetCandidate& GetVBFJet(const size_t index)
     {
         if(!selected_signal_jets.isSelectedVBFjet(index)) throw exception("VBF jet not found.");
+        return GetJets().at(index);
+
+    }
+
+    const JetCandidate& GetBJet(const size_t index)
+    {
+        if(!selected_signal_jets.isSelectedBjet(index)) throw exception("B jet not found.");
         return GetJets().at(index);
 
     }
