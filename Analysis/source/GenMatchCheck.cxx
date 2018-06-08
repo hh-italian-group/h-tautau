@@ -18,6 +18,7 @@ struct Arguments {
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, output_file);
+    REQ_ARG(std::string, period);
 };
 
 namespace analysis {
@@ -40,7 +41,9 @@ public:
     using EventTuple = ntuple::EventTuple;
 
     GenMatchCheck(const Arguments& _args) : args(_args), output(root_ext::CreateRootFile(args.output_file())),
-        anaData(output) {}
+        anaData(output) {
+            run_period = analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(args.period());
+        }
 
     void Run()
     {
@@ -64,10 +67,9 @@ public:
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple->GetEntry(current_entry);
 
-            ntuple::JetPair bjet_pair = EventInfoBase::SelectBjetPair(originalTuple->data(), cuts::btag_2017::pt,
-                                                          cuts::btag_2017::eta, JetOrdering::DeepCSV);
-            auto eventInfoPtr = MakeEventInfo(channel, originalTuple->data(), bjet_pair, summaryInfo.get());
-            EventInfoBase& event = *eventInfoPtr;
+            JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
+            auto event_info =  MakeEventInfo(channel, originalTuple->data(), run_period, jet_ordering, &summaryInfo);
+            EventInfoBase& event = *event_info;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event.GetTriggerResults().AnyAcceptAndMatch()) continue;
@@ -95,6 +97,7 @@ private:
     Arguments args;
     std::shared_ptr<TFile> output;
     GenMatchCheckData anaData;
+    analysis::Period run_period;
 };
 
 } // namespace analysis

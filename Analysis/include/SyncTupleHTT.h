@@ -325,7 +325,7 @@ namespace htt_sync {
                 jet_ordering = analysis::JetOrdering::DeepCSV;
             }
 
-            selected_signal_jets = event_info->SelectSignalJets(event,run_period,jet_ordering);
+            selected_signal_jets = event_info->SelectSignalJets(*event,run_period,jet_ordering);
         };
 
 
