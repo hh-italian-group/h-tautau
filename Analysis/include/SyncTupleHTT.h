@@ -193,6 +193,7 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 #undef JVAR
 
 #define COND_VAL(cond, val) cond ? static_cast<float>(val) : default_value
+#define COND_VAL_INT(cond, val) cond ? static_cast<int>(val) : default_int_value
 
 namespace htt_sync {
 
@@ -389,7 +390,7 @@ namespace htt_sync {
 
         sync().ht_other_jets = event.GetHT();
 
-        sync().kinfit_convergence = COND_VAL(event->kinFit_convergence.size() > 0 && event.HasBjetPair(), event.GetKinFitResults().convergence);
+        sync().kinfit_convergence = COND_VAL_INT(event->kinFit_convergence.size() > 0 && event.HasBjetPair(), event.GetKinFitResults().convergence);
         sync().m_kinfit = COND_VAL(event.GetKinFitResults().HasValidMass() && event->kinFit_convergence.size() > 0 && event.HasBjetPair(), static_cast<float>(event.GetKinFitResults().mass));
         sync().m_kinfit_tau_ES_up = COND_VAL(event_tau_up &&
                                              event_tau_up->GetKinFitResults().HasValidMass() &&
@@ -493,3 +494,4 @@ namespace htt_sync {
 }
 
 #undef COND_VAL
+#undef COND_VAL_INT

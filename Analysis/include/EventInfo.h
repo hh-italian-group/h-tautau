@@ -357,7 +357,7 @@ public:
 
     const SelectedSignalJets& GetSelectedSignalJets() const {return selected_signal_jets; }
     const analysis::Period& GetPeriod() const {return period; }
-    const JetOrdering GetJetOrdering() const {return jet_ordering; }
+    JetOrdering GetJetOrdering() const {return jet_ordering; }
 
     const JetCollection& GetJets()
     {

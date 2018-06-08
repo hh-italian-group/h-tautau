@@ -61,14 +61,14 @@ public:
 
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
+        SummaryInfo* summaryInfo(new SummaryInfo(summaryTuple->data()));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple->GetEntry(current_entry);
 
             JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
-            auto event_info =  MakeEventInfo(channel, originalTuple->data(), run_period, jet_ordering, &summaryInfo);
+            auto event_info =  analysis::MakeEventInfo(channel, originalTuple->data(), run_period, jet_ordering, summaryInfo);
             EventInfoBase& event = *event_info;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
