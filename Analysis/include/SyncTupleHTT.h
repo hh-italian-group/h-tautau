@@ -177,6 +177,54 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(UInt_t, jets_nSelected_hadronFlavour_b) \
     VAR(UInt_t, jets_nSelected_hadronFlavour_c) \
+    /* mva variable */ \
+    VAR(Float_t, pt_b2) \
+    VAR(Float_t, pt_hbb) \
+    VAR(Float_t, pt_l1) \
+    VAR(Float_t, pt_l2) \
+    VAR(Float_t, pt_l1l2) \
+    VAR(Float_t, pt_htautau) \
+    VAR(Float_t, pt_htautau_sv) \
+    VAR(Float_t, pt_MET) \
+    VAR(Double_t, HT_otherjets) \
+    VAR(Double_t, p_zeta) \
+    VAR(Double_t, p_zetavisible) \
+    VAR(Float_t, dphi_l1l2) \
+    VAR(Float_t, abs_dphi_b1b2) \
+    VAR(Float_t, dphi_b1b2) \
+    VAR(Float_t, dphi_l1MET) \
+    VAR(Float_t, abs_dphi_METhtautau_sv) \
+    VAR(Float_t, dphi_METhtautau_sv) \
+    VAR(Float_t, dphi_hbbMET) \
+    VAR(Float_t, abs_dphi_hbbhatutau_sv) \
+    VAR(Float_t, abs_deta_b1b2) \
+    VAR(Float_t, abs_deta_l2MET) \
+    VAR(Float_t, abs_deta_hbbMET) \
+    VAR(Float_t, dR_l1l2) \
+    VAR(Float_t, dR_hbbMET) \
+    VAR(Float_t, dR_hbbhtautau) \
+    VAR(Float_t, dR_l1l2Pt_htautau) \
+    VAR(Float_t, dR_l1l2Pt_htautau_sv) \
+    VAR(Float_t, mass_htautau_sv) \
+    VAR(Float_t, MT_l1) \
+    VAR(Float_t, MT_htautau) \
+    VAR(Float_t, MT_htautau_sv) \
+    VAR(Float_t, MT_tot) \
+    VAR(Float_t, MT2) \
+    VAR(Float_t, mass_top1) \
+    VAR(Float_t, mass_X) \
+    VAR(Float_t, mass_H) \
+    VAR(Float_t, mass_H_sv) \
+    VAR(Float_t, mass_H_vis) \
+    VAR(Float_t, mass_H_kinfit) \
+    VAR(Float_t, mass_H_kinfit_chi2) \
+    VAR(Float_t, phi_sv) \
+    VAR(Float_t, phi_1_sv) \
+    VAR(Float_t, phi_2_sv) \
+    VAR(Float_t, costheta_METhtautau_sv) \
+    VAR(Float_t, costheta_METhbb) \
+    VAR(Float_t, costheta_b1hbbv) \
+    VAR(Float_t, costheta_htautau_svhhMET) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -448,6 +496,67 @@ namespace htt_sync {
                     std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 5));
         sync().jets_nSelected_hadronFlavour_c = static_cast<unsigned>(
                     std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
+
+        //mva variables
+        using namespace ROOT::Math::VectorUtil;
+        const auto& Htt = event.GetHiggsTTMomentum(false);
+        const auto& Htt_sv = event.GetHiggsTTMomentum(true);
+        const auto& t1 = event.GetLeg(1).GetMomentum();
+        const auto& t2 = event.GetLeg(2).GetMomentum();
+
+        const auto& Hbb = event.GetHiggsBB().GetMomentum();
+        const auto& b1 = event.GetHiggsBB().GetFirstDaughter().GetMomentum();
+        const auto& b2 = event.GetHiggsBB().GetSecondDaughter().GetMomentum();
+
+        const auto& met = event.GetMET().GetMomentum();
+
+        sync().pt_b2 = b2.Pt();
+        sync().pt_hbb = Hbb.Pt();
+        sync().pt_l1 = t1.Pt();
+        sync().pt_l2 = t2.Pt();
+        sync().pt_l1l2 = (t1+t2).Pt();
+        sync().pt_htautau = (Htt+met).Pt();
+        sync().pt_htautau_sv = Htt_sv.Pt();
+        sync().pt_MET = met.Pt();
+        sync().HT_otherjets = event->ht_other_jets;
+        sync().p_zeta = analysis::Calculate_Pzeta(t1, t2,  met);
+        sync().p_zetavisible = analysis::Calculate_visiblePzeta(t1, t2);
+        sync().dphi_l1l2 = DeltaPhi(t1, t2);
+        sync().abs_dphi_b1b2 = std::abs(DeltaPhi(b1, b2));
+        sync().dphi_b1b2 = DeltaPhi(b1, b2);
+        sync().dphi_l1MET = DeltaPhi(t1, met);
+        sync().abs_dphi_METhtautau_sv = std::abs(DeltaPhi(Htt_sv, met));
+        sync().dphi_METhtautau_sv = DeltaPhi(Htt_sv, met);
+        sync().dphi_hbbMET = DeltaPhi(Hbb, met);
+        sync().abs_dphi_hbbhatutau_sv = std::abs(DeltaPhi(Hbb, Htt_sv));
+        sync().abs_deta_b1b2 = std::abs(b1.eta() - b2.eta());
+        sync().abs_deta_l2MET = std::abs(t2.eta()-met.eta());
+        sync().abs_deta_hbbMET = std::abs(Hbb.eta()-met.eta());
+        sync().dR_l1l2 = DeltaR(t1, t2);
+        sync().dR_hbbMET = DeltaR(Hbb, met);
+        sync().dR_hbbhtautau = DeltaR(Hbb, Htt+met);
+        sync().dR_l1l2Pt_htautau = DeltaR(t1, t2)*(Htt+met).Pt();
+        sync().dR_l1l2Pt_htautau_sv = DeltaR(t1, t2)*Htt_sv.Pt();
+        sync().mass_htautau_sv = Htt_sv.M();
+        sync().MT_l1 = analysis::Calculate_MT(t1,met);
+        sync().MT_htautau = analysis::Calculate_MT(Htt+met, met);
+        sync().MT_htautau_sv = analysis::Calculate_MT(Htt_sv, met);
+        sync().MT_tot = analysis::Calculate_TotalMT(t1, t2,met);
+        sync().MT2 = event.GetMT2();
+        sync().mass_top1 = analysis::four_bodies::Calculate_topPairMasses(t1, t2, b1, b2, met).first;
+        sync().mass_X = analysis::four_bodies::Calculate_MX(t1, t2, b1, b2, met);
+        sync().mass_H = InvariantMass(Hbb, Htt+met);
+        sync().mass_H_sv = InvariantMass(Hbb, Htt_sv);
+        sync().mass_H_vis = InvariantMass(Hbb, t1+t2);
+        sync().mass_H_kinfit = event.GetKinFitResults().mass;
+        sync().mass_H_kinfit_chi2 = event.GetKinFitResults().chi2;
+        sync().phi_sv = analysis::four_bodies::Calculate_phi(t1, t2, b1, b2, Htt_sv, Hbb);
+        sync().phi_1_sv = analysis::four_bodies::Calculate_phi1(t1, t2, Htt_sv, Hbb);
+        sync().phi_2_sv = analysis::four_bodies::Calculate_phi1(b1, b2, Htt_sv, Hbb);
+        sync().costheta_METhtautau_sv = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Htt_sv);
+        sync().costheta_METhbb = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Hbb);
+        sync().costheta_b1hbb = analysis::four_bodies::Calculate_cosTheta_2bodies(b1, Hbb);
+        sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, eventbase.GetResonanceMomentum(false,true));
 
         select_jets(event_tau_up);
         sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
