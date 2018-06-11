@@ -328,6 +328,7 @@ public:
         mutex = std::make_shared<Mutex>();
         triggerResults.SetAcceptBits(event->trigger_accepts);
         triggerResults.SetMatchBits(event->trigger_matches);
+        kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
     }
     
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
@@ -500,11 +501,22 @@ public:
         if(!kinfit_results) {
             const size_t pairId = ntuple::CombinationPairToIndex(selected_signal_jets.selectedBjetPair, GetNJets());
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
-            if(iter == event->kinFit_jetPairId.end())
-                throw exception("Kinfit information for jet pair (%1%, %2%) is not stored for event %3%.")
-                    % selected_signal_jets.selectedBjetPair.first % selected_signal_jets.selectedBjetPair.second % eventIdentifier;
-            const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
+            if(iter == event->kinFit_jetPairId.end()){
+                double energy_resolution_1 = GetBJet(selected_signal_jets.selectedBjetPair.first)->resolution()*
+                        GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().E();
+                double energy_resolution_2 = GetBJet(selected_signal_jets.selectedBjetPair.second)->resolution()*
+                        GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().E();
+                const auto& result = kinfitProducer->Fit(GetLeg(0).GetMomentum(), GetLeg(1).GetMomentum(),
+                                                         GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum(),
+                                                         GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum(),
+                                                         *met,energy_resolution_1,energy_resolution_2);
+                kinfit_results->convergence = result.convergence;
+                kinfit_results->chi2 = result.chi2;
+                kinfit_results->probability = TMath::Prob(result.chi2, 2);
+                kinfit_results->mass = result.mass;
+            }
+            const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
             kinfit_results->convergence = event->kinFit_convergence.at(index);
             kinfit_results->chi2 = event->kinFit_chi2.at(index);
             kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
@@ -594,6 +606,7 @@ private:
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     boost::optional<double> mt2;
     double mva_score;
+    std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
 };
 
 template<typename _FirstLeg, typename _SecondLeg>

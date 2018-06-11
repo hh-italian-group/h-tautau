@@ -579,61 +579,12 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
 void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selection,
                         const std::vector<LorentzVector>& signalLeptonMomentums)
 {
-    static constexpr bool RunKinfitForAllPairs = false;
     using namespace cuts::btag_2016;
 
     selection.jets = CollectJets(signalLeptonMomentums);
-    const size_t n_jets = selection.jets.size();
     if(applyRecoilCorr)
         ApplyRecoilCorrection(selection.jets);
-    if(!runKinFit || n_jets < 2) return;
 
-    const auto runKinfit = [&](size_t first, size_t second) {
-        const ntuple::JetPair pair(first, second);
-        //jet resolution
-        JME::JetParameters parameters_1;
-        parameters_1.setJetPt(selection.jets.at(pair.first).GetMomentum().pt());
-        parameters_1.setJetEta(selection.jets.at(pair.first).GetMomentum().eta());
-        parameters_1.setRho(*rho);
-        float resolution_1 = resolution.getResolution(parameters_1);
-        float energy_resolution_1 = resolution_1 * selection.jets.at(pair.first).GetMomentum().E();
-        JME::JetParameters parameters_2;
-        parameters_2.setJetPt(selection.jets.at(pair.second).GetMomentum().pt());
-        parameters_2.setJetEta(selection.jets.at(pair.second).GetMomentum().eta());
-        parameters_2.setRho(*rho);
-        float resolution_2 = resolution.getResolution(parameters_2);
-        float energy_resolution_2 = resolution_2 * selection.jets.at(pair.second).GetMomentum().E();
-
-        const size_t pair_index = ntuple::CombinationPairToIndex(pair, n_jets);
-        const auto& result = kinfitProducer->Fit(signalLeptonMomentums.at(0), signalLeptonMomentums.at(1),
-                                                 selection.jets.at(pair.first).GetMomentum(),
-                                                 selection.jets.at(pair.second).GetMomentum(), *met,energy_resolution_1,
-                                                 energy_resolution_2);
-        selection.kinfitResults[pair_index] = result;
-    };
-
-    if(RunKinfitForAllPairs) {
-        for(size_t n = 0; n < n_jets; ++n) {
-            for(size_t k = 0; k < n_jets; ++k) {
-                if(k == n) continue;
-                runKinfit(n, k);
-            }
-        }
-    } else {
-        runKinfit(0, 1);
-
-        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
-        for(size_t n = 0; n < selection.jets.size(); ++n) {
-            const JetCandidate& jet = selection.jets.at(n);
-            jet_info_vector.emplace_back(jet.GetMomentum(),n,jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-        }
-
-        auto jets_ordered = analysis::jet_ordering::OrderJets(jet_info_vector,false,cuts::btag_2017::pt,
-                                                              cuts::btag_2017::eta);
-        if((jets_ordered.at(0).index) != 0 && (jets_ordered.at(1).index) != 1){
-            runKinfit(jets_ordered.at(0).index, jets_ordered.at(1).index);
-        }
-    }
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectVetoElectrons(
