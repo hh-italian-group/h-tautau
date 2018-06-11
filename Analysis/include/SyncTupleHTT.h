@@ -349,8 +349,6 @@ namespace htt_sync {
 
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
-        analysis::JetOrdering jet_ordering;
-        analysis::EventInfoBase::SelectedSignalJets selected_signal_jets;
 
         auto select_jets = [&](analysis::EventInfoBase* event_info) {
             jets_pt20.clear();
@@ -362,7 +360,6 @@ namespace htt_sync {
                                                    analysis::JetOrdering::Pt);
                 jets_pt30 = event_info->SelectJets(30, 4.7, std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
-                jet_ordering = analysis::JetOrdering::CSV;
             }
 
             if (run_period == analysis::Period::Run2017) {
@@ -371,7 +368,6 @@ namespace htt_sync {
                 jets_pt30 = event_info->SelectJets(30, std::numeric_limits<double>::max(),
                                                    std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
-                jet_ordering = analysis::JetOrdering::DeepCSV;
             }
 
         };
@@ -449,7 +445,7 @@ namespace htt_sync {
 
         sync().nFatJets = static_cast<unsigned>(event.GetFatJets().size());
         const auto fatJet = event.SelectFatJet(30, 0.4);
-        sync().hasFatJet = selected_signal_jets.n_bjets >= 2 ? fatJet != nullptr : -1;
+        sync().hasFatJet = event.HasBjetPair() ? fatJet != nullptr : -1;
         sync().fatJet_pt = COND_VAL(fatJet, fatJet->GetMomentum().Pt());
         sync().fatJet_eta = COND_VAL(fatJet, fatJet->GetMomentum().Eta());
         sync().fatJet_phi = COND_VAL(fatJet, fatJet->GetMomentum().Phi());
@@ -550,39 +546,43 @@ namespace htt_sync {
         std::cout << "After mva vars" << std::endl;
 
         select_jets(event_tau_up);
+        std::cout << "Selected tau up event" << std::endl;
         sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_up_1 = COND_VAL(event_tau_up->HasBjetPair(), event_tau_up->GetBJet(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_up_2 = COND_VAL(event_tau_up->HasBjetPair(), event_tau_up->GetBJet(2).GetMomentum().Pt());
-        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(1).GetMomentum().Pt());
-        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(2).GetMomentum().Pt());
+        std::cout << "Selected jet tau up event" << std::endl;
+        sync().bjet_pt_tau_ES_up_1 = COND_VAL(event_tau_up && event_tau_up->HasBjetPair(), event_tau_up->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_2 = COND_VAL(event_tau_up && event_tau_up->HasBjetPair(), event_tau_up->GetBJet(2).GetMomentum().Pt());
+        std::cout << "Selected bjet tau up event" << std::endl;
+        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(event_tau_up && event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(event_tau_up && event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(2).GetMomentum().Pt());
+        std::cout << "Selected vbf jets tau up event" << std::endl;
         std::cout << "After tau up" << std::endl;
 
         select_jets(event_tau_down);
         sync().jpt_tau_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_down_1 = COND_VAL(event_tau_down->HasBjetPair(), event_tau_down->GetBJet(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_down_2 = COND_VAL(event_tau_down->HasBjetPair(), event_tau_down->GetBJet(2).GetMomentum().Pt());
-        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(1).GetMomentum().Pt());
-        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(2).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_1 = COND_VAL(event_tau_down && event_tau_down->HasBjetPair(), event_tau_down->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_2 = COND_VAL(event_tau_down && event_tau_down->HasBjetPair(), event_tau_down->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(event_tau_down && event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(event_tau_down && event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(2).GetMomentum().Pt());
         std::cout << "After tau down" << std::endl;
 
         select_jets(event_jet_up);
         sync().jpt_jet_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_jet_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_up_1 = COND_VAL(event_jet_up->HasBjetPair(), event_jet_up->GetBJet(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_up_2 = COND_VAL(event_jet_up->HasBjetPair(), event_jet_up->GetBJet(2).GetMomentum().Pt());
-        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(1).GetMomentum().Pt());
-        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(2).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_1 = COND_VAL(event_jet_up && event_jet_up->HasBjetPair(), event_jet_up->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_2 = COND_VAL(event_jet_up && event_jet_up->HasBjetPair(), event_jet_up->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(event_jet_up && event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(event_jet_up && event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(2).GetMomentum().Pt());
         std::cout << "After jet up" << std::endl;
 
         select_jets(event_jet_down);
         sync().jpt_jet_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_jet_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_down_1 = COND_VAL(event_jet_down->HasBjetPair(), event_jet_down->GetBJet(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_down_2 = COND_VAL(event_jet_down->HasBjetPair(), event_jet_down->GetBJet(2).GetMomentum().Pt());
-        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(1).GetMomentum().Pt());
-        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(2).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_1 = COND_VAL(event_jet_down && event_jet_down->HasBjetPair(), event_jet_down->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_2 = COND_VAL(event_jet_down && event_jet_down->HasBjetPair(), event_jet_down->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(event_jet_down && event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(event_jet_down && event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(2).GetMomentum().Pt());
         std::cout << "After jet down" << std::endl;
 
         sync.Fill();

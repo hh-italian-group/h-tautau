@@ -73,12 +73,20 @@ public:
                 current_id = event_id;
                 events.clear();
             }
+            std::cout << "ES: " << event.eventEnergyScale << " - Before fill events" << std::endl;
             events[static_cast<EventEnergyScale>(event.eventEnergyScale)] = event;
+            std::cout << "ES: " << event.eventEnergyScale << " - After fill events" << std::endl;
         }
-        if(!events.empty())
+        std::cout << "evets size: " << events.size() << std::endl;
+        if(!events.empty()){
+            std::cout << "Events not empty" << std::endl;
             FillSyncTuple(sync, events, summaryInfo);
+            std::cout << "After events not empty filled" << std::endl;
+        }
 
+        std::cout << "Before write" << std::endl;
         sync.Write();
+        std::cout << "After write" << std::endl;
     }
 
 private:
