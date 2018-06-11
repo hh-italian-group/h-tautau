@@ -374,7 +374,6 @@ namespace htt_sync {
                 jet_ordering = analysis::JetOrdering::DeepCSV;
             }
 
-            selected_signal_jets = event_info->SelectSignalJets(*event,run_period,jet_ordering);
         };
 
 
@@ -412,8 +411,8 @@ namespace htt_sync {
 
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
-        std::cout << "Nbjets: " << selected_signal_jets.n_bjets << std::endl;
-        sync().nbjets = static_cast<int>(selected_signal_jets.n_bjets);
+        std::cout << "Nbjets: " << event.GetSelectedSignalJets().n_bjets << std::endl;
+        sync().nbjets = static_cast<int>(event.GetSelectedSignalJets().n_bjets);
         sync().bjet_pt_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Pt());
         sync().bjet_eta_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Eta());
         sync().bjet_phi_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Phi());
@@ -433,24 +432,16 @@ namespace htt_sync {
         std::cout << "After bjets" << std::endl;
         sync().ht_other_jets = event.GetHT();
 
-        sync().kinfit_convergence = COND_VAL_INT(event->kinFit_convergence.size() > 0 && event.HasBjetPair(), event.GetKinFitResults().convergence);
-        sync().m_kinfit = COND_VAL(event.GetKinFitResults().HasValidMass() && event.GetKinFitResults().convergence > 0 && event.HasBjetPair(), static_cast<float>(event.GetKinFitResults().mass));
-        sync().m_kinfit_tau_ES_up = COND_VAL(event_tau_up &&
-                                             event_tau_up->GetKinFitResults().HasValidMass() &&
-                                             event_tau_up->GetKinFitResults().convergence > 0 &&
-                                             event_tau_up->HasBjetPair(), event_tau_up->GetKinFitResults().mass);
-        sync().m_kinfit_tau_ES_down = COND_VAL(event_tau_down &&
-                                               event_tau_down->GetKinFitResults().HasValidMass() &&
-                                               event_tau_down->GetKinFitResults().convergence > 0 &&
-                                               event_tau_down->HasBjetPair(), event_tau_down->GetKinFitResults().mass);
-        sync().m_kinfit_jet_ES_up = COND_VAL(event_jet_up &&
-                                             event_jet_up->GetKinFitResults().HasValidMass() &&
-                                             event_jet_up->GetKinFitResults().convergence > 0 &&
-                                             event_jet_up->HasBjetPair(), event_jet_up->GetKinFitResults().mass);
-        sync().m_kinfit_jet_ES_down = COND_VAL(event_jet_down &&
-                                               event_jet_down->GetKinFitResults().HasValidMass() &&
-                                               event_jet_down->GetKinFitResults().convergence > 0 &&
-                                               event_jet_down->HasBjetPair(), event_jet_down->GetKinFitResults().mass);
+        sync().kinfit_convergence = COND_VAL_INT(event.HasBjetPair() , event.GetKinFitResults().convergence);
+        sync().m_kinfit = COND_VAL(event.HasBjetPair() && event.GetKinFitResults().HasValidMass(), static_cast<float>(event.GetKinFitResults().mass));
+        sync().m_kinfit_tau_ES_up = COND_VAL(event_tau_up && event_tau_up->HasBjetPair() &&
+                                             event_tau_up->GetKinFitResults().HasValidMass(), event_tau_up->GetKinFitResults().mass);
+        sync().m_kinfit_tau_ES_down = COND_VAL(event_tau_down && event_tau_down->HasBjetPair() &&
+                                               event_tau_down->GetKinFitResults().HasValidMass(), event_tau_down->GetKinFitResults().mass);
+        sync().m_kinfit_jet_ES_up = COND_VAL(event_jet_up && event_jet_up->HasBjetPair() &&
+                                             event_jet_up->GetKinFitResults().HasValidMass(), event_jet_up->GetKinFitResults().mass);
+        sync().m_kinfit_jet_ES_down = COND_VAL(event_jet_down && event_jet_down->HasBjetPair() &&
+                                               event_jet_down->GetKinFitResults().HasValidMass(), event_jet_down->GetKinFitResults().mass);
 
         std::cout << "After kin fit" << std::endl;
 
@@ -493,65 +484,69 @@ namespace htt_sync {
                     std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
 
         //mva variables
-        using namespace ROOT::Math::VectorUtil;
-        const auto& Htt = event.GetHiggsTTMomentum(false);
-        const auto& Htt_sv = event.GetHiggsTTMomentum(true);
-        const auto& t1 = event.GetLeg(1).GetMomentum();
-        const auto& t2 = event.GetLeg(2).GetMomentum();
-
-        const auto& Hbb = event.GetHiggsBB().GetMomentum();
-        const auto& b1 = event.GetHiggsBB().GetFirstDaughter().GetMomentum();
-        const auto& b2 = event.GetHiggsBB().GetSecondDaughter().GetMomentum();
-
-        const auto& met = event.GetMET().GetMomentum();
-
-        sync().pt_b2 = b2.Pt();
-        sync().pt_hbb = Hbb.Pt();
-        sync().pt_l1 = t1.Pt();
-        sync().pt_l2 = t2.Pt();
-        sync().pt_l1l2 = (t1+t2).Pt();
-        sync().pt_htautau = (Htt+met).Pt();
-        sync().pt_htautau_sv = Htt_sv.Pt();
-        sync().pt_MET = met.Pt();
-        sync().HT_otherjets = event->ht_other_jets;
-        sync().p_zeta = analysis::Calculate_Pzeta(t1, t2,  met);
-        sync().p_zetavisible = analysis::Calculate_visiblePzeta(t1, t2);
-        sync().dphi_l1l2 = DeltaPhi(t1, t2);
-        sync().abs_dphi_b1b2 = std::abs(DeltaPhi(b1, b2));
-        sync().dphi_b1b2 = DeltaPhi(b1, b2);
-        sync().dphi_l1MET = DeltaPhi(t1, met);
-        sync().abs_dphi_METhtautau_sv = std::abs(DeltaPhi(Htt_sv, met));
-        sync().dphi_METhtautau_sv = DeltaPhi(Htt_sv, met);
-        sync().dphi_hbbMET = DeltaPhi(Hbb, met);
-        sync().abs_dphi_hbbhatutau_sv = std::abs(DeltaPhi(Hbb, Htt_sv));
-        sync().abs_deta_b1b2 = std::abs(b1.eta() - b2.eta());
-        sync().abs_deta_l2MET = std::abs(t2.eta()-met.eta());
-        sync().abs_deta_hbbMET = std::abs(Hbb.eta()-met.eta());
-        sync().dR_l1l2 = DeltaR(t1, t2);
-        sync().dR_hbbMET = DeltaR(Hbb, met);
-        sync().dR_hbbhtautau = DeltaR(Hbb, Htt+met);
-        sync().dR_l1l2Pt_htautau = DeltaR(t1, t2)*(Htt+met).Pt();
-        sync().dR_l1l2Pt_htautau_sv = DeltaR(t1, t2)*Htt_sv.Pt();
-        sync().mass_htautau_sv = Htt_sv.M();
-        sync().MT_l1 = analysis::Calculate_MT(t1,met);
-        sync().MT_htautau = analysis::Calculate_MT(Htt+met, met);
-        sync().MT_htautau_sv = analysis::Calculate_MT(Htt_sv, met);
-        sync().MT_tot = analysis::Calculate_TotalMT(t1, t2,met);
-        sync().MT2 = event.GetMT2();
-        sync().mass_top1 = analysis::four_bodies::Calculate_topPairMasses(t1, t2, b1, b2, met).first;
-        sync().mass_X = analysis::four_bodies::Calculate_MX(t1, t2, b1, b2, met);
-        sync().mass_H = InvariantMass(Hbb, Htt+met);
-        sync().mass_H_sv = InvariantMass(Hbb, Htt_sv);
-        sync().mass_H_vis = InvariantMass(Hbb, t1+t2);
-        sync().mass_H_kinfit = event.GetKinFitResults().mass;
-        sync().mass_H_kinfit_chi2 = event.GetKinFitResults().chi2;
-        sync().phi_sv = analysis::four_bodies::Calculate_phi(t1, t2, b1, b2, Htt_sv, Hbb);
-        sync().phi_1_sv = analysis::four_bodies::Calculate_phi1(t1, t2, Htt_sv, Hbb);
-        sync().phi_2_sv = analysis::four_bodies::Calculate_phi1(b1, b2, Htt_sv, Hbb);
-        sync().costheta_METhtautau_sv = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Htt_sv);
-        sync().costheta_METhbb = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Hbb);
-        sync().costheta_b1hbb = analysis::four_bodies::Calculate_cosTheta_2bodies(b1, Hbb);
-        sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, event.GetResonanceMomentum(false,true));
+        if(event.HasBjetPair()){
+            using namespace ROOT::Math::VectorUtil;
+            const auto& Htt = event.GetHiggsTTMomentum(false);
+            const auto& Htt_sv = event.GetHiggsTTMomentum(true);
+            const auto& t1 = event.GetLeg(1).GetMomentum();
+            const auto& t2 = event.GetLeg(2).GetMomentum();
+            
+            const auto& Hbb = event.GetHiggsBB().GetMomentum();
+            std::cout << "After Hbb candidate" << std::endl;
+            const auto& b1 = event.GetHiggsBB().GetFirstDaughter().GetMomentum();
+            const auto& b2 = event.GetHiggsBB().GetSecondDaughter().GetMomentum();
+            
+            const auto& met = event.GetMET().GetMomentum();
+            
+            sync().pt_b2 = b2.Pt();
+            sync().pt_hbb = Hbb.Pt();
+            sync().pt_l1 = t1.Pt();
+            sync().pt_l2 = t2.Pt();
+            sync().pt_l1l2 = (t1+t2).Pt();
+            sync().pt_htautau = (Htt+met).Pt();
+            sync().pt_htautau_sv = Htt_sv.Pt();
+            sync().pt_MET = met.Pt();
+            sync().HT_otherjets = event->ht_other_jets;
+            sync().p_zeta = analysis::Calculate_Pzeta(t1, t2,  met);
+            sync().p_zetavisible = analysis::Calculate_visiblePzeta(t1, t2);
+            sync().dphi_l1l2 = DeltaPhi(t1, t2);
+            sync().abs_dphi_b1b2 = std::abs(DeltaPhi(b1, b2));
+            sync().dphi_b1b2 = DeltaPhi(b1, b2);
+            sync().dphi_l1MET = DeltaPhi(t1, met);
+            sync().abs_dphi_METhtautau_sv = std::abs(DeltaPhi(Htt_sv, met));
+            sync().dphi_METhtautau_sv = DeltaPhi(Htt_sv, met);
+            sync().dphi_hbbMET = DeltaPhi(Hbb, met);
+            sync().abs_dphi_hbbhatutau_sv = std::abs(DeltaPhi(Hbb, Htt_sv));
+            sync().abs_deta_b1b2 = std::abs(b1.eta() - b2.eta());
+            sync().abs_deta_l2MET = std::abs(t2.eta()-met.eta());
+            sync().abs_deta_hbbMET = std::abs(Hbb.eta()-met.eta());
+            sync().dR_l1l2 = DeltaR(t1, t2);
+            sync().dR_hbbMET = DeltaR(Hbb, met);
+            sync().dR_hbbhtautau = DeltaR(Hbb, Htt+met);
+            sync().dR_l1l2Pt_htautau = DeltaR(t1, t2)*(Htt+met).Pt();
+            sync().dR_l1l2Pt_htautau_sv = DeltaR(t1, t2)*Htt_sv.Pt();
+            sync().mass_htautau_sv = Htt_sv.M();
+            sync().MT_l1 = analysis::Calculate_MT(t1,met);
+            sync().MT_htautau = analysis::Calculate_MT(Htt+met, met);
+            sync().MT_htautau_sv = analysis::Calculate_MT(Htt_sv, met);
+            sync().MT_tot = analysis::Calculate_TotalMT(t1, t2,met);
+            sync().MT2 = event.GetMT2();
+            sync().mass_top1 = analysis::four_bodies::Calculate_topPairMasses(t1, t2, b1, b2, met).first;
+            sync().mass_X = analysis::four_bodies::Calculate_MX(t1, t2, b1, b2, met);
+            sync().mass_H = InvariantMass(Hbb, Htt+met);
+            sync().mass_H_sv = InvariantMass(Hbb, Htt_sv);
+            sync().mass_H_vis = InvariantMass(Hbb, t1+t2);
+            sync().mass_H_kinfit = event.GetKinFitResults().mass;
+            sync().mass_H_kinfit_chi2 = event.GetKinFitResults().chi2;
+            sync().phi_sv = analysis::four_bodies::Calculate_phi(t1, t2, b1, b2, Htt_sv, Hbb);
+            sync().phi_1_sv = analysis::four_bodies::Calculate_phi1(t1, t2, Htt_sv, Hbb);
+            sync().phi_2_sv = analysis::four_bodies::Calculate_phi1(b1, b2, Htt_sv, Hbb);
+            sync().costheta_METhtautau_sv = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Htt_sv);
+            sync().costheta_METhbb = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Hbb);
+            sync().costheta_b1hbb = analysis::four_bodies::Calculate_cosTheta_2bodies(b1, Hbb);
+            sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, event.GetResonanceMomentum(false,true));
+        }
+        
         std::cout << "After mva vars" << std::endl;
 
         select_jets(event_tau_up);
