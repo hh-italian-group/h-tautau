@@ -494,15 +494,10 @@ namespace htt_sync {
             
             const auto& met = event.GetMET().GetMomentum();
             
-            sync().pt_b2 = b2.Pt();
             sync().pt_hbb = Hbb.Pt();
-            sync().pt_l1 = t1.Pt();
-            sync().pt_l2 = t2.Pt();
             sync().pt_l1l2 = (t1+t2).Pt();
             sync().pt_htautau = (Htt+met).Pt();
             sync().pt_htautau_sv = Htt_sv.Pt();
-            sync().pt_MET = met.Pt();
-            sync().HT_otherjets = event->ht_other_jets;
             sync().p_zeta = analysis::Calculate_Pzeta(t1, t2,  met);
             sync().p_zetavisible = analysis::Calculate_visiblePzeta(t1, t2);
             sync().dphi_l1l2 = DeltaPhi(t1, t2);
@@ -521,7 +516,6 @@ namespace htt_sync {
             sync().dR_hbbhtautau = DeltaR(Hbb, Htt+met);
             sync().dR_l1l2Pt_htautau = DeltaR(t1, t2)*(Htt+met).Pt();
             sync().dR_l1l2Pt_htautau_sv = DeltaR(t1, t2)*Htt_sv.Pt();
-            sync().mass_htautau_sv = Htt_sv.M();
             sync().MT_l1 = analysis::Calculate_MT(t1,met);
             sync().MT_htautau = analysis::Calculate_MT(Htt+met, met);
             sync().MT_htautau_sv = analysis::Calculate_MT(Htt_sv, met);
@@ -532,7 +526,6 @@ namespace htt_sync {
             sync().mass_H = InvariantMass(Hbb, Htt+met);
             sync().mass_H_sv = InvariantMass(Hbb, Htt_sv);
             sync().mass_H_vis = InvariantMass(Hbb, t1+t2);
-            sync().mass_H_kinfit = event.GetKinFitResults().mass;
             sync().mass_H_kinfit_chi2 = event.GetKinFitResults().chi2;
             sync().phi_sv = analysis::four_bodies::Calculate_phi(t1, t2, b1, b2, Htt_sv, Hbb);
             sync().phi_1_sv = analysis::four_bodies::Calculate_phi1(t1, t2, Htt_sv, Hbb);
