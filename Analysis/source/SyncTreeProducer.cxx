@@ -137,7 +137,9 @@ private:
         }
 
         if(!event_infos.count(EventEnergyScale::Central)) return;
+        std::cout << "I am in Central" << std::endl;
         if(!event_infos.at(EventEnergyScale::Central)->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) return;
+        std::cout << "Applied Trigger" << std::endl;
 
         if(!args.jet_uncertainty().empty()) {
             event_infos[EventEnergyScale::JetUp] = event_infos[EventEnergyScale::Central]
@@ -145,12 +147,14 @@ private:
             event_infos[EventEnergyScale::JetDown] = event_infos[EventEnergyScale::Central]
                     ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Down);
         }
-
+        
+        std::cout << "Before Fill SyncTuple" << std::endl;
         htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period,
                                 event_infos[EventEnergyScale::TauUp].get(),
                                 event_infos[EventEnergyScale::TauDown].get(),
                                 event_infos[EventEnergyScale::JetUp].get(),
                                 event_infos[EventEnergyScale::JetDown].get());
+        std::cout << "After Fill SyncTuple" << std::endl;
     }
 
 private:

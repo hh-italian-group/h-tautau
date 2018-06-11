@@ -188,22 +188,22 @@ public:
         SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedJetPair()),
             selectedVBFjetPair(ntuple::UndefinedJetPair()), n_bjets(0) { }
 
-        bool HasBjetPair(const Size_t njets) const
+        bool HasBjetPair(const size_t njets) const
         {
             return selectedBjetPair.first < njets && selectedBjetPair.second < njets;
         }
 
-        bool HasVBFPair(const Size_t njets) const
+        bool HasVBFPair(const size_t njets) const
         {
             return selectedVBFjetPair.first < njets && selectedVBFjetPair.second < njets;
         }
 
-        bool isSelectedBjet(const Size_t n) const
+        bool isSelectedBjet(const size_t n) const
         {
             return selectedBjetPair.first == n || selectedBjetPair.second == n;
         }
 
-        bool isSelectedVBFjet(const Size_t n) const
+        bool isSelectedVBFjet(const size_t n) const
         {
             return selectedVBFjetPair.first == n || selectedVBFjetPair.second == n;
         }
@@ -448,16 +448,20 @@ public:
 
     const JetCandidate& GetVBFJet(const size_t index)
     {
-        if(!selected_signal_jets.isSelectedVBFjet(index)) throw exception("VBF jet not found.");
-        return GetJets().at(index);
-
+        if(index != 1 || index != 2 || !HasVBFjetPair())
+            throw exception("VBF jet not found.");
+        if(index == 1)
+            return GetJets().at(selected_signal_jets.selectedVBFjetPair.first);
+        return GetJets().at(selected_signal_jets.selectedVBFjetPair.second);
     }
 
     const JetCandidate& GetBJet(const size_t index)
     {
-        if(!selected_signal_jets.isSelectedBjet(index)) throw exception("B jet not found.");
-        return GetJets().at(index);
-
+        if(index != 1 || index != 2 || !HasBjetPair())
+            throw exception("B jet not found.");
+        if(index == 1)
+            return GetJets().at(selected_signal_jets.selectedBjetPair.first);
+        return GetJets().at(selected_signal_jets.selectedBjetPair.second);
     }
 
     const HiggsBBCandidate& GetHiggsBB()
@@ -503,24 +507,24 @@ public:
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
             if(iter == event->kinFit_jetPairId.end()){
-                double energy_resolution_1 = GetBJet(selected_signal_jets.selectedBjetPair.first)->resolution()*
-                        GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().E();
-                double energy_resolution_2 = GetBJet(selected_signal_jets.selectedBjetPair.second)->resolution()*
-                        GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().E();
-                const auto& result = kinfitProducer->Fit(GetLeg(0).GetMomentum(), GetLeg(1).GetMomentum(),
-                                                         GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum(),
-                                                         GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum(),
+                double energy_resolution_1 = GetBJet(1)->resolution()*GetBJet(1).GetMomentum().E();
+                double energy_resolution_2 = GetBJet(2)->resolution()*GetBJet(2).GetMomentum().E();
+                const auto& result = kinfitProducer->Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
+                                                         GetBJet(1).GetMomentum(),
+                                                         GetBJet(2).GetMomentum(),
                                                          *met,energy_resolution_1,energy_resolution_2);
                 kinfit_results->convergence = result.convergence;
                 kinfit_results->chi2 = result.chi2;
                 kinfit_results->probability = TMath::Prob(result.chi2, 2);
                 kinfit_results->mass = result.mass;
             }
-            const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
-            kinfit_results->convergence = event->kinFit_convergence.at(index);
-            kinfit_results->chi2 = event->kinFit_chi2.at(index);
-            kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
-            kinfit_results->mass = event->kinFit_m.at(index);
+            else {
+                const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
+                kinfit_results->convergence = event->kinFit_convergence.at(index);
+                kinfit_results->chi2 = event->kinFit_chi2.at(index);
+                kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
+                kinfit_results->mass = event->kinFit_m.at(index);
+            }
         }
         return *kinfit_results;
     }

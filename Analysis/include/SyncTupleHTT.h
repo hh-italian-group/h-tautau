@@ -380,7 +380,7 @@ namespace htt_sync {
 
 
         select_jets(&event);
-
+        std::cout << "In the event" << std::endl;
         sync().mjj = COND_VAL(jets_pt20.size() >= 2, (jets_pt20.at(0).GetMomentum()
                    + jets_pt20.at(1).GetMomentum()).M());
         sync().jdeta = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(0).GetMomentum().Eta()
@@ -402,44 +402,39 @@ namespace htt_sync {
 
         sync().njets_vbf = static_cast<int>(jets_pt30.size());
         sync().isVBF = jets_pt30.size() >= 2;
-        sync().jpt_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                    event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
-        sync().jeta_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Eta());
-        sync().jphi_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Phi());
-        sync().jpt_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                    event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
-        sync().jeta_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Eta());
-        sync().jphi_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                     event.GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Phi());
+        sync().jpt_vbf_1 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(1).GetMomentum().Pt());
+        sync().jeta_vbf_1 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(1).GetMomentum().Eta());
+        sync().jphi_vbf_1 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(1).GetMomentum().Phi());
+        sync().jpt_vbf_2 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(2).GetMomentum().Pt());
+        sync().jeta_vbf_2 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(2).GetMomentum().Eta());
+        sync().jphi_vbf_2 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(2).GetMomentum().Phi());
+        std::cout << "After vbf jets" << std::endl;
 
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
-
+        std::cout << "Nbjets: " << selected_signal_jets.n_bjets << std::endl;
         sync().nbjets = static_cast<int>(selected_signal_jets.n_bjets);
-        sync().bjet_pt_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
-        sync().bjet_eta_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Eta());
-        sync().bjet_phi_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Phi());
-        sync().bjet_rawf_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first)->rawf());
-        sync().bjet_csv_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first)->csv());
-        sync().bjet_deepcsv_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event.GetBJet(selected_signal_jets.selectedBjetPair.first)->deepcsv());
-        sync().bjet_resolution_1 = COND_VAL(selected_signal_jets.n_bjets >= 1,
-                                            event.GetBJet(selected_signal_jets.selectedBjetPair.first)->resolution() * event.GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().E());
-        sync().bjet_pt_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
-        sync().bjet_eta_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Eta());
-        sync().bjet_phi_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Phi());
-        sync().bjet_rawf_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second)->rawf());
-        sync().bjet_csv_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second)->csv());
-        sync().bjet_deepcsv_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event.GetBJet(selected_signal_jets.selectedBjetPair.second)->deepcsv());
-        sync().bjet_resolution_2 = COND_VAL(selected_signal_jets.n_bjets >= 2,
-                                            event.GetBJet(selected_signal_jets.selectedBjetPair.second)->resolution() * event.GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().E());
-
+        sync().bjet_pt_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Pt());
+        sync().bjet_eta_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Eta());
+        sync().bjet_phi_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Phi());
+        sync().bjet_rawf_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->rawf());
+        sync().bjet_csv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->csv());
+        sync().bjet_deepcsv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->deepcsv());
+        sync().bjet_resolution_1 = COND_VAL(event.HasBjetPair(),
+                                            event.GetBJet(1)->resolution() * event.GetBJet(1).GetMomentum().E());
+        sync().bjet_pt_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Pt());
+        sync().bjet_eta_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Eta());
+        sync().bjet_phi_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Phi());
+        sync().bjet_rawf_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->rawf());
+        sync().bjet_csv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->csv());
+        sync().bjet_deepcsv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->deepcsv());
+        sync().bjet_resolution_2 = COND_VAL(event.HasBjetPair(),
+                                            event.GetBJet(2)->resolution() * event.GetBJet(2).GetMomentum().E());
+        std::cout << "After bjets" << std::endl;
         sync().ht_other_jets = event.GetHT();
 
         sync().kinfit_convergence = COND_VAL_INT(event->kinFit_convergence.size() > 0 && event.HasBjetPair(), event.GetKinFitResults().convergence);
-        sync().m_kinfit = COND_VAL(event.GetKinFitResults().HasValidMass() && event->kinFit_convergence.size() > 0 && event.HasBjetPair(), static_cast<float>(event.GetKinFitResults().mass));
+        sync().m_kinfit = COND_VAL(event.GetKinFitResults().HasValidMass() && event.GetKinFitResults().convergence > 0 && event.HasBjetPair(), static_cast<float>(event.GetKinFitResults().mass));
         sync().m_kinfit_tau_ES_up = COND_VAL(event_tau_up &&
                                              event_tau_up->GetKinFitResults().HasValidMass() &&
                                              event_tau_up->GetKinFitResults().convergence > 0 &&
@@ -457,7 +452,7 @@ namespace htt_sync {
                                                event_jet_down->GetKinFitResults().convergence > 0 &&
                                                event_jet_down->HasBjetPair(), event_jet_down->GetKinFitResults().mass);
 
-
+        std::cout << "After kin fit" << std::endl;
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
@@ -557,48 +552,46 @@ namespace htt_sync {
         sync().costheta_METhbb = analysis::four_bodies::Calculate_cosTheta_2bodies(met, Hbb);
         sync().costheta_b1hbb = analysis::four_bodies::Calculate_cosTheta_2bodies(b1, Hbb);
         sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, event.GetResonanceMomentum(false,true));
+        std::cout << "After mva vars" << std::endl;
 
         select_jets(event_tau_up);
         sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_up_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_tau_up->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_up_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_tau_up->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
-        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                              event_tau_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
-        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                              event_tau_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_1 = COND_VAL(event_tau_up->HasBjetPair(), event_tau_up->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_up_2 = COND_VAL(event_tau_up->HasBjetPair(), event_tau_up->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_1 = COND_VAL(event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_tau_ES_up_vbf_2 = COND_VAL(event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(2).GetMomentum().Pt());
+        std::cout << "After tau up" << std::endl;
 
         select_jets(event_tau_down);
         sync().jpt_tau_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_down_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_tau_down->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
-        sync().bjet_pt_tau_ES_down_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_tau_down->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
-        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                                event_tau_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
-        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                                event_tau_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_1 = COND_VAL(event_tau_down->HasBjetPair(), event_tau_down->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_tau_ES_down_2 = COND_VAL(event_tau_down->HasBjetPair(), event_tau_down->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_1 = COND_VAL(event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_tau_ES_down_vbf_2 = COND_VAL(event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(2).GetMomentum().Pt());
+        std::cout << "After tau down" << std::endl;
 
         select_jets(event_jet_up);
         sync().jpt_jet_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_jet_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_up_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_jet_up->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_up_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_jet_up->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
-        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                              event_jet_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
-        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                              event_jet_up->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_1 = COND_VAL(event_jet_up->HasBjetPair(), event_jet_up->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_up_2 = COND_VAL(event_jet_up->HasBjetPair(), event_jet_up->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_1 = COND_VAL(event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_jet_ES_up_vbf_2 = COND_VAL(event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(2).GetMomentum().Pt());
+        std::cout << "After jet up" << std::endl;
 
         select_jets(event_jet_down);
         sync().jpt_jet_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_jet_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_down_1 = COND_VAL(selected_signal_jets.n_bjets >= 1, event_jet_down->GetBJet(selected_signal_jets.selectedBjetPair.first).GetMomentum().Pt());
-        sync().bjet_pt_jet_ES_down_2 = COND_VAL(selected_signal_jets.n_bjets >= 2, event_jet_down->GetBJet(selected_signal_jets.selectedBjetPair.second).GetMomentum().Pt());
-        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(selected_signal_jets.selectedVBFjetPair.first < jets_pt30.size(),
-                                                event_jet_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.first).GetMomentum().Pt());
-        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(selected_signal_jets.selectedVBFjetPair.second < jets_pt30.size(),
-                                                event_jet_down->GetVBFJet(selected_signal_jets.selectedVBFjetPair.second).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_1 = COND_VAL(event_jet_down->HasBjetPair(), event_jet_down->GetBJet(1).GetMomentum().Pt());
+        sync().bjet_pt_jet_ES_down_2 = COND_VAL(event_jet_down->HasBjetPair(), event_jet_down->GetBJet(2).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_1 = COND_VAL(event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(1).GetMomentum().Pt());
+        sync().jpt_jet_ES_down_vbf_2 = COND_VAL(event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(2).GetMomentum().Pt());
+        std::cout << "After jet down" << std::endl;
 
         sync.Fill();
+        std::cout << "Filled" << std::endl;
     }
 }
 
