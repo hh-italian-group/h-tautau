@@ -178,53 +178,48 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(UInt_t, jets_nSelected_hadronFlavour_b) \
     VAR(UInt_t, jets_nSelected_hadronFlavour_c) \
     /* mva variable */ \
-    VAR(Float_t, pt_b2) \
-    VAR(Float_t, pt_hbb) \
-    VAR(Float_t, pt_l1) \
-    VAR(Float_t, pt_l2) \
-    VAR(Float_t, pt_l1l2) \
-    VAR(Float_t, pt_htautau) \
-    VAR(Float_t, pt_htautau_sv) \
-    VAR(Float_t, pt_MET) \
+    VAR(Double_t, pt_hbb) \
+    VAR(Double_t, pt_l1l2) \
+    VAR(Double_t, pt_htautau) \
+    VAR(Double_t, pt_htautau_sv) \
+    VAR(Double_t, pt_MET) \
     VAR(Double_t, HT_otherjets) \
     VAR(Double_t, p_zeta) \
     VAR(Double_t, p_zetavisible) \
-    VAR(Float_t, dphi_l1l2) \
-    VAR(Float_t, abs_dphi_b1b2) \
-    VAR(Float_t, dphi_b1b2) \
-    VAR(Float_t, dphi_l1MET) \
-    VAR(Float_t, abs_dphi_METhtautau_sv) \
-    VAR(Float_t, dphi_METhtautau_sv) \
-    VAR(Float_t, dphi_hbbMET) \
-    VAR(Float_t, abs_dphi_hbbhatutau_sv) \
-    VAR(Float_t, abs_deta_b1b2) \
-    VAR(Float_t, abs_deta_l2MET) \
-    VAR(Float_t, abs_deta_hbbMET) \
-    VAR(Float_t, dR_l1l2) \
-    VAR(Float_t, dR_hbbMET) \
-    VAR(Float_t, dR_hbbhtautau) \
-    VAR(Float_t, dR_l1l2Pt_htautau) \
-    VAR(Float_t, dR_l1l2Pt_htautau_sv) \
-    VAR(Float_t, mass_htautau_sv) \
-    VAR(Float_t, MT_l1) \
-    VAR(Float_t, MT_htautau) \
-    VAR(Float_t, MT_htautau_sv) \
-    VAR(Float_t, MT_tot) \
-    VAR(Float_t, MT2) \
-    VAR(Float_t, mass_top1) \
-    VAR(Float_t, mass_X) \
-    VAR(Float_t, mass_H) \
-    VAR(Float_t, mass_H_sv) \
-    VAR(Float_t, mass_H_vis) \
-    VAR(Float_t, mass_H_kinfit) \
-    VAR(Float_t, mass_H_kinfit_chi2) \
-    VAR(Float_t, phi_sv) \
-    VAR(Float_t, phi_1_sv) \
-    VAR(Float_t, phi_2_sv) \
-    VAR(Float_t, costheta_METhtautau_sv) \
-    VAR(Float_t, costheta_METhbb) \
-    VAR(Float_t, costheta_b1hbb) \
-    VAR(Float_t, costheta_htautau_svhhMET) \
+    VAR(Double_t, dphi_l1l2) \
+    VAR(Double_t, abs_dphi_b1b2) \
+    VAR(Double_t, dphi_b1b2) \
+    VAR(Double_t, dphi_l1MET) \
+    VAR(Double_t, abs_dphi_METhtautau_sv) \
+    VAR(Double_t, dphi_METhtautau_sv) \
+    VAR(Double_t, dphi_hbbMET) \
+    VAR(Double_t, abs_dphi_hbbhatutau_sv) \
+    VAR(Double_t, abs_deta_b1b2) \
+    VAR(Double_t, abs_deta_l2MET) \
+    VAR(Double_t, abs_deta_hbbMET) \
+    VAR(Double_t, dR_l1l2) \
+    VAR(Double_t, dR_hbbMET) \
+    VAR(Double_t, dR_hbbhtautau) \
+    VAR(Double_t, dR_l1l2Pt_htautau) \
+    VAR(Double_t, dR_l1l2Pt_htautau_sv) \
+    VAR(Double_t, MT_l1) \
+    VAR(Double_t, MT_htautau) \
+    VAR(Double_t, MT_htautau_sv) \
+    VAR(Double_t, MT_tot) \
+    VAR(Double_t, MT2) \
+    VAR(Double_t, mass_top1) \
+    VAR(Double_t, mass_X) \
+    VAR(Double_t, mass_H) \
+    VAR(Double_t, mass_H_sv) \
+    VAR(Double_t, mass_H_vis) \
+    VAR(Double_t, mass_H_kinfit_chi2) \
+    VAR(Double_t, phi_sv) \
+    VAR(Double_t, phi_1_sv) \
+    VAR(Double_t, phi_2_sv) \
+    VAR(Double_t, costheta_METhtautau_sv) \
+    VAR(Double_t, costheta_METhbb) \
+    VAR(Double_t, costheta_b1hbb) \
+    VAR(Double_t, costheta_htautau_svhhMET) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -375,7 +370,6 @@ namespace htt_sync {
 
 
         select_jets(&event);
-        std::cout << "In the event" << std::endl;
         sync().mjj = COND_VAL(jets_pt20.size() >= 2, (jets_pt20.at(0).GetMomentum()
                    + jets_pt20.at(1).GetMomentum()).M());
         sync().jdeta = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(0).GetMomentum().Eta()
@@ -403,11 +397,9 @@ namespace htt_sync {
         sync().jpt_vbf_2 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(2).GetMomentum().Pt());
         sync().jeta_vbf_2 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(2).GetMomentum().Eta());
         sync().jphi_vbf_2 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(2).GetMomentum().Phi());
-        std::cout << "After vbf jets" << std::endl;
 
         sync().extramuon_veto = event->extramuon_veto;
         sync().extraelec_veto = event->extraelec_veto;
-        std::cout << "Nbjets: " << event.GetSelectedSignalJets().n_bjets << std::endl;
         sync().nbjets = static_cast<int>(event.GetSelectedSignalJets().n_bjets);
         sync().bjet_pt_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Pt());
         sync().bjet_eta_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Eta());
@@ -425,7 +417,6 @@ namespace htt_sync {
         sync().bjet_deepcsv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->deepcsv());
         sync().bjet_resolution_2 = COND_VAL(event.HasBjetPair(),
                                             event.GetBJet(2)->resolution() * event.GetBJet(2).GetMomentum().E());
-        std::cout << "After bjets" << std::endl;
         sync().ht_other_jets = event.GetHT();
 
         sync().kinfit_convergence = COND_VAL_INT(event.HasBjetPair() , event.GetKinFitResults().convergence);
@@ -439,7 +430,6 @@ namespace htt_sync {
         sync().m_kinfit_jet_ES_down = COND_VAL(event_jet_down && event_jet_down->HasBjetPair() &&
                                                event_jet_down->GetKinFitResults().HasValidMass(), event_jet_down->GetKinFitResults().mass);
 
-        std::cout << "After kin fit" << std::endl;
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
@@ -488,7 +478,6 @@ namespace htt_sync {
             const auto& t2 = event.GetLeg(2).GetMomentum();
             
             const auto& Hbb = event.GetHiggsBB().GetMomentum();
-            std::cout << "After Hbb candidate" << std::endl;
             const auto& b1 = event.GetHiggsBB().GetFirstDaughter().GetMomentum();
             const auto& b2 = event.GetHiggsBB().GetSecondDaughter().GetMomentum();
             
@@ -536,21 +525,15 @@ namespace htt_sync {
             sync().costheta_htautau_svhhMET = analysis::four_bodies::Calculate_cosTheta_2bodies(Htt_sv, event.GetResonanceMomentum(false,true));
         }
         
-        std::cout << "After mva vars" << std::endl;
 
         select_jets(event_tau_up);
-        std::cout << "Selected tau up event" << std::endl;
         sync().jpt_tau_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_up_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
-        std::cout << "Selected jet tau up event" << std::endl;
         sync().bjet_pt_tau_ES_up_1 = COND_VAL(event_tau_up && event_tau_up->HasBjetPair(), event_tau_up->GetBJet(1).GetMomentum().Pt());
         sync().bjet_pt_tau_ES_up_2 = COND_VAL(event_tau_up && event_tau_up->HasBjetPair(), event_tau_up->GetBJet(2).GetMomentum().Pt());
-        std::cout << "Selected bjet tau up event" << std::endl;
         sync().jpt_tau_ES_up_vbf_1 = COND_VAL(event_tau_up && event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_tau_ES_up_vbf_2 = COND_VAL(event_tau_up && event_tau_up->HasVBFjetPair(), event_tau_up->GetVBFJet(2).GetMomentum().Pt());
-        std::cout << "Selected vbf jets tau up event" << std::endl;
-        std::cout << "After tau up" << std::endl;
-
+        
         select_jets(event_tau_down);
         sync().jpt_tau_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
         sync().jpt_tau_ES_down_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1).GetMomentum().Pt());
@@ -558,7 +541,6 @@ namespace htt_sync {
         sync().bjet_pt_tau_ES_down_2 = COND_VAL(event_tau_down && event_tau_down->HasBjetPair(), event_tau_down->GetBJet(2).GetMomentum().Pt());
         sync().jpt_tau_ES_down_vbf_1 = COND_VAL(event_tau_down && event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_tau_ES_down_vbf_2 = COND_VAL(event_tau_down && event_tau_down->HasVBFjetPair(), event_tau_down->GetVBFJet(2).GetMomentum().Pt());
-        std::cout << "After tau down" << std::endl;
 
         select_jets(event_jet_up);
         sync().jpt_jet_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
@@ -567,7 +549,6 @@ namespace htt_sync {
         sync().bjet_pt_jet_ES_up_2 = COND_VAL(event_jet_up && event_jet_up->HasBjetPair(), event_jet_up->GetBJet(2).GetMomentum().Pt());
         sync().jpt_jet_ES_up_vbf_1 = COND_VAL(event_jet_up && event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_jet_ES_up_vbf_2 = COND_VAL(event_jet_up && event_jet_up->HasVBFjetPair(), event_jet_up->GetVBFJet(2).GetMomentum().Pt());
-        std::cout << "After jet up" << std::endl;
 
         select_jets(event_jet_down);
         sync().jpt_jet_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
@@ -576,10 +557,8 @@ namespace htt_sync {
         sync().bjet_pt_jet_ES_down_2 = COND_VAL(event_jet_down && event_jet_down->HasBjetPair(), event_jet_down->GetBJet(2).GetMomentum().Pt());
         sync().jpt_jet_ES_down_vbf_1 = COND_VAL(event_jet_down && event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_jet_ES_down_vbf_2 = COND_VAL(event_jet_down && event_jet_down->HasVBFjetPair(), event_jet_down->GetVBFJet(2).GetMomentum().Pt());
-        std::cout << "After jet down" << std::endl;
 
         sync.Fill();
-        std::cout << "Filled" << std::endl;
     }
 }
 

@@ -31,7 +31,7 @@ public:
                    float resolution_1, float resolution_2)
     {
         const auto& met_p4 = met.GetMomentum();
-        const TMatrixD met_cov = ConvertMatrix(met.GetCovMatrix());
+        const TMatrixD& met_cov = ConvertMatrix(met.GetCovMatrix());
 
         FitResults result;
         try {

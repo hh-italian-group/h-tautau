@@ -73,20 +73,15 @@ public:
                 current_id = event_id;
                 events.clear();
             }
-            std::cout << "ES: " << event.eventEnergyScale << " - Before fill events" << std::endl;
             events[static_cast<EventEnergyScale>(event.eventEnergyScale)] = event;
-            std::cout << "ES: " << event.eventEnergyScale << " - After fill events" << std::endl;
         }
-        std::cout << "evets size: " << events.size() << std::endl;
+        
         if(!events.empty()){
-            std::cout << "Events not empty" << std::endl;
             FillSyncTuple(sync, events, summaryInfo);
-            std::cout << "After events not empty filled" << std::endl;
         }
 
-        std::cout << "Before write" << std::endl;
         sync.Write();
-        std::cout << "After write" << std::endl;
+
     }
 
 private:
@@ -145,9 +140,7 @@ private:
         }
 
         if(!event_infos.count(EventEnergyScale::Central)) return;
-        std::cout << "I am in Central" << std::endl;
         if(!event_infos.at(EventEnergyScale::Central)->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) return;
-        std::cout << "Applied Trigger" << std::endl;
 
         if(!args.jet_uncertainty().empty()) {
             event_infos[EventEnergyScale::JetUp] = event_infos[EventEnergyScale::Central]
@@ -156,13 +149,11 @@ private:
                     ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Down);
         }
         
-        std::cout << "Before Fill SyncTuple" << std::endl;
         htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period,
                                 event_infos[EventEnergyScale::TauUp].get(),
                                 event_infos[EventEnergyScale::TauDown].get(),
                                 event_infos[EventEnergyScale::JetUp].get(),
                                 event_infos[EventEnergyScale::JetDown].get());
-        std::cout << "After Fill SyncTuple" << std::endl;
     }
 
 private:

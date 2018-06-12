@@ -233,16 +233,20 @@ public:
                 throw exception("Unsupported jet ordering for b-jet pair selection.");
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
         }
-
+        
         auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
         selected_signal_jets.n_bjets = bjets_ordered.size();
-        if(bjets_ordered.size() >= 1)
+        if(bjets_ordered.size() >= 1){
             selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
-        double tag_second_bjet = period == analysis::Period::Run2017 ?
-                    event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
-        double btag_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::deepCSVv2M : cuts::btag_2016::CSVv2M ;
-        if(bjets_ordered.size() >= 2 &&  tag_second_bjet > btag_cut ){
-            selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
+        }
+        
+        if(bjets_ordered.size() >= 2){
+            double tag_second_bjet = period == analysis::Period::Run2017 ?
+            event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
+            double btag_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::deepCSVv2M : cuts::btag_2016::CSVv2M ;
+            if(tag_second_bjet > btag_cut){
+                selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
+            }
         }
 
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_vbf;
@@ -253,7 +257,7 @@ public:
         }
 
         auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,vbf_pt_cut,vbf_eta_cut);
-
+        
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
             const analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>& jet_1 = vbf_jets_ordered.at(n);
@@ -267,6 +271,7 @@ public:
                 }
             }
         }
+        
 
         if(selected_signal_jets.HasBjetPair(event.jets_p4.size()) ||
                 (!selected_signal_jets.HasBjetPair(event.jets_p4.size()) &&
@@ -507,8 +512,8 @@ public:
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
             kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
             if(iter == event->kinFit_jetPairId.end()){
-                double energy_resolution_1 = GetBJet(1)->resolution()*GetBJet(1).GetMomentum().E();
-                double energy_resolution_2 = GetBJet(2)->resolution()*GetBJet(2).GetMomentum().E();
+                float energy_resolution_1 = static_cast<float>(GetBJet(1)->resolution()*GetBJet(1).GetMomentum().E());
+                float energy_resolution_2 = static_cast<float>(GetBJet(2)->resolution()*GetBJet(2).GetMomentum().E());
                 const auto& result = kinfitProducer->Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
                                                          GetBJet(1).GetMomentum(),
                                                          GetBJet(2).GetMomentum(),
@@ -607,10 +612,11 @@ private:
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
     std::shared_ptr<ntuple::TupleMet> tuple_met;
     std::shared_ptr<MET> met;
+    std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     boost::optional<double> mt2;
     double mva_score;
-    std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
+    
 };
 
 template<typename _FirstLeg, typename _SecondLeg>
