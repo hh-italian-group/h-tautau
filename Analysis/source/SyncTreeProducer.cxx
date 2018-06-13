@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/SyncTupleHTT.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
+#include "h-tautau/Analysis/include/EventLoader.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/McCorrections/include/EventWeights.h"
@@ -65,17 +66,24 @@ public:
         SummaryInfo summaryInfo(summaryTuple->data(), args.jet_unc_source());
         EventIdentifier current_id = EventIdentifier::Undef_event();
         std::map<EventEnergyScale, ntuple::Event> events;
-        // std::map<EventEnergyScale, std::shared_ptr<EventInfoBase>> event_infos;
         for(const auto& event : *originalTuple) {
             EventIdentifier event_id(event);
-            if(event_id != current_id && !events.empty()) {
-                FillSyncTuple(sync, events, summaryInfo);
+            if(event_id != current_id) {
+                if(!events.empty()) {
+                    FillSyncTuple(sync, events, summaryInfo);
+                    events.clear();
+                }
                 current_id = event_id;
-                events.clear();
             }
-            events[static_cast<EventEnergyScale>(event.eventEnergyScale)] = event;
+
+            auto central_evt_iter = events.find(EventEnergyScale::Central);
+            const ntuple::Event* central_evt = central_evt_iter != events.end() ? &central_evt_iter->second : nullptr;
+            Event full_event = event;
+            ntuple::EventLoader::Load(full_event, central_evt);
+            const auto es = static_cast<EventEnergyScale>(event.eventEnergyScale);
+            events[es] = full_event;
         }
-        
+
         if(!events.empty()){
             FillSyncTuple(sync, events, summaryInfo);
         }
@@ -96,7 +104,6 @@ private:
                 "HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg_v"} },
             { Channel::MuMu, { "HLT_IsoMu24_v", "HLT_IsoMu27_v" } },
         };
-        
         const Channel channel = Parse<Channel>(args.tree_name());
         std::map<EventEnergyScale, std::shared_ptr<EventInfoBase>> event_infos;
         for(const auto& entry : events) {
@@ -110,6 +117,9 @@ private:
 
             JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
             auto event_info =  MakeEventInfo(channel, event, run_period, jet_ordering, &summaryInfo);
+
+            if(!event_info->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
+
             /*
             static const std::vector<std::string> trigger_patterns = {
                 "HLT_VBF_DoubleLooseChargedIsoPFTau20_Trk1_eta2p1_Reg_v"
@@ -133,7 +143,6 @@ private:
         }
 
         if(!event_infos.count(EventEnergyScale::Central)) return;
-        if(!event_infos.at(EventEnergyScale::Central)->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) return;
 
         if(!args.jet_uncertainty().empty()) {
             event_infos[EventEnergyScale::JetUp] = event_infos[EventEnergyScale::Central]
@@ -141,7 +150,7 @@ private:
             event_infos[EventEnergyScale::JetDown] = event_infos[EventEnergyScale::Central]
                     ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Down);
         }
-        
+
         htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period,
                                 event_infos[EventEnergyScale::TauUp].get(),
                                 event_infos[EventEnergyScale::TauDown].get(),

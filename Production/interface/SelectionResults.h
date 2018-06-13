@@ -93,6 +93,24 @@ struct SelectionResultsBase {
         }
         return true;
     }
+
+    bool HaveSameOtherLeptons(const SelectionResultsBase& other) const
+    {
+        if(eventId != other.eventId) return false;
+        if(other_electrons.size() != other.other_electrons.size()
+                || other_muons.size() != other.other_muons.size()) return false;
+
+        for(size_t n = 0; n < other_electrons.size(); ++n) {
+            if(&(*other_electrons.at(n)) != &(*other.other_electrons.at(n)))
+                return false;
+        }
+
+        for(size_t n = 0; n < other_muons.size(); ++n) {
+            if(&(*other_muons.at(n)) != &(*other.other_muons.at(n)))
+                return false;
+        }
+        return true;
+    }
 };
 
 template<typename _FirstLeg, typename _SecondLeg>

@@ -9,8 +9,8 @@ namespace ntuple {
 
 class StorageMode {
 public:
-    static constexpr size_t NumberOfParts = 5;
-    enum class EventPart { FirstTauIds = 0, SecondTauIds = 1, Jets = 2, FatJets = 3, GenInfo = 4 };
+    static constexpr size_t NumberOfParts = 6;
+    enum class EventPart { FirstTauIds = 0, SecondTauIds = 1, Jets = 2, FatJets = 3, GenInfo = 4, OtherLeptons = 5 };
 
     static const StorageMode& Full() { static const StorageMode m(0); return m; }
 
@@ -58,23 +58,31 @@ public:
         if(mode.IsMissing(EventPart::Jets)) {
             CP_BR(jets_p4);
             CP_BR(jets_csv);
+            CP_BR(jets_deepCsv_BvsAll);
+            CP_BR(jets_deepCsv_CvsB);
+            CP_BR(jets_deepCsv_CvsL);
+            CP_BR(jets_deepFlavour_b);
+            CP_BR(jets_deepFlavour_bb);
+            CP_BR(jets_deepFlavour_lepb);
+            CP_BR(jets_deepFlavour_c);
+            CP_BR(jets_deepFlavour_uds);
+            CP_BR(jets_deepFlavour_g);
             CP_BR(jets_rawf);
             CP_BR(jets_pu_id);
-            CP_BR(jets_partonFlavour);
             CP_BR(jets_hadronFlavour);
+            CP_BR(jets_resolution);
+            CP_BR(jets_triggerFilterMatch);
         }
 
         if(mode.IsMissing(EventPart::FatJets)) {
             CP_BR(fatJets_p4);
-            CP_BR(fatJets_csv);
-            CP_BR(fatJets_m_pruned);
             CP_BR(fatJets_m_softDrop);
-            CP_BR(fatJets_n_subjettiness_tau1);
-            CP_BR(fatJets_n_subjettiness_tau2);
-            CP_BR(fatJets_n_subjettiness_tau3);
+            CP_BR(fatJets_jettiness_tau1);
+            CP_BR(fatJets_jettiness_tau2);
+            CP_BR(fatJets_jettiness_tau3);
+            CP_BR(fatJets_jettiness_tau4);
 
             CP_BR(subJets_p4);
-            CP_BR(subJets_csv);
             CP_BR(subJets_parentIndex);
         }
 
@@ -94,14 +102,20 @@ public:
             CP_BR(genParticles_nPromptMuons);
             CP_BR(genParticles_nPromptTaus);
             CP_BR(genJets_nTotal);
-            CP_BR(jets_nTotal_partonFlavour_b);
-            CP_BR(jets_nTotal_partonFlavour_c);
             CP_BR(jets_nTotal_hadronFlavour_b);
             CP_BR(jets_nTotal_hadronFlavour_c);
             CP_BR(genJets_p4);
-            CP_BR(genJets_partonFlavour);
             CP_BR(genJets_hadronFlavour);
         }
+
+        if(mode.IsMissing(EventPart::OtherLeptons)) {
+            CP_BR(other_lepton_p4);
+            CP_BR(other_lepton_q);
+            CP_BR(other_lepton_type);
+            CP_BR(other_lepton_gen_match);
+            CP_BR(other_lepton_gen_p4);
+        }
+
         return mode;
     }
 };

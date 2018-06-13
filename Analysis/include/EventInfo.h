@@ -257,7 +257,7 @@ public:
         if(bjets_ordered.size() >= 1){
             selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
         }
-        
+
         if(bjets_ordered.size() >= 2){
             double tag_second_bjet = jet_ordering == JetOrdering::DeepCSV ?
             event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
@@ -274,7 +274,7 @@ public:
         }
 
         auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,vbf_pt_cut,vbf_eta_cut);
-        
+
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
             const auto& jet_1 = vbf_jets_ordered.at(n);
@@ -288,7 +288,7 @@ public:
                 }
             }
         }
-        
+
 
         if(selected_signal_jets.HasBjetPair(event.jets_p4.size()) ||
                 (!selected_signal_jets.HasBjetPair(event.jets_p4.size()) &&
@@ -336,10 +336,10 @@ public:
         triggerResults.SetAcceptBits(event->trigger_accepts);
         triggerResults.SetMatchBits(event->trigger_matches);
     }
-    
+
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
     virtual ~EventInfoBase(){} //destructor
-    
+
     EventInfoBase& operator= ( const EventInfoBase& ) = default; //assignment
 
 
@@ -519,13 +519,12 @@ public:
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
             kinfit_results = std::make_shared<kin_fit::FitResults>();
             if(iter == event->kinFit_jetPairId.end()){
-                double energy_resolution_1 = GetBJet(1)->resolution()*GetBJet(1).GetMomentum().E();
-                double energy_resolution_2 = GetBJet(2)->resolution()*GetBJet(2).GetMomentum().E();
+                double energy_resolution_1 = GetBJet(1)->resolution() * GetBJet(1).GetMomentum().E();
+                double energy_resolution_2 = GetBJet(2)->resolution() * GetBJet(2).GetMomentum().E();
                 const auto& kinfitProducer = GetKinFitProducer();
                 const auto& result = kinfitProducer.Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
-                                                         GetBJet(1).GetMomentum(),
-                                                         GetBJet(2).GetMomentum(),
-                                                         *met,energy_resolution_1,energy_resolution_2);
+                                                        GetBJet(1).GetMomentum(), GetBJet(2).GetMomentum(),
+                                                        GetMET(), energy_resolution_1, energy_resolution_2);
                 kinfit_results->convergence = result.convergence;
                 kinfit_results->chi2 = result.chi2;
                 kinfit_results->probability = TMath::Prob(result.chi2, 2);
@@ -623,7 +622,7 @@ private:
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     boost::optional<double> mt2;
     double mva_score;
-    
+
 };
 
 template<typename _FirstLeg, typename _SecondLeg>

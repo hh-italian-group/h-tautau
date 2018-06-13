@@ -456,14 +456,11 @@ void BaseTupleProducer::FillGenJetInfo()
     static constexpr double pt_cut = 5;
     eventTuple().genJets_nTotal = genJets->size();
 
-    std::map<int, size_t> pf_counts, hf_counts;
+    std::map<int, size_t> hf_counts;
 
     for(const JetCandidate& jet : jets) {
-        ++pf_counts[std::abs(jet->partonFlavour())];
         ++hf_counts[std::abs(jet->hadronFlavour())];
     }
-    eventTuple().jets_nTotal_partonFlavour_b = pf_counts[b_flavour];
-    eventTuple().jets_nTotal_partonFlavour_c = pf_counts[c_flavour];
     eventTuple().jets_nTotal_hadronFlavour_b = hf_counts[b_flavour];
     eventTuple().jets_nTotal_hadronFlavour_c = hf_counts[c_flavour];
 
@@ -473,17 +470,16 @@ void BaseTupleProducer::FillGenJetInfo()
         if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
 
-        const auto findRecoJetFlavours = [&]() -> std::pair<int, int> {
+        const auto findRecoJetFlavour = [&]() {
             for(const JetCandidate& reco_jet : jets) {
                 if(reco_jet->genJet() == &gen_jet)
-                    return std::make_pair(reco_jet->partonFlavour(), reco_jet->hadronFlavour());
+                    return reco_jet->hadronFlavour();
             }
-            return std::make_pair(ntuple::DefaultFillValue<int>(), ntuple::DefaultFillValue<int>());
+            return ntuple::DefaultFillValue<int>();
         };
 
-        const auto flavours = findRecoJetFlavours();
-        eventTuple().genJets_partonFlavour.push_back(flavours.first);
-        eventTuple().genJets_hadronFlavour.push_back(flavours.second);
+        const auto flavour = findRecoJetFlavour();
+        eventTuple().genJets_hadronFlavour.push_back(flavour);
     }
 }
 
@@ -514,8 +510,6 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         }
     }
 }
-
-
 
 void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4)
 {
@@ -794,7 +788,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
             eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
             eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
-            eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
             eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
             // Jet resolution
             JME::JetParameters parameters;
@@ -821,44 +814,32 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     const bool haveReference = reference && selection.eventId == reference->eventId;
     storageMode.SetPresence(EventPart::FatJets, !haveReference);
     storageMode.SetPresence(EventPart::GenInfo, !haveReference);
-    eventTuple().storageMode = storageMode.Mode();
 
     if(!haveReference) {
         for(const JetCandidate& jet : fatJets) {
-            const LorentzVector& p4 = jet.GetMomentum();
-            eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(p4));
-            eventTuple().fatJets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-            eventTuple().fatJets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
-            eventTuple().fatJets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
-            eventTuple().fatJets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
-            eventTuple().fatJets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
-            eventTuple().fatJets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
-            eventTuple().fatJets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
-            eventTuple().fatJets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
-            eventTuple().fatJets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
-            eventTuple().fatJets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
-            eventTuple().fatJets_m_pruned.push_back(GetUserFloat(jet, "ak8PFJetsCHSPrunedMass"));
-            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
-            eventTuple().fatJets_n_subjettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
-            eventTuple().fatJets_n_subjettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
-            eventTuple().fatJets_n_subjettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
+            eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(jet.GetMomentum()));
 
-            if(!jet->hasSubjets("SoftDrop")) continue;
+            std::string subjets_collection;
+            if(period == Period::Run2016) {
+                subjets_collection = "SoftDrop";
+                eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
+                eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
+                eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
+                eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
+            } else if(period == Period::Run2017) {
+                subjets_collection = "SoftDropPuppi";
+                eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
+                eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
+                eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
+                eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
+                eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
+            }
+
+            if(!jet->hasSubjets(subjets_collection)) continue;
             const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
-            const auto& sub_jets = jet->subjets("SoftDrop");
+            const auto& sub_jets = jet->subjets(subjets_collection);
             for(const auto& sub_jet : sub_jets) {
                 eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
-                eventTuple().subJets_csv.push_back(
-                            sub_jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-                eventTuple().subJets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
-                eventTuple().subJets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
-                eventTuple().subJets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
-                eventTuple().subJets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
-                eventTuple().subJets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
-                eventTuple().subJets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
-                eventTuple().subJets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
-                eventTuple().subJets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
-                eventTuple().subJets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
                 eventTuple().subJets_parentIndex.push_back(parentIndex);
             }
         }
@@ -879,9 +860,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     eventTuple().extraelec_veto = selection.electronVeto;
     eventTuple().extramuon_veto = selection.muonVeto;
-    FillOtherLeptons(selection.other_electrons,selection.other_muons);
+    if(!haveReference || !selection.HaveSameOtherLeptons(*reference))
+        FillOtherLeptons(selection.other_electrons,selection.other_muons);
+    else
+        storageMode.SetPresence(EventPart::OtherLeptons, false);
 
     eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
     eventTuple().trigger_accepts = selection.triggerResults.GetAcceptBits();
     eventTuple().trigger_matches = selection.triggerResults.GetMatchBits();
+
+    eventTuple().storageMode = storageMode.Mode();
 }

@@ -52,7 +52,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 
-#define JET_COMMON_DATA(col) \
+#define JET_DATA(col) \
     JVAR(LorentzVectorE, p4, col) /* Jet 4-momentum */ \
     JVAR(Float_t, csv, col) /* Jet CSV value */ \
     JVAR(Float_t, deepCsv_BvsAll, col) /* Jet deepCSV b+bb value */ \
@@ -64,29 +64,24 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     JVAR(Float_t, deepFlavour_c, col) /* Jet deepFlavour c value */ \
     JVAR(Float_t, deepFlavour_uds, col) /* Jet deepFlavour uds value */ \
     JVAR(Float_t, deepFlavour_g, col) /* Jet deepFlavour g value */ \
-    /**/
-
-#define JET_DATA(col) \
-    JET_COMMON_DATA(col) \
     JVAR(Float_t, rawf, col) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     JVAR(Int_t, pu_id, col) /* Jet MVA id value */ \
-    JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
     JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \
     JVAR(ULong64_t, triggerFilterMatch, col) /* Trigger filters matching bits */ \
     /**/
 
 #define FATJET_DATA(col) \
-    JET_COMMON_DATA(col) \
-    JVAR(Float_t, m_pruned, col) \
+    JVAR(LorentzVectorE, p4, col) /* Jet 4-momentum */ \
     JVAR(Float_t, m_softDrop, col) \
-    JVAR(Float_t, n_subjettiness_tau1, col) \
-    JVAR(Float_t, n_subjettiness_tau2, col) \
-    JVAR(Float_t, n_subjettiness_tau3, col) \
+    JVAR(Float_t, jettiness_tau1, col) \
+    JVAR(Float_t, jettiness_tau2, col) \
+    JVAR(Float_t, jettiness_tau3, col) \
+    JVAR(Float_t, jettiness_tau4, col) \
     /**/
 
 #define SUBJET_DATA(col) \
-    JET_COMMON_DATA(col) \
+    JVAR(LorentzVectorE, p4, col) /* Jet 4-momentum */ \
     JVAR(size_t, parentIndex, col) \
     /**/
 
@@ -167,12 +162,9 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, genParticles_nPromptMuons) \
     VAR(UInt_t, genParticles_nPromptTaus) \
     VAR(UInt_t, genJets_nTotal) \
-    VAR(UInt_t, jets_nTotal_partonFlavour_b) \
-    VAR(UInt_t, jets_nTotal_partonFlavour_c) \
     VAR(UInt_t, jets_nTotal_hadronFlavour_b) \
     VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
-    VAR(std::vector<Int_t>, genJets_partonFlavour) \
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
     VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
@@ -194,6 +186,7 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef EVENT_DATA
 #undef LEG_DATA
 #undef LVAR
+#undef OTHERVAR
 #undef JET_DATA
 #undef FATJET_DATA
 #undef SUBJET_DATA

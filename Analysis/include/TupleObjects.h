@@ -135,7 +135,6 @@ public:
     }
     DiscriminatorResult csv() const { return event->jets_csv.at(jet_id); }
     DiscriminatorResult deepcsv() const { return event->jets_deepCsv_BvsAll.at(jet_id); }
-    Integer partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
     Integer hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
     RealNumber rawf() const { return event->jets_rawf.at(jet_id); }
     RealNumber resolution() const { return event->jets_resolution.at(jet_id); }
@@ -154,7 +153,6 @@ public:
     }
 
     const LorentzVectorE& p4() const { return event->subJets_p4.at(jet_id); }
-    DiscriminatorResult csv() const { return event->subJets_csv.at(jet_id); }
 
 private:
     size_t jet_id;
@@ -177,20 +175,19 @@ public:
     }
 
     const LorentzVectorE& p4() const { return event->fatJets_p4.at(jet_id); }
-    DiscriminatorResult csv() const { return event->fatJets_csv.at(jet_id); }
 
     float m(MassType massType) const
     {
-        if(massType == MassType::Pruned) return event->fatJets_m_pruned.at(jet_id);
         if(massType == MassType::SoftDrop) return event->fatJets_m_softDrop.at(jet_id);
         throw analysis::exception("Unsupported fat jet mass type");
     }
 
-    DiscriminatorResult n_subjettiness(size_t tau_index) const
+    DiscriminatorResult jettiness(size_t tau_index) const
     {
-        if(tau_index == 1) return event->fatJets_n_subjettiness_tau1.at(jet_id);
-        if(tau_index == 2) return event->fatJets_n_subjettiness_tau2.at(jet_id);
-        if(tau_index == 3) return event->fatJets_n_subjettiness_tau3.at(jet_id);
+        if(tau_index == 1) return event->fatJets_jettiness_tau1.at(jet_id);
+        if(tau_index == 2) return event->fatJets_jettiness_tau2.at(jet_id);
+        if(tau_index == 3) return event->fatJets_jettiness_tau3.at(jet_id);
+        if(tau_index == 4) return event->fatJets_jettiness_tau4.at(jet_id);
         throw analysis::exception("Unsupported tau index = %1% for fat jet subjettiness.") % tau_index;
     }
 
