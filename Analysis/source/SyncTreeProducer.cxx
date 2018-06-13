@@ -75,16 +75,28 @@ public:
             }
             events[static_cast<EventEnergyScale>(event.eventEnergyScale)] = event;
         }
-        if(!events.empty())
+        
+        if(!events.empty()){
             FillSyncTuple(sync, events, summaryInfo);
+        }
 
         sync.Write();
+
     }
 
 private:
     void FillSyncTuple(SyncTuple& sync, const std::map<EventEnergyScale, ntuple::Event>& events,
                        const SummaryInfo& summaryInfo) const
     {
+        static const std::map<Channel, std::vector<std::string>> triggerPaths = {
+            { Channel::ETau, { "HLT_Ele32_WPTight_Gsf_v", "HLT_Ele35_WPTight_Gsf_v", "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1_v" } },
+            { Channel::MuTau, { "HLT_IsoMu24_v", "HLT_IsoMu27_v", "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1_v" } },
+            { Channel::TauTau, { "HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_v",
+                "HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg_v",
+                "HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg_v"} },
+            { Channel::MuMu, { "HLT_IsoMu24_v", "HLT_IsoMu27_v" } },
+        };
+        
         const Channel channel = Parse<Channel>(args.tree_name());
         std::map<EventEnergyScale, std::shared_ptr<EventInfoBase>> event_infos;
         for(const auto& entry : events) {
@@ -96,14 +108,8 @@ private:
                     && (es == EventEnergyScale::JetUp || es == EventEnergyScale::JetDown)) continue;
             if(syncMode == SyncMode::HH && (event.extraelec_veto || event.extramuon_veto)) continue;
 
-            ntuple::JetPair bjet_pair;
-            if(run_period == Period::Run2016)
-                bjet_pair = EventInfoBase::SelectBjetPair(event, cuts::btag_2016::pt, cuts::btag_2016::eta,
-                                                          JetOrdering::CSV);
-            if(run_period == Period::Run2017)
-                bjet_pair = EventInfoBase::SelectBjetPair(event, cuts::btag_2017::pt, cuts::btag_2017::eta,
-                                                          JetOrdering::DeepCSV);
-            auto event_info =  MakeEventInfo(channel, event, bjet_pair, &summaryInfo);
+            JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
+            auto event_info =  MakeEventInfo(channel, event, run_period, jet_ordering, &summaryInfo);
             /*
             static const std::vector<std::string> trigger_patterns = {
                 "HLT_VBF_DoubleLooseChargedIsoPFTau20_Trk1_eta2p1_Reg_v"
@@ -127,6 +133,7 @@ private:
         }
 
         if(!event_infos.count(EventEnergyScale::Central)) return;
+        if(!event_infos.at(EventEnergyScale::Central)->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) return;
 
         if(!args.jet_uncertainty().empty()) {
             event_infos[EventEnergyScale::JetUp] = event_infos[EventEnergyScale::Central]
@@ -134,7 +141,7 @@ private:
             event_infos[EventEnergyScale::JetDown] = event_infos[EventEnergyScale::Central]
                     ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Down);
         }
-
+        
         htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period,
                                 event_infos[EventEnergyScale::TauUp].get(),
                                 event_infos[EventEnergyScale::TauDown].get(),
