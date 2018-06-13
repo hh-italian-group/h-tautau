@@ -224,7 +224,7 @@ public:
             btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2017::deepCSVv2M : cuts::btag_2017::CSVv2M ;
         }
         else if(period == analysis::Period::Run2016){
-            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2016::deepCSVv2M : cuts::btag_2016::CSVv2M ;
+            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2016::DeepCSVM : cuts::btag_2016::CSVv2M ;
         }
         else
             throw exception("Unsupported btag cut for a specific period.");

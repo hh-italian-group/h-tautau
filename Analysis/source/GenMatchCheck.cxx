@@ -66,7 +66,7 @@ public:
             originalTuple->GetEntry(current_entry);
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
-            auto event_info =  analysis::MakeEventInfo(channel, originalTuple->data(), args.period(), jet_ordering, summaryInfo);
+            auto event_info =  analysis::MakeEventInfo(channel, originalTuple->data(), args.period(), jet_ordering, summaryInfo.get());
             EventInfoBase& event = *event_info;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
