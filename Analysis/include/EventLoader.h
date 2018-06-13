@@ -10,7 +10,7 @@ namespace ntuple {
 class StorageMode {
 public:
     static constexpr size_t NumberOfParts = 6;
-    enum class EventPart { FirstTauIds = 0, SecondTauIds = 1, Jets = 2, FatJets = 3, GenInfo = 4, OtherLeptons = 6 };
+    enum class EventPart { FirstTauIds = 0, SecondTauIds = 1, Jets = 2, FatJets = 3, GenInfo = 4, OtherLeptons = 5 };
 
     static const StorageMode& Full() { static const StorageMode m(0); return m; }
 
@@ -115,7 +115,7 @@ public:
             CP_BR(other_lepton_gen_match);
             CP_BR(other_lepton_gen_p4);
         }
-        
+
         return mode;
     }
 };
