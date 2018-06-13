@@ -218,7 +218,16 @@ public:
         double bjet_eta_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
         double vbf_pt_cut = 30;
         double vbf_eta_cut = 5;
-        double btag_cut = period == analysis::Period::Run2017 && jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2017::deepCSVv2M : cuts::btag_2016::CSVv2M ;
+        double btag_cut;
+
+        if(period == analysis::Period::Run2017){
+            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2017::deepCSVv2M : cuts::btag_2017::CSVv2M ;
+        }
+        else if(period == analysis::Period::Run2016){
+            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2016::deepCSVv2M : cuts::btag_2016::CSVv2M ;
+        }
+        else
+            throw exception("Unsupported btag cut for a specific period.");
 
         SelectedSignalJets selected_signal_jets;
 
@@ -282,22 +291,6 @@ public:
         if(selected_signal_jets.HasBjetPair(event.jets_p4.size()) ||
                 (!selected_signal_jets.HasBjetPair(event.jets_p4.size()) &&
                  !selected_signal_jets.HasVBFPair(event.jets_p4.size())) ) return selected_signal_jets;
-
-//        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_new;
-//        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-//            if(selected_signal_jets.isSelectedBjet(n)) continue;
-//            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-//            double tag;
-//            if(jet_ordering == JetOrdering::Pt)
-//                tag = event.jets_p4.at(n).Pt();
-//            else if(jet_ordering == JetOrdering::CSV)
-//                tag = event.jets_csv.at(n);
-//            else if(jet_ordering == JetOrdering::DeepCSV)
-//                tag = event.jets_deepCsv_BvsAll.at(n);
-//            else
-//                throw exception("Unsupported jet ordering for b-jet pair selection.");
-//            jet_info_vector_new.emplace_back(event.jets_p4.at(n),n,tag);
-//        }
 
         auto jet_info_vector_new = CreateJetInfo();
         auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
