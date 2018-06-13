@@ -26,7 +26,7 @@ public:
     }
 
     template<typename LVector1, typename LVector2, typename LVector3, typename LVector4, typename Met>
-    const FitResults Fit(const LVector1& lepton1_p4, const LVector2& lepton2_p4,
+    FitResults Fit(const LVector1& lepton1_p4, const LVector2& lepton2_p4,
                    const LVector3& jet1_p4, const LVector4& jet2_p4, const Met& met,
                    double resolution_1, double resolution_2) const
     {

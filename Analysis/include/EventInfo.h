@@ -234,6 +234,8 @@ public:
         const auto CreateJetInfo = [&]() -> auto {
             std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+            if(selected_signal_jets.isSelectedBjet(n)) continue;
+            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
                 double tag;
                 if(jet_ordering == JetOrdering::Pt)
                     tag = event.jets_p4.at(n).Pt();
@@ -724,7 +726,7 @@ private:
 
 inline std::shared_ptr<EventInfoBase> MakeEventInfo(
         Channel channel, const EventInfoBase::Event& event,
-        const Period period, JetOrdering jet_ordering,
+        Period period, JetOrdering jet_ordering,
         const SummaryInfo* summaryInfo = nullptr)
 {
     if(channel == Channel::ETau)
