@@ -18,7 +18,7 @@ struct Arguments {
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, output_file);
-    REQ_ARG(std::string, period);
+    REQ_ARG(analysis::Period, period);
 };
 
 namespace analysis {
@@ -41,9 +41,7 @@ public:
     using EventTuple = ntuple::EventTuple;
 
     GenMatchCheck(const Arguments& _args) : args(_args), output(root_ext::CreateRootFile(args.output_file())),
-        anaData(output) {
-            run_period = analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(args.period());
-        }
+        anaData(output) { }
 
     void Run()
     {
@@ -61,14 +59,14 @@ public:
 
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        SummaryInfo* summaryInfo(new SummaryInfo(summaryTuple->data()));
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple->GetEntry(current_entry);
 
-            JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
-            auto event_info =  analysis::MakeEventInfo(channel, originalTuple->data(), run_period, jet_ordering, summaryInfo);
+            JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
+            auto event_info =  analysis::MakeEventInfo(channel, originalTuple->data(), args.period(), jet_ordering, summaryInfo);
             EventInfoBase& event = *event_info;
 
             if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
@@ -97,7 +95,6 @@ private:
     Arguments args;
     std::shared_ptr<TFile> output;
     GenMatchCheckData anaData;
-    analysis::Period run_period;
 };
 
 } // namespace analysis

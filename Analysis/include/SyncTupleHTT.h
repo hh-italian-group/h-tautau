@@ -390,7 +390,7 @@ namespace htt_sync {
         sync().jrawf_2 = COND_VAL(jets_pt20.size() >= 2, jets_pt20.at(1)->rawf());
 
         sync().njets_vbf = static_cast<int>(jets_pt30.size());
-        sync().isVBF = jets_pt30.size() >= 2;
+        sync().isVBF = event.HasVBFjetPair();
         sync().jpt_vbf_1 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(1).GetMomentum().Pt());
         sync().jeta_vbf_1 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(1).GetMomentum().Eta());
         sync().jphi_vbf_1 = COND_VAL(event.HasVBFjetPair(), event.GetVBFJet(1).GetMomentum().Phi());

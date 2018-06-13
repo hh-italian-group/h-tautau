@@ -188,22 +188,22 @@ public:
         SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedJetPair()),
             selectedVBFjetPair(ntuple::UndefinedJetPair()), n_bjets(0) { }
 
-        bool HasBjetPair(const size_t njets) const
+        bool HasBjetPair(size_t njets) const
         {
             return selectedBjetPair.first < njets && selectedBjetPair.second < njets;
         }
 
-        bool HasVBFPair(const size_t njets) const
+        bool HasVBFPair(size_t njets) const
         {
             return selectedVBFjetPair.first < njets && selectedVBFjetPair.second < njets;
         }
 
-        bool isSelectedBjet(const size_t n) const
+        bool isSelectedBjet(size_t n) const
         {
             return selectedBjetPair.first == n || selectedBjetPair.second == n;
         }
 
-        bool isSelectedVBFjet(const size_t n) const
+        bool isSelectedVBFjet(size_t n) const
         {
             return selectedVBFjetPair.first == n || selectedVBFjetPair.second == n;
         }
@@ -218,22 +218,29 @@ public:
         double bjet_eta_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
         double vbf_pt_cut = 30;
         double vbf_eta_cut = 5;
+        double btag_cut = period == analysis::Period::Run2017 && jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2017::deepCSVv2M : cuts::btag_2016::CSVv2M ;
 
         SelectedSignalJets selected_signal_jets;
-        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
-        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            double tag;
-            if(jet_ordering == JetOrdering::Pt)
-                tag = event.jets_p4.at(n).Pt();
-            else if(jet_ordering == JetOrdering::CSV)
-                tag = event.jets_csv.at(n);
-            else if(jet_ordering == JetOrdering::DeepCSV)
-                tag = event.jets_deepCsv_BvsAll.at(n);
-            else
-                throw exception("Unsupported jet ordering for b-jet pair selection.");
-            jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
-        }
-        
+
+        const auto CreateJetInfo = [&]() -> auto {
+            std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
+            for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+                double tag;
+                if(jet_ordering == JetOrdering::Pt)
+                    tag = event.jets_p4.at(n).Pt();
+                else if(jet_ordering == JetOrdering::CSV)
+                    tag = event.jets_csv.at(n);
+                else if(jet_ordering == JetOrdering::DeepCSV)
+                    tag = event.jets_deepCsv_BvsAll.at(n);
+                else
+                    throw exception("Unsupported jet ordering for b-jet pair selection.");
+                jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
+            }
+            return jet_info_vector;
+        };
+
+
+        auto jet_info_vector = CreateJetInfo();
         auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
         selected_signal_jets.n_bjets = bjets_ordered.size();
         if(bjets_ordered.size() >= 1){
@@ -241,9 +248,8 @@ public:
         }
         
         if(bjets_ordered.size() >= 2){
-            double tag_second_bjet = period == analysis::Period::Run2017 ?
+            double tag_second_bjet = jet_ordering == JetOrdering::DeepCSV ?
             event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
-            double btag_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::deepCSVv2M : cuts::btag_2016::CSVv2M ;
             if(tag_second_bjet > btag_cut){
                 selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
             }
@@ -260,10 +266,10 @@ public:
         
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
-            const analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>& jet_1 = vbf_jets_ordered.at(n);
+            const auto& jet_1 = vbf_jets_ordered.at(n);
             for(size_t h = n+1; h < vbf_jets_ordered.size(); ++h) {
-                const analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>& jet_2 = vbf_jets_ordered.at(h);
-                const LorentzVectorE_Float jet_12 = jet_1.p4 + jet_2.p4;
+                const auto& jet_2 = vbf_jets_ordered.at(h);
+                const auto jet_12 = jet_1.p4 + jet_2.p4;
                 if(jet_12.M() > max_mjj){
                     max_mjj = jet_12.M();
                     selected_signal_jets.selectedVBFjetPair = std::make_pair(vbf_jets_ordered.at(n).index,
@@ -277,22 +283,23 @@ public:
                 (!selected_signal_jets.HasBjetPair(event.jets_p4.size()) &&
                  !selected_signal_jets.HasVBFPair(event.jets_p4.size())) ) return selected_signal_jets;
 
-        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_new;
-        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(selected_signal_jets.isSelectedBjet(n)) continue;
-            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-            double tag;
-            if(jet_ordering == JetOrdering::Pt)
-                tag = event.jets_p4.at(n).Pt();
-            else if(jet_ordering == JetOrdering::CSV)
-                tag = event.jets_csv.at(n);
-            else if(jet_ordering == JetOrdering::DeepCSV)
-                tag = event.jets_deepCsv_BvsAll.at(n);
-            else
-                throw exception("Unsupported jet ordering for b-jet pair selection.");
-            jet_info_vector_new.emplace_back(event.jets_p4.at(n),n,tag);
-        }
+//        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_new;
+//        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+//            if(selected_signal_jets.isSelectedBjet(n)) continue;
+//            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
+//            double tag;
+//            if(jet_ordering == JetOrdering::Pt)
+//                tag = event.jets_p4.at(n).Pt();
+//            else if(jet_ordering == JetOrdering::CSV)
+//                tag = event.jets_csv.at(n);
+//            else if(jet_ordering == JetOrdering::DeepCSV)
+//                tag = event.jets_deepCsv_BvsAll.at(n);
+//            else
+//                throw exception("Unsupported jet ordering for b-jet pair selection.");
+//            jet_info_vector_new.emplace_back(event.jets_p4.at(n),n,tag);
+//        }
 
+        auto jet_info_vector_new = CreateJetInfo();
         auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
         if(new_bjets_ordered.size() >= 1)
             selected_signal_jets.selectedBjetPair.second = new_bjets_ordered.at(0).index;
@@ -324,7 +331,7 @@ public:
 
     static constexpr int verbosity = 0;
 
-    EventInfoBase(const Event& _event, const analysis::Period& _period, JetOrdering _jet_ordering,
+    EventInfoBase(const Event& _event, Period _period, JetOrdering _jet_ordering,
                   const SummaryInfo* _summaryInfo = nullptr) :
         event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
         selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)), period(_period),
@@ -333,7 +340,6 @@ public:
         mutex = std::make_shared<Mutex>();
         triggerResults.SetAcceptBits(event->trigger_accepts);
         triggerResults.SetMatchBits(event->trigger_matches);
-        kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
     }
     
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
@@ -355,6 +361,12 @@ public:
         return *summaryInfo;
     }
 
+    static const kin_fit::FitProducer& GetKinFitProducer()
+    {
+        static kin_fit::FitProducer kinfitProducer;
+        return kinfitProducer;
+    }
+
     virtual const AnalysisObject& GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
     virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
 
@@ -362,7 +374,7 @@ public:
     size_t GetNFatJets() const { return event->fatJets_p4.size(); }
 
     const SelectedSignalJets& GetSelectedSignalJets() const {return selected_signal_jets; }
-    const analysis::Period& GetPeriod() const {return period; }
+    Period GetPeriod() const { return period; }
     JetOrdering GetJetOrdering() const {return jet_ordering; }
 
     const JetCollection& GetJets()
@@ -453,7 +465,7 @@ public:
 
     const JetCandidate& GetVBFJet(const size_t index)
     {
-        if(index != 1 || index != 2 || !HasVBFjetPair())
+        if(!HasVBFjetPair() || (index != 1 && index != 2))
             throw exception("VBF jet not found.");
         if(index == 1)
             return GetJets().at(selected_signal_jets.selectedVBFjetPair.first);
@@ -462,7 +474,7 @@ public:
 
     const JetCandidate& GetBJet(const size_t index)
     {
-        if(index != 1 || index != 2 || !HasBjetPair())
+        if(!HasBjetPair() || (index != 1 && index != 2) )
             throw exception("B jet not found.");
         if(index == 1)
             return GetJets().at(selected_signal_jets.selectedBjetPair.first);
@@ -476,8 +488,8 @@ public:
             throw exception("Can't create H->bb candidate.");
         if(!higgs_bb) {
             const auto& jets = GetJets();
-            higgs_bb = std::shared_ptr<HiggsBBCandidate>(
-                       new HiggsBBCandidate(jets.at(selected_signal_jets.selectedBjetPair.first), jets.at(selected_signal_jets.selectedBjetPair.second)));
+            higgs_bb = std::make_shared<HiggsBBCandidate>(jets.at(selected_signal_jets.selectedBjetPair.first),
+                                                          jets.at(selected_signal_jets.selectedBjetPair.second));
         }
         return *higgs_bb;
     }
@@ -510,11 +522,12 @@ public:
         if(!kinfit_results) {
             const size_t pairId = ntuple::CombinationPairToIndex(selected_signal_jets.selectedBjetPair, GetNJets());
             const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
-            kinfit_results = std::shared_ptr<kin_fit::FitResults>(new kin_fit::FitResults());
+            kinfit_results = std::make_shared<kin_fit::FitResults>();
             if(iter == event->kinFit_jetPairId.end()){
-                float energy_resolution_1 = static_cast<float>(GetBJet(1)->resolution()*GetBJet(1).GetMomentum().E());
-                float energy_resolution_2 = static_cast<float>(GetBJet(2)->resolution()*GetBJet(2).GetMomentum().E());
-                const auto& result = kinfitProducer->Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
+                double energy_resolution_1 = GetBJet(1)->resolution()*GetBJet(1).GetMomentum().E();
+                double energy_resolution_2 = GetBJet(2)->resolution()*GetBJet(2).GetMomentum().E();
+                const auto& kinfitProducer = GetKinFitProducer();
+                const auto& result = kinfitProducer.Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
                                                          GetBJet(1).GetMomentum(),
                                                          GetBJet(2).GetMomentum(),
                                                          *met,energy_resolution_1,energy_resolution_2);
@@ -602,7 +615,7 @@ protected:
 private:
     EventIdentifier eventIdentifier;
     SelectedSignalJets selected_signal_jets;
-    analysis::Period period;
+    Period period;
     JetOrdering jet_ordering;
 
     std::shared_ptr<std::list<ntuple::TupleJet>> tuple_jets;
@@ -612,7 +625,6 @@ private:
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
     std::shared_ptr<ntuple::TupleMet> tuple_met;
     std::shared_ptr<MET> met;
-    std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     boost::optional<double> mt2;
     double mva_score;
@@ -630,7 +642,7 @@ public:
 
     static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
 
-    EventInfo(const Event& _event, const analysis::Period& _period, JetOrdering _jet_ordering,
+    EventInfo(const Event& _event, Period _period, JetOrdering _jet_ordering,
               const SummaryInfo* _summaryInfo = nullptr) :
         EventInfoBase(_event, _period, _jet_ordering, _summaryInfo)
     {
@@ -719,7 +731,7 @@ private:
 
 inline std::shared_ptr<EventInfoBase> MakeEventInfo(
         Channel channel, const EventInfoBase::Event& event,
-        const analysis::Period& period, JetOrdering jet_ordering,
+        const Period period, JetOrdering jet_ordering,
         const SummaryInfo* summaryInfo = nullptr)
 {
     if(channel == Channel::ETau)

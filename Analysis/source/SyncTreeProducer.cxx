@@ -108,13 +108,6 @@ private:
                     && (es == EventEnergyScale::JetUp || es == EventEnergyScale::JetDown)) continue;
             if(syncMode == SyncMode::HH && (event.extraelec_veto || event.extramuon_veto)) continue;
 
-//            ntuple::JetPair bjet_pair;
-//            if(run_period == Period::Run2016)
-//                bjet_pair = EventInfoBase::SelectBjetPair(event, cuts::btag_2016::pt, cuts::btag_2016::eta,
-//                                                          JetOrdering::CSV);
-//            if(run_period == Period::Run2017)
-//                bjet_pair = EventInfoBase::SelectBjetPair(event, cuts::btag_2017::pt, cuts::btag_2017::eta,
-//                                                          JetOrdering::DeepCSV);
             JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
             auto event_info =  MakeEventInfo(channel, event, run_period, jet_ordering, &summaryInfo);
             /*
