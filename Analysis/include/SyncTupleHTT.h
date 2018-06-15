@@ -161,7 +161,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Float_t, fatJet_eta) \
     VAR(Float_t, fatJet_phi) \
     VAR(Float_t, fatJet_energy) \
-    VAR(Float_t, fatJet_m_pruned) \
     VAR(Float_t, fatJet_m_filtered) \
     VAR(Float_t, fatJet_m_trimmed) \
     VAR(Float_t, fatJet_m_softDrop) \
@@ -443,7 +442,6 @@ namespace htt_sync {
         sync().fatJet_eta = COND_VAL(fatJet, fatJet->GetMomentum().Eta());
         sync().fatJet_phi = COND_VAL(fatJet, fatJet->GetMomentum().Phi());
         sync().fatJet_energy = COND_VAL(fatJet, fatJet->GetMomentum().E());
-        sync().fatJet_m_pruned = COND_VAL(fatJet, (*fatJet)->m(ntuple::TupleFatJet::MassType::Pruned));
         sync().fatJet_m_softDrop = COND_VAL(fatJet, (*fatJet)->m(ntuple::TupleFatJet::MassType::SoftDrop));
         sync().fatJet_n_subjettiness_tau1 = COND_VAL(fatJet, (*fatJet)->jettiness(1));
         sync().fatJet_n_subjettiness_tau2 = COND_VAL(fatJet, (*fatJet)->jettiness(2));

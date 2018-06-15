@@ -274,7 +274,7 @@ public:
         }
 
         auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,vbf_pt_cut,vbf_eta_cut);
-
+        
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
             const auto& jet_1 = vbf_jets_ordered.at(n);
@@ -290,9 +290,7 @@ public:
         }
 
 
-        if(selected_signal_jets.HasBjetPair(event.jets_p4.size()) ||
-                (!selected_signal_jets.HasBjetPair(event.jets_p4.size()) &&
-                 !selected_signal_jets.HasVBFPair(event.jets_p4.size())) ) return selected_signal_jets;
+        if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
 
         auto jet_info_vector_new = CreateJetInfo();
         auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
