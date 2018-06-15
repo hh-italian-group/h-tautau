@@ -84,6 +84,9 @@ private:
         edm::Handle<std::vector<PileupSummaryInfo>> puInfo;
         event.getByToken(puInfo_token, puInfo);
         (*expressTuple)().npu = analysis::gen_truth::GetNumberOfPileUpInteractions(puInfo);
+        (*expressTuple)().run = event.id().run();
+        (*expressTuple)().lumi = event.id().luminosityBlock();
+        (*expressTuple)().evt = event.id().event();
         (*expressTuple)().genEventWeight = genEvent->weight();
         (*expressTuple)().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();

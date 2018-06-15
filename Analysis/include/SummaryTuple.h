@@ -44,6 +44,9 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
 
 #define EVENT_EXPRESS_DATA() \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
+    VAR(UInt_t, run) /* run */ \
+    VAR(UInt_t, lumi) /* lumi section */ \
+    VAR(ULong64_t, evt) /* event number */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
     VAR(Float_t, gen_top_pt) /* pt of gen ME top */ \
     VAR(Float_t, gen_topBar_pt) /* pt of gen ME anti-top */ \
