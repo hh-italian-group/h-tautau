@@ -185,6 +185,10 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         muons.push_back(MuonCandidate(muon, Isolation(muon)));
 
 
+    met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
+    double shifted_met_px = 0;
+    double shifted_met_py = 0;
+
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
@@ -203,11 +207,25 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
                     }
                 }
                 const auto shiftedMomentum = tau.p4() * sf;
+
+                auto corr_tau(tauCandidate);
+                corr_tau.SetMomentum(shiftedMomentum);
+
+                shifted_met_px += tauCandidate.GetMomentum().px() - corr_tau.GetMomentum().px();
+                shifted_met_py += tauCandidate.GetMomentum().py() - corr_tau.GetMomentum().py();
+
                 tauCandidate.SetMomentum(shiftedMomentum);
             }
         }
 
         taus.push_back(tauCandidate);
+    }
+
+    if(met){
+        shifted_met_px += met->px();
+        shifted_met_py += met->py();
+        double E = std::hypot(shifted_met_px,shifted_met_py);
+        met->SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
     }
 
     jets.clear();
@@ -229,7 +247,7 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& jet : * pat_fatJets)
         fatJets.push_back(JetCandidate(jet));
 
-    met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
+
     if(metUncertantyMap.count(energyScale)) {
         const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
         met->SetMomentum(shiftedMomentum);
