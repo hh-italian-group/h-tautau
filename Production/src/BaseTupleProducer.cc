@@ -759,6 +759,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().rho = *rho;
 
     // HTT candidate
+    eventTuple().SVfit_is_valid = selection.svfitResult.has_valid_momentum;
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
     eventTuple().SVfit_p4_error = selection.svfitResult.momentum_error;
     eventTuple().SVfit_mt = selection.svfitResult.transverseMass;

@@ -403,7 +403,8 @@ namespace htt_sync {
         sync().bjet_phi_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Phi());
         sync().bjet_rawf_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->rawf());
         sync().bjet_csv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->csv());
-        sync().bjet_deepcsv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->deepcsv());
+        sync().bjet_deepcsv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->deepcsv() >= 0
+                ? event.GetBJet(1)->deepcsv() : -2);
         sync().bjet_resolution_1 = COND_VAL(event.HasBjetPair(),
                                             event.GetBJet(1)->resolution() * event.GetBJet(1).GetMomentum().E());
         sync().bjet_pt_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Pt());
@@ -411,10 +412,11 @@ namespace htt_sync {
         sync().bjet_phi_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Phi());
         sync().bjet_rawf_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->rawf());
         sync().bjet_csv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->csv());
-        sync().bjet_deepcsv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->deepcsv());
+        sync().bjet_deepcsv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->deepcsv() >= 0
+                ? event.GetBJet(2)->deepcsv() : -2);
         sync().bjet_resolution_2 = COND_VAL(event.HasBjetPair(),
                                             event.GetBJet(2)->resolution() * event.GetBJet(2).GetMomentum().E());
-        sync().ht_other_jets = event.GetHT();
+        sync().ht_other_jets = event.GetHT(false, true);
 
         sync().kinfit_convergence = COND_VAL_INT(event.HasBjetPair() , event.GetKinFitResults().convergence);
         sync().m_kinfit = COND_VAL(event.HasBjetPair() && event.GetKinFitResults().HasValidMass(),
@@ -465,10 +467,13 @@ namespace htt_sync {
                     std::count(event->genJets_hadronFlavour.begin(), event->genJets_hadronFlavour.end(), 4));
         sync().jets_nTotal_hadronFlavour_b = event->jets_nTotal_hadronFlavour_b;
         sync().jets_nTotal_hadronFlavour_c = event->jets_nTotal_hadronFlavour_c;
-        sync().jets_nSelected_hadronFlavour_b = static_cast<unsigned>(
-                    std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 5));
-        sync().jets_nSelected_hadronFlavour_c = static_cast<unsigned>(
-                    std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
+        sync().jets_nSelected_hadronFlavour_b = 0;
+        sync().jets_nSelected_hadronFlavour_c = 0;
+        for(const auto& jet : event.GetJets()) {
+            if(jet.GetMomentum().pt() <= 20) continue;
+            if(jet->hadronFlavour() == 5) ++sync().jets_nSelected_hadronFlavour_b;
+            if(jet->hadronFlavour() == 4) ++sync().jets_nSelected_hadronFlavour_c;
+        }
 
         //mva variables
         if(event.HasBjetPair()){

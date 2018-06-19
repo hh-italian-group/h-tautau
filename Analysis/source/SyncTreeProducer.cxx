@@ -118,6 +118,7 @@ private:
             JetOrdering jet_ordering = run_period == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
             auto event_info =  MakeEventInfo(channel, event, run_period, jet_ordering, &summaryInfo);
 
+            if(syncMode == SyncMode::HH && !event_info->HasBjetPair()) continue;
             if(!event_info->GetTriggerResults().AnyAcceptAndMatch(triggerPaths.at(channel))) continue;
 
             /*

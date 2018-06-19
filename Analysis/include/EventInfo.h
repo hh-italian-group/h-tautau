@@ -274,7 +274,7 @@ public:
         }
 
         auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,vbf_pt_cut,vbf_eta_cut);
-        
+
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
             const auto& jet_1 = vbf_jets_ordered.at(n);
@@ -423,20 +423,23 @@ public:
         return selected_jets;
     }
 
-
-    double GetHT(bool includeHbbJets = true)
+    double GetHT(bool includeHbbJets, bool apply_pt_eta_cut)
     {
-        const JetCollection& all_jets = GetJets();
-        const std::set<size_t> bjet_indexes = GetSelectedBjetIndicesSet();
-        double sum = 0;
-        for(unsigned n = 0; n < all_jets.size(); ++n) {
-            if(!includeHbbJets && bjet_indexes.count(n)) continue;
-            const JetCandidate& jet = all_jets.at(n);
-            sum += jet.GetMomentum().Pt();
-        }
-        return sum;
-    }
+        static constexpr double other_jets_min_pt = 20;
+        static constexpr double other_jets_max_eta = 4.7;
 
+        double ht = 0;
+        const auto& jets = GetJets();
+        for(size_t n = 0; n < jets.size(); ++n) {
+            const auto& jet = jets.at(n);
+
+            if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
+            if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
+                || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
+            ht += jet.GetMomentum().pt();
+        }
+        return ht;
+    }
 
     const FatJetCollection& GetFatJets()
     {
