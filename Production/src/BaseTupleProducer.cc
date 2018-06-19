@@ -185,25 +185,45 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         muons.push_back(MuonCandidate(muon, Isolation(muon)));
 
 
+    met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
+    double shifted_met_px = 0;
+    double shifted_met_py = 0;
+    bool met_shift_applied = false;
+
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
         if(isMC) {
+            bool tau_es_set = false;
             const analysis::gen_truth::MatchResult result =
                         analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
             if(result.first == analysis::GenMatch::Tau){
                 double corr_factor = 1;
                 double sf = 1;
+                double tau_es_var = 1;
+                bool tau_es_sf_set = false;
                 if(tau_correction_factor.at(period).count(tau.decayMode())){
                     corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
                     sf = corr_factor;
+                    tau_es_set = true;
                     if(tauEnergyScales.count(energyScale)) {
                         const int sign = tauEnergyScales.at(energyScale);
-                        sf = corr_factor + sign * tau_energyUncertainty.at(period);
+                        tau_es_var = sign * tau_energyUncertainty.at(period);
+                        sf = corr_factor + tau_es_var;
+                        tau_es_sf_set = true;
                     }
                 }
-                const auto shiftedMomentum = tau.p4() * sf;
-                tauCandidate.SetMomentum(shiftedMomentum);
+
+                if(tau_es_sf_set){
+                    const auto shiftedMomentum_met = tau.p4() * tau_es_var;
+                    shifted_met_px += tauCandidate.GetMomentum().px() - shiftedMomentum_met.px();
+                    shifted_met_py += tauCandidate.GetMomentum().py() - shiftedMomentum_met.py();
+                    met_shift_applied = true;
+                }
+                if(tau_es_set){
+                    const auto shiftedMomentum = tau.p4() * sf;
+                    tauCandidate.SetMomentum(shiftedMomentum);
+                }
             }
         }
 
@@ -229,8 +249,16 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& jet : * pat_fatJets)
         fatJets.push_back(JetCandidate(jet));
 
-    met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
-    if(metUncertantyMap.count(energyScale)) {
+
+    if(met_shift_applied){
+        shifted_met_px += met->GetMomentum().px();
+        shifted_met_py += met->GetMomentum().px();
+        analysis::LorentzVectorXYZ shifted_met;
+        double E = std::hypot(shifted_met_px,shifted_met_py);
+        shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+        met->SetMomentum(shifted_met);
+    }
+    else if(metUncertantyMap.count(energyScale)) {
         const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
         met->SetMomentum(shiftedMomentum);
     }
