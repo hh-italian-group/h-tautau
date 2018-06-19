@@ -188,6 +188,7 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
     double shifted_met_px = 0;
     double shifted_met_py = 0;
+    bool met_shift_applied = false;
 
     taus.clear();
     for(const auto& tau : *pat_taus) {
@@ -198,34 +199,35 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
             if(result.first == analysis::GenMatch::Tau){
                 double corr_factor = 1;
                 double sf = 1;
+                double tau_es_var = 1;
+                bool tau_es_sf_set = false;
                 if(tau_correction_factor.at(period).count(tau.decayMode())){
                     corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
                     sf = corr_factor;
                     if(tauEnergyScales.count(energyScale)) {
                         const int sign = tauEnergyScales.at(energyScale);
-                        sf = corr_factor + sign * tau_energyUncertainty.at(period);
+                        tau_es_var = sign * tau_energyUncertainty.at(period);
+                        sf = corr_factor + tau_es_var;
+                        tau_es_sf_set = true;
                     }
                 }
-                const auto shiftedMomentum = tau.p4() * sf;
 
-                auto corr_tau(tauCandidate);
-                corr_tau.SetMomentum(shiftedMomentum);
+                if(tau_es_sf_set){
+                    const auto shiftedMomentum_met = tau.p4() * tau_es_var;
+                    auto corr_tau(tauCandidate);
+                    corr_tau.SetMomentum(shiftedMomentum_met);
 
-                shifted_met_px += tauCandidate.GetMomentum().px() - corr_tau.GetMomentum().px();
-                shifted_met_py += tauCandidate.GetMomentum().py() - corr_tau.GetMomentum().py();
+                    shifted_met_px += tauCandidate.GetMomentum().px() - corr_tau.GetMomentum().px();
+                    shifted_met_py += tauCandidate.GetMomentum().py() - corr_tau.GetMomentum().py();
+                    met_shift_applied = true;
 
-                tauCandidate.SetMomentum(shiftedMomentum);
+                    const auto shiftedMomentum = tau.p4() * sf;
+                    tauCandidate.SetMomentum(shiftedMomentum);
+                }
             }
         }
 
         taus.push_back(tauCandidate);
-    }
-
-    if(met){
-        shifted_met_px += met->px();
-        shifted_met_py += met->py();
-        double E = std::hypot(shifted_met_px,shifted_met_py);
-        met->SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
     }
 
     jets.clear();
@@ -248,7 +250,13 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         fatJets.push_back(JetCandidate(jet));
 
 
-    if(metUncertantyMap.count(energyScale)) {
+    if(met_shift_applied){
+        shifted_met_px += met->px();
+        shifted_met_py += met->py();
+        double E = std::hypot(shifted_met_px,shifted_met_py);
+        met->SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+    }
+    else if(metUncertantyMap.count(energyScale)) {
         const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
         met->SetMomentum(shiftedMomentum);
     }
