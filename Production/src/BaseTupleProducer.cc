@@ -201,11 +201,11 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
                 double corr_factor = 1;
                 double sf = 1;
                 double tau_es_var = 1;
-                tau_es_set = true;
                 bool tau_es_sf_set = false;
                 if(tau_correction_factor.at(period).count(tau.decayMode())){
                     corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
                     sf = corr_factor;
+                    tau_es_set = true;
                     if(tauEnergyScales.count(energyScale)) {
                         const int sign = tauEnergyScales.at(energyScale);
                         tau_es_var = sign * tau_energyUncertainty.at(period);
@@ -216,11 +216,8 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
                 if(tau_es_sf_set){
                     const auto shiftedMomentum_met = tau.p4() * tau_es_var;
-                    auto corr_tau(tauCandidate);
-                    corr_tau.SetMomentum(shiftedMomentum_met);
-
-                    shifted_met_px += tauCandidate.GetMomentum().px() - corr_tau.GetMomentum().px();
-                    shifted_met_py += tauCandidate.GetMomentum().py() - corr_tau.GetMomentum().py();
+                    shifted_met_px += tauCandidate.GetMomentum().px() - shiftedMomentum_met.px();
+                    shifted_met_py += tauCandidate.GetMomentum().py() - shiftedMomentum_met.py();
                     met_shift_applied = true;
                 }
                 if(tau_es_set){
