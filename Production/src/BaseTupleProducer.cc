@@ -251,10 +251,12 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
 
     if(met_shift_applied){
-        shifted_met_px += met->px();
-        shifted_met_py += met->py();
+        shifted_met_px += met->GetMomentum().px();
+        shifted_met_py += met->GetMomentum().px();
+        analysis::LorentzVectorXYZ shifted_met;
         double E = std::hypot(shifted_met_px,shifted_met_py);
-        met->SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+        shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+        met->SetMomentum(shifted_met);
     }
     else if(metUncertantyMap.count(energyScale)) {
         const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
