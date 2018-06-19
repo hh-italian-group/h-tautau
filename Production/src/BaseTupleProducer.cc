@@ -194,12 +194,14 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
         if(isMC) {
+            bool tau_es_set = false;
             const analysis::gen_truth::MatchResult result =
                         analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
             if(result.first == analysis::GenMatch::Tau){
                 double corr_factor = 1;
                 double sf = 1;
                 double tau_es_var = 1;
+                tau_es_set = true;
                 bool tau_es_sf_set = false;
                 if(tau_correction_factor.at(period).count(tau.decayMode())){
                     corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
@@ -220,7 +222,8 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
                     shifted_met_px += tauCandidate.GetMomentum().px() - corr_tau.GetMomentum().px();
                     shifted_met_py += tauCandidate.GetMomentum().py() - corr_tau.GetMomentum().py();
                     met_shift_applied = true;
-
+                }
+                if(tau_es_set){
                     const auto shiftedMomentum = tau.p4() * sf;
                     tauCandidate.SetMomentum(shiftedMomentum);
                 }
