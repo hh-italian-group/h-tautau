@@ -262,7 +262,7 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 #define COND_VAL_INT(cond, val) cond ? static_cast<int>(val) : default_int_value
 
 namespace htt_sync {
-    
+
 
     void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period,
                        analysis::mva_study::MvaReader* mva_reader = nullptr,
@@ -460,7 +460,7 @@ namespace htt_sync {
                                                event_jet_down->GetKinFitResults().HasValidMass(),
                                                event_jet_down->GetKinFitResults().mass);
 
-        
+
         sync().mva_score_nonRes_kl1 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_smANkin_BSMklscan", 125, 1}, &event));
         sync().mva_score_lm_320 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_lmANkin", 320, 0}, &event));
         sync().mva_score_mm_400 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_mmANkin", 400, 0}, &event));

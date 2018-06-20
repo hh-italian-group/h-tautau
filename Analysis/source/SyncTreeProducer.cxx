@@ -55,23 +55,23 @@ public:
 
         if(args.mva_setup().size()) {
             ConfigReader config_reader;
-            
+
             MvaReaderSetupCollection mva_setup_collection;
             MvaReaderSetupEntryReader mva_entry_reader(mva_setup_collection);
             config_reader.AddEntryReader("MVA", mva_entry_reader, true);
             config_reader.ReadConfig(args.mva_setup());
-            
+
             std::vector<MvaReaderSetup> mva_setups;
             for(const auto& mva_setup_element : mva_setup_collection) {
                 mva_setups.push_back(mva_setup_element.second);
             }
             mva_setup = mva_setups.size() == 1 ? mva_setups.front() : MvaReaderSetup::Join(mva_setups);
-            
+
             mva_reader = std::make_shared<analysis::mva_study::MvaReader>();
             InitializeMvaReader();
         }
 
-        
+
     }
 
     void Run()
