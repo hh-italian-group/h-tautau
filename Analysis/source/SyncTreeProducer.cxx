@@ -21,7 +21,6 @@ struct Arguments {
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
     REQ_ARG(std::string, output_file);
-    REQ_ARG(std::string, sources);
     OPT_ARG(std::string, mva_setup, "");
     OPT_ARG(bool, fill_tau_es_vars, false);
     OPT_ARG(bool, fill_jet_es_vars, false);
@@ -54,20 +53,18 @@ public:
         ss_mode >> syncMode;
         run_period = analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(args.period());
 
-        ConfigReader config_reader;
-
-        MvaReaderSetupCollection mva_setup_collection;
-        MvaReaderSetupEntryReader mva_entry_reader(mva_setup_collection);
-        config_reader.AddEntryReader("MVA", mva_entry_reader, true);
-        config_reader.ReadConfig(args.sources());
-
         if(args.mva_setup().size()) {
+            ConfigReader config_reader;
+            
+            MvaReaderSetupCollection mva_setup_collection;
+            MvaReaderSetupEntryReader mva_entry_reader(mva_setup_collection);
+            config_reader.AddEntryReader("MVA", mva_entry_reader, true);
+            config_reader.ReadConfig(args.mva_setup());
+            
             const auto mva_setup_names = SplitValueList(args.mva_setup(), false, ", \t", true);
             std::vector<MvaReaderSetup> mva_setups;
-            for(const auto& name : mva_setup_names) {
-                if(!mva_setup_collection.count(name))
-                    throw exception("MVA setup '%1%' not found.") % name;
-                mva_setups.push_back(mva_setup_collection.at(name));
+            for(const auto& mva_setup_element : mva_setup_collection) {
+                mva_setups.push_back(mva_setup_element.second);
             }
             mva_setup = mva_setups.size() == 1 ? mva_setups.front() : MvaReaderSetup::Join(mva_setups);
             

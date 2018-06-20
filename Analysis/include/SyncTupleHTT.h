@@ -3,7 +3,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include "AnalysisTools/Run/include/MultiThread.h"
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "EventInfo.h"
@@ -370,7 +369,6 @@ namespace htt_sync {
 
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
-        std::map<analysis::mva_study::MvaReader::MvaKey, double> scores;
 
         auto select_jets = [&](analysis::EventInfoBase* event_info) {
             jets_pt20.clear();
