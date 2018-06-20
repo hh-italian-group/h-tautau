@@ -14,12 +14,15 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/McCorrections/include/EventWeights.h"
 
+
 struct Arguments {
     REQ_ARG(std::string, mode);
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, period);
     REQ_ARG(std::string, output_file);
+    REQ_ARG(std::string, sources);
+    OPT_ARG(std::string, mva_setup, "");
     OPT_ARG(bool, fill_tau_es_vars, false);
     OPT_ARG(bool, fill_jet_es_vars, false);
     OPT_ARG(std::string, jet_unc_source, "");
@@ -50,6 +53,27 @@ public:
         std::istringstream ss_mode(args.mode());
         ss_mode >> syncMode;
         run_period = analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(args.period());
+
+        ConfigReader config_reader;
+
+        MvaReaderSetupCollection mva_setup_collection;
+        MvaReaderSetupEntryReader mva_entry_reader(mva_setup_collection);
+        config_reader.AddEntryReader("MVA", mva_entry_reader, false);
+
+        config_reader.ReadConfig(args.sources());
+
+        if(args.mva_setup().size()) {
+            const auto mva_setup_names = SplitValueList(args.mva_setup(), false, ", \t", true);
+            std::vector<MvaReaderSetup> mva_setups;
+            for(const auto& name : mva_setup_names) {
+                if(!mva_setup_collection.count(name))
+                    throw exception("MVA setup '%1%' not found.") % name;
+                mva_setups.push_back(mva_setup_collection.at(name));
+            }
+            mva_setup = mva_setups.size() == 1 ? mva_setups.front() : MvaReaderSetup::Join(mva_setups);
+        }
+
+        InitializeMvaReader();
     }
 
     void Run()
@@ -93,6 +117,27 @@ public:
     }
 
 private:
+
+    void InitializeMvaReader()
+    {
+        using MvaKey = mva_study::MvaReader::MvaKey;
+        if(!mva_setup.is_initialized()) return;
+        for(const auto& method : mva_setup->trainings) {
+            const auto& name = method.first;
+            const auto& file = method.second;
+            const auto& vars = mva_setup->variables.at(name);
+            const auto& masses = mva_setup->masses.at(name);
+            const auto& spins = mva_setup->spins.at(name);
+            const bool legacy = mva_setup->legacy.count(name);
+            const bool legacy_lm = legacy && mva_setup->legacy.at(name) == "lm";
+            const size_t n_wp = masses.size();
+            for(size_t n = 0; n < n_wp; ++n) {
+                const MvaKey key{name, static_cast<int>(masses.at(n)), spins.at(n)};
+                mva_reader.Add(key, FullPath(file), vars, legacy, legacy_lm);
+            }
+        }
+    }
+
     void FillSyncTuple(SyncTuple& sync, const std::map<EventEnergyScale, ntuple::Event>& events,
                        const SummaryInfo& summaryInfo) const
     {
@@ -156,7 +201,8 @@ private:
                                 event_infos[EventEnergyScale::TauUp].get(),
                                 event_infos[EventEnergyScale::TauDown].get(),
                                 event_infos[EventEnergyScale::JetUp].get(),
-                                event_infos[EventEnergyScale::JetDown].get());
+                                event_infos[EventEnergyScale::JetDown].get(),
+                                mva_setup, mva_reader);
     }
 
 private:
@@ -164,6 +210,8 @@ private:
     SyncMode syncMode;
     analysis::Period run_period;
     mc_corrections::EventWeights eventWeights;
+    boost::optional<MvaReaderSetup> mva_setup;
+    analysis::mva_study::MvaReader mva_reader;
 };
 
 } // namespace analysis

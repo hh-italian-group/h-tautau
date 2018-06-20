@@ -9,6 +9,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/Btag_2016.h"
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "AnalysisTypes.h"
+#include "hh-bbtautau/Analysis/include/MvaReader.h"
+#include "hh-bbtautau/Analysis/include/SampleDescriptorConfigEntryReader.h"
 
 #define LVAR(type, name, pref) VAR(type, name##_##pref)
 #define JVAR(type, name, suff, pref) VAR(type, suff##name##_##pref)
@@ -148,6 +150,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     VAR(Double_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
+    VAR(Double_t, mva_score) /* mva_score */\
     VAR(Float_t, m_kinfit) \
     VAR(Float_t, m_kinfit_tau_ES_up) \
     VAR(Float_t, m_kinfit_tau_ES_down) \
@@ -243,7 +246,9 @@ namespace htt_sync {
                        analysis::EventInfoBase* event_tau_up = nullptr,
                        analysis::EventInfoBase* event_tau_down = nullptr,
                        analysis::EventInfoBase* event_jet_up = nullptr,
-                       analysis::EventInfoBase* event_jet_down = nullptr)
+                       analysis::EventInfoBase* event_jet_down = nullptr,
+                       boost::optional<analysis::MvaReaderSetup> mva_setup,
+                       analysis::mva_study::MvaReader mva_reader)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -364,6 +369,20 @@ namespace htt_sync {
                                                    analysis::JetOrdering::Pt);
             }
 
+            if(mva_setup.is_initialized()) {
+
+                std::map<analysis::mva_study::MvaReader::MvaKey, double> scores;
+                for(const auto& mva_sel : mva_setup->selections) {
+                    const auto& params = mva_sel.second;
+                    const analysis::mva_study::MvaReader::MvaKey key{params.name, static_cast<int>(params.mass), params.spin};
+                    std::cout << "Mva Key: " << params.name << ", " << params.mass << ", " << params.spin << std::endl;
+                    if(!scores.count(key)) {
+                        auto eval = std::bind(&analysis::mva_study::MvaReader::Evaluate, &mva_reader, key, &event);
+                        scores[key] = eval;
+                    }
+                }
+            }
+
         };
 
         select_jets(&event);
@@ -433,7 +452,7 @@ namespace htt_sync {
         sync().m_kinfit_jet_ES_down = COND_VAL(event_jet_down && event_jet_down->HasBjetPair() &&
                                                event_jet_down->GetKinFitResults().HasValidMass(),
                                                event_jet_down->GetKinFitResults().mass);
-
+        sync().mva_score = 1;
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
