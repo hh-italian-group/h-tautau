@@ -61,7 +61,6 @@ public:
             config_reader.AddEntryReader("MVA", mva_entry_reader, true);
             config_reader.ReadConfig(args.mva_setup());
             
-            const auto mva_setup_names = SplitValueList(args.mva_setup(), false, ", \t", true);
             std::vector<MvaReaderSetup> mva_setups;
             for(const auto& mva_setup_element : mva_setup_collection) {
                 mva_setups.push_back(mva_setup_element.second);
@@ -120,7 +119,8 @@ private:
     void InitializeMvaReader()
     {
         using MvaKey = mva_study::MvaReader::MvaKey;
-        if(!mva_setup.is_initialized()) return;
+        if(!mva_setup.is_initialized())
+            throw analysis::exception("Mva setup is not initialized.");
         for(const auto& method : mva_setup->trainings) {
             const auto& name = method.first;
             const auto& file = method.second;
