@@ -151,7 +151,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     VAR(Double_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
-    VAR(Double_t, mva_score) /* mva_score */\
+    VAR(Double_t, mva_score_1) /* mva_score */\
     VAR(Float_t, m_kinfit) \
     VAR(Float_t, m_kinfit_tau_ES_up) \
     VAR(Float_t, m_kinfit_tau_ES_down) \
@@ -457,8 +457,8 @@ namespace htt_sync {
 
         const analysis::mva_study::MvaReader::MvaKey key_1{"lm", 320, 0};
         if(!scores.count(key_1))
-            throw exception("Key1 not found");
-        sync().mva_score_1 = static_cast<double>(scores.at(key_1));
+            throw analysis::exception("Key1 not found");
+        sync().mva_score_1 = scores.at(key_1).get();
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
