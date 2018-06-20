@@ -59,21 +59,16 @@ public:
         MvaReaderSetupCollection mva_setup_collection;
         MvaReaderSetupEntryReader mva_entry_reader(mva_setup_collection);
         config_reader.AddEntryReader("MVA", mva_entry_reader, true);
-        std::cout << "Created mva reader" << std::endl;
         config_reader.ReadConfig(args.sources());
-        std::cout << "Read cfg" << std::endl;
 
         if(args.mva_setup().size()) {
-            std::cout << "mva_setup(): " << args.mva_setup().size() << std::endl;
             const auto mva_setup_names = SplitValueList(args.mva_setup(), false, ", \t", true);
             std::vector<MvaReaderSetup> mva_setups;
             for(const auto& name : mva_setup_names) {
-                std::cout << "name mva: " << name << std::endl;
                 if(!mva_setup_collection.count(name))
                     throw exception("MVA setup '%1%' not found.") % name;
                 mva_setups.push_back(mva_setup_collection.at(name));
             }
-            std::cout << "mva_setups.size(): " << mva_setups.size() << std::endl;
             mva_setup = mva_setups.size() == 1 ? mva_setups.front() : MvaReaderSetup::Join(mva_setups);
             
             mva_reader = std::make_shared<analysis::mva_study::MvaReader>();
