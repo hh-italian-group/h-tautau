@@ -23,7 +23,8 @@ public:
 
     const LorentzVector& GetMomentum() const { return momentum; }
     template<typename FourVector>
-    void SetMomentum(const FourVector& _momentum) { momentum = LorentzVector(_momentum); }
+    void SetMomentum(const FourVector& _momentum) { momentum = LorentzVector(_momentum); momentum_changed = true; }
+    bool MomentumChanged() const { return momentum_changed; }
 
     int GetCharge() const { return charge; }
     void SetCharge(int _charge) { charge = _charge; }
@@ -38,6 +39,7 @@ private:
     LorentzVector momentum;
     int charge;
     double isolation;
+    bool momentum_changed{false};
 };
 
 template<typename _PATObject, typename _PATObjectConstPtr = const _PATObject*>
