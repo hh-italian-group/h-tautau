@@ -133,7 +133,7 @@ private:
             const size_t n_wp = masses.size();
             for(size_t n = 0; n < n_wp; ++n) {
                 const MvaKey key{name, static_cast<int>(masses.at(n)), spins.at(n)};
-                mva_reader.Add(key, FullPath(file), vars, legacy, legacy_lm);
+                mva_reader.Add(key, file, vars, legacy, legacy_lm);
             }
         }
     }
@@ -197,12 +197,11 @@ private:
                     ->ApplyShiftBase(Parse<UncertaintySource>(args.jet_uncertainty()), UncertaintyScale::Down);
         }
 
-        htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period,
+        htt_sync::FillSyncTuple(*event_infos[EventEnergyScale::Central], sync, run_period, mva_setup, mva_reader,
                                 event_infos[EventEnergyScale::TauUp].get(),
                                 event_infos[EventEnergyScale::TauDown].get(),
                                 event_infos[EventEnergyScale::JetUp].get(),
-                                event_infos[EventEnergyScale::JetDown].get(),
-                                mva_setup, mva_reader);
+                                event_infos[EventEnergyScale::JetDown].get());
     }
 
 private:

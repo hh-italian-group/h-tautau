@@ -3,6 +3,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include "AnalysisTools/Run/include/MultiThread.h"
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "EventInfo.h"
@@ -241,14 +242,15 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 #define COND_VAL_INT(cond, val) cond ? static_cast<int>(val) : default_int_value
 
 namespace htt_sync {
+    
 
     void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period,
+                       boost::optional<analysis::MvaReaderSetup> mva_setup,
+                       analysis::mva_study::MvaReader mva_reader,
                        analysis::EventInfoBase* event_tau_up = nullptr,
                        analysis::EventInfoBase* event_tau_down = nullptr,
                        analysis::EventInfoBase* event_jet_up = nullptr,
-                       analysis::EventInfoBase* event_jet_down = nullptr,
-                       boost::optional<analysis::MvaReaderSetup> mva_setup,
-                       analysis::mva_study::MvaReader mva_reader)
+                       analysis::EventInfoBase* event_jet_down = nullptr)
     {
 
         static constexpr float default_value = std::numeric_limits<float>::lowest();
@@ -371,14 +373,14 @@ namespace htt_sync {
 
             if(mva_setup.is_initialized()) {
 
-                std::map<analysis::mva_study::MvaReader::MvaKey, double> scores;
+                std::map<analysis::mva_study::MvaReader::MvaKey, std::future<double>> scores;
                 for(const auto& mva_sel : mva_setup->selections) {
                     const auto& params = mva_sel.second;
                     const analysis::mva_study::MvaReader::MvaKey key{params.name, static_cast<int>(params.mass), params.spin};
                     std::cout << "Mva Key: " << params.name << ", " << params.mass << ", " << params.spin << std::endl;
                     if(!scores.count(key)) {
                         auto eval = std::bind(&analysis::mva_study::MvaReader::Evaluate, &mva_reader, key, &event);
-                        scores[key] = eval;
+                        scores[key] = run::async(eval);
                     }
                 }
             }
