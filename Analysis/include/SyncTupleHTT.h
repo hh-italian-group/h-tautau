@@ -350,6 +350,7 @@ namespace htt_sync {
 
         analysis::EventInfoBase::JetCollection jets_pt20;
         analysis::EventInfoBase::JetCollection jets_pt30;
+        std::map<analysis::mva_study::MvaReader::MvaKey, std::future<double>> scores;
 
         auto select_jets = [&](analysis::EventInfoBase* event_info) {
             jets_pt20.clear();
@@ -373,7 +374,6 @@ namespace htt_sync {
 
             if(mva_setup.is_initialized()) {
 
-                std::map<analysis::mva_study::MvaReader::MvaKey, std::future<double>> scores;
                 for(const auto& mva_sel : mva_setup->selections) {
                     const auto& params = mva_sel.second;
                     const analysis::mva_study::MvaReader::MvaKey key{params.name, static_cast<int>(params.mass), params.spin};
@@ -454,7 +454,11 @@ namespace htt_sync {
         sync().m_kinfit_jet_ES_down = COND_VAL(event_jet_down && event_jet_down->HasBjetPair() &&
                                                event_jet_down->GetKinFitResults().HasValidMass(),
                                                event_jet_down->GetKinFitResults().mass);
-        sync().mva_score = 1;
+
+        const analysis::mva_study::MvaReader::MvaKey key_1{"lm", 320, 0};
+        if(!scores.count(key_1))
+            throw exception("Key1 not found");
+        sync().mva_score_1 = static_cast<double>(scores.at(key_1));
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
