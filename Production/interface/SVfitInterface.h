@@ -36,8 +36,13 @@ inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(
         const LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>& lepton)
 {
     const auto& momentum = lepton.GetMomentum();
+    // applying fix for electron mass
+    static const double minVisMass = classic_svFit::electronMass, maxVisMass = minVisMass;
+    double preciseVisMass = momentum.mass();
+    if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
+    if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
     return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay,
-                                              momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M());
+                                            momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass);
 }
 
 template<>
