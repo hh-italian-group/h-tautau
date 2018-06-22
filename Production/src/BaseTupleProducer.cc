@@ -215,8 +215,8 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
                 if(tau_es_sf_set){
                     const auto shiftedMomentum_met = tau.p4() * tau_es_var;
-                    shifted_met_px += tauCandidate.GetMomentum().px() - shiftedMomentum_met.px();
-                    shifted_met_py += tauCandidate.GetMomentum().py() - shiftedMomentum_met.py();
+                    shifted_met_px -= shiftedMomentum_met.px();
+                    shifted_met_py -= shiftedMomentum_met.py();
                     met_shift_applied = true;
                 }
                 if(tau_es_set){
@@ -251,7 +251,7 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
     if(met_shift_applied){
         shifted_met_px += met->GetMomentum().px();
-        shifted_met_py += met->GetMomentum().px();
+        shifted_met_py += met->GetMomentum().py();
         analysis::LorentzVectorXYZ shifted_met;
         double E = std::hypot(shifted_met_px,shifted_met_py);
         shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
