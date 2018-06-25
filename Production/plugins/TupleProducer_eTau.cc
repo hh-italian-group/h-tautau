@@ -114,6 +114,9 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     if(productionMode == ProductionMode::hh) {
         cut(tau->tauID("againstElectronTightMVA6") > againstElectronTightMVA6, "againstElectron");
         cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
+        if(period == analysis::Period::Run2017) {
+            cut(tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5, "VVLooseIso");
+        }
     }
 }
 

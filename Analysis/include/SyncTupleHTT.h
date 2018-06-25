@@ -9,6 +9,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/Btag_2016.h"
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "AnalysisTypes.h"
+#include "hh-bbtautau/Analysis/include/MvaReader.h"
+#include "hh-bbtautau/Analysis/include/SampleDescriptorConfigEntryReader.h"
 
 #define LVAR(type, name, pref) VAR(type, name##_##pref)
 #define JVAR(type, name, suff, pref) VAR(type, suff##name##_##pref)
@@ -148,11 +150,33 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     JET_DATA(bjet_, 1) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     JET_DATA(bjet_, 2) /* leading b-jet sorted by csv (Fill only if corrected b-jet pt>20 GeV) */ \
     VAR(Double_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
+    /* mva_score */ \
+    VAR(Double_t, mva_score_nonRes_kl1) /* mva_score */\
+    VAR(Double_t, mva_score_lm_320) /* mva_score */\
+    VAR(Double_t, mva_score_mm_400) /* mva_score */\
+    VAR(Double_t, mva_score_hm_650) /* mva_score */\
+    VAR(Double_t, mva_score_nonRes_kl1_tau_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_lm_320_tau_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_mm_400_tau_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_hm_650_tau_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_nonRes_kl1_tau_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_lm_320_tau_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_mm_400_tau_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_hm_650_tau_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_nonRes_kl1_jet_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_lm_320_jet_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_mm_400_jet_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_hm_650_jet_ES_up) /* mva_score */\
+    VAR(Double_t, mva_score_nonRes_kl1_jet_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_lm_320_jet_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_mm_400_jet_ES_down) /* mva_score */\
+    VAR(Double_t, mva_score_hm_650_jet_ES_down) /* mva_score */\
+    /* m_kinFit */ \
     VAR(Float_t, m_kinfit) \
     VAR(Float_t, m_kinfit_tau_ES_up) \
     VAR(Float_t, m_kinfit_tau_ES_down) \
     VAR(Float_t, m_kinfit_jet_ES_up) \
-    VAR(Float_t, m_kinfit_jet_ES_down ) \
+    VAR(Float_t, m_kinfit_jet_ES_down) \
     VAR(Int_t, kinfit_convergence) \
     VAR(Float_t, deltaR_ll) \
     VAR(UInt_t, nFatJets) \
@@ -239,7 +263,9 @@ INITIALIZE_TREE(htt_sync, SyncTuple, SYNC_DATA)
 
 namespace htt_sync {
 
+
     void FillSyncTuple(analysis::EventInfoBase& event, htt_sync::SyncTuple& sync, analysis::Period run_period,
+                       analysis::mva_study::MvaReader* mva_reader = nullptr,
                        analysis::EventInfoBase* event_tau_up = nullptr,
                        analysis::EventInfoBase* event_tau_down = nullptr,
                        analysis::EventInfoBase* event_jet_up = nullptr,
@@ -403,7 +429,8 @@ namespace htt_sync {
         sync().bjet_phi_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1).GetMomentum().Phi());
         sync().bjet_rawf_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->rawf());
         sync().bjet_csv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->csv());
-        sync().bjet_deepcsv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->deepcsv());
+        sync().bjet_deepcsv_1 = COND_VAL(event.HasBjetPair(), event.GetBJet(1)->deepcsv() >= 0
+                ? event.GetBJet(1)->deepcsv() : -2);
         sync().bjet_resolution_1 = COND_VAL(event.HasBjetPair(),
                                             event.GetBJet(1)->resolution() * event.GetBJet(1).GetMomentum().E());
         sync().bjet_pt_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Pt());
@@ -411,10 +438,11 @@ namespace htt_sync {
         sync().bjet_phi_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2).GetMomentum().Phi());
         sync().bjet_rawf_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->rawf());
         sync().bjet_csv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->csv());
-        sync().bjet_deepcsv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->deepcsv());
+        sync().bjet_deepcsv_2 = COND_VAL(event.HasBjetPair(), event.GetBJet(2)->deepcsv() >= 0
+                ? event.GetBJet(2)->deepcsv() : -2);
         sync().bjet_resolution_2 = COND_VAL(event.HasBjetPair(),
                                             event.GetBJet(2)->resolution() * event.GetBJet(2).GetMomentum().E());
-        sync().ht_other_jets = event.GetHT();
+        sync().ht_other_jets = event.GetHT(false, true);
 
         sync().kinfit_convergence = COND_VAL_INT(event.HasBjetPair() , event.GetKinFitResults().convergence);
         sync().m_kinfit = COND_VAL(event.HasBjetPair() && event.GetKinFitResults().HasValidMass(),
@@ -432,6 +460,11 @@ namespace htt_sync {
                                                event_jet_down->GetKinFitResults().HasValidMass(),
                                                event_jet_down->GetKinFitResults().mass);
 
+
+        sync().mva_score_nonRes_kl1 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_smANkin_BSMklscan", 125, 1}, &event));
+        sync().mva_score_lm_320 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_lmANkin", 320, 0}, &event));
+        sync().mva_score_mm_400 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_mmANkin", 400, 0}, &event));
+        sync().mva_score_hm_650 = COND_VAL(mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_hmANkin", 650, 0}, &event));
 
         sync().deltaR_ll = ROOT::Math::VectorUtil::DeltaR(event->p4_1, event->p4_2);
 
@@ -465,10 +498,13 @@ namespace htt_sync {
                     std::count(event->genJets_hadronFlavour.begin(), event->genJets_hadronFlavour.end(), 4));
         sync().jets_nTotal_hadronFlavour_b = event->jets_nTotal_hadronFlavour_b;
         sync().jets_nTotal_hadronFlavour_c = event->jets_nTotal_hadronFlavour_c;
-        sync().jets_nSelected_hadronFlavour_b = static_cast<unsigned>(
-                    std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 5));
-        sync().jets_nSelected_hadronFlavour_c = static_cast<unsigned>(
-                    std::count(event->jets_hadronFlavour.begin(), event->jets_hadronFlavour.end(), 4));
+        sync().jets_nSelected_hadronFlavour_b = 0;
+        sync().jets_nSelected_hadronFlavour_c = 0;
+        for(const auto& jet : event.GetJets()) {
+            if(jet.GetMomentum().pt() <= 20) continue;
+            if(jet->hadronFlavour() == 5) ++sync().jets_nSelected_hadronFlavour_b;
+            if(jet->hadronFlavour() == 4) ++sync().jets_nSelected_hadronFlavour_c;
+        }
 
         //mva variables
         if(event.HasBjetPair()){
@@ -538,6 +574,10 @@ namespace htt_sync {
                                               event_tau_up->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_tau_ES_up_vbf_2 = COND_VAL(event_tau_up && event_tau_up->HasVBFjetPair(),
                                               event_tau_up->GetVBFJet(2).GetMomentum().Pt());
+        sync().mva_score_nonRes_kl1_tau_ES_up = COND_VAL(event_tau_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_smANkin_BSMklscan", 125, 1}, event_tau_up));
+        sync().mva_score_lm_320_tau_ES_up = COND_VAL(event_tau_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_lmANkin", 320, 0}, event_tau_up));
+        sync().mva_score_mm_400_tau_ES_up = COND_VAL(event_tau_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_mmANkin", 400, 0}, event_tau_up));
+        sync().mva_score_hm_650_tau_ES_up = COND_VAL(event_tau_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_hmANkin", 650, 0}, event_tau_up));
 
         select_jets(event_tau_down);
         sync().jpt_tau_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
@@ -550,6 +590,10 @@ namespace htt_sync {
                                                 event_tau_down->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_tau_ES_down_vbf_2 = COND_VAL(event_tau_down && event_tau_down->HasVBFjetPair(),
                                                 event_tau_down->GetVBFJet(2).GetMomentum().Pt());
+        sync().mva_score_nonRes_kl1_tau_ES_down = COND_VAL(event_tau_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_smANkin_BSMklscan", 125, 1}, event_tau_down));
+        sync().mva_score_lm_320_tau_ES_down = COND_VAL(event_tau_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_lmANkin", 320, 0}, event_tau_down));
+        sync().mva_score_mm_400_tau_ES_down = COND_VAL(event_tau_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_mmANkin", 400, 0}, event_tau_down));
+        sync().mva_score_hm_650_tau_ES_down = COND_VAL(event_tau_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_hmANkin", 650, 0}, event_tau_down));
 
         select_jets(event_jet_up);
         sync().jpt_jet_ES_up_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
@@ -562,6 +606,10 @@ namespace htt_sync {
                                               event_jet_up->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_jet_ES_up_vbf_2 = COND_VAL(event_jet_up && event_jet_up->HasVBFjetPair(),
                                               event_jet_up->GetVBFJet(2).GetMomentum().Pt());
+        sync().mva_score_nonRes_kl1_jet_ES_up = COND_VAL(event_jet_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_smANkin_BSMklscan", 125, 1}, event_jet_up));
+        sync().mva_score_lm_320_jet_ES_up = COND_VAL(event_jet_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_lmANkin", 320, 0}, event_jet_up));
+        sync().mva_score_mm_400_jet_ES_up = COND_VAL(event_jet_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_mmANkin", 400, 0}, event_jet_up));
+        sync().mva_score_hm_650_jet_ES_up = COND_VAL(event_jet_up && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_hmANkin", 650, 0}, event_jet_up));
 
         select_jets(event_jet_down);
         sync().jpt_jet_ES_down_1 = COND_VAL(jets_pt20.size() >= 1, jets_pt20.at(0).GetMomentum().Pt());
@@ -574,6 +622,10 @@ namespace htt_sync {
                                                 event_jet_down->GetVBFJet(1).GetMomentum().Pt());
         sync().jpt_jet_ES_down_vbf_2 = COND_VAL(event_jet_down && event_jet_down->HasVBFjetPair(),
                                                 event_jet_down->GetVBFJet(2).GetMomentum().Pt());
+        sync().mva_score_nonRes_kl1_jet_ES_down = COND_VAL(event_jet_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_smANkin_BSMklscan", 125, 1}, event_jet_down));
+        sync().mva_score_lm_320_jet_ES_down = COND_VAL(event_jet_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_lmANkin", 320, 0}, event_jet_down));
+        sync().mva_score_mm_400_jet_ES_down = COND_VAL(event_jet_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_mmANkin", 400, 0}, event_jet_down));
+        sync().mva_score_hm_650_jet_ES_down = COND_VAL(event_jet_down && mva_reader, mva_reader->Evaluate(analysis::mva_study::MvaReader::MvaKey{"mva_hmANkin", 650, 0}, event_jet_down));
 
         sync.Fill();
     }

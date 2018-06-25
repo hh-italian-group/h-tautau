@@ -195,9 +195,8 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
         TauCandidate tauCandidate(tau, Isolation(tau));
         if(isMC) {
             bool tau_es_set = false;
-            const analysis::gen_truth::MatchResult result =
-                        analysis::gen_truth::LeptonGenMatch(tauCandidate.GetMomentum(), *genParticles);
-            if(result.first == analysis::GenMatch::Tau){
+            if(tau.genJet() != nullptr && tau.genJet()->p4().pt() > 15
+                    && ROOT::Math::VectorUtil::DeltaR(tau.genJet()->p4(), tau.p4()) < 0.2) {
                 double corr_factor = 1;
                 double sf = 1;
                 double tau_es_var = 1;
@@ -216,8 +215,8 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
                 if(tau_es_sf_set){
                     const auto shiftedMomentum_met = tau.p4() * tau_es_var;
-                    shifted_met_px += tauCandidate.GetMomentum().px() - shiftedMomentum_met.px();
-                    shifted_met_py += tauCandidate.GetMomentum().py() - shiftedMomentum_met.py();
+                    shifted_met_px -= shiftedMomentum_met.px();
+                    shifted_met_py -= shiftedMomentum_met.py();
                     met_shift_applied = true;
                 }
                 if(tau_es_set){
@@ -252,7 +251,7 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
     if(met_shift_applied){
         shifted_met_px += met->GetMomentum().px();
-        shifted_met_py += met->GetMomentum().px();
+        shifted_met_py += met->GetMomentum().py();
         analysis::LorentzVectorXYZ shifted_met;
         double E = std::hypot(shifted_met_px,shifted_met_py);
         shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
@@ -727,6 +726,7 @@ void BaseTupleProducer::FillElectronLeg(size_t leg_id, const ElectronCandidate& 
     GET_LEG(dz) = electron->gsfTrack()->dz(primaryVertex->position());
     GET_LEG(iso) = electron.GetIsolation();
     GET_LEG(decayMode) = -1;
+    GET_LEG(es_shift_applied) = false;
     FillLegGenMatch(leg_id, electron->p4());
 }
 
@@ -738,6 +738,7 @@ void BaseTupleProducer::FillMuonLeg(size_t leg_id, const MuonCandidate& muon)
     GET_LEG(dz) = muon->muonBestTrack()->dz(primaryVertex->position());
     GET_LEG(iso) = muon.GetIsolation();
     GET_LEG(decayMode) = -1;
+    GET_LEG(es_shift_applied) = false;
     FillLegGenMatch(leg_id, muon->p4());
 }
 
@@ -759,6 +760,7 @@ void BaseTupleProducer::FillTauLeg(size_t leg_id, const TauCandidate& tau, bool 
     GET_LEG(dz) = packedLeadTauCand->dz();
     GET_LEG(iso) = tau.GetIsolation();
     GET_LEG(decayMode) = tau->decayMode();
+    GET_LEG(es_shift_applied) = tau.MomentumChanged();
     FillLegGenMatch(leg_id, tau->p4());
     GET_LEG(tauId_flags) = CreateTauIdResults(*tau, period).GetResultBits();
     RAW_TAU_IDS(leg_id)
@@ -787,6 +789,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().rho = *rho;
 
     // HTT candidate
+    eventTuple().SVfit_is_valid = selection.svfitResult.has_valid_momentum;
     eventTuple().SVfit_p4 = selection.svfitResult.momentum;
     eventTuple().SVfit_p4_error = selection.svfitResult.momentum_error;
     eventTuple().SVfit_mt = selection.svfitResult.transverseMass;

@@ -35,6 +35,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     LVAR(Float_t, dxy, n) /* dxy with respect to primary vertex */ \
     LVAR(Float_t, dz, n) /* dz with respect to primary vertex */ \
     LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Bool_t, es_shift_applied, n) /* ES shift is applied to the central value */\
     LVAR(Int_t, gen_match, n) /* Generator matching, see Htautau Twiki*/\
     LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
     LVAR(Int_t, decayMode, n) /* tau decay mode */ \
@@ -128,6 +129,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
+    VAR(Bool_t, SVfit_is_valid) /* SVfit using integration method */ \
     VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
     VAR(LorentzVectorM, SVfit_p4_error) /* SVfit using integration method */ \
     VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
