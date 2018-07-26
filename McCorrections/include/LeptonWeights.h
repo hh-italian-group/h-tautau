@@ -79,7 +79,7 @@ public:
 
     template<typename LorentzVector>
     double GetIdIsoSF(const LorentzVector& p4) const {
-//         std::cout << "GetIdSF(p4) * GetIsoSF(p4) : " << GetIdSF(p4) * GetIsoSF(p4) << '\n';
+         std::cout << "GetIdSF(p4) * GetIsoSF(p4) : " << GetIdSF(p4) * GetIsoSF(p4) << '\n';
         return GetIdSF(p4) * GetIsoSF(p4); }
 
     static HistPtr LoadWeight(const std::string& weight_file_name, const std::string& hist_name)
@@ -89,7 +89,7 @@ public:
     }
 
 private:
-    HistPtr id_hist, iso_hist, trigger_hist;
+    HistPtr id_hist, iso_hist;
  };
 
  class MuonScaleFactorPOG {
@@ -99,7 +99,7 @@ private:
 
      MuonScaleFactorPOG(const std::string& idInput, const std::string& isoInput, const std::string& triggerInput) :
          id_hist(LoadWeight(idInput,"NUM_MediumID_DEN_genTracks_pt_abseta")),
-         iso_hist(LoadWeight(isoInput,"NUM_TightRelIso_DEN_MediumID_pt_abseta")), //waht point
+         iso_hist(LoadWeight(isoInput,"NUM_TightRelIso_DEN_MediumID_pt_abseta")),
          trigger_hist(LoadWeight( triggerInput,"IsoMu27_PtEtaBins/pt_abseta_ratio"))
          {}
 
@@ -183,44 +183,33 @@ public:
 
             if(channel == Channel::ETau) {
                 if(!electronSFPOG || (std::abs(event.p4_2.eta()) < 2.1)){
-                    // if(std::abs(event.p4_2.eta()) < 2.1){
-                  // if(electronSFPOG == nullptr){
                         std::cout << "eta (Id Iso eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
                         std::cout << "Et(Id Iso eTau) : " << event.p4_2.Et() << '\n';
                         std::cout << "SF (Id Iso eTau) for eta < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
                         return electronSF.GetIdIsoSF(event.p4_1);
-                   // }
-                }
+                 }
 
-                     if ((std::abs(event.p4_2.eta()) >= 2.10) ){
-                    // else{
-                        std::cout << "eta (Id Iso eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Id Iso eTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Id Iso eTau) for eta > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return electronSFPOG->GetIdIsoSF(event.p4_1);
-                  // }
+                 if ((std::abs(event.p4_2.eta()) >= 2.10) ){
+                    std::cout << "eta (Id Iso eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Id Iso eTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Id Iso eTau) for eta > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return electronSFPOG->GetIdIsoSF(event.p4_1);
                 }
             }
 
             if(channel == Channel::MuTau) {
-                // if(!electronSFPOG){
-                    if(!muonSFPOG || (std::abs(event.p4_2.eta()) < 2.1)){
 
-                        std::cout << "eta (Id Iso muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Id Iso muTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Id Iso muTau) for eta < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return muonSF.GetIdIsoSF(event.p4_1);
-                   // }
+                if(!muonSFPOG || (std::abs(event.p4_2.eta()) < 2.1)){
+                    std::cout << "eta (Id Iso muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Id Iso muTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Id Iso muTau) for eta < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return muonSF.GetIdIsoSF(event.p4_1);
                 }
-                // else if(muonSFPOG  != nullptr){
-                     if ((std::abs(event.p4_2.eta()) >= 2.10) ){
-                 // if (electronSFPOG){
-                // else{
-                        std::cout << "eta (Id Iso muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Id Iso muTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Id Iso muTau) for eta > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return muonSFPOG->GetIdIsoSF(event.p4_1);
-                  // }
+                 if ((std::abs(event.p4_2.eta()) >= 2.10) ){
+                    std::cout << "eta (Id Iso muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Id Iso muTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Id Iso muTau) for eta > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return muonSFPOG->GetIdIsoSF(event.p4_1);
                 }
             }
         } catch(std::runtime_error& e) {
@@ -236,48 +225,36 @@ public:
             const Channel channel = static_cast<Channel>(event.channelId);
             if(channel == Channel::ETau) {
 
-                    if( !electronSFPOG || std::abs(event.p4_2.eta()) < 2.1){
-                //    if(electronSFPOG == nullptr){
-                        std::cout << "eta (Trigger eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Trigger eTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Trigger eTau) for eta  < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return electronSF.GetTriggerSF(event.p4_1);
-                   }
+                if( !electronSFPOG || std::abs(event.p4_2.eta()) < 2.1){
 
-                // else if (electronSFPOG  != nullptr) {
-                     if ( std::abs(event.p4_2.eta()) >= 2.10 ){
-                  // if (electronSFPOG){
-                  // else{
-                        std::cout << "eta (Trigger eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Trigger eTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Trigger eTau) for eta  > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return electronSFPOG->GetTriggerSF();
-                   // }
+                    std::cout << "eta (Trigger eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Trigger eTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Trigger eTau) for eta  < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return electronSF.GetTriggerSF(event.p4_1);
+                }
 
+                 if ( std::abs(event.p4_2.eta()) >= 2.10 ){
+                    std::cout << "eta (Trigger eTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Trigger eTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Trigger eTau) for eta  > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return electronSFPOG->GetTriggerSF();
                 }
             }
             if(channel == Channel::MuTau){
-                 // if(!electronSFPOG){
-                    if( !muonSFPOG || std::abs(event.p4_2.eta()) < 2.1){
-                //    if(muonSFPOG == nullptr){
-                        std::cout << "eta (Trigger muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Trigger muTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Trigger muTau) for eta  < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return muonSF.GetTriggerSF(event.p4_1);
-                    // }
+                if( !muonSFPOG || std::abs(event.p4_2.eta()) < 2.1){
+                    std::cout << "eta (Trigger muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Trigger muTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Trigger muTau) for eta  < 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return muonSF.GetTriggerSF(event.p4_1);
                 }
 
-                      if ( std::abs(event.p4_2.eta()) >= 2.10 ){
-                  // if (electronSFPOG){
-                   // else{
-                        std::cout << "eta (Trigger muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
-                        std::cout << "Et(Trigger muTau) : " << event.p4_2.Et() << '\n';
-                        std::cout << "SF (Trigger muTau) for eta  > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
-                        return muonSFPOG->GetTriggerSF(event.p4_1);
-
+                  if ( std::abs(event.p4_2.eta()) >= 2.10 ){
+                    std::cout << "eta (Trigger muTau): " <<  std::abs(event.p4_2.eta()) << '\n';
+                    std::cout << "Et(Trigger muTau) : " << event.p4_2.Et() << '\n';
+                    std::cout << "SF (Trigger muTau) for eta  > 2.1: " <<  electronSF.GetIdIsoSF(event.p4_1) << '\n';
+                    return muonSFPOG->GetTriggerSF(event.p4_1);
                 }
-
-         }
+            }
         } catch(std::runtime_error& e) {
             const EventIdentifier id(event);
             std::cerr << id << " ERROR: " << e.what() << std::endl;
