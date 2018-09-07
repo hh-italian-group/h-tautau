@@ -55,6 +55,8 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
     VAR(Float_t, lhe_hh_m) /* mass of lhe hh pair */ \
     VAR(Float_t, lhe_hh_cosTheta) /* cos(theta) between h and z-axis in the hh reference frame */ \
     /* MC truth event splitting */ \
+    VAR(UInt_t, file_desc_id)  /*File id in ExpressTuple.*/  \
+    VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
     VAR(UInt_t, lhe_n_partons) \
     VAR(UInt_t, lhe_n_b_partons) \
     VAR(UInt_t, lhe_ht10_bin) \
@@ -170,7 +172,7 @@ inline void CheckProdSummaryConsistency(const ProdSummary& s)
 inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os = nullptr)
 {
     if(s1.tauId_names.size() != s2.tauId_names.size()) {
-        if(os) *os << "Number of tou id are not compatible: " << s1.tauId_names.size() << "!="
+        if(os) *os << "Number of tau id are not compatible: " << s1.tauId_names.size() << "!="
                    << s2.tauId_names.size() << "." << std::endl;
         return false;
     }
@@ -255,6 +257,19 @@ inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
     ConvertGenEventCountMap(summary, genCountMap);
     ConvertGenEventTypeCountMap(summary, genEventTypeCountMap);
     return summary;
+}
+
+
+inline std::shared_ptr<ExpressTuple> CreateExpressTuple(const std::string& name, TDirectory* directory,
+                                                        bool readMode, TreeState treeState)
+{
+    static const std::map<TreeState, std::set<std::string>> disabled_branches = {
+        { TreeState::Full, { "file_desc_id", "split_id"} },
+        { TreeState::Skimmed, {} }
+    };
+
+    const auto& disabled = disabled_branches.at(treeState);
+    return std::make_shared<ExpressTuple>(name, directory, readMode, disabled);
 }
 
 } // namespace ntuple
