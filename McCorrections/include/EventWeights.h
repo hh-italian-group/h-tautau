@@ -53,7 +53,10 @@ public:
             if(mode.empty() || mode.count(WeightType::TauId))
                 providers[WeightType::TauId] = std::make_shared<TauIdWeight>(
                             FullName("Tau/fitresults_tt_moriond2017.json"), DiscriminatorWP::Medium);
-        } else {
+        }
+        else if(period == Period::Run2017) {
+        }
+        else {
             throw exception("Period %1% is not supported.") % period;
         }
     }
