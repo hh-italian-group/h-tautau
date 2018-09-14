@@ -2,13 +2,13 @@
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
-
 #include "PileUpWeight.h"
 #include "LeptonWeights.h"
 #include "BTagWeight.h"
 #include "TopPtWeight.h"
 #include "TauIdWeight.h"
 #include "WeightingMode.h"
+
 
 namespace analysis {
 namespace mc_corrections {
@@ -56,31 +56,27 @@ public:
         }
 
         else if(period == Period::Run2017) {
-                    if(mode.empty() || mode.count(WeightType::PileUp))
-                        providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
-                                    FullName("pileup_weight_600bins_Moriond17.root"), "pileup_weight", 60, 0);
-                    if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
+                        if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
                         providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+                                   Period::Run2017,
                                     FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
+                                    FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
                                     FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
+                                    FullName("2017/Electron/tauTariggerEfficiencies.root"),
                                     FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
-                                    FullLeptonName("Muon/Run2017/Muon_IsoMu27.root"),
+                                    FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
+                                    FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
+                                    // POGs SFs
                                     FullName("2017/Electron/EleIdSFPOG.root"),
                                     FullName("2017/Electron/EleIsoSFPOG.root"),
                                     FullName("2017/Muon/MuonIdSFPOG.root"),
                                     FullName("2017/Muon/MuonIsoSFPOG.root"),
-                                    FullName("2017/Muon/MuonTriggerSFPOG.root"));
-                    if(mode.empty() || mode.count(WeightType::BTag))
-                        providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                                    FullBtagName("bTagEfficiencies_Moriond17.root"), FullBtagName("CSVv2_Moriond17_B_H.csv"),
-                                    btag_wp);
+                                    FullName("2017/Muon/MuonTriggerSFPOG.root"),
+                                    FullName("Tau/fitresults_tt_moriond2017.json"),
+                                    DiscriminatorWP::Medium);
                     if(mode.empty() || mode.count(WeightType::TopPt))
                         providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
-                    if(mode.empty() || mode.count(WeightType::TauId))
-                        providers[WeightType::TauId] = std::make_shared<TauIdWeight>(
-                                    FullName("Tau/fitresults_tt_moriond2017.json"), DiscriminatorWP::Medium);
-                }
-
+        }
         else {
             throw exception("Period %1% is not supported.") % period;
         }
@@ -121,6 +117,7 @@ public:
 protected:
     static std::string FullName(const std::string& fileName, const std::string& path)
     {
+
         return path + "/" + fileName; //mettere un trow exception
     }
 
