@@ -171,8 +171,9 @@ public:
                   const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp) :
         electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
         muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
-        tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput))
-    {   tau_iso_wp = _tau_iso_wp;
+        tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput)),
+        tau_iso_wp(_tau_iso_wp)
+     {
         if(period == Period::Run2016)
             tauIdWeight = std::make_shared<TauIdWeight2016>(tauTriggerInput);
         else if(period == Period::Run2017)
@@ -199,7 +200,7 @@ public:
 
         else if(channel == Channel::TauTau) {
             return tauIdWeight->GetIdIsoSF(event.p4_1,
-                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2, DiscriminatorWP::VLoose,
+                static_cast<GenMatch>(event.gen_match_1), event.decayMode_1, DiscriminatorWP::VLoose,
                 DiscriminatorWP::Loose, tau_iso_wp) * tauIdWeight->GetIdIsoSF(event.p4_2,
                 static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,DiscriminatorWP::VLoose,
                 DiscriminatorWP::Loose, tau_iso_wp);
@@ -247,7 +248,7 @@ private:
         else if(channel == Channel::MuTau) {
             if(std::abs(event.p4_2.eta()) < 2.1){
                 const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
-                const double muon_cross_eff = electronSF.GetTriggerEffCross(event.p4_1, isData);
+                const double muon_cross_eff = muonSF.GetTriggerEffCross(event.p4_1, isData);
                 const double tau_eff = isData
                     ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
                                                    event.p4_2.phi(), TauTriggerSFs2017::kCentral)
@@ -285,10 +286,6 @@ private:
     std::shared_ptr<TauTriggerSFs2017> tauSF;
     std::shared_ptr<TauIdWeight> tauIdWeight;
     DiscriminatorWP tau_iso_wp;
-    // std::shared_ptr<detail::ElectronScaleFactorPOG> electronSFPOG;
-    // std::shared_ptr<detail::MuonScaleFactorPOG> muonSFPOG;
-    // std::shared_ptr<IWeightProvider> tauIdWeight;
-
 };
 
 } // namespace mc_corrections
