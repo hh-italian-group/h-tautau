@@ -47,7 +47,7 @@ public:
                             FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"));
             if(mode.empty() || mode.count(WeightType::BTag))
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                            FullBtagName("2016/btag/bTagEfficiencies_Moriond17.root"), FullBtagName("2016/btagCSVv2_Moriond17_B_H.csv"),
+                            FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btagCSVv2_Moriond17_B_H.csv"),
                             btag_wp);
             if(mode.empty() || mode.count(WeightType::TopPt))
                 providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
@@ -59,11 +59,11 @@ public:
             if(mode.empty() || mode.count(WeightType::BTag)){
                 if(jet_ordering == JetOrdering::DeepCSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                            FullBtagName("2017/btag/BTagEfficiency_deep_csv_pu_id_full.root"), FullBtagName("DeepCSV_94XSF_V3_B_F.csv"),
+                            FullName("2017/btag/BTagEfficiency_deep_csv_pu_id_full.root"), FullName("DeepCSV_94XSF_V3_B_F.csv"),
                             btag_wp);
                 else if(jet_ordering == JetOrdering::CSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                            FullBtagName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullBtagName("CSVv2_94XSF_V2_B_F.csv"),
+                            FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullName("CSVv2_94XSF_V2_B_F.csv"),
                             btag_wp);
                 else
                    throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
