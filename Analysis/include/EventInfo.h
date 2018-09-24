@@ -66,6 +66,12 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
 
 
 enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
+ENUM_NAMES(JetOrdering) = {
+    { JetOrdering::NoOrdering, "NoOrdering" },
+    { JetOrdering::Pt, "Pt" },
+    { JetOrdering::CSV, "CSV" },
+    { JetOrdering::DeepCSV, "DeepCSV" },
+};
 
 namespace jet_ordering {
 
