@@ -147,45 +147,26 @@ public:
 
 private:
     double getMuonMissIdSF(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const {
-        // https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
-        // https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs2017
+        //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
+        //https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs2017
 
-        if(std::abs(p4.eta()) < 0.4){
-            if(iso_wp == DiscriminatorWP::Loose)
-                return 1.06;
-            else if(iso_wp == DiscriminatorWP::Tight)
-                return 1.17;
-            else throw exception("WP %1% is not supported.") % iso_wp;
-        }
-        else if(std::abs(p4.eta()) < 0.8 && std::abs(p4.eta()) > 0.4){
-            if(iso_wp == DiscriminatorWP::Loose)
-                return 1.02;
-            else if(iso_wp == DiscriminatorWP::Tight)
-                return 1.29;
-            else throw exception("WP %1% is not supported.") % iso_wp;
-        }
-        else if(std::abs(p4.eta()) > 0.8 && std::abs(p4.eta()) < 1.2){
-            if(iso_wp == DiscriminatorWP::Loose)
-                return 1.10;
-            else if(iso_wp == DiscriminatorWP::Tight)
-                return 1.14;
-            else throw exception("WP %1% is not supported.") % iso_wp;
-        }
-        else if(std::abs(p4.eta()) > 1.2 && std::abs(p4.eta()) < 1.7){
-            if(iso_wp == DiscriminatorWP::Loose)
-                return 1.03;
-            else if(iso_wp == DiscriminatorWP::Tight)
-                return 0.93;
-            else throw exception("WP %1% is not supported.") % iso_wp;
-        }
-        else if(std::abs(p4.eta()) < 1.7 && std::abs(p4.eta()) > 2.3){
-            if(iso_wp == DiscriminatorWP::Loose)
-                return 1.94;
-            else if(iso_wp == DiscriminatorWP::Tight)
-                return 1.67;
-            else throw exception("WP %1% is not supported.") % iso_wp;
-        }
-        return 1;
+        if(!(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Tight))
+            throw exception("WP %1% is not supported.") % iso_wp;
+
+        if(std::abs(p4.eta()) >= 0.4)
+            return iso_wp == DiscriminatorWP::Loose ? 1.06 : 1.17;
+
+        else if(std::abs(p4.eta()) > 0.4 && std::abs(p4.eta()) < 0.8)
+            return iso_wp == DiscriminatorWP::Loose ? 1.02 : 1.29;
+
+        else if(std::abs(p4.eta()) >= 0.8 && std::abs(p4.eta()) < 1.2)
+            return iso_wp == DiscriminatorWP::Loose ? 1.10 : 1.14;
+
+        else if(std::abs(p4.eta()) >= 1.2 && std::abs(p4.eta()) < 1.7)
+            return iso_wp == DiscriminatorWP::Loose ? 1.03 : 0.93;
+
+        else if(std::abs(p4.eta()) >=1.7 && std::abs(p4.eta()) < 2.3)
+            return iso_wp == DiscriminatorWP::Loose ? 1.7 : 2.3;
     }
 
     double getEleMissIdSF(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const{
@@ -223,10 +204,9 @@ private:
 
             else throw exception("WP %1% is not supported.") % iso_wp;
         }
-        else
+        //Gap between barrel and endcaps
+        else if(std::abs(p4.eta()) >= 1.460 && std::abs(p4.eta()) <= 1.558)
             return 1;
-
-        return 1;
     }
 
     //Isolation sum with deltaR=0.5
@@ -239,8 +219,6 @@ private:
         else if (iso_wp == DiscriminatorWP::Tight)
             return  0.93;
         else throw exception("WP %1% is not supported.") % iso_wp;
-
-        return 1;
     }
 };
 } // namespace mc_corrections
