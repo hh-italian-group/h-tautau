@@ -59,11 +59,11 @@ public:
             if(mode.empty() || mode.count(WeightType::BTag)){
                 if(jet_ordering == JetOrdering::DeepCSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                            FullName("2017/btag/BTagEfficiency_deep_csv_pu_id_full.root"), FullName("DeepCSV_94XSF_V3_B_F.csv"),
+                            FullName("2017/btag/BTagEfficiency_deep_csv_pu_id_full.root"), FullName("2017/btag/DeepCSV_94XSF_V3_B_F.csv"),
                             btag_wp);
                 else if(jet_ordering == JetOrdering::CSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                            FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullName("CSVv2_94XSF_V2_B_F.csv"),
+                            FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullName("2017/btag/CSVv2_94XSF_V2_B_F.csv"),
                             btag_wp);
                 else
                    throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
