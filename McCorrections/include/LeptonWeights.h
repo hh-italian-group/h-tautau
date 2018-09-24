@@ -38,15 +38,21 @@ public:
     }
 
     template<typename LorentzVector>
-    double GetTriggerSF(const LorentzVector& p4 ) const
+    double GetTriggerEff(const LorentzVector& p4, bool isData) const
     {
-        return triggerSingle->get_ScaleFactor(p4.pt(), p4.eta());
+        if(isData)
+            return triggerSingle->get_EfficiencyData(p4.pt(), p4.eta());
+        else
+            return triggerSingle->get_EfficiencyMC(p4.pt(), p4.eta());
     }
 
     template<typename LorentzVector>
-    double GetTriggerSFCross(const LorentzVector& p4 ) const
+    double GetTriggerEffCross(const LorentzVector& p4, bool isData ) const
     {
-        return triggerCross->get_ScaleFactor(p4.pt(), p4.eta());
+        if(isData)
+            return triggerCross->get_EfficiencyData(p4.pt(), p4.eta());
+        else
+            return triggerCross->get_EfficiencyMC(p4.pt(), p4.eta());
     }
 
 private:
@@ -160,32 +166,19 @@ public:
     using Event = ntuple::Event;
 
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
-                  const std::string& muon_idIsoInput, const std::string& muon_SingletriggerInput ) :
-        electronSF(electron_idIsoInput, electron_SingletriggerInput),
-        muonSF(muon_idIsoInput, muon_SingletriggerInput)
-     {
-     }
-
-    LeptonWeights(Period period, const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
-                  const std::string& electron_CrossTriggerInput, const std::string& tauTriggerInput,
-                  const std::string& muon_idIsoInput, const std::string& muon_SingletriggerInput,
-                  const std::string& muon_CrossTriggerInput,
-                  const std::string& electron_idInput, const std::string& electron_IsoInput,
-                  const std::string& muon_idInput, const std::string& muon_IsoInput, const std::string& muon_triggerInput,
-                  const std::string& tauId_input, DiscriminatorWP tau_iso_wp ) :
+                  const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
+                  const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
+                  const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp) :
         electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
         muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
-        tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput, "medium")),
-        electronSFPOG(std::make_shared<detail::ElectronScaleFactorPOG>(electron_idInput, electron_IsoInput)),
-        muonSFPOG(std::make_shared<detail::MuonScaleFactorPOG>(muon_idInput, muon_IsoInput, muon_triggerInput)),
-        tauIdWeight(std::make_shared<TauIdWeight2017>(tauId_input, tau_iso_wp))
-    {
+        tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput))
+    {   tau_iso_wp = _tau_iso_wp;
         if(period == Period::Run2016)
-            tauIdWeight = std::make_shared<TauIdWeight>(tauId_input, tau_iso_wp);
+            tauIdWeight = std::make_shared<TauIdWeight2016>(tauTriggerInput);
         else if(period == Period::Run2017)
-            tauIdWeight = std::make_shared<TauIdWeight2017>(tauId_input, tau_iso_wp);
+            tauIdWeight = std::make_shared<TauIdWeight2017>();
         else
-            throw exception("Period %1% is not supported.");
+            throw exception("Period %1% is not supported.") % period;
     }
 
     double GetIdIsoWeight(const Event& event) const
@@ -193,120 +186,37 @@ public:
         const Channel channel = static_cast<Channel>(event.channelId);
 
         if(channel == Channel::ETau) {
-            //Recommendation for Ele SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/Egamma2017DataRecommendations
-            double tauSF = 0;
-            //Barrel ( abs(eta) < 1.460)
-            if(std::abs(event.p4_1.eta()) < 1.460){
-                double tauIsoMedium = 0.89;
-                double AgainstEleTight = 1.80;
-
-                tauSF = tauIsoMedium * AgainstEleTight;
-            }
-            // Endcaps ( abs(eta) > 1.558)
-            else if(std::abs(event.p4_1.eta()) < 1.558){
-                double tauIsoMedium = 0.89;
-                double AgainstEleTight = 1.53;
-
-                tauSF = tauIsoMedium * AgainstEleTight;
-            }
-            return (electronSF.GetIdIsoSF(event.p4_1) * tauSF);
+            return electronSF.GetIdIsoSF(event.p4_1) * tauIdWeight->GetIdIsoSF(event.p4_2,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2, DiscriminatorWP::Tight,
+                DiscriminatorWP::Loose, tau_iso_wp);
         }
 
         else if(channel == Channel::MuTau) {
-            //Recommendation for Muon SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs2017
-            double tauSF = 0;
-            if(0 < std::abs(event.p4_1.eta()) < 0.4){
-                double tauIsoMedium = 0.89;
-                double againstMuonTight = 1.17;
-
-                tauSF = tauIsoMedium * againstMuonTight;
-            }
-
-            else if(0.4 < std::abs(event.p4_1.eta()) < 0.8){
-                double tauIsoMedium = 0.89;
-                double againstMuonTight = 1.29;
-
-                tauSF = tauIsoMedium * againstMuonTight;
-            }
-
-            else if(0.8 < std::abs(event.p4_1.eta()) < 1.2){
-                double tauIsoMedium = 0.89;
-                double againstMuonTight = 1.14;
-
-                tauSF = tauIsoMedium * againstMuonTight;
-            }
-
-            else if(1.2 < std::abs(event.p4_1.eta()) < 1.7){
-                double tauIsoMedium = 0.89;
-                double againstMuonTight = 0.93;
-
-                tauSF = tauIsoMedium * againstMuonTight;
-            }
-
-            else if(1.7 < std::abs(event.p4_1.eta()) < 2.3){
-                double tauIsoMedium = 0.89;
-                double againstMuonTight = 1.61;
-
-                tauSF = tauIsoMedium * againstMuonTight;
-            }
-            return muonSF.GetIdIsoSF(event.p4_1) * tauSF;
+            return muonSF.GetIdIsoSF(event.p4_1) * tauIdWeight->GetIdIsoSF(event.p4_2,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,  DiscriminatorWP::VLoose,
+                DiscriminatorWP::Tight, tau_iso_wp);
         }
 
-        else if (channel == Channel::TauTau) {
-            //Recommendation for Tau SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
-            //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
-            double tauIsoMedium = 0.89;
-            double tauSF =  2 * tauIsoMedium;
-
-            return tauSF;
+        else if(channel == Channel::TauTau) {
+            return tauIdWeight->GetIdIsoSF(event.p4_1,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2, DiscriminatorWP::VLoose,
+                DiscriminatorWP::Loose, tau_iso_wp) * tauIdWeight->GetIdIsoSF(event.p4_2,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,DiscriminatorWP::VLoose,
+                DiscriminatorWP::Loose, tau_iso_wp);
         }
 
         else if(channel == Channel::MuMu)
             return muonSF.GetIdIsoSF(event.p4_1) * muonSF.GetIdIsoSF(event.p4_2);
-
         else
             throw exception ("channel not allowed");
     }
 
     double GetTriggerWeight(const Event& event) const
     {
-        const Channel channel = static_cast<Channel>(event.channelId);
-        if(channel == Channel::ETau) {
+        const double eff_data = GetTriggerEfficiency(event, true);
+        const double eff_mc = GetTriggerEfficiency(event, false);
+        return eff_data / eff_mc;
 
-            if(std::abs(event.p4_2.eta()) < 2.1){
-
-                double SF = electronSF.GetTriggerSF(event.p4_1) *
-                            (1 - tauSF->getETauScaleFactor(event.p4_2.pt(), event.p4_2.eta(), event.p4_2.phi(), TauTriggerSFs2017::kCentral)) +
-                            electronSF.GetTriggerSFCross(event.p4_1) * (tauSF->getETauScaleFactor(event.p4_2.pt(), event.p4_2.eta(), event.p4_2.phi(), TauTriggerSFs2017::kCentral));
-                return SF;
-            }
-            else
-                return electronSF.GetTriggerSF(event.p4_1);
-        }
-        if(channel == Channel::MuTau){
-            if(std::abs(event.p4_2.eta()) < 2.1){
-
-                double SF = muonSF.GetTriggerSF(event.p4_1) *
-                            (1 - tauSF->getMuTauScaleFactor(event.p4_2.pt(), event.p4_2.eta(), event.p4_2.phi(), TauTriggerSFs2017::kCentral)) +
-                            muonSF.GetTriggerSFCross(event.p4_1) * tauSF->getMuTauScaleFactor(event.p4_2.pt(), event.p4_2.eta(), event.p4_2.phi(), TauTriggerSFs2017::kCentral);
-                return SF;
-            }
-            else
-                return muonSF.GetTriggerSF(event.p4_1);
-            }
-
-        if(channel == Channel::TauTau){
-
-            double SF1 = tauSF->getDiTauScaleFactor(event.p4_1.pt(), event.p4_1.eta(), event.p4_1.phi(), TauTriggerSFs2017::kCentral);
-            double SF2 = tauSF->getDiTauScaleFactor(event.p4_2.pt(), event.p4_2.eta(), event.p4_2.phi(), TauTriggerSFs2017::kCentral);
-
-            return SF1 * SF2;
-        }
-
-        if(channel == Channel::MuMu)
-            return muonSF.GetTriggerSF(event.p4_1);
-
-        else throw exception ("channel not allowed");
     }
 
     virtual double Get(const Event& event) const override { return GetIdIsoWeight(event) * GetTriggerWeight(event); }
@@ -317,11 +227,67 @@ public:
     }
 
 private:
+    double GetTriggerEfficiency(const Event& event, bool isData) const
+    {
+        const Channel channel = static_cast<Channel>(event.channelId);
+        if(channel == Channel::ETau) {
+            if(std::abs(event.p4_2.eta()) < 2.1){
+                const double ele_single_eff = electronSF.GetTriggerEff(event.p4_1, isData);
+                const double ele_cross_eff = electronSF.GetTriggerEffCross(event.p4_1, isData);
+                const double tau_eff = isData
+                    ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
+                                                   event.p4_2.phi(), TauTriggerSFs2017::kCentral)
+                    : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
+                                                 event.p4_2.phi(), TauTriggerSFs2017::kCentral);
+                return ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff;
+            }
+            else
+                return electronSF.GetTriggerEff(event.p4_1, isData);
+        }
+        else if(channel == Channel::MuTau) {
+            if(std::abs(event.p4_2.eta()) < 2.1){
+                const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
+                const double muon_cross_eff = electronSF.GetTriggerEffCross(event.p4_1, isData);
+                const double tau_eff = isData
+                    ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
+                                                   event.p4_2.phi(), TauTriggerSFs2017::kCentral)
+                    : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
+                                                 event.p4_2.phi(), TauTriggerSFs2017::kCentral);
+                return muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff;
+            }
+            else
+                return muonSF.GetTriggerEff(event.p4_1, isData);
+        }
+
+        else if(channel == Channel::TauTau) {
+            const double tau_eff_1 = isData
+                ? tauSF->getDiTauEfficiencyData(event.p4_1.pt(), event.p4_1.eta(),
+                                               event.p4_1.phi(), TauTriggerSFs2017::kCentral)
+                : tauSF->getETauEfficiencyMC(event.p4_1.pt(), event.p4_1.eta(),
+                                             event.p4_1.phi(), TauTriggerSFs2017::kCentral);
+
+             const double tau_eff_2 = isData
+                 ? tauSF->getDiTauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
+                                                event.p4_2.phi(), TauTriggerSFs2017::kCentral)
+                 : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
+                                              event.p4_2.phi(), TauTriggerSFs2017::kCentral);
+            return  tau_eff_1 * tau_eff_2;
+        }
+
+        else if(channel == Channel::MuMu)
+            return  muonSF.GetTriggerEff(event.p4_1, isData) * muonSF.GetTriggerEff(event.p4_2, isData);
+
+        else throw exception ("channel not allowed");
+    }
+
+private:
     detail::LeptonScaleFactors electronSF, muonSF;
     std::shared_ptr<TauTriggerSFs2017> tauSF;
-    std::shared_ptr<detail::ElectronScaleFactorPOG> electronSFPOG;
-    std::shared_ptr<detail::MuonScaleFactorPOG> muonSFPOG;
-    std::shared_ptr<IWeightProvider> tauIdWeight;
+    std::shared_ptr<TauIdWeight> tauIdWeight;
+    DiscriminatorWP tau_iso_wp;
+    // std::shared_ptr<detail::ElectronScaleFactorPOG> electronSFPOG;
+    // std::shared_ptr<detail::MuonScaleFactorPOG> muonSFPOG;
+    // std::shared_ptr<IWeightProvider> tauIdWeight;
 
 };
 
