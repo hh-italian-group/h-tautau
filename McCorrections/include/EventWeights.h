@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TopPtWeight.h"
 #include "TauIdWeight.h"
 #include "WeightingMode.h"
+#include "h-tautau/Analysis/include/EventInfo.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -18,7 +19,7 @@ public:
     using ProviderPtr = std::shared_ptr<IWeightProvider>;
     using ProviderMap = std::map<WeightType, ProviderPtr>;
 
-    EventWeights(Period period, DiscriminatorWP btag_wp, const WeightingMode& mode = {})
+    EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, const WeightingMode& mode = {})
     {
         if(period == Period::Run2015) {
             if(mode.empty() || mode.count(WeightType::PileUp))
@@ -55,6 +56,16 @@ public:
                             FullName("Tau/fitresults_tt_moriond2017.json"), DiscriminatorWP::Medium);
         }
         else if(period == Period::Run2017) {
+            if(mode.empty() || mode.count(WeightType::BTag)){
+                if(jet_ordering == JetOrdering::DeepCSV)
+                    providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                            FullBtagName("BTagEfficiency_deep_csv_pu_id_full.root"), FullBtagName("DeepCSV_94XSF_V3_B_F.csv"),
+                            btag_wp);
+                if(jet_ordering == JetOrdering::CSV)
+                    providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                            FullBtagName("BTagEfficiency_csv_pu_id_full.root"), FullBtagName("CSVv2_94XSF_V2_B_F.csv"),
+                            btag_wp);
+            }
         }
         else {
             throw exception("Period %1% is not supported.") % period;
