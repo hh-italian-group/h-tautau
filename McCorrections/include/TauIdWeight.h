@@ -153,10 +153,10 @@ private:
         if(!(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Tight))
             throw exception("WP %1% is not supported.") % iso_wp;
 
-        if(std::abs(p4.eta()) >= 0.4)
+        if(std::abs(p4.eta()) < 0.4)
             return iso_wp == DiscriminatorWP::Loose ? 1.06 : 1.17;
 
-        else if(std::abs(p4.eta()) > 0.4 && std::abs(p4.eta()) < 0.8)
+        else if(std::abs(p4.eta()) >= 0.4 && std::abs(p4.eta()) < 0.8)
             return iso_wp == DiscriminatorWP::Loose ? 1.02 : 1.29;
 
         else if(std::abs(p4.eta()) >= 0.8 && std::abs(p4.eta()) < 1.2)
@@ -167,6 +167,8 @@ private:
 
         else if(std::abs(p4.eta()) >=1.7 && std::abs(p4.eta()) < 2.3)
             return iso_wp == DiscriminatorWP::Loose ? 1.7 : 2.3;
+
+        else throw exception("eta out of range");
     }
 
     double getEleMissIdSF(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const{
@@ -204,9 +206,8 @@ private:
 
             else throw exception("WP %1% is not supported.") % iso_wp;
         }
-        //Gap between barrel and endcaps
-        else if(std::abs(p4.eta()) >= 1.460 && std::abs(p4.eta()) <= 1.558)
-            return 1;
+
+        else throw exception("eta out of range");
     }
 
     //Isolation sum with deltaR=0.5
