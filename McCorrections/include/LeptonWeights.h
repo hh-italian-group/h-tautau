@@ -1,5 +1,6 @@
-/*! Various lepton weights.
+/* Various lepton weights.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
+
 
 #pragma once
 
@@ -7,20 +8,27 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "WeightProvider.h"
+#include "TauTriggerSFs2017.h"
+#include "TauIdWeight.h"
 
 namespace analysis {
 namespace mc_corrections {
-
 namespace detail {
+
 class LeptonScaleFactors {
 public:
     using SF = htt_utilities::ScaleFactor;
 
-    LeptonScaleFactors(const std::string& idIsoInput, const std::string& triggerInput) :
-        idIso(new SF()), trigger(new SF())
+    LeptonScaleFactors(const std::string& idIsoInput, const std::string& triggerInputSingle, const std::string& triggerInputCross = "") :
+        idIso(new SF()), triggerSingle(new SF())
+
     {
         idIso->init_ScaleFactor(idIsoInput);
-        trigger->init_ScaleFactor(triggerInput);
+        triggerSingle->init_ScaleFactor(triggerInputSingle);
+        if(!triggerInputCross.empty()) {
+            triggerCross = std::make_shared<SF>();
+            triggerCross->init_ScaleFactor(triggerInputCross);
+        }
     }
 
     template<typename LorentzVector>
@@ -30,82 +38,61 @@ public:
     }
 
     template<typename LorentzVector>
-    double GetTriggerSF(const LorentzVector& p4) const
+    double GetTriggerEff(const LorentzVector& p4, bool isData) const
     {
-        return trigger->get_ScaleFactor(p4.pt(), p4.eta());
+        if(isData)
+            return triggerSingle->get_EfficiencyData(p4.pt(), p4.eta());
+        else
+            return triggerSingle->get_EfficiencyMC(p4.pt(), p4.eta());
     }
 
     template<typename LorentzVector>
-    double GetTotalSF(const LorentzVector& p4) const { return GetIsoSF(p4) * GetTriggerSF(p4); }
+    double GetTriggerEffCross(const LorentzVector& p4, bool isData ) const
+    {
+        if(isData)
+            return triggerCross->get_EfficiencyData(p4.pt(), p4.eta());
+        else
+            return triggerCross->get_EfficiencyMC(p4.pt(), p4.eta());
+    }
 
 private:
-    std::shared_ptr<SF> idIso, trigger;
+    std::shared_ptr<SF> idIso, triggerSingle, triggerCross;
 };
 
-class MuonScaleFactorPOG {
+class ElectronScaleFactorPOG {
 public:
     using Hist = TH1;
     using HistPtr = std::shared_ptr<Hist>;
 
-    MuonScaleFactorPOG(const std::string& idInput_B_F, const std::string& isoInput_B_F,
-                       const std::string& triggerInput_B_F, const std::string& idInput_G_H,
-                       const std::string& isoInput_G_H, const std::string& triggerInput_G_H) :
-        id_hist_B_F(LoadWeight(idInput_B_F,"MC_NUM_TightID_DEN_genTracks_PAR_pt_eta/pt_abseta_ratio")),
-        id_hist_G_H(LoadWeight(idInput_G_H,"MC_NUM_TightID_DEN_genTracks_PAR_pt_eta/pt_abseta_ratio")),
-        iso_hist_B_F(LoadWeight(isoInput_B_F,"LooseISO_TightID_pt_eta/pt_abseta_ratio")),
-        iso_hist_G_H(LoadWeight(isoInput_G_H,"LooseISO_TightID_pt_eta/pt_abseta_ratio")),
-        trigger_hist_B_F(LoadWeight(triggerInput_B_F,"IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio")),
-        trigger_hist_G_H(LoadWeight(triggerInput_G_H,"IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio")),
-        lumi_B_F(19.72), lumi_G_H(15.931)
+    ElectronScaleFactorPOG(const std::string& idInput, const std::string& isoInput) :
+        id_hist(LoadWeight(idInput,"EGamma_SF2D")),
+        iso_hist(LoadWeight(isoInput,"EGamma_SF2D"))
+        {}
+
+    double GetTriggerSF() const { return 0.991; }
+
+    template<typename LorentzVector>
+    double GetIsoSF(const LorentzVector& p4) const
     {
-//        file_idInput_B_F = new TFile(idInput_B_F, "read");
+        const Int_t bin_eta = iso_hist->GetXaxis()->FindBin(std::abs(p4.eta()));
+        const Int_t bin_et = iso_hist->GetYaxis()->FindBin(p4.Et());
+        double sf = iso_hist->GetBinContent(bin_eta,bin_et);
+
+        return sf;
     }
 
     template<typename LorentzVector>
     double GetIdSF(const LorentzVector& p4) const
     {
-//        TH2F* hist_B_F = (TH2F*)file_idInput_B_F->Get("MC_NUM_TightID_DEN_genTracks_PAR_pt_eta/pt_abseta_ratio");
-        const Int_t bin_pt_B_F = id_hist_B_F->GetXaxis()->FindBin(p4.pt());
-        const Int_t bin_eta_B_F = id_hist_B_F->GetYaxis()->FindBin(std::abs(p4.eta()));
-        double sf_B_F = id_hist_B_F->GetBinContent(bin_pt_B_F,bin_eta_B_F);
+        const Int_t bin_eta = id_hist->GetXaxis()->FindBin(std::abs(p4.eta()));
+        const Int_t bin_et = id_hist->GetYaxis()->FindBin(p4.Et());
+        double sf = id_hist->GetBinContent(bin_eta,bin_et);
 
-        const Int_t bin_pt_G_H = id_hist_G_H->GetXaxis()->FindBin(p4.pt());
-        const Int_t bin_eta_G_H = id_hist_G_H->GetYaxis()->FindBin(std::abs(p4.eta()));
-        double sf_G_H = id_hist_G_H->GetBinContent(bin_pt_G_H,bin_eta_G_H);
-
-        return ((sf_B_F * lumi_B_F) + (sf_G_H * lumi_G_H))/(lumi_B_F + lumi_G_H);
+        return sf;
     }
 
     template<typename LorentzVector>
-    double GetIsoSF(const LorentzVector& p4) const
-    {
-        const Int_t bin_pt_B_F = iso_hist_B_F->GetXaxis()->FindBin(p4.pt());
-        const Int_t bin_eta_B_F = iso_hist_B_F->GetYaxis()->FindBin(std::abs(p4.eta()));
-        double sf_B_F = iso_hist_B_F->GetBinContent(bin_pt_B_F,bin_eta_B_F);
-
-        const Int_t bin_pt_G_H = iso_hist_G_H->GetXaxis()->FindBin(p4.pt());
-        const Int_t bin_eta_G_H = iso_hist_G_H->GetYaxis()->FindBin(std::abs(p4.eta()));
-        double sf_G_H = iso_hist_G_H->GetBinContent(bin_pt_G_H,bin_eta_G_H);
-
-        return ((sf_B_F * lumi_B_F) + (sf_G_H * lumi_G_H))/(lumi_B_F + lumi_G_H);
-    }
-
-    template<typename LorentzVector>
-    double GetTriggerSF(const LorentzVector& p4) const
-    {
-        const Int_t bin_pt_B_F = trigger_hist_B_F->GetXaxis()->FindBin(p4.pt());
-        const Int_t bin_eta_B_F = trigger_hist_B_F->GetYaxis()->FindBin(std::abs(p4.eta()));
-        double sf_B_F = trigger_hist_B_F->GetBinContent(bin_pt_B_F,bin_eta_B_F);
-
-        const Int_t bin_pt_G_H = trigger_hist_G_H->GetXaxis()->FindBin(p4.pt());
-        const Int_t bin_eta_G_H = trigger_hist_G_H->GetYaxis()->FindBin(std::abs(p4.eta()));
-        double sf_G_H = trigger_hist_G_H->GetBinContent(bin_pt_G_H,bin_eta_G_H);
-
-        return ((sf_B_F * lumi_B_F) + (sf_G_H * lumi_G_H))/(lumi_B_F + lumi_G_H);
-    }
-
-    template<typename LorentzVector>
-    double GetTotalSF(const LorentzVector& p4) const { return GetIdSF(p4) * GetIsoSF(p4) * GetTriggerSF(p4); }
+    double GetIdIsoSF(const LorentzVector& p4) const { return GetIdSF(p4) * GetIsoSF(p4); }
 
     static HistPtr LoadWeight(const std::string& weight_file_name, const std::string& hist_name)
     {
@@ -114,9 +101,62 @@ public:
     }
 
 private:
-    HistPtr id_hist_B_F, id_hist_G_H, iso_hist_B_F, iso_hist_G_H, trigger_hist_B_F, trigger_hist_G_H;
-    double lumi_B_F, lumi_G_H;
+    HistPtr id_hist, iso_hist;
+ };
 
+ class MuonScaleFactorPOG {
+ public:
+     using Hist = TH1;
+     using HistPtr = std::shared_ptr<Hist>;
+
+     MuonScaleFactorPOG(const std::string& idInput, const std::string& isoInput, const std::string& triggerInput) :
+         id_hist(LoadWeight(idInput,"NUM_MediumID_DEN_genTracks_pt_abseta")),
+         iso_hist(LoadWeight(isoInput,"NUM_TightRelIso_DEN_MediumID_pt_abseta")),
+         trigger_hist(LoadWeight( triggerInput,"IsoMu27_PtEtaBins/pt_abseta_ratio"))
+         {}
+
+     template<typename LorentzVector>
+     double GetTriggerSF(const LorentzVector& p4) const
+     {
+
+         const Int_t bin_pt = trigger_hist->GetXaxis()->FindBin(p4.pt());
+         const Int_t bin_eta = trigger_hist->GetYaxis()->FindBin(std::abs(p4.eta()));
+         double sf = trigger_hist->GetBinContent(bin_pt,bin_eta);
+
+         return sf;
+     }
+
+     template<typename LorentzVector>
+     double GetIsoSF(const LorentzVector& p4) const
+     {
+         const Int_t bin_pt = iso_hist->GetXaxis()->FindBin(p4.pt());
+         const Int_t bin_eta = iso_hist->GetYaxis()->FindBin(std::abs(p4.eta()));
+         double sf = iso_hist->GetBinContent(bin_pt,bin_eta);
+
+         return sf;
+     }
+
+     template<typename LorentzVector>
+     double GetIdSF(const LorentzVector& p4) const
+     {
+         const Int_t bin_pt = id_hist->GetXaxis()->FindBin(p4.pt());
+         const Int_t bin_eta = id_hist->GetYaxis()->FindBin(std::abs(p4.eta()));
+         double sf = id_hist->GetBinContent(bin_pt,bin_eta);
+
+         return sf;
+     }
+
+     template<typename LorentzVector>
+     double GetIdIsoSF(const LorentzVector& p4) const { return GetIdSF(p4) * GetIsoSF(p4); }
+
+     static HistPtr LoadWeight(const std::string& weight_file_name, const std::string& hist_name)
+     {
+         auto file = root_ext::OpenRootFile(weight_file_name);
+         return HistPtr(root_ext::ReadCloneObject<Hist>(*file, hist_name, "", true));
+     }
+
+     private:
+     HistPtr id_hist, iso_hist, trigger_hist;
 };
 
 } // namespace detail
@@ -125,37 +165,59 @@ class LeptonWeights : public IWeightProvider {
 public:
     using Event = ntuple::Event;
 
-    LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_triggerInput,
-                  const std::string& muon_idIsoInput, const std::string& muon_triggerInput) :
-        electronSF(electron_idIsoInput, electron_triggerInput),
-        muonSF(muon_idIsoInput, muon_triggerInput)
-    {
+    LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
+                  const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
+                  const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
+                  const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp) :
+        electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
+        muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
+        tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput)),
+        tau_iso_wp(_tau_iso_wp)
+     {
+        if(period == Period::Run2016)
+            tauIdWeight = std::make_shared<TauIdWeight2016>(tauTriggerInput);
+        else if(period == Period::Run2017)
+            tauIdWeight = std::make_shared<TauIdWeight2017>();
+        else
+            throw exception("Period %1% is not supported.") % period;
     }
 
     double GetIdIsoWeight(const Event& event) const
     {
-        try {
-            const Channel channel = static_cast<Channel>(event.channelId);
-            if(channel == Channel::ETau) return electronSF.GetIdIsoSF(event.p4_1);
-            if(channel == Channel::MuTau) return muonSF.GetIdIsoSF(event.p4_1);
-        } catch(std::runtime_error& e) {
-            const EventIdentifier id(event);
-            std::cerr << id << " ERROR: " << e.what() << std::endl;
+        const Channel channel = static_cast<Channel>(event.channelId);
+
+        if(channel == Channel::ETau) {
+            return electronSF.GetIdIsoSF(event.p4_1) * tauIdWeight->GetIdIsoSF(event.p4_2,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2, DiscriminatorWP::Tight,
+                DiscriminatorWP::Loose, tau_iso_wp);
         }
-        return 1.0;
+
+        else if(channel == Channel::MuTau) {
+            return muonSF.GetIdIsoSF(event.p4_1) * tauIdWeight->GetIdIsoSF(event.p4_2,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,  DiscriminatorWP::VLoose,
+                DiscriminatorWP::Tight, tau_iso_wp);
+        }
+
+        else if(channel == Channel::TauTau) {
+            return tauIdWeight->GetIdIsoSF(event.p4_1,
+                static_cast<GenMatch>(event.gen_match_1), event.decayMode_1, DiscriminatorWP::VLoose,
+                DiscriminatorWP::Loose, tau_iso_wp) * tauIdWeight->GetIdIsoSF(event.p4_2,
+                static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,DiscriminatorWP::VLoose,
+                DiscriminatorWP::Loose, tau_iso_wp);
+        }
+
+        else if(channel == Channel::MuMu)
+            return muonSF.GetIdIsoSF(event.p4_1) * muonSF.GetIdIsoSF(event.p4_2);
+        else
+            throw exception ("channel not allowed");
     }
 
     double GetTriggerWeight(const Event& event) const
     {
-        try {
-            const Channel channel = static_cast<Channel>(event.channelId);
-            if(channel == Channel::ETau) return electronSF.GetTriggerSF(event.p4_1);
-            if(channel == Channel::MuTau) return muonSF.GetTriggerSF(event.p4_1);
-        } catch(std::runtime_error& e) {
-            const EventIdentifier id(event);
-            std::cerr << id << " ERROR: " << e.what() << std::endl;
-        }
-        return 1.0;
+        const double eff_data = GetTriggerEfficiency(event, true);
+        const double eff_mc = GetTriggerEfficiency(event, false);
+        return eff_data / eff_mc;
+
     }
 
     virtual double Get(const Event& event) const override { return GetIdIsoWeight(event) * GetTriggerWeight(event); }
@@ -166,8 +228,64 @@ public:
     }
 
 private:
+    double GetTriggerEfficiency(const Event& event, bool isData) const
+    {
+        const Channel channel = static_cast<Channel>(event.channelId);
+        if(channel == Channel::ETau) {
+            if(std::abs(event.p4_2.eta()) < 2.1){
+                const double ele_single_eff = electronSF.GetTriggerEff(event.p4_1, isData);
+                const double ele_cross_eff = electronSF.GetTriggerEffCross(event.p4_1, isData);
+                const double tau_eff = isData
+                    ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
+                                                   event.p4_2.phi(), TauTriggerSFs2017::kCentral)
+                    : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
+                                                 event.p4_2.phi(), TauTriggerSFs2017::kCentral);
+                return ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff;
+            }
+            else
+                return electronSF.GetTriggerEff(event.p4_1, isData);
+        }
+        else if(channel == Channel::MuTau) {
+            if(std::abs(event.p4_2.eta()) < 2.1){
+                const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
+                const double muon_cross_eff = muonSF.GetTriggerEffCross(event.p4_1, isData);
+                const double tau_eff = isData
+                    ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
+                                                   event.p4_2.phi(), TauTriggerSFs2017::kCentral)
+                    : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
+                                                 event.p4_2.phi(), TauTriggerSFs2017::kCentral);
+                return muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff;
+            }
+            else
+                return muonSF.GetTriggerEff(event.p4_1, isData);
+        }
+
+        else if(channel == Channel::TauTau) {
+            const double tau_eff_1 = isData
+                ? tauSF->getDiTauEfficiencyData(event.p4_1.pt(), event.p4_1.eta(),
+                                               event.p4_1.phi(), TauTriggerSFs2017::kCentral)
+                : tauSF->getETauEfficiencyMC(event.p4_1.pt(), event.p4_1.eta(),
+                                             event.p4_1.phi(), TauTriggerSFs2017::kCentral);
+
+             const double tau_eff_2 = isData
+                 ? tauSF->getDiTauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
+                                                event.p4_2.phi(), TauTriggerSFs2017::kCentral)
+                 : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
+                                              event.p4_2.phi(), TauTriggerSFs2017::kCentral);
+            return  tau_eff_1 * tau_eff_2;
+        }
+
+        else if(channel == Channel::MuMu)
+            return  muonSF.GetTriggerEff(event.p4_1, isData) * muonSF.GetTriggerEff(event.p4_2, isData);
+
+        else throw exception ("channel not allowed");
+    }
+
+private:
     detail::LeptonScaleFactors electronSF, muonSF;
-//    detail::MuonScaleFactorPOG muonSF;
+    std::shared_ptr<TauTriggerSFs2017> tauSF;
+    std::shared_ptr<TauIdWeight> tauIdWeight;
+    DiscriminatorWP tau_iso_wp;
 };
 
 } // namespace mc_corrections
