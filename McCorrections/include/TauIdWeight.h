@@ -207,6 +207,10 @@ private:
             else throw exception("WP %1% is not supported.") % iso_wp;
         }
 
+        //Gap between barrel and endcaps
+        else if(std::abs(p4.eta()) >= 1.460 && std::abs(p4.eta()) <= 1.558)
+            return 1;
+
         else throw exception("eta out of range");
     }
 
