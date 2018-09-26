@@ -24,7 +24,7 @@ public:
         if(period == Period::Run2016) {
             if(mode.empty() || mode.count(WeightType::PileUp))
                 providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
-                            FullName("pileup_weight_600bins_Moriond17.root"), "pileup_weight", 60, 0);
+                            FullName("2016/pileup_weight_600bins_Moriond17.root"), "pileup_weight", 60, 0);
             if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
                 providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                             FullLeptonName("Electron/Run2016BtoH/Electron_IdIso_IsoLt0p15_eff.root"),
