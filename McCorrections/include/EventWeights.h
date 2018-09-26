@@ -35,7 +35,7 @@ public:
                             " ", " ", period, DiscriminatorWP::Medium);
             if(mode.empty() || mode.count(WeightType::BTag))
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                            FullBtagName("bTagEfficiencies_Moriond17.root"), FullBtagName("CSVv2_Moriond17_B_H.csv"),
+                            FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
                             btag_wp);
             if(mode.empty() || mode.count(WeightType::TopPt))
                 providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
