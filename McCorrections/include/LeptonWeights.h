@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "WeightProvider.h"
 #include "TauTriggerSFs2017.h"
 #include "TauIdWeight.h"
+#include "TauTriggerWeight.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -54,6 +55,8 @@ public:
         else
             return triggerCross->get_EfficiencyMC(p4.pt(), p4.eta());
     }
+
+    bool HasCrossTriggers() const { return triggerCross.get() != nullptr; }
 
 private:
     std::shared_ptr<SF> idIso, triggerSingle, triggerCross;
@@ -171,13 +174,16 @@ public:
                   const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp) :
         electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
         muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
-        tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput)),
         tau_iso_wp(_tau_iso_wp)
      {
-        if(period == Period::Run2016)
-            tauIdWeight = std::make_shared<TauIdWeight2016>(tauTriggerInput);
-        else if(period == Period::Run2017)
+        if(period == Period::Run2016){
+            tauTriggerWeight =  std::make_shared<TauTriggerWeight2016>(tauTriggerInput);
+            tauIdWeight = std::make_shared<TauIdWeight2016>();
+        }
+        else if(period == Period::Run2017){
+            tauTriggerWeight =  std::make_shared<TauTriggerWeight2017>(tauTriggerInput);
             tauIdWeight = std::make_shared<TauIdWeight2017>();
+        }
         else
             throw exception("Period %1% is not supported.") % period;
     }
@@ -185,19 +191,16 @@ public:
     double GetIdIsoWeight(const Event& event) const
     {
         const Channel channel = static_cast<Channel>(event.channelId);
-
         if(channel == Channel::ETau) {
             return electronSF.GetIdIsoSF(event.p4_1) * tauIdWeight->GetIdIsoSF(event.p4_2,
                 static_cast<GenMatch>(event.gen_match_2), event.decayMode_2, DiscriminatorWP::Tight,
                 DiscriminatorWP::Loose, tau_iso_wp);
         }
-
         else if(channel == Channel::MuTau) {
             return muonSF.GetIdIsoSF(event.p4_1) * tauIdWeight->GetIdIsoSF(event.p4_2,
                 static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,  DiscriminatorWP::VLoose,
                 DiscriminatorWP::Tight, tau_iso_wp);
         }
-
         else if(channel == Channel::TauTau) {
             return tauIdWeight->GetIdIsoSF(event.p4_1,
                 static_cast<GenMatch>(event.gen_match_1), event.decayMode_1, DiscriminatorWP::VLoose,
@@ -205,7 +208,6 @@ public:
                 static_cast<GenMatch>(event.gen_match_2), event.decayMode_2,DiscriminatorWP::VLoose,
                 DiscriminatorWP::Loose, tau_iso_wp);
         }
-
         else if(channel == Channel::MuMu)
             return muonSF.GetIdIsoSF(event.p4_1) * muonSF.GetIdIsoSF(event.p4_2);
         else
@@ -217,8 +219,8 @@ public:
         const double eff_data = GetTriggerEfficiency(event, true);
         const double eff_mc = GetTriggerEfficiency(event, false);
         return eff_data / eff_mc;
-
     }
+
 
     virtual double Get(const Event& event) const override { return GetIdIsoWeight(event) * GetTriggerWeight(event); }
 
@@ -232,59 +234,48 @@ private:
     {
         const Channel channel = static_cast<Channel>(event.channelId);
         if(channel == Channel::ETau) {
-            if(std::abs(event.p4_2.eta()) < 2.1){
+            if(electronSF.HasCrossTriggers() && std::abs(event.p4_2.eta()) < 2.1){
                 const double ele_single_eff = electronSF.GetTriggerEff(event.p4_1, isData);
                 const double ele_cross_eff = electronSF.GetTriggerEffCross(event.p4_1, isData);
-                const double tau_eff = isData
-                    ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
-                                                   event.p4_2.phi(), TauTriggerSFs2017::kCentral)
-                    : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
-                                                 event.p4_2.phi(), TauTriggerSFs2017::kCentral);
-                return ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff;
+                const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_2),
+                                                                       static_cast<GenMatch>(event.gen_match_2),
+                                                                       event.decayMode_2, tau_iso_wp, isData);
+                return std::min(ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff, 1.);
             }
             else
                 return electronSF.GetTriggerEff(event.p4_1, isData);
         }
         else if(channel == Channel::MuTau) {
-            if(std::abs(event.p4_2.eta()) < 2.1){
-                const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
-                const double muon_cross_eff = muonSF.GetTriggerEffCross(event.p4_1, isData);
-                const double tau_eff = isData
-                    ? tauSF->getETauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
-                                                   event.p4_2.phi(), TauTriggerSFs2017::kCentral)
-                    : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
-                                                 event.p4_2.phi(), TauTriggerSFs2017::kCentral);
-                return muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff;
+            if(muonSF.HasCrossTriggers() && std::abs(event.p4_2.eta()) < 2.1){
+                    const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
+                    const double muon_cross_eff = muonSF.GetTriggerEffCross(event.p4_1, isData);
+                    const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_2),
+                                                                           static_cast<GenMatch>(event.gen_match_2),
+                                                                           event.decayMode_2, tau_iso_wp, isData );
+                    return std::min(muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff, 1.);
             }
             else
                 return muonSF.GetTriggerEff(event.p4_1, isData);
         }
 
-        else if(channel == Channel::TauTau) {
-            const double tau_eff_1 = isData
-                ? tauSF->getDiTauEfficiencyData(event.p4_1.pt(), event.p4_1.eta(),
-                                               event.p4_1.phi(), TauTriggerSFs2017::kCentral)
-                : tauSF->getETauEfficiencyMC(event.p4_1.pt(), event.p4_1.eta(),
-                                             event.p4_1.phi(), TauTriggerSFs2017::kCentral);
-
-             const double tau_eff_2 = isData
-                 ? tauSF->getDiTauEfficiencyData(event.p4_2.pt(), event.p4_2.eta(),
-                                                event.p4_2.phi(), TauTriggerSFs2017::kCentral)
-                 : tauSF->getETauEfficiencyMC(event.p4_2.pt(), event.p4_2.eta(),
-                                              event.p4_2.phi(), TauTriggerSFs2017::kCentral);
-            return  tau_eff_1 * tau_eff_2;
-        }
-
         else if(channel == Channel::MuMu)
             return  muonSF.GetTriggerEff(event.p4_1, isData) * muonSF.GetTriggerEff(event.p4_2, isData);
 
-        else throw exception ("channel not allowed");
+        else if(channel == Channel::TauTau){
+            double tauSF_1 = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_1), static_cast<GenMatch>(event.gen_match_1),
+                                                   event.decayMode_1, tau_iso_wp, isData);
+            double tauSF_2 = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_2), static_cast<GenMatch>(event.gen_match_2),
+                                                       event.decayMode_2, tau_iso_wp, isData);
+            return  tauSF_1 * tauSF_2;
+        }
+
+        throw exception ("channel not allowed");
     }
 
 private:
     detail::LeptonScaleFactors electronSF, muonSF;
-    std::shared_ptr<TauTriggerSFs2017> tauSF;
     std::shared_ptr<TauIdWeight> tauIdWeight;
+    std::shared_ptr<TauTriggerWeight> tauTriggerWeight;
     DiscriminatorWP tau_iso_wp;
 };
 
