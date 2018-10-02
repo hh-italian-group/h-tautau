@@ -15,10 +15,19 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 namespace mc_corrections {
+//namespace detail{
 
-class TauIdWeight : public IWeightProvider {
+class TauIdWeight {
 public:
-    using Event = ntuple::Event;
+    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int decay_mode, DiscriminatorWP anti_ele_wp,
+                      DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const = 0;
+
+    virtual ~TauIdWeight() {}
+};
+
+class TauIdWeight2016 : public TauIdWeight {
+public:
+
     using ptree = boost::property_tree::ptree;
 
     struct Key {
@@ -86,7 +95,7 @@ public:
         }
     };
 
-    TauIdWeight(const std::string& tauId_input, DiscriminatorWP _iso_wp) : iso_wp(_iso_wp)
+    TauIdWeight2016(const std::string& tauId_input)
     {
         ptree property_tree;
         boost::property_tree::json_parser::read_json(tauId_input, property_tree);
@@ -95,31 +104,22 @@ public:
             tauIdparam_map[key] = Parameters::Parse(type_entry.second);
         }
     }
-
-    virtual double Get(const Event& event) const override
+    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int decay_mode,
+                              DiscriminatorWP /*anti_ele_wp*/, DiscriminatorWP /*anti_mu_wp*/, DiscriminatorWP iso_wp) const override
     {
-        const Channel channel = static_cast<Channel>(event.channelId);
-        if(channel != Channel::TauTau) return 1.;
-        const double sf_1 = EvaluateSF(event.p4_1.pt(), static_cast<GenMatch>(event.gen_match_1), event.decayMode_1);
-        const double sf_2 = EvaluateSF(event.p4_2.pt(), static_cast<GenMatch>(event.gen_match_2), event.decayMode_2);
-        return sf_1 * sf_2;
+        return EvaluateSF(p4.pt(), gen_match, decay_mode, iso_wp);
     }
 
-    virtual double Get(const ntuple::ExpressEvent& /*event*/) const override
-    {
-        throw exception("ExpressEvent is not supported in TauIdWeight::Get.");
-    }
-
-private:
-    double EvaluateSF(double pt, GenMatch gen_match, int decay_mode) const
+    private:
+    double EvaluateSF(double pt, GenMatch gen_match, int decay_mode, DiscriminatorWP iso_wp) const
     {
         const bool is_genuine = gen_match == GenMatch::Tau;
-        const double eff_data = EvaluateEfficiency(pt, true, is_genuine, decay_mode);
-        const double eff_mc = EvaluateEfficiency(pt, false, is_genuine, decay_mode);
+        const double eff_data = EvaluateEfficiency(pt, true, is_genuine, decay_mode, iso_wp);
+        const double eff_mc = EvaluateEfficiency(pt, false, is_genuine, decay_mode, iso_wp);
         return eff_data / eff_mc;
     }
 
-    double EvaluateEfficiency(double pt, bool is_data, bool is_genuine, int decay_mode) const
+    double EvaluateEfficiency(double pt, bool is_data, bool is_genuine, int decay_mode, DiscriminatorWP iso_wp) const
     {
         const Key key{is_data, is_genuine, iso_wp, decay_mode};
         auto iter = tauIdparam_map.find(key);
@@ -131,9 +131,100 @@ private:
     }
 
     std::map<Key, Parameters> tauIdparam_map;
-    DiscriminatorWP iso_wp;
-
 };
 
+class TauIdWeight2017 : public TauIdWeight {
+public:
+    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch /*gen_match*/, int /*decay_mode*/, DiscriminatorWP anti_ele_wp,
+                             DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const override
+    {
+        auto tauSF = getTauIso(iso_wp);
+        auto muonSF = getMuonMissIdSF(p4, anti_mu_wp);
+        auto eleSF = getEleMissIdSF(p4, anti_ele_wp);
+
+        return tauSF * muonSF * eleSF;
+    }
+
+private:
+    double getMuonMissIdSF(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const {
+        //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
+        //https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs2017
+
+        if(!(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Tight))
+            throw exception("WP %1% is not supported.") % iso_wp;
+
+        if(std::abs(p4.eta()) < 0.4)
+            return iso_wp == DiscriminatorWP::Loose ? 1.06 : 1.17;
+
+        else if(std::abs(p4.eta()) >= 0.4 && std::abs(p4.eta()) < 0.8)
+            return iso_wp == DiscriminatorWP::Loose ? 1.02 : 1.29;
+
+        else if(std::abs(p4.eta()) >= 0.8 && std::abs(p4.eta()) < 1.2)
+            return iso_wp == DiscriminatorWP::Loose ? 1.10 : 1.14;
+
+        else if(std::abs(p4.eta()) >= 1.2 && std::abs(p4.eta()) < 1.7)
+            return iso_wp == DiscriminatorWP::Loose ? 1.03 : 0.93;
+
+        else if(std::abs(p4.eta()) >=1.7 && std::abs(p4.eta()) < 2.3)
+            return iso_wp == DiscriminatorWP::Loose ? 1.7 : 2.3;
+
+        else throw exception("eta out of range");
+    }
+
+    double getEleMissIdSF(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const{
+        //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
+        //Recommendation for Ele SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/Egamma2017DataRecommendations
+
+        //Barrel ( abs(eta) < 1.460)
+        if(std::abs(p4.eta()) < 1.460){
+            if(iso_wp == DiscriminatorWP::VLoose)
+                return 1.09;
+            else if(iso_wp == DiscriminatorWP::Loose)
+                return 1.17;
+            else if(iso_wp == DiscriminatorWP::Medium)
+                return  1.40;
+            else if(iso_wp == DiscriminatorWP::Tight)
+                return  1.80;
+            else if(iso_wp == DiscriminatorWP::VTight)
+                return 1.96;
+
+            else throw exception("WP %1% is not supported.") % iso_wp;
+        }
+
+        // Endcaps ( abs(eta) > 1.558)
+        else if(std::abs(p4.eta()) > 1.558){
+            if(iso_wp == DiscriminatorWP::VLoose)
+                return 1.19;
+            else if(iso_wp == DiscriminatorWP::Loose)
+                return 1.25;
+            else if(iso_wp == DiscriminatorWP::Medium)
+                return 1.21;
+            else if(iso_wp == DiscriminatorWP::Tight)
+                return 1.53;
+            else if(iso_wp == DiscriminatorWP::VTight)
+                return 1.66;
+
+            else throw exception("WP %1% is not supported.") % iso_wp;
+        }
+
+        //Gap between barrel and endcaps
+        else if(std::abs(p4.eta()) >= 1.460 && std::abs(p4.eta()) <= 1.558)
+            return 1;
+
+        else throw exception("eta out of range");
+    }
+
+    //Isolation sum with deltaR=0.5
+    double getTauIso(DiscriminatorWP iso_wp) const{
+        //Recommendation for Tau SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
+        //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
+        // double tauIsoSF = 1;
+        if(iso_wp == DiscriminatorWP::Medium)
+            return  0.94;
+        else if (iso_wp == DiscriminatorWP::Tight)
+            return  0.93;
+        else throw exception("WP %1% is not supported.") % iso_wp;
+    }
+};
 } // namespace mc_corrections
 } // namespace analysis

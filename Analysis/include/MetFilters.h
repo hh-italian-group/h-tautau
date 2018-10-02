@@ -16,7 +16,7 @@ public:
     };
 
     explicit MetFilters(unsigned filter_results = 0) : bits(filter_results) {}
-    unsigned FilterResults() const { return bits.to_ulong(); }
+    unsigned FilterResults() const { return static_cast<unsigned int>(bits.to_ulong()); }
     bool PassAll() const { return bits.all(); }
     bool Fail(Filter filter) const { return !bits[static_cast<size_t>(filter)]; }
     bool Pass(Filter filter) const { return !Fail(filter); }
