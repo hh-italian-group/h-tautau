@@ -56,7 +56,6 @@ public:
             return triggerCross->get_EfficiencyMC(p4.pt(), p4.eta());
     }
 
-    // bool HasCrossTriggers() const { return triggerCross; } static_cast<Channel>(event.channelId);
     bool HasCrossTriggers() const { return static_cast<bool>(triggerCross); }
 
 private:
