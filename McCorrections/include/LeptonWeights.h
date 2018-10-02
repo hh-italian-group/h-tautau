@@ -56,7 +56,7 @@ public:
             return triggerCross->get_EfficiencyMC(p4.pt(), p4.eta());
     }
 
-    bool HasCrossTriggers() const { return static_cast<bool>(triggerCross); }
+    bool HasCrossTriggers() const { return triggerCross.get() != nullptr; }
 
 private:
     std::shared_ptr<SF> idIso, triggerSingle, triggerCross;
@@ -216,9 +216,9 @@ public:
 
     double GetTriggerWeight(const Event& event) const
     {
-            const double eff_data = GetTriggerEfficiency(event, true);
-            const double eff_mc = GetTriggerEfficiency(event, false);
-            return eff_data / eff_mc;
+        const double eff_data = GetTriggerEfficiency(event, true);
+        const double eff_mc = GetTriggerEfficiency(event, false);
+        return eff_data / eff_mc;
     }
 
 

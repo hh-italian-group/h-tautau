@@ -1,5 +1,3 @@
-
-
 /*! Various lepton weights.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
@@ -109,26 +107,25 @@ public:
     }
 
      virtual double GetEfficiency(Channel channel, const LorentzVectorM& p4, GenMatch gen_match, int decay_mode,
-         DiscriminatorWP /*iso_wp*/, bool isData) const override
+         DiscriminatorWP iso_wp, bool isData) const override
     {
         const bool is_genuine = gen_match == GenMatch::Tau;
         if(channel == Channel::TauTau)
-            return EvaluateEfficiency(p4.pt(), isData, is_genuine, decay_mode);
-
+            return EvaluateEfficiency(p4.pt(), isData, is_genuine, decay_mode, iso_wp);
         else
             throw exception ("channel %1% not supported") % channel;
     }
 
     private:
-    double EvaluateSF(double pt, GenMatch gen_match, int decay_mode) const
+    double EvaluateSF(double pt, GenMatch gen_match, int decay_mode, DiscriminatorWP iso_wp ) const
     {
         const bool is_genuine = gen_match == GenMatch::Tau;
-        const double eff_data = EvaluateEfficiency(pt, true, is_genuine, decay_mode);
-        const double eff_mc = EvaluateEfficiency(pt, false, is_genuine, decay_mode);
+        const double eff_data = EvaluateEfficiency(pt, true, is_genuine, decay_mode, iso_wp);
+        const double eff_mc = EvaluateEfficiency(pt, false, is_genuine, decay_mode, iso_wp);
         return eff_data / eff_mc;
     }
 
-    double EvaluateEfficiency(double pt, bool is_data, bool is_genuine, int decay_mode) const
+    double EvaluateEfficiency(double pt, bool is_data, bool is_genuine, int decay_mode, DiscriminatorWP iso_wp) const
     {
         const Key key{is_data, is_genuine, iso_wp, decay_mode};
         auto iter = tauIdparam_map.find(key);
@@ -140,7 +137,6 @@ public:
     }
 
     std::map<Key, Parameters> tauIdparam_map;
-    DiscriminatorWP iso_wp;
 };
 
 class TauTriggerWeight2017 : public TauTriggerWeight {
@@ -148,11 +144,25 @@ public:
     TauTriggerWeight2017(const std::string& tauTriggerInput) : tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput))
     {}
 
-    virtual double GetEfficiency(Channel /*channel*/, const LorentzVectorM& p4, GenMatch /*gen_match*/, int /*decay_mode*/,
+    virtual double GetEfficiency(Channel channel, const LorentzVectorM& p4, GenMatch /*gen_match*/, int /*decay_mode*/,
                                  DiscriminatorWP /*iso_wp*/, bool isData) const override
     {
-            return isData ? tauSF->getDiTauEfficiencyData(p4.pt(), p4.eta( ), p4.phi(),TauTriggerSFs2017::kCentral)
+        if(channel == Channel::ETau){
+            return isData ? tauSF->getETauEfficiencyData(p4.pt(), p4.eta(), p4.phi(), TauTriggerSFs2017::kCentral)
                           : tauSF->getETauEfficiencyMC(p4.pt(), p4.eta(), p4.phi(), TauTriggerSFs2017::kCentral);
+        }
+
+        else if(channel == Channel::MuTau){
+            return isData ? tauSF->getMuTauEfficiencyData(p4.pt(), p4.eta(), p4.phi(), TauTriggerSFs2017::kCentral)
+                          : tauSF->getMuTauEfficiencyMC(p4.pt(), p4.eta(), p4.phi(), TauTriggerSFs2017::kCentral);
+        }
+
+        else if(channel == Channel::TauTau){
+            return isData ? tauSF->getDiTauEfficiencyData(p4.pt(), p4.eta( ), p4.phi(),TauTriggerSFs2017::kCentral)
+                          : tauSF->getDiTauEfficiencyMC(p4.pt(), p4.eta(), p4.phi(), TauTriggerSFs2017::kCentral);
+        }
+
+        throw exception ("channel not allowed");
     }
 private:
     std::shared_ptr<TauTriggerSFs2017> tauSF;
