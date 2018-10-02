@@ -29,10 +29,10 @@ public:
                 providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                             FullLeptonName("Electron/Run2016BtoH/Electron_IdIso_IsoLt0p15_eff.root"),
                             FullLeptonName("Electron/Run2016BtoH/Electron_Ele25WPTight_eff.root"),
-                            " ",
+                            "",
                             FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
-                            FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"),
-                            " ", " ", period, DiscriminatorWP::Medium);
+                            FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"), "",
+                            FullName("2016/Tau/fitresults_tt_moriond2017.json"), period, DiscriminatorWP::Medium);
             if(mode.empty() || mode.count(WeightType::BTag))
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                             FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
@@ -114,12 +114,6 @@ protected:
     static std::string FullName(const std::string& fileName)
     {
         static const std::string path = "h-tautau/McCorrections/data";
-        return FullName(fileName, path);
-    }
-
-    static std::string FullBtagName(const std::string& fileName)
-    {
-        static const std::string path = "h-tautau/McCorrections/data/btag";
         return FullName(fileName, path);
     }
 
