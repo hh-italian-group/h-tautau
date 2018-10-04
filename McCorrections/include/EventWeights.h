@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TopPtWeight.h"
 #include "TauIdWeight.h"
 #include "WeightingMode.h"
+#include "h-tautau/Analysis/include/EventInfo.h"
 
 
 namespace analysis {
@@ -19,7 +20,7 @@ public:
     using ProviderPtr = std::shared_ptr<IWeightProvider>;
     using ProviderMap = std::map<WeightType, ProviderPtr>;
 
-    EventWeights(Period period, DiscriminatorWP btag_wp, const WeightingMode& mode = {})
+    EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, const WeightingMode& mode = {})
     {
         if(period == Period::Run2016) {
             if(mode.empty() || mode.count(WeightType::PileUp))
@@ -45,6 +46,19 @@ public:
             if(mode.empty() || mode.count(WeightType::PileUp))
                 providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
                             FullName("2017/pileup_weight_200bins.root"), "pileup_weight", 130, 0);
+            if(mode.empty() || mode.count(WeightType::BTag)){
+                if(jet_ordering == JetOrdering::DeepCSV)
+                    providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                            FullName("2017/btag/BTagEfficiency_deep_csv_pu_id_full.root"), FullName("2017/btag/DeepCSV_94XSF_V3_B_F.csv"),
+                            btag_wp);
+                else if(jet_ordering == JetOrdering::CSV)
+                    providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                            FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullName("2017/btag/CSVv2_94XSF_V2_B_F.csv"),
+                            btag_wp);
+                else
+                   throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
+            }
+
                         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
                         providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                                     FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
