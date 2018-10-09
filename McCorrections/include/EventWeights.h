@@ -105,9 +105,9 @@ public:
     double GetWeight(const Event& event, WeightType weightType) const
     {
         double weight = GetProvider(weightType)->Get(event);
-        if (weight == std::numeric_limits<double>::quiet_NaN()|| weight == std::numeric_limits<double>::infinity() || weight == -std::numeric_limits<double>::infinity())
-            throw exception("'%1%' weights is nan or max or min for event: run '%2%', lumi '%3', event id '%4' ") %weightType %event.run %event.lumi %event.evt;
-        return weight;
+        if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
+            throw exception("%1% weights is nan or infinity for event %2%.”) % weightType % EventIdentifier(event);
+		return weight;
     }
 
     template<typename Event>
