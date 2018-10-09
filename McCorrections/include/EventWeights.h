@@ -106,7 +106,7 @@ public:
     {
         double weight = GetProvider(weightType)->Get(event);
         if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
-            throw exception("%1% weights is nan or infinity for event %2%.”) % weightType % EventIdentifier(event);
+            throw exception("%1% weights is nan or infinity for event %2%.") % weightType % EventIdentifier(event);
 		return weight;
     }
 
