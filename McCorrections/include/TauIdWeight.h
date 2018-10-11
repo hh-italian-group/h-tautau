@@ -202,7 +202,7 @@ private:
 
         //Gap between barrel and endcaps
         else if(std::abs(p4.eta()) >= 1.460 && std::abs(p4.eta()) <= 1.558)
-            return 1;
+            return 0;
 
         else throw exception("eta out of range");
     }
@@ -211,7 +211,6 @@ private:
     double getTauIsoUncertainties(DiscriminatorWP iso_wp) const{
         //Recommendation for Tau SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
         //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
-        // double tauIsoSF = 1;
         if(iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)
             return  0.05;
         else throw exception("WP %1% is not supported.") % iso_wp;
