@@ -22,6 +22,12 @@ public:
     virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int decay_mode, DiscriminatorWP anti_ele_wp,
                       DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const = 0;
 
+    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const = 0;
+
+    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP anti_mu_wp) const = 0;
+
+    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP anti_ele_wp) const = 0;
+
     virtual ~TauIdWeight() {}
 };
 
@@ -47,14 +53,19 @@ public:
         return tauSF * muonSF * eleSF;
     }
 
-    virtual double GetIdIsoSFUncertainties(const LorentzVectorM_Float& p4, GenMatch gen_match, int /*decay_mode*/, DiscriminatorWP anti_ele_wp,
-                             DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const override
+    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const override
     {
-        auto tauSFUnc = getTauIsoUncertainties(iso_wp);
-        auto muonSFUnc = (gen_match == GenMatch::Muon || gen_match == GenMatch::TauMuon) ? getMuonMissIdSFUncertainties(p4, anti_mu_wp) : 0;
-        auto eleSFUnc = (gen_match == GenMatch::Electron || gen_match == GenMatch::TauElectron) ? getEleMissIdSF(p4, anti_ele_wp) : 0;
+        return getTauIdEfficiencyUncertainty(iso_wp);
+    }
 
-        return std::sqrt(tauSFUnc*tauSFUnc+muonSFUnc*muonSFUnc+eleSFUnc*eleSFUnc);
+    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP anti_mu_wp) const override
+    {
+        return (gen_match == GenMatch::Muon || gen_match == GenMatch::TauMuon) ? getMuonMissIdUncertainty(p4, anti_mu_wp) : 0;
+    }
+
+    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP anti_ele_wp) const override
+    {
+        return (gen_match == GenMatch::Electron || gen_match == GenMatch::TauElectron) ? getEleMissIdUncertainty(p4, anti_ele_wp) : 0;
     }
 
 private:
@@ -139,7 +150,7 @@ private:
     }
 
 
-    double getMuonMissIdSFUncertainties(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const {
+    double getMuonMissIdUncertainty(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const {
             //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
             //https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs2017
 
@@ -156,15 +167,15 @@ private:
                 return iso_wp == DiscriminatorWP::Loose ? 0.04 : 0.05;
 
             else if(std::abs(p4.eta()) >= 1.2 && std::abs(p4.eta()) < 1.7)
-                return iso_wp == DiscriminatorWP::Loose ? 1.03 : 0.93;
+                return iso_wp == DiscriminatorWP::Loose ? 0.18 : 0.60;
 
             else if(std::abs(p4.eta()) >=1.7 && std::abs(p4.eta()) < 2.3)
-                        return iso_wp == DiscriminatorWP::Loose ? 1.94 : 1.61;
+                        return iso_wp == DiscriminatorWP::Loose ? 0.35 : 0.60;
 
             else throw exception("eta out of range");
         }
 
-    double getEleMissIdSFUncertainties(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const{
+    double getEleMissIdUncertainty(const LorentzVectorM_Float& p4, DiscriminatorWP iso_wp) const{
         //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
         //Recommendation for Ele SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/Egamma2017DataRecommendations
 
@@ -208,7 +219,7 @@ private:
     }
 
     //Isolation sum with deltaR=0.5
-    double getTauIsoUncertainties(DiscriminatorWP iso_wp) const{
+    double getTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const{
         //Recommendation for Tau SF https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
         //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
         if(iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)
