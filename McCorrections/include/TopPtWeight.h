@@ -28,15 +28,18 @@ public:
 		return topWeight;
 	}
 
-    virtual double Get(const ExpressEvent& expr_event) const override
+	virtual double Get(const ExpressEvent& /*expr_event*/) const override
     {
+		/*
         const double pt_top = expr_event.gen_top_pt;
         const double pt_topBar = expr_event.gen_topBar_pt;
         const double sf_1 = std::sqrt(std::exp(_p1 - _p2 * pt_top));
         const double sf_2 = std::sqrt(std::exp(_p1 - _p2 * pt_topBar));
         return sf_1 * sf_2;
+		*/
+		return 1;
     }
-
+	
 private:
     double _p1, _p2;
 };

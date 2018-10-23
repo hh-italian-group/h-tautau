@@ -218,6 +218,11 @@ public:
     {
         const double eff_data = GetTriggerEfficiency(event, true);
         const double eff_mc = GetTriggerEfficiency(event, false);
+        if(eff_mc == 0) {
+            if(eff_data != 0)
+                throw exception("Undefined trigger SF for %1%") % EventIdentifier(event);
+            return 0;
+        }
         return eff_data / eff_mc;
     }
 
