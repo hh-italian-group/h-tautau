@@ -65,12 +65,13 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
 };
 
 
-enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
+enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV, DeepFlavour };
 ENUM_NAMES(JetOrdering) = {
     { JetOrdering::NoOrdering, "NoOrdering" },
     { JetOrdering::Pt, "Pt" },
     { JetOrdering::CSV, "CSV" },
     { JetOrdering::DeepCSV, "DeepCSV" },
+    { JetOrdering::DeepFlavour, "DeepFlavour" },
 };
 
 namespace jet_ordering {
@@ -242,13 +243,15 @@ public:
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-                double tag;
+                double tag = 0;
                 if(jet_ordering == JetOrdering::Pt)
                     tag = event.jets_p4.at(n).Pt();
                 else if(jet_ordering == JetOrdering::CSV)
                     tag = event.jets_csv.at(n);
                 else if(jet_ordering == JetOrdering::DeepCSV)
                     tag = event.jets_deepCsv_BvsAll.at(n);
+                else if(jet_ordering == JetOrdering::DeepFlavour)
+                    tag = event.jets_deepFlavour_b.at(n) + event.jets_deepFlavour_bb.at(n) + event.jets_deepFlavour_lepb.at(n);
                 else
                     throw exception("Unsupported jet ordering for b-jet pair selection.");
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -265,11 +268,17 @@ public:
         }
 
         if(bjets_ordered.size() >= 2){
-            double tag_second_bjet = jet_ordering == JetOrdering::DeepCSV ?
-            event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
-            if(tag_second_bjet > btag_cut){
+            double tag_second_bjet = 0;
+            if (jet_ordering == JetOrdering::DeepCSV)
+                tag_second_bjet =  event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index);
+            else if (jet_ordering == JetOrdering::CSV)
+                tag_second_bjet =  event.jets_csv.at(bjets_ordered.at(1).index);
+            else if (jet_ordering == JetOrdering::DeepFlavour)
+                tag_second_bjet =  event.jets_deepFlavour_b.at(bjets_ordered.at(1).index)
+                        + event.jets_deepFlavour_bb.at(bjets_ordered.at(1).index)
+                        + event.jets_deepFlavour_lepb.at(bjets_ordered.at(1).index);
+            if(tag_second_bjet > btag_cut)
                 selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
-            }
         }
 
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_vbf;
@@ -416,6 +425,8 @@ public:
                 tag = jet->csv();
             else if(jet_ordering == JetOrdering::DeepCSV)
                 tag = jet->deepcsv();
+            else if(jet_ordering == JetOrdering::DeepFlavour)
+                tag = jet->deepflavour();
             else
                 throw exception("Unsupported jet ordering for jet selection.");
             jet_info_vector.emplace_back(jet.GetMomentum(),n,tag);
