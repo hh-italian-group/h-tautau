@@ -8,6 +8,8 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
 #include "BTagCalibrationStandalone.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2017.h"
+#include "h-tautau/Analysis/include/BTagger.h"
 #include "WeightProvider.h"
 #include "TextIO.h"
 
@@ -27,7 +29,6 @@ struct JetInfo {
     {
         pt  = event.jets_p4.at(jetIndex).pt();
         eta = event.jets_p4.at(jetIndex).eta();
-        CSV = event.jets_csv.at(jetIndex);
         hadronFlavour = event.jets_hadronFlavour.at(jetIndex);
     }
 };
@@ -100,34 +101,42 @@ public:
     using ReaderInfoMap = std::map<int, ReaderInfoPtr>;
     using ReaderPtr = std::shared_ptr<btag_calibration::BTagCalibrationReader>;
 
-    BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, DiscriminatorWP wp) :
+    BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName,Period period, JetOrdering ordering,
+               DiscriminatorWP wp) :
         calib("CSVv2", bjetSFFileName)
     {
-        static const std::map<DiscriminatorWP, std::pair<OperatingPoint, double>> op_map = {
+        /*static const std::map<DiscriminatorWP, std::pair<OperatingPoint, double>> op_map = {
             { DiscriminatorWP::Loose, { BTagEntry::OP_LOOSE, cuts::btag_2016::CSVv2L } },
             { DiscriminatorWP::Medium, { BTagEntry::OP_MEDIUM, cuts::btag_2016::CSVv2M } },
             { DiscriminatorWP::Tight, { BTagEntry::OP_TIGHT, cuts::btag_2016::CSVv2T } }
+        };*/
+        bTagger = std::make_shared<BTagger>(period, ordering, wp);
+
+        static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
+            {DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, {DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM} ,
+            {DiscriminatorWP::Tight, BTagEntry::OP_TIGHT}
         };
+
         static const std::map<JetFlavor, int> jet_flavors {
             { BTagEntry::FLAV_B, 5 }, { BTagEntry::FLAV_C, 4 }, { BTagEntry::FLAV_UDSG, 0 },
         };
 
         if(!op_map.count(wp))
             throw exception("Working point %1% is not supported.") % wp;
-        csv_cut = op_map.at(wp).second;
+        //csv_cut = op_map.at(wp).second;
         auto bTagEffFile = root_ext::OpenRootFile(bTagEffFileName);
 
-        ReaderPtr reader_b(new BTagCalibrationReader(op_map.at(wp).first, "central", {"up", "down"}));
+        ReaderPtr reader_b(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
         reader_b->load(calib, BTagEntry::FLAV_B, "comb");
         readerInfos[jet_flavors.at(BTagEntry::FLAV_B)] =
                 ReaderInfoPtr(new ReaderInfo(reader_b, BTagEntry::FLAV_B, bTagEffFile, wp));
 
-        ReaderPtr reader_c(new BTagCalibrationReader(op_map.at(wp).first, "central", {"up", "down"}));
+        ReaderPtr reader_c(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
         reader_c->load(calib, BTagEntry::FLAV_C, "comb");
         readerInfos[jet_flavors.at(BTagEntry::FLAV_C)] =
                 ReaderInfoPtr(new ReaderInfo(reader_c, BTagEntry::FLAV_C, bTagEffFile, wp));
 
-        ReaderPtr reader_light(new BTagCalibrationReader(op_map.at(wp).first, "central", {"up", "down"}));
+        ReaderPtr reader_light(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
         reader_light->load(calib, BTagEntry::FLAV_UDSG, "incl");
         readerInfos[jet_flavors.at(BTagEntry::FLAV_UDSG)] =
                 ReaderInfoPtr(new ReaderInfo(reader_light, BTagEntry::FLAV_UDSG, bTagEffFile, wp));
@@ -152,7 +161,7 @@ public:
             JetInfo jetInfo(event, jetIndex);
             if(std::abs(jetInfo.eta) >= cuts::btag_2016::eta) continue;
             GetReader(jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
-            jetInfo.bTagOutcome = std::abs(jetInfo.eta) < cuts::btag_2016::eta && jetInfo.CSV > csv_cut;
+            jetInfo.bTagOutcome = std::abs(jetInfo.eta) < cuts::btag_2016::eta && bTagger->Pass(event, jetIndex);
             jetInfos.push_back(jetInfo);
         }
 
@@ -191,7 +200,8 @@ private:
 private:
     BTagCalibration calib;
     ReaderInfoMap readerInfos;
-    double csv_cut;
+    //double csv_cut;
+    std::shared_ptr<BTagger> bTagger;
 };
 
 } // namespace mc_corrections

@@ -11,13 +11,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV, DeepFalvour };
+enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV, DeepFlavour };
 ENUM_NAMES(JetOrdering) = {
     { JetOrdering::NoOrdering, "NoOrdering" },
     { JetOrdering::Pt, "Pt" },
     { JetOrdering::CSV, "CSV" },
     { JetOrdering::DeepCSV, "DeepCSV" },
-    { JetOrdering::DeepFalvour, "DeepFalvour" },
+    { JetOrdering::DeepFlavour, "DeepFlavour" },
 };
 
 struct BTagger {
@@ -29,35 +29,46 @@ public:
             {Period::Run2017, {
                 {JetOrdering::DeepCSV, {
                     {DiscriminatorWP::Loose, cuts::btag_2017::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2017::deepCSVv2M},
-                    {DiscriminatorWP::Tight, cuts::btag_2017::deepCSVv2T}}},
+                    {DiscriminatorWP::Tight, cuts::btag_2017::deepCSVv2T}
+                }},
                 {JetOrdering::CSV, {
                     {DiscriminatorWP::Loose, cuts::btag_2017::CSVv2L}, {DiscriminatorWP::Medium, cuts::btag_2017::CSVv2M},
-                    {DiscriminatorWP::Tight, cuts::btag_2017::CSVv2T}}},
-                {JetOrdering::DeepFalvour, {
+                    {DiscriminatorWP::Tight, cuts::btag_2017::CSVv2T}
+                }},
+                {JetOrdering::DeepFlavour, {
                     {DiscriminatorWP::Loose, cuts::btag_2017::deepFlavourL},
                     {DiscriminatorWP::Medium, cuts::btag_2017::deepFlavourM},
-                    {DiscriminatorWP::Tight, cuts::btag_2017::deepFlavourT}}}}},
-            {Period::Run2016,
+                    {DiscriminatorWP::Tight, cuts::btag_2017::deepFlavourT}
+                }}
+            }},
+            {Period::Run2016, {
                 {JetOrdering::CSV, {
                     {DiscriminatorWP::Loose, cuts::btag_2016::CSVv2L},
                     {DiscriminatorWP::Medium, cuts::btag_2016::CSVv2M},
-                    {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}}}}};
+                    {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}}
+                }
+            }}
+        };
 
-        if(!working_points.at(period))
+        if(!working_points.count(period))
             throw exception("Period %1% is not supported.") % period;
-        if(!working_points.at(period).at(ordering))
-            throw exception("Jet Ordering %1% is not supported.") % ordering;
-        if(!working_points.at(period).at(ordering).at(wp))
-            throw exception("Working point %1% is not supported.") % wp;
-        
-        cut = working_points.at(period).at(ordering).at(wp);
+        if(ordering != JetOrdering::Pt){
+            if(!working_points.at(period).count(ordering))
+                throw exception("Jet Ordering %1% is not supported.") % ordering;
+            if(!working_points.at(period).at(ordering).count(wp))
+                throw exception("Working point %1% is not supported.") % wp;
+        }
+
+        if(ordering == JetOrdering::Pt) cut = 20;
+        else cut = working_points.at(period).at(ordering).at(wp);
     }
 
     double BTag(const ntuple::Event& event, size_t jet_index) const
     {
-        if(ordering==JetOrdering::DeepCSV) return event.jets_deepCsv_BvsAll.at(jet_index);
+        if(ordering==JetOrdering::Pt) return event.jets_p4.at(jet_index).Pt();
+        else if(ordering==JetOrdering::DeepCSV) return event.jets_deepCsv_BvsAll.at(jet_index);
         else if (ordering==JetOrdering::CSV) return event.jets_csv.at(jet_index);
-        else if(ordering==JetOrdering::DeepFalvour) return (event.jets_deepFlavour_b.at(jet_index) +
+        else if(ordering==JetOrdering::DeepFlavour) return (event.jets_deepFlavour_b.at(jet_index) +
                 event.jets_deepFlavour_bb.at(jet_index) + event.jets_deepFlavour_lepb.at(jet_index));
         else
             throw exception("Jet Ordering %1% is not supported") % ordering;
@@ -65,9 +76,10 @@ public:
 
     double BTag(const ntuple::TupleJet& jet) const
     {
-        if(ordering==JetOrdering::DeepCSV) return jet.deepcsv();
+        if(ordering==JetOrdering::Pt) return jet.p4().Pt();
+        else if(ordering==JetOrdering::DeepCSV) return jet.deepcsv();
         else if(ordering==JetOrdering::CSV) return jet.csv();
-        else if(ordering==JetOrdering::DeepFalvour) return jet.deepFlavour();
+        else if(ordering==JetOrdering::DeepFlavour) return jet.deepFlavour();
         else
             throw exception("Jet Ordering %1% is not supported") % ordering;
     }

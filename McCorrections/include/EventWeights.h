@@ -37,7 +37,7 @@ public:
             if(mode.empty() || mode.count(WeightType::BTag))
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                             FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
-                            btag_wp);
+                            period, jet_ordering, btag_wp);
             if(mode.empty() || mode.count(WeightType::TopPt))
                 providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
         }
@@ -50,11 +50,15 @@ public:
                 if(jet_ordering == JetOrdering::DeepCSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                             FullName("2017/btag/BTagEfficiency_deep_csv_pu_id_full.root"), FullName("2017/btag/DeepCSV_94XSF_V3_B_F.csv"),
-                            btag_wp);
+                            period, jet_ordering, btag_wp);
                 else if(jet_ordering == JetOrdering::CSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                             FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullName("2017/btag/CSVv2_94XSF_V2_B_F.csv"),
-                            btag_wp);
+                            period, jet_ordering, btag_wp);
+                else if(jet_ordering == JetOrdering::DeepFlavour)
+                    providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                            FullName("2017/btag/BTagEfficiency_deep_Flavour_pu_id_full.root"), FullName("2017/btag/DeepFlavour_94XSF_V1_B_F.csv"),
+                            period, jet_ordering, btag_wp);
                 else
                    throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
             }
