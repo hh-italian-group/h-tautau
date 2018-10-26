@@ -110,7 +110,7 @@ public:
             { DiscriminatorWP::Medium, { BTagEntry::OP_MEDIUM, cuts::btag_2016::CSVv2M } },
             { DiscriminatorWP::Tight, { BTagEntry::OP_TIGHT, cuts::btag_2016::CSVv2T } }
         };*/
-        bTagger = std::make_shared<BTagger>(period, ordering, wp);
+        bTagger = std::make_shared<BTagger>(period, ordering);
 
         static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
             {DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, {DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM} ,

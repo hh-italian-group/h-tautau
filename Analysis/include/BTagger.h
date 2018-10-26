@@ -22,7 +22,7 @@ ENUM_NAMES(JetOrdering) = {
 
 struct BTagger {
 public:
-    BTagger(Period period, JetOrdering _ordering, DiscriminatorWP wp) :
+    BTagger(Period period, JetOrdering _ordering) :
         ordering(_ordering)
     {
         static const std::map<Period, std::map<JetOrdering, std::map<DiscriminatorWP, double>>> working_points = {
@@ -55,12 +55,13 @@ public:
         if(ordering != JetOrdering::Pt){
             if(!working_points.at(period).count(ordering))
                 throw exception("Jet Ordering %1% is not supported.") % ordering;
-            if(!working_points.at(period).at(ordering).count(wp))
-                throw exception("Working point %1% is not supported.") % wp;
+            /*if(!working_points.at(period).at(ordering).count(wp))
+                throw exception("Working point %1% is not supported.") % wp;*/
         }
 
-        if(ordering == JetOrdering::Pt) cut = 20;
-        else cut = working_points.at(period).at(ordering).at(wp);
+        if(ordering == JetOrdering::Pt) cut = {{ DiscriminatorWP::Loose, 20 }, {DiscriminatorWP::Medium, 20 },
+                                              { DiscriminatorWP::Tight, 20 }};
+        else cut = working_points.at(period).at(ordering);
     }
 
     double BTag(const ntuple::Event& event, size_t jet_index) const
@@ -84,19 +85,19 @@ public:
             throw exception("Jet Ordering %1% is not supported") % ordering;
     }
 
-    bool Pass(const ntuple::Event& event, size_t jet_index) const
+    bool Pass(const ntuple::Event& event, size_t jet_index, DiscriminatorWP wp = DiscriminatorWP::Medium) const
     {
-        return BTag(event, jet_index) > cut;
+        return BTag(event, jet_index) > cut.at(wp);
     }
 
-    bool Pass(const ntuple::TupleJet& jet) const
+    bool Pass(const ntuple::TupleJet& jet, DiscriminatorWP wp = DiscriminatorWP::Medium) const
     {
-        return BTag(jet) > cut;
+        return BTag(jet) > cut.at(wp);
     }
 
 private:
     JetOrdering ordering;
-    double cut;
+    std::map<DiscriminatorWP,double> cut;
 };
   
 }

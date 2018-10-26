@@ -226,7 +226,7 @@ public:
         double bjet_eta_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
         double vbf_pt_cut = 30;
         double vbf_eta_cut = 5;
-        static BTagger bTagger(period,jet_ordering,DiscriminatorWP::Medium);
+        BTagger bTagger(period,jet_ordering);
         //double btag_cut;
 
         /*if(period == analysis::Period::Run2017){
@@ -406,7 +406,7 @@ public:
                              const std::set<size_t>& bjet_indexes = {})
     {
         Lock lock(*mutex);
-        static BTagger bTagger(period,jet_ordering,DiscriminatorWP::Medium);
+        BTagger bTagger(period,jet_ordering);
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
