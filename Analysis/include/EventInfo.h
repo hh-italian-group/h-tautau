@@ -65,16 +65,6 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
     using FirstLeg = MuonCandidate; using SecondLeg = MuonCandidate;
 };
 
-
-/*enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV,DeepFlavour };
-ENUM_NAMES(JetOrdering) = {
-    { JetOrdering::NoOrdering, "NoOrdering" },
-    { JetOrdering::Pt, "Pt" },
-    { JetOrdering::CSV, "CSV" },
-    { JetOrdering::DeepCSV, "DeepCSV" },
-    { JetOrdering::DeepFlavour, "DeepFlavour" },
-};*/
-
 namespace jet_ordering {
 
     template<typename LorentzVector>
@@ -227,16 +217,6 @@ public:
         double vbf_pt_cut = 30;
         double vbf_eta_cut = 5;
         BTagger bTagger(period,jet_ordering);
-        //double btag_cut;
-
-        /*if(period == analysis::Period::Run2017){
-            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2017::deepCSVv2M : cuts::btag_2017::CSVv2M ;
-        }
-        else if(period == analysis::Period::Run2016){
-            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2016::DeepCSVM : cuts::btag_2016::CSVv2M ;
-        }
-        else
-            throw exception("Unsupported btag cut for a specific period.");*/
 
         SelectedSignalJets selected_signal_jets;
 
@@ -246,14 +226,6 @@ public:
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
                 double tag = bTagger.BTag(event,n);
-                /*if(jet_ordering == JetOrdering::Pt)
-                    tag = event.jets_p4.at(n).Pt();
-                else if(jet_ordering == JetOrdering::CSV)
-                    tag = event.jets_csv.at(n);
-                else if(jet_ordering == JetOrdering::DeepCSV)
-                    tag = event.jets_deepCsv_BvsAll.at(n);
-                else
-                    throw exception("Unsupported jet ordering for b-jet pair selection.");*/
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
             }
             return jet_info_vector;
@@ -268,8 +240,6 @@ public:
         }
 
         if(bjets_ordered.size() >= 2){
-            /*double tag_second_bjet = jet_ordering == JetOrdering::DeepCSV ?
-            event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);*/
             if(bTagger.Pass(event,bjets_ordered.at(1).index)){
                 selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
             }
@@ -401,7 +371,6 @@ public:
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
-                             //double csv_cut = std::numeric_limits<double>::lowest(),
                              JetOrdering jet_ordering = JetOrdering::CSV,
                              const std::set<size_t>& bjet_indexes = {})
     {
