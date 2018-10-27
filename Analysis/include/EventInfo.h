@@ -382,17 +382,7 @@ public:
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
 
-            //if(bjet_indexes.count(n) || jet->csv() <= csv_cut) continue;
             if(bjet_indexes.count(n) || !(bTagger.Pass(*event,n))) continue;
-            /*double tag;
-            if(jet_ordering == JetOrdering::Pt)
-                tag = jet.GetMomentum().Pt();
-            else if(jet_ordering == JetOrdering::CSV)
-                tag = jet->csv();
-            else if(jet_ordering == JetOrdering::DeepCSV)
-                tag = jet->deepcsv();
-            else
-                throw exception("Unsupported jet ordering for jet selection.");*/
             jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
         }
 

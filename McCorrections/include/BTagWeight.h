@@ -105,11 +105,7 @@ public:
                DiscriminatorWP wp) :
         calib("CSVv2", bjetSFFileName)
     {
-        /*static const std::map<DiscriminatorWP, std::pair<OperatingPoint, double>> op_map = {
-            { DiscriminatorWP::Loose, { BTagEntry::OP_LOOSE, cuts::btag_2016::CSVv2L } },
-            { DiscriminatorWP::Medium, { BTagEntry::OP_MEDIUM, cuts::btag_2016::CSVv2M } },
-            { DiscriminatorWP::Tight, { BTagEntry::OP_TIGHT, cuts::btag_2016::CSVv2T } }
-        };*/
+
         bTagger = std::make_shared<BTagger>(period, ordering);
 
         static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
@@ -123,7 +119,7 @@ public:
 
         if(!op_map.count(wp))
             throw exception("Working point %1% is not supported.") % wp;
-        //csv_cut = op_map.at(wp).second;
+
         auto bTagEffFile = root_ext::OpenRootFile(bTagEffFileName);
 
         ReaderPtr reader_b(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
@@ -200,7 +196,6 @@ private:
 private:
     BTagCalibration calib;
     ReaderInfoMap readerInfos;
-    //double csv_cut;
     std::shared_ptr<BTagger> bTagger;
 };
 

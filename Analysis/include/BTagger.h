@@ -39,14 +39,21 @@ public:
                     {DiscriminatorWP::Loose, cuts::btag_2017::deepFlavourL},
                     {DiscriminatorWP::Medium, cuts::btag_2017::deepFlavourM},
                     {DiscriminatorWP::Tight, cuts::btag_2017::deepFlavourT}
+                }},
+                {JetOrdering::Pt, {
+                    {DiscriminatorWP::Medium, cuts::btag_2017::pt}
                 }}
             }},
             {Period::Run2016, {
                 {JetOrdering::CSV, {
                     {DiscriminatorWP::Loose, cuts::btag_2016::CSVv2L},
                     {DiscriminatorWP::Medium, cuts::btag_2016::CSVv2M},
-                    {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}}
-                }
+                    {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}
+                }},
+                {JetOrdering::Pt, {
+                    {DiscriminatorWP::Medium, cuts::btag_2016::pt}
+                }}
+
             }}
         };
 
@@ -55,13 +62,9 @@ public:
         if(ordering != JetOrdering::Pt){
             if(!working_points.at(period).count(ordering))
                 throw exception("Jet Ordering %1% is not supported.") % ordering;
-            /*if(!working_points.at(period).at(ordering).count(wp))
-                throw exception("Working point %1% is not supported.") % wp;*/
         }
 
-        if(ordering == JetOrdering::Pt) cut = {{ DiscriminatorWP::Loose, 20 }, {DiscriminatorWP::Medium, 20 },
-                                              { DiscriminatorWP::Tight, 20 }};
-        else cut = working_points.at(period).at(ordering);
+        cut = working_points.at(period).at(ordering);
     }
 
     double BTag(const ntuple::Event& event, size_t jet_index) const
@@ -87,12 +90,16 @@ public:
 
     bool Pass(const ntuple::Event& event, size_t jet_index, DiscriminatorWP wp = DiscriminatorWP::Medium) const
     {
-        return BTag(event, jet_index) > cut.at(wp);
+        if(!cut.count(wp))
+            throw exception("Working point %1% is not supported.") %wp;
+        else return BTag(event, jet_index) > cut.at(wp);
     }
 
     bool Pass(const ntuple::TupleJet& jet, DiscriminatorWP wp = DiscriminatorWP::Medium) const
     {
-        return BTag(jet) > cut.at(wp);
+        if(!cut.count(wp))
+            throw exception("Working point %1% is not supported.") %wp;
+        else return BTag(jet) > cut.at(wp);
     }
 
 private:
