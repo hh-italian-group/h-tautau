@@ -377,19 +377,15 @@ namespace htt_sync {
 
             if (run_period == analysis::Period::Run2016) {
                 jets_pt20 = event_info->SelectJets(20, 4.7,
-                                                   //std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
                 jets_pt30 = event_info->SelectJets(30, 4.7,
-                                                   //std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
             }
 
             if (run_period == analysis::Period::Run2017) {
                 jets_pt20 = event_info->SelectJets(20, 4.7,
-                                                   //std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
                 jets_pt30 = event_info->SelectJets(30, std::numeric_limits<double>::max(),
-                                                   //std::numeric_limits<double>::lowest(),
                                                    analysis::JetOrdering::Pt);
             }
 
