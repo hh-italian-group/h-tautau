@@ -64,7 +64,7 @@ public:
                 throw exception("Jet Ordering %1% is not supported.") % ordering;
         }
 
-        cut = working_points.at(period).at(ordering);
+        cut = &working_points.at(period).at(ordering);
     }
 
     double BTag(const ntuple::Event& event, size_t jet_index) const
@@ -90,21 +90,21 @@ public:
 
     bool Pass(const ntuple::Event& event, size_t jet_index, DiscriminatorWP wp = DiscriminatorWP::Medium) const
     {
-        if(!cut.count(wp))
+        if(!cut->count(wp))
             throw exception("Working point %1% is not supported.") %wp;
-        else return BTag(event, jet_index) > cut.at(wp);
+        else return BTag(event, jet_index) > cut->at(wp);
     }
 
     bool Pass(const ntuple::TupleJet& jet, DiscriminatorWP wp = DiscriminatorWP::Medium) const
     {
-        if(!cut.count(wp))
+        if(!cut->count(wp))
             throw exception("Working point %1% is not supported.") %wp;
-        else return BTag(jet) > cut.at(wp);
+        else return BTag(jet) > cut->at(wp);
     }
 
 private:
     JetOrdering ordering;
-    std::map<DiscriminatorWP,double> cut;
+    const std::map<DiscriminatorWP,double>* cut;
 };
   
 }

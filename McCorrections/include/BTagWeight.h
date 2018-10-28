@@ -19,7 +19,7 @@ namespace mc_corrections {
 namespace detail {
 
 struct JetInfo {
-    double pt, eta, CSV;
+    double pt, eta;
     int hadronFlavour;
     double eff, SF;
     bool bTagOutcome;
@@ -103,10 +103,9 @@ public:
 
     BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName,Period period, JetOrdering ordering,
                DiscriminatorWP wp) :
-        calib("CSVv2", bjetSFFileName)
+        calib(ToString(ordering), bjetSFFileName),
+        bTagger(period,ordering)
     {
-
-        bTagger = std::make_shared<BTagger>(period, ordering);
 
         static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
             {DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, {DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM} ,
@@ -157,7 +156,7 @@ public:
             JetInfo jetInfo(event, jetIndex);
             if(std::abs(jetInfo.eta) >= cuts::btag_2016::eta) continue;
             GetReader(jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
-            jetInfo.bTagOutcome = std::abs(jetInfo.eta) < cuts::btag_2016::eta && bTagger->Pass(event, jetIndex);
+            jetInfo.bTagOutcome = bTagger.Pass(event, jetIndex);
             jetInfos.push_back(jetInfo);
         }
 
@@ -196,7 +195,7 @@ private:
 private:
     BTagCalibration calib;
     ReaderInfoMap readerInfos;
-    std::shared_ptr<BTagger> bTagger;
+    BTagger bTagger;
 };
 
 } // namespace mc_corrections
