@@ -59,10 +59,8 @@ public:
 
         if(!working_points.count(period))
             throw exception("Period %1% is not supported.") % period;
-        if(ordering != JetOrdering::Pt){
-            if(!working_points.at(period).count(ordering))
+        if(!working_points.at(period).count(ordering))
                 throw exception("Jet Ordering %1% is not supported.") % ordering;
-        }
 
         cut = &working_points.at(period).at(ordering);
     }
