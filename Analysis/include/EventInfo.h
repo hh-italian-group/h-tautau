@@ -18,6 +18,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/McCorrections/include/JECUncertaintiesWrapper.h"
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Analysis/include/BTagger.h"
 
 namespace analysis {
 
@@ -62,15 +63,6 @@ template<> struct ChannelLegInfo<static_cast<int>(Channel::TauTau)> {
 };
 template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
     using FirstLeg = MuonCandidate; using SecondLeg = MuonCandidate;
-};
-
-
-enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV };
-ENUM_NAMES(JetOrdering) = {
-    { JetOrdering::NoOrdering, "NoOrdering" },
-    { JetOrdering::Pt, "Pt" },
-    { JetOrdering::CSV, "CSV" },
-    { JetOrdering::DeepCSV, "DeepCSV" },
 };
 
 namespace jet_ordering {
@@ -224,16 +216,7 @@ public:
         double bjet_eta_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
         double vbf_pt_cut = 30;
         double vbf_eta_cut = 5;
-        double btag_cut;
-
-        if(period == analysis::Period::Run2017){
-            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2017::deepCSVv2M : cuts::btag_2017::CSVv2M ;
-        }
-        else if(period == analysis::Period::Run2016){
-            btag_cut = jet_ordering == JetOrdering::DeepCSV ? cuts::btag_2016::DeepCSVM : cuts::btag_2016::CSVv2M ;
-        }
-        else
-            throw exception("Unsupported btag cut for a specific period.");
+        BTagger bTagger(period,jet_ordering);
 
         SelectedSignalJets selected_signal_jets;
 
@@ -242,15 +225,7 @@ public:
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-                double tag;
-                if(jet_ordering == JetOrdering::Pt)
-                    tag = event.jets_p4.at(n).Pt();
-                else if(jet_ordering == JetOrdering::CSV)
-                    tag = event.jets_csv.at(n);
-                else if(jet_ordering == JetOrdering::DeepCSV)
-                    tag = event.jets_deepCsv_BvsAll.at(n);
-                else
-                    throw exception("Unsupported jet ordering for b-jet pair selection.");
+                double tag = bTagger.BTag(event,n);
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
             }
             return jet_info_vector;
@@ -265,9 +240,7 @@ public:
         }
 
         if(bjets_ordered.size() >= 2){
-            double tag_second_bjet = jet_ordering == JetOrdering::DeepCSV ?
-            event.jets_deepCsv_BvsAll.at(bjets_ordered.at(1).index) : event.jets_csv.at(bjets_ordered.at(1).index);
-            if(tag_second_bjet > btag_cut){
+            if(bTagger.Pass(event,bjets_ordered.at(1).index)){
                 selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
             }
         }
@@ -398,27 +371,19 @@ public:
 
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
-                             double csv_cut = std::numeric_limits<double>::lowest(),
                              JetOrdering jet_ordering = JetOrdering::CSV,
                              const std::set<size_t>& bjet_indexes = {})
     {
         Lock lock(*mutex);
+        BTagger bTagger(period,jet_ordering);
         const JetCollection& all_jets = GetJets();
         JetCollection selected_jets;
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
-            if(bjet_indexes.count(n) || jet->csv() <= csv_cut) continue;
-            double tag;
-            if(jet_ordering == JetOrdering::Pt)
-                tag = jet.GetMomentum().Pt();
-            else if(jet_ordering == JetOrdering::CSV)
-                tag = jet->csv();
-            else if(jet_ordering == JetOrdering::DeepCSV)
-                tag = jet->deepcsv();
-            else
-                throw exception("Unsupported jet ordering for jet selection.");
-            jet_info_vector.emplace_back(jet.GetMomentum(),n,tag);
+
+            if(bjet_indexes.count(n) || !(bTagger.Pass(*event,n))) continue;
+            jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
         }
 
         auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);

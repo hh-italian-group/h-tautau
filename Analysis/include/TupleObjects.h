@@ -135,6 +135,8 @@ public:
     }
     DiscriminatorResult csv() const { return event->jets_csv.at(jet_id); }
     DiscriminatorResult deepcsv() const { return event->jets_deepCsv_BvsAll.at(jet_id); }
+    DiscriminatorResult deepFlavour() const{return (event->jets_deepFlavour_b.at(jet_id) +
+                                event->jets_deepFlavour_bb.at(jet_id)+ event->jets_deepFlavour_lepb.at(jet_id));}
     Integer hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
     RealNumber rawf() const { return event->jets_rawf.at(jet_id); }
     RealNumber resolution() const { return event->jets_resolution.at(jet_id); }

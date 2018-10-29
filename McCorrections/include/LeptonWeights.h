@@ -264,7 +264,7 @@ private:
         }
 
         else if(channel == Channel::MuMu)
-            return  muonSF.GetTriggerEff(event.p4_1, isData) * muonSF.GetTriggerEff(event.p4_2, isData);
+            return  muonSF.GetTriggerEff(event.p4_1, isData); // * muonSF.GetTriggerEff(event.p4_2, isData);
 
         else if(channel == Channel::TauTau){
             double tauSF_1 = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_1), static_cast<GenMatch>(event.gen_match_1),
