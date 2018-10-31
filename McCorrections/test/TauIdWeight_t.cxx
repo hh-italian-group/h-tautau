@@ -14,6 +14,7 @@ struct Arguments {
     run::Argument<std::string> input_file{"input_file", "input file"};
     run::Argument<std::string> json_file{"json_file", "json file"};
     run::Argument<std::string> iso_type{"iso_type", "iso type"};
+    run::Argument<analysis::Period> period{"period","period",analysis::Period::Run2017};
 };
 
 namespace analysis {
@@ -22,10 +23,10 @@ class TauIdWeight_t {
 public:
     using TauIdWeight = analysis::mc_corrections::TauIdWeight;
 
-    TauIdWeight_t(const Arguments& _args) : args(_args),
-        tauId_weight(args.json_file(), Parse<DiscriminatorWP>(args.iso_type()))
+    TauIdWeight_t(const Arguments& _args) : args(_args)
     {
-
+        if(args.period()==Period::Run2017) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2017>();
+        else if(args.period()==Period::Run2017) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2016>();
     }
 
 public:
@@ -36,7 +37,8 @@ public:
         auto eventTuple = ntuple::CreateEventTuple("tauTau",inputFile.get(),true,ntuple::TreeState::Full);
 
         for(const ntuple::Event& event : *eventTuple) {
-            std::cout << "TauID weight: " << tauId_weight.Get(event) << std::endl;
+            GenMatch gen_match = static_cast<GenMatch>(event.gen_match_2);
+            std::cout << "TauID weight: " << tauId_weight->GetIdIsoSF(event.p4_2, gen_match, event.decayMode_2, DiscriminatorWP::Loose,DiscriminatorWP::Loose,DiscriminatorWP::Medium) << std::endl;
         }
 
     }
@@ -44,7 +46,7 @@ public:
 
 private:
     Arguments args;
-    TauIdWeight tauId_weight;
+    std::shared_ptr<TauIdWeight> tauId_weight;
 
 };
 

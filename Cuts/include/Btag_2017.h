@@ -15,6 +15,10 @@ namespace btag_2017 {
     constexpr double deepCSVv2M = 0.4941; // >
     constexpr double deepCSVv2T = 0.8001; // >
 
+    constexpr double deepFlavourL = 0.0521; // >
+    constexpr double deepFlavourM = 0.3033; // >
+    constexpr double deepFlavourT = 0.7489; // >
+
     constexpr double pt = 20; // >
     constexpr double eta = 2.4; // <
 }
