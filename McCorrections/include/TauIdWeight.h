@@ -165,7 +165,6 @@ private:
         //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
         //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
 
-
         if(iso_wp == DiscriminatorWP::VLoose)
             return  PhysicalValue(0.88,0.03);
         else if(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)

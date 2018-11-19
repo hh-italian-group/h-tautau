@@ -89,7 +89,6 @@ public:
         EventIdentifier current_id = EventIdentifier::Undef_event();
         std::map<EventEnergyScale, ntuple::Event> events;
         for(const auto& event : *originalTuple) {
-
             EventIdentifier event_id(event);
             if(event_id != current_id) {
                 if(!events.empty()) {
