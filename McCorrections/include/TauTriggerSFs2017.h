@@ -5,6 +5,7 @@
 #include <TH2.h>
 
 #include <string>
+#include "h-tautau/Analysis/include/AnalysisTypes.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -38,8 +39,8 @@ public:
   enum { kCentral, kStatUp, kStatDown };
 
 
-  TauTriggerSFs2017(const std::string& inputFileName, const std::string& inputFileNameOld, const std::string& tauMVAWP = "medium")
-  : inputFileName_(inputFileName), inputFileNameOld_(inputFileNameOld), tauMVAWP_(tauMVAWP)
+  TauTriggerSFs2017(const std::string& inputFileName, const std::string& inputFileNameOld, DiscriminatorWP _tau_iso_wp, const std::string& tauMVAWP = "medium")
+  : inputFileName_(inputFileName), inputFileNameOld_(inputFileNameOld), tauMVAWP_(tauMVAWP), tau_iso_wp_(_tau_iso_wp)
     {
         inputFile_ = new TFile(inputFileName_.data());
         if ( !inputFile_ ) {
@@ -63,9 +64,9 @@ public:
 
         // FIXME: Use the eta-phi efficiency corrections from pre-re-miniaod branch
         // Only medium, tight, and vtight are provided and they are from MVA ID
-//        std::string tauMVAWP = tauMVAWP_.data();
-//        if (tauMVAWP == "vvloose" || tauMVAWP == "vloose" || tauMVAWP == "loose") tauMVAWP = "medium";
-//        if (tauMVAWP == "vvtight")  tauMVAWP = "vtight";
+        std::string tau_MVAWP = tauMVAWP_.data();
+        if (tau_MVAWP == "vvloose" || tau_MVAWP == "vloose" || tau_MVAWP == "loose") tau_MVAWP = "medium";
+        if (tau_MVAWP == "vvtight")  tau_MVAWP = "vtight";
 
         // load the TH2s containing the eta phi efficiency corrections
         diTauEtaPhiData_ = loadTH2(inputFileOld_, Form("diTau_%s_DATA", tauMVAWP_.data()));
@@ -213,6 +214,8 @@ protected:
   std::string inputFileName_,inputFileNameOld_;
   TFile* inputFile_;
   TFile* inputFileOld_;
+  DiscriminatorWP tau_iso_wp_;
+
 
   std::string tauMVAWP_;
 
