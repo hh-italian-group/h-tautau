@@ -141,7 +141,7 @@ public:
 
 class TauTriggerWeight2017 : public TauTriggerWeight {
 public:
-    TauTriggerWeight2017(const std::string& tauTriggerInput, const std::string& tauTriggerInputOld, DiscriminatorWP _tau_iso_wp)
+    TauTriggerWeight2017(const std::string& tauTriggerInput, const std::string& tauTriggerInputOld, std::string _tau_iso_wp)
         : tauSF(std::make_shared<TauTriggerSFs2017>(tauTriggerInput, tauTriggerInputOld, _tau_iso_wp))
     {}
 

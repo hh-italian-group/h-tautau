@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include "AnalysisTools/Core/include/EventIdentifier.h"
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "h-tautau/Analysis/include/AnalysisTypes.h"
@@ -181,7 +182,7 @@ public:
             tauIdWeight = std::make_shared<TauIdWeight2016>();
         }
         else if(period == Period::Run2017){
-            tauTriggerWeight =  std::make_shared<TauTriggerWeight2017>(tauTriggerInput, tauTriggerInputOld, ToString(_tau_iso_wp));
+            tauTriggerWeight =  std::make_shared<TauTriggerWeight2017>(tauTriggerInput, tauTriggerInputOld,  boost::algorithm::to_lower_copy(ToString(_tau_iso_wp)));
             tauIdWeight = std::make_shared<TauIdWeight2017>();
         }
         else
