@@ -5,7 +5,6 @@
 #include <TH2.h>
 
 #include <string>
-#include "h-tautau/Analysis/include/AnalysisTypes.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -39,8 +38,8 @@ public:
   enum { kCentral, kStatUp, kStatDown };
 
 
-  TauTriggerSFs2017(const std::string& inputFileName, const std::string& inputFileNameOld, DiscriminatorWP _tau_iso_wp, const std::string& tauMVAWP = "medium")
-  : inputFileName_(inputFileName), inputFileNameOld_(inputFileNameOld), tauMVAWP_(tauMVAWP), tau_iso_wp_(_tau_iso_wp)
+  TauTriggerSFs2017(const std::string& inputFileName, const std::string& inputFileNameOld, const std::string& tauMVAWP = "medium")
+  : inputFileName_(inputFileName), inputFileNameOld_(inputFileNameOld), tauMVAWP_(tauMVAWP)
     {
         inputFile_ = new TFile(inputFileName_.data());
         if ( !inputFile_ ) {
@@ -64,25 +63,25 @@ public:
 
         // FIXME: Use the eta-phi efficiency corrections from pre-re-miniaod branch
         // Only medium, tight, and vtight are provided and they are from MVA ID
-        std::string tau_MVAWP = tauMVAWP_.data();
-        if (tau_MVAWP == "vvloose" || tau_MVAWP == "vloose" || tau_MVAWP == "loose") tau_MVAWP = "medium";
-        if (tau_MVAWP == "vvtight")  tau_MVAWP = "vtight";
+        std::string tmpMVAWP = tauMVAWP_.data();
+        if (tmpMVAWP == "vvloose" || tmpMVAWP == "vloose" || tmpMVAWP == "loose") tmpMVAWP = "medium";
+        if (tmpMVAWP == "vvtight")  tmpMVAWP = "vtight";
 
         // load the TH2s containing the eta phi efficiency corrections
-        diTauEtaPhiData_ = loadTH2(inputFileOld_, Form("diTau_%s_DATA", tauMVAWP_.data()));
-        diTauEtaPhiMC_ = loadTH2(inputFileOld_, Form("diTau_%s_MC", tauMVAWP_.data()));
-        eTauEtaPhiData_ = loadTH2(inputFileOld_, Form("eTau_%s_DATA", tauMVAWP_.data()));
-        eTauEtaPhiMC_ = loadTH2(inputFileOld_, Form("eTau_%s_MC", tauMVAWP_.data()));
-        muTauEtaPhiData_ = loadTH2(inputFileOld_, Form("muTau_%s_DATA", tauMVAWP_.data()));
-        muTauEtaPhiMC_ = loadTH2(inputFileOld_, Form("muTau_%s_MC", tauMVAWP_.data()));
+        diTauEtaPhiData_ = loadTH2(inputFileOld_, Form("diTau_%s_DATA", tmpMVAWP.data()));
+        diTauEtaPhiMC_ = loadTH2(inputFileOld_, Form("diTau_%s_MC", tmpMVAWP.data()));
+        eTauEtaPhiData_ = loadTH2(inputFileOld_, Form("eTau_%s_DATA", tmpMVAWP.data()));
+        eTauEtaPhiMC_ = loadTH2(inputFileOld_, Form("eTau_%s_MC", tmpMVAWP.data()));
+        muTauEtaPhiData_ = loadTH2(inputFileOld_, Form("muTau_%s_DATA", tmpMVAWP.data()));
+        muTauEtaPhiMC_ = loadTH2(inputFileOld_, Form("muTau_%s_MC", tmpMVAWP.data()));
 
         // Eta Phi Avg
-        diTauEtaPhiAvgData_ = loadTH2(inputFileOld_, Form("diTau_%s_AVG_DATA", tauMVAWP_.data()));
-        diTauEtaPhiAvgMC_ = loadTH2(inputFileOld_, Form("diTau_%s_AVG_MC", tauMVAWP_.data()));
-        eTauEtaPhiAvgData_ = loadTH2(inputFileOld_, Form("eTau_%s_AVG_DATA", tauMVAWP_.data()));
-        eTauEtaPhiAvgMC_ = loadTH2(inputFileOld_, Form("eTau_%s_AVG_MC", tauMVAWP_.data()));
-        muTauEtaPhiAvgData_ = loadTH2(inputFileOld_, Form("muTau_%s_AVG_DATA", tauMVAWP_.data()));
-        muTauEtaPhiAvgMC_ = loadTH2(inputFileOld_, Form("muTau_%s_AVG_MC", tauMVAWP_.data()));
+        diTauEtaPhiAvgData_ = loadTH2(inputFileOld_, Form("diTau_%s_AVG_DATA", tmpMVAWP.data()));
+        diTauEtaPhiAvgMC_ = loadTH2(inputFileOld_, Form("diTau_%s_AVG_MC", tmpMVAWP.data()));
+        eTauEtaPhiAvgData_ = loadTH2(inputFileOld_, Form("eTau_%s_AVG_DATA", tmpMVAWP.data()));
+        eTauEtaPhiAvgMC_ = loadTH2(inputFileOld_, Form("eTau_%s_AVG_MC", tmpMVAWP.data()));
+        muTauEtaPhiAvgData_ = loadTH2(inputFileOld_, Form("muTau_%s_AVG_DATA", tmpMVAWP.data()));
+        muTauEtaPhiAvgMC_ = loadTH2(inputFileOld_, Form("muTau_%s_AVG_MC", tmpMVAWP.data()));
     }
     ~TauTriggerSFs2017()
     {
@@ -214,7 +213,6 @@ protected:
   std::string inputFileName_,inputFileNameOld_;
   TFile* inputFile_;
   TFile* inputFileOld_;
-  DiscriminatorWP tau_iso_wp_;
 
 
   std::string tauMVAWP_;

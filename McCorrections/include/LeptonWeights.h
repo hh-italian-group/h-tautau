@@ -181,7 +181,7 @@ public:
             tauIdWeight = std::make_shared<TauIdWeight2016>();
         }
         else if(period == Period::Run2017){
-            tauTriggerWeight =  std::make_shared<TauTriggerWeight2017>(tauTriggerInput, tauTriggerInputOld, _tau_iso_wp);
+            tauTriggerWeight =  std::make_shared<TauTriggerWeight2017>(tauTriggerInput, tauTriggerInputOld, ToString(_tau_iso_wp));
             tauIdWeight = std::make_shared<TauIdWeight2017>();
         }
         else
