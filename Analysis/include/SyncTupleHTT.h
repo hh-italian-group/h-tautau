@@ -139,6 +139,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     VAR(Float_t, puweight) \
+    VAR(Float_t, leptonidisoWeight) \
+    VAR(Float_t, leptontrigWeight) \
     /* hh->bbtautau part */ \
     VAR(Float_t, shapeWeight) /* genWeight * puWeight * genEventSpec */ \
     VAR(Float_t, topWeight) /* gen top pt weight for TTbar */ \
@@ -484,6 +486,9 @@ namespace htt_sync {
         sync().shapeWeight = static_cast<Float_t>(event->weight_pu * event->weight_bsm_to_sm * event->weight_dy
                            * event->weight_ttbar * event->weight_wjets * event->weight_xs);
         sync().btagWeight = static_cast<Float_t>(event->weight_btag);
+        sync().puweight = static_cast<Float_t>(event->weight_pu);
+        sync().leptonidisoWeight = static_cast<Float_t>(event->weight_lepton_id_iso);
+        sync().leptontrigWeight = static_cast<Float_t>(event->weight_lepton_trig);
 
         sync().lhe_n_b_partons = static_cast<int>(event->lhe_n_b_partons);
         sync().lhe_n_partons = static_cast<int>(event->lhe_n_partons);

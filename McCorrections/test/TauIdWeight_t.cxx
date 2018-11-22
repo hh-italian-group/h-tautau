@@ -26,7 +26,7 @@ public:
     TauIdWeight_t(const Arguments& _args) : args(_args)
     {
         if(args.period()==Period::Run2017) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2017>();
-        else if(args.period()==Period::Run2017) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2016>();
+        else if(args.period()==Period::Run2016) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2016>();
     }
 
 public:

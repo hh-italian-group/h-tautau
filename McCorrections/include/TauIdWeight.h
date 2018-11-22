@@ -62,7 +62,7 @@ public:
     virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int /*decay_mode*/, DiscriminatorWP anti_ele_wp,
                              DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const override
     {
-        auto tauSF = getTauIso(iso_wp).GetValue();
+        auto tauSF = gen_match == GenMatch::Tau ? getTauIso(iso_wp).GetValue() : 1;
         auto muonSF = getMuonMissId(p4, gen_match, anti_mu_wp).GetValue();
         auto eleSF = getEleMissId(p4, gen_match, anti_ele_wp).GetValue();
 

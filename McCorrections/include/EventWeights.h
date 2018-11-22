@@ -33,7 +33,7 @@ public:
                             "",
                             FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
                             FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"), "",
-                            FullName("2016/Tau/fitresults_tt_moriond2017.json"), period, DiscriminatorWP::Medium);
+                            FullName("2016/Tau/fitresults_tt_moriond2017.json"), "",period, DiscriminatorWP::Medium);
             if(mode.empty() || mode.count(WeightType::BTag))
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                             FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
@@ -71,6 +71,7 @@ public:
                                     FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
                                     FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
                                     FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
+                                    FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
                                     FullName("2017/Tau/tauTariggerEfficiencies.root"),
                                     period, DiscriminatorWP::Medium);
                                     // POG SFs
