@@ -119,6 +119,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Double_t, weight_xs_withTopPt) \
     VAR(Double_t, weight_total) \
     VAR(Double_t, weight_total_withTopPt) \
+    VAR(Bool_t,isData) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -247,7 +248,7 @@ inline std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDi
                              "weight_tau_id", "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy",
                              "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs",
                              "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt", "file_desc_id",
-                             "split_id" } },
+                             "split_id", "isData" } },
         { TreeState::Skimmed, { } }
     };
 

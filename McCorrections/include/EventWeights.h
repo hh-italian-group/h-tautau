@@ -44,8 +44,10 @@ public:
 
         else if(period == Period::Run2017) {
             if(mode.empty() || mode.count(WeightType::PileUp))
-                providers[WeightType::PileUp] = std::make_shared<PileUpWeight>(
-                            FullName("2017/pileup_weight_200bins.root"), "pileup_weight", 130, 0);
+                providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
+                            FullName("2017/DataPileupHistogram_200bin.root"),
+                            FullName("2017/pu_mc_distr_per_sample.root"),
+                            FullName("2017/pileup_groups.txt"), 130, 0);
             if(mode.empty() || mode.count(WeightType::BTag)){
                 if(jet_ordering == JetOrdering::DeepCSV)
                     providers[WeightType::BTag] = std::make_shared<BTagWeight>(

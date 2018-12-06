@@ -20,8 +20,8 @@ namespace analysis {
 class PileUpCalcData : public root_ext::AnalyzerData {
 public:
     using AnalyzerData::AnalyzerData;
-    TH1D_ENTRY(n_pu_mc, 1000, 0, 100)
-    TH1D_ENTRY(n_pu_mc_norm, 1000, 0, 100)
+    TH1D_ENTRY(n_pu_mc, 200, 0, 200)
+    TH1D_ENTRY(n_pu_mc_norm, 200, 0, 200)
 };
 
 
@@ -38,13 +38,16 @@ public:
         for(const auto& file_name : args.MC_input_files()){
             auto inputFile = root_ext::OpenRootFile(file_name);
             std::cout << "File opened: " << file_name << std::endl;
+            auto input_file = GetFileNameWithoutPath(file_name);
+            auto name = RemoveFileExtension(input_file);
+            std::cout << "name : " << name << '\n';
             try{
                 ntuple::ExpressTuple tuple(args.tree_name(), inputFile.get(), true);
                 for(const auto& event : tuple)
-                    anaData.n_pu_mc().Fill(event.npu);
+                    anaData.n_pu_mc(name).Fill(event.npu);
 
-                anaData.n_pu_mc_norm().CopyContent(anaData.n_pu_mc());
-                RenormalizeHistogram(anaData.n_pu_mc_norm(), 1, true);
+                anaData.n_pu_mc_norm(name).CopyContent(anaData.n_pu_mc(name));
+                RenormalizeHistogram(anaData.n_pu_mc_norm(name), 1, true);
             }catch(std::exception&) {}
 
         }

@@ -9,7 +9,7 @@ namespace ntuple {
 
 class MetFilters {
 public:
-    static constexpr size_t NumberOfFilters = 8;
+    static constexpr size_t NumberOfFilters = 9;
     enum class Filter {
         PrimaryVertex = 0, BeamHalo = 1, HBHE_noise = 2, HBHEiso_noise = 3, ECAL_TP = 4, ee_badSC_noise = 5,
         badMuon = 6, badChargedHadron = 7, ecalBadCalib = 8
