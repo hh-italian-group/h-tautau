@@ -19,6 +19,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
 #include "h-tautau/Analysis/include/BTagger.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
+
 
 namespace analysis {
 
@@ -223,14 +225,21 @@ public:
         const auto CreateJetInfo = [&]() -> auto {
             std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(selected_signal_jets.isSelectedBjet(n)) continue;
-            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
+                if(selected_signal_jets.isSelectedBjet(n)) continue;
+                if(selected_signal_jets.isSelectedVBFjet(n)) continue;
+
+                if(period ==  analysis::Period::Run2017){
+                    const double abs_eta = std::abs(event.jets_p4.at(n).eta());
+                    if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::pt &&
+                        abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low &&
+                        abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high) continue;
+                    }
+
                 double tag = bTagger.BTag(event,n);
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
             }
             return jet_info_vector;
         };
-
 
         auto jet_info_vector = CreateJetInfo();
         auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);

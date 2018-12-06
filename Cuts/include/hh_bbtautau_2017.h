@@ -50,7 +50,7 @@ namespace ETau {
 
     // ZeeVeto should not be applied.
 }
-    
+
 namespace TauTau {
     namespace tauID {
         //constexpr double pt = 45; // > to be fixed
@@ -113,7 +113,13 @@ namespace fatJetID {
 }
 
 namespace jetID {
-    constexpr double eta = 5; // <
+    constexpr double eta = 5;
+ //MET Recomendations. See presentation https://indico.cern.ch/event/762187/contributions/3218088/attachments/1753676/2842443/HTT_15Nov18_PileupJetID_ADow.pdf
+//and https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1865.html
+    constexpr double pt = 50;
+    constexpr double eta_low = 2.65;
+    constexpr double eta_high = 3.139;
+
 
 }
 
