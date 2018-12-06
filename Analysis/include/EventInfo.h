@@ -19,6 +19,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
 #include "h-tautau/Analysis/include/BTagger.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
+
 
 namespace analysis {
 
@@ -227,7 +229,10 @@ public:
                 if(selected_signal_jets.isSelectedVBFjet(n)) continue;
 
                 const double abs_eta = std::abs(event.jets_p4.at(n).eta());
-                if(event.jets_p4.at(n).pt() < 50 && abs_eta > 2.65 && abs_eta < 3.139) continue;
+                // if(event.jets_p4.at(n).pt() < 50 && abs_eta > 2.65 && abs_eta < 3.139) continue;
+                if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::pt &&
+                    abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low &&
+                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high) continue;
 
                 double tag = bTagger.BTag(event,n);
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
