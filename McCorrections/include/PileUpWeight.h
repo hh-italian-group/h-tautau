@@ -9,7 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-    class PileUpWeight : public IWeightProvider {
+class PileUpWeight : public IWeightProvider {
 public:
     using Event = ntuple::Event;
     using Hist = TH1;
