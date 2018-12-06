@@ -64,8 +64,7 @@ public:
 
     void SetActiveDataset(const std::string& active_dataset)
     {
-        std::ostringstream ss_active_dataset;
-        ss_active_dataset << "n_pu_mc_" << active_dataset;
+        const std::string active_dataset_full_name = "n_pu_mc_" + active_dataset;
         std::string active_dataset_full_name = ss_active_dataset.str();
 
         if(!datasets.at(active_dataset_full_name))

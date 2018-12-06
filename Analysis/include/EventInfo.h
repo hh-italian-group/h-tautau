@@ -228,11 +228,12 @@ public:
                 if(selected_signal_jets.isSelectedBjet(n)) continue;
                 if(selected_signal_jets.isSelectedVBFjet(n)) continue;
 
-                const double abs_eta = std::abs(event.jets_p4.at(n).eta());
-                // if(event.jets_p4.at(n).pt() < 50 && abs_eta > 2.65 && abs_eta < 3.139) continue;
-                if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::pt &&
-                    abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low &&
-                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high) continue;
+                if(period ==  analysis::Period::Run2017){
+                    const double abs_eta = std::abs(event.jets_p4.at(n).eta());
+                    if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::pt &&
+                        abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low &&
+                        abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high) continue;
+                    }
 
                 double tag = bTagger.BTag(event,n);
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
