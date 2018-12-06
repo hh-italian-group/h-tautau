@@ -65,8 +65,7 @@ public:
     void SetActiveDataset(const std::string& active_dataset)
     {
         const std::string active_dataset_full_name = "n_pu_mc_" + active_dataset;
-        std::string active_dataset_full_name = ss_active_dataset.str();
-
+        
         if(!datasets.at(active_dataset_full_name))
             throw exception("active dataset isn't initialized");
         active_group = datasets.at(active_dataset_full_name);
