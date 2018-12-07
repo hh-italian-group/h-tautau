@@ -22,7 +22,6 @@ public:
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
-    static bool SelectSpring15VetoElectron(const pat::Electron& electron);
     void FillEventTuple(const SelectionResults& selection);
 
     std::vector<ElectronCandidate> CollectZelectrons();

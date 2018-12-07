@@ -56,41 +56,6 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
         previous_selection = SelectionResultsPtr(new SelectionResults(selection));
 }
 
-bool TupleProducer_eTau::SelectSpring15VetoElectron(const pat::Electron& electron)
-{
-    double full5x5_sigmaIetaIeta = electron.full5x5_sigmaIetaIeta();
-    double dEtaIn = std::abs(electron.deltaEtaSuperClusterTrackAtVtx());
-    float dPhiIn = electron.deltaPhiSuperClusterTrackAtVtx();
-    float hOverE = electron.hadronicOverEm();
-    const float ecal_energy_inverse = 1.0/electron.ecalEnergy();
-    const float eSCoverP = electron.eSuperClusterOverP();
-    float ooEmooP =  std::abs(1.0 - eSCoverP)*ecal_energy_inverse;
-    constexpr reco::HitPattern::HitCategory missingHitType =
-    reco::HitPattern::MISSING_INNER_HITS;
-    const unsigned mHits = 
-    electron.gsfTrack()->hitPattern().numberOfHits(missingHitType);
-    bool result = false;
-    if(fabs(electron.superCluster()->position().eta()) <= 1.479){
-	result=full5x5_sigmaIetaIeta < 0.0114 &&
-               fabs(dEtaIn) < 0.0152  &&
-	       fabs(dPhiIn) < 0.216   &&
-	       hOverE < 0.181 &&
-               ooEmooP < 0.207 &&
-               mHits <= 2 &&
-               electron.passConversionVeto();
-    }
-    else if(fabs(electron.superCluster()->position().eta()) > 1.479 && fabs(electron.superCluster()->position().eta()) < 2.5){
-	result=full5x5_sigmaIetaIeta < 0.0352 &&
-               fabs(dEtaIn) < 0.0113  &&
-	       fabs(dPhiIn) < 0.237   &&
-	       hOverE < 0.116 &&
-               ooEmooP < 0.174 &&
-               mHits <= 3 &&
-               electron.passConversionVeto();       
-    } 
-    return result;
-}
-
 std::vector<BaseTupleProducer::ElectronCandidate> TupleProducer_eTau::CollectZelectrons()
 {
     using namespace std::placeholders;
@@ -150,9 +115,6 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     const bool isTight = (*tight_id_decisions)[electron.getPtr()];
     cut(isTight, "electronMVATightID");
     if(productionMode != ProductionMode::hh) {
-        const auto eleMissingHits =
-                electron->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
-        cut(eleMissingHits <= missingHits, "missingHits", eleMissingHits);
         cut(electron->passConversionVeto(), "conversionVeto");
     } else {
         cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());

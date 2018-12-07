@@ -25,23 +25,26 @@ public:
     using Entry = root_ext::AnalyzerDataEntry<RootHist>;
     using AnaData = root_ext::AnalyzerData;
     using Factory = root_ext::HistogramFactory<RootHist>;
-    SelectionManager(Entry& _entry, double _weight)
-        : entry(&_entry), weight(_weight) {}
+    SelectionManager(Entry* _entry, double _weight, const std::string& _selection_label)
+        : entry(_entry), weight(_weight), selection_label(_selection_label) {}
 
     template<typename ValueType>
     ValueType FillHistogram(ValueType value, const std::string& hist_name)
     {
-        if(!entry->GetHistograms().count(hist_name)) {
-            std::shared_ptr<Hist> hist(Factory::Make(hist_name));
-            entry->Set(hist_name, hist);
+        if(entry != nullptr) {
+            if(!entry->GetHistograms().count(hist_name)) {
+                std::shared_ptr<Hist> hist(Factory::Make(hist_name, selection_label));
+                entry->Set(hist_name, hist);
+            }
+            (*entry)(hist_name).Fill(value, weight);
         }
-        (*entry)(hist_name).Fill(value, weight);
         return value;
     }
 
 private:
     Entry* entry;
     double weight;
+    std::string selection_label;
 };
 
 struct SelectionResultsBase {

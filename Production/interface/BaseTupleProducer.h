@@ -143,7 +143,7 @@ private:
 protected:
     const ProductionMode productionMode;
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
-    const int nJetsRecoilCorr;    
+    const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
     analysis::TriggerDescriptors triggerDescriptors;
     ntuple::EventTuple eventTuple;
@@ -270,7 +270,9 @@ protected:
             anaDataBeforeCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                        treeName + "_before_cut/" + suffix);
 
-        SelectionManager selectionManager(anaDataBeforeCut.at(suffix)->h, weight);
+        auto entry = eventEnergyScale == analysis::EventEnergyScale::Central
+                   ? &anaDataBeforeCut.at(suffix)->h : nullptr;
+        SelectionManager selectionManager(entry, weight, selection_label);
 
         const auto selector = [&](size_t id) -> Candidate {
             const Candidate& candidate = all_candidates.at(id);
@@ -286,7 +288,10 @@ protected:
             anaDataAfterCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                        treeName + "_after_cut/" + suffix);
 
-        SelectionManager selectionManager_afterCut(anaDataAfterCut.at(suffix)->h, weight);
+
+        auto entry_afterCut = eventEnergyScale == analysis::EventEnergyScale::Central
+                            ? &anaDataAfterCut.at(suffix)->h : nullptr;
+        SelectionManager selectionManager_afterCut(entry_afterCut, weight, selection_label);
         for(const auto& candidate : selected) {
             Cutter cut(nullptr, &selectionManager_afterCut);
             base_selector(candidate, cut);

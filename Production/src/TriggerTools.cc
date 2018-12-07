@@ -6,6 +6,43 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "AnalysisTools/Core/include/RootExt.h"
 
+namespace trigger_tools {
+
+    inline constexpr int GetCMSSWVersion()
+    {
+        int d1 =  *(PROJECT_VERSION + 6) - '0';
+        int d2 =  *(PROJECT_VERSION + 7) - '0';
+        if(d2 >= 0 && d2 <= 9) return d1 * 10 + d2;
+        return d1;
+    }
+
+    namespace detail {
+        template<typename TriggerObject, int cmssw_version>
+        struct UnpackFiltersImpl;
+
+        template<typename TriggerObject>
+        struct UnpackFiltersImpl<TriggerObject, 8>{
+            static void Unpack(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                               TriggerObject& triggerObject) {}
+        };
+
+        template<typename TriggerObject>
+        struct UnpackFiltersImpl<TriggerObject, 9>{
+            static void Unpack(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                               TriggerObject& triggerObject)
+            {
+                triggerObject.unpackFilterLabels(event, triggerResults);
+            }
+        };
+    }
+
+    inline void UnpackFilters(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                              pat::TriggerObjectStandAlone& triggerObject)
+    {
+        detail::UnpackFiltersImpl<pat::TriggerObjectStandAlone, GetCMSSWVersion()>::Unpack(event, triggerResults, triggerObject);
+    }
+}
+
 namespace analysis {
 
 TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
@@ -75,6 +112,7 @@ TriggerTools::TriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
         if(ROOT::Math::VectorUtil::DeltaR2(triggerObject.polarP4(), candidateMomentum) >= deltaR2) continue;
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
         unpackedTriggerObject.unpackPathNames(triggerNames);
+        trigger_tools::UnpackFilters(*iEvent,*triggerResultsHLT,unpackedTriggerObject);
         if(!passFilters(unpackedTriggerObject)) continue;
         const auto& paths = unpackedTriggerObject.pathNames(true, true);
         for(const auto& path : paths) {

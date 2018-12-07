@@ -3,7 +3,7 @@ Defined only cuts that are different from the H to tautau baseline selection.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
-#include "AnalysisMath.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
 
 namespace cuts {
 namespace hh_bbtautau_2016 {
