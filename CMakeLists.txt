@@ -8,7 +8,7 @@ file(GLOB_RECURSE HTT_UTILITIES_SRC "${CMSSW_BASE_SRC}/HTT-utilities/*.cc")
 add_library(HTT-utilities STATIC ${HTT_UTILITIES_SRC})
 set_source_files_properties(${HTT_UTILITIES_SRC} PROPERTIES COMPILE_FLAGS "-w")
 
-file(GLOB_RECURSE SVFIT_SRC "${CMSSW_BASE_SRC}/TauAnalysis/ClassicSVfit/*.cc")
+file(GLOB_RECURSE SVFIT_SRC "${CMSSW_BASE_SRC}/TauAnalysis/SVfitStandalone/*.cc")
 add_library(SVfit STATIC ${SVFIT_SRC})
 set_source_files_properties(${SVFIT_SRC} PROPERTIES COMPILE_FLAGS "-w")
 
