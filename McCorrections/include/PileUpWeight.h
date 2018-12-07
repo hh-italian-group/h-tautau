@@ -66,8 +66,8 @@ public:
     {
         const std::string active_dataset_full_name = "n_pu_mc_" + active_dataset;
         
-        if(!datasets.at(active_dataset_full_name))
-            throw exception("active dataset isn't initialized");
+        if(!datasets.count(active_dataset_full_name))
+            throw exception("PileUp weight for dataset '%1%' isn't found") % active_dataset;
         active_group = datasets.at(active_dataset_full_name);
     }
 
