@@ -13,7 +13,8 @@ using ::analysis::operator<<;
 using ::analysis::operator>>;
 
 enum class WeightType {
-    PileUp = 0, LeptonTrigIdIso = 1, BTag = 2, DY = 3, TTbar = 4, Wjets = 5, BSM_to_SM = 6, TopPt = 7, TauId = 8
+    PileUp = 0, LeptonTrigIdIso = 1, BTag = 2, DY = 3, TTbar = 4, Wjets = 5, BSM_to_SM = 6, TopPt = 7, TauId = 8,
+    GenEventWeight = 9
 };
 ENUM_NAMES(WeightType) = {
     { WeightType::PileUp, "PileUp" },
@@ -24,7 +25,8 @@ ENUM_NAMES(WeightType) = {
     { WeightType::Wjets, "Wjets" },
     { WeightType::BSM_to_SM, "BSM_to_SM" },
     { WeightType::TopPt, "TopPt" },
-    { WeightType::TauId, "TauId" }
+    { WeightType::TauId, "TauId" },
+    { WeightType::GenEventWeight, "GenEventWeight" }
 };
 
 using WeightingMode = std::set<WeightType>;

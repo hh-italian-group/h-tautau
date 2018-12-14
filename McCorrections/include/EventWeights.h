@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TopPtWeight.h"
 #include "TauIdWeight.h"
 #include "WeightingMode.h"
+#include "GenEventWeight.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 
 
@@ -64,31 +65,32 @@ public:
                 else
                    throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
             }
-
-                        if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
-                        providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                                    FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
-                                    FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
-                                    FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
-                                    FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
-                                    FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
-                                    FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
-                                    FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
-                                    FullName("2017/Tau/tauTariggerEfficiencies.root"),
-                                    period, DiscriminatorWP::Medium);
-                                    // POG SFs
-                                    // FullName("2017/Electron/EleIdSFPOG.root"),
-                                    // FullName("2017/Electron/EleIsoSFPOG.root"),
-                                    // FullName("2017/Muon/MuonIdSFPOG.root"),
-                                    // FullName("2017/Muon/MuonIsoSFPOG.root"),
-                                    // FullName("2017/Muon/MuonTriggerSFPOG.root"),
-                                    // FullName("Tau/fitresults_tt_moriond2017.json"),
-                    if(mode.empty() || mode.count(WeightType::TopPt))
-                        providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
+            if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
+                providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+                            FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
+                            FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
+                            FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
+                            FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
+                            FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
+                            FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
+                            FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
+                            FullName("2017/Tau/tauTariggerEfficiencies.root"),
+                            period, DiscriminatorWP::Medium);
+                            // POG SFs
+                            // FullName("2017/Electron/EleIdSFPOG.root"),
+                            // FullName("2017/Electron/EleIsoSFPOG.root"),
+                            // FullName("2017/Muon/MuonIdSFPOG.root"),
+                            // FullName("2017/Muon/MuonIsoSFPOG.root"),
+                            // FullName("2017/Muon/MuonTriggerSFPOG.root"),
+                            // FullName("Tau/fitresults_tt_moriond2017.json"),
+        if(mode.empty() || mode.count(WeightType::TopPt))
+            providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
         }
         else {
             throw exception("Period %1% is not supported.") % period;
         }
+        if(mode.empty() || mode.count(WeightType::GenEventWeight))
+            providers[WeightType::GenEventWeight] = std::make_shared<GenEventWeight>();
     }
 
     ProviderPtr GetProvider(WeightType weightType) const
