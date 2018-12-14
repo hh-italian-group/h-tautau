@@ -216,32 +216,24 @@ public:
     {
         double bjet_pt_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::pt : cuts::btag_2016::pt;
         double bjet_eta_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
-        double vbf_pt_cut = 30;
-        double vbf_eta_cut = 5;
         BTagger bTagger(period,jet_ordering);
 
         SelectedSignalJets selected_signal_jets;
 
-        const auto CreateJetInfo = [&]() -> auto {
+        const auto CreateJetInfo = [&](bool useBTag) -> auto {
             std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
                 if(selected_signal_jets.isSelectedBjet(n)) continue;
                 if(selected_signal_jets.isSelectedVBFjet(n)) continue;
+                if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
 
-                if(period ==  analysis::Period::Run2017){
-                    const double abs_eta = std::abs(event.jets_p4.at(n).eta());
-                    if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::pt &&
-                        abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low &&
-                        abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high) continue;
-                    }
-
-                double tag = bTagger.BTag(event,n);
+                const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
             }
             return jet_info_vector;
         };
 
-        auto jet_info_vector = CreateJetInfo();
+        auto jet_info_vector = CreateJetInfo(true);
         auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
         selected_signal_jets.n_bjets = bjets_ordered.size();
         if(bjets_ordered.size() >= 1){
@@ -254,14 +246,10 @@ public:
             }
         }
 
-        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector_vbf;
-        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-            if(selected_signal_jets.isSelectedBjet(n)) continue;
-            double tag = event.jets_p4.at(n).Pt();
-            jet_info_vector_vbf.emplace_back(event.jets_p4.at(n),n,tag);
-        }
-
-        auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,vbf_pt_cut,vbf_eta_cut);
+        auto jet_info_vector_vbf = CreateJetInfo(false);
+        auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,
+                                                        cuts::hh_bbtautau_2017::jetID::vbf_pt_cut,
+                                                        cuts::hh_bbtautau_2017::jetID::vbf_eta_cut);
 
         double max_mjj = -std::numeric_limits<double>::infinity();
         for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
@@ -280,7 +268,7 @@ public:
 
         if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
 
-        auto jet_info_vector_new = CreateJetInfo();
+        auto jet_info_vector_new = CreateJetInfo(true);
         auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
         if(new_bjets_ordered.size() >= 1)
             selected_signal_jets.selectedBjetPair.second = new_bjets_ordered.at(0).index;
@@ -390,7 +378,7 @@ public:
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
-
+            if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
             if(bjet_indexes.count(n) || !(bTagger.Pass(*event,n))) continue;
             jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
         }
@@ -413,6 +401,7 @@ public:
         for(size_t n = 0; n < jets.size(); ++n) {
             const auto& jet = jets.at(n);
 
+            if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
             if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
             if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
                 || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
@@ -586,6 +575,19 @@ protected:
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
     std::shared_ptr<Mutex> mutex;
+
+private:
+    template<typename LorentzVector>
+    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period)
+    {
+        if(period !=  analysis::Period::Run2017)
+            return true;
+
+        const double abs_eta = std::abs(jet_p4.eta());
+        return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
+                    abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
+                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto);
+    }
 
 private:
     EventIdentifier eventIdentifier;
