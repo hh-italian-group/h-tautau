@@ -225,13 +225,8 @@ public:
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
                 if(selected_signal_jets.isSelectedBjet(n)) continue;
                 if(selected_signal_jets.isSelectedVBFjet(n)) continue;
+                if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
 
-                if(period ==  analysis::Period::Run2017){
-                    const double abs_eta = std::abs(event.jets_p4.at(n).eta());
-                    if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
-                        abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                        abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto) continue;
-                }
                 const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
             }
@@ -383,7 +378,7 @@ public:
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
-
+            if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
             if(bjet_indexes.count(n) || !(bTagger.Pass(*event,n))) continue;
             jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
         }
@@ -406,6 +401,7 @@ public:
         for(size_t n = 0; n < jets.size(); ++n) {
             const auto& jet = jets.at(n);
 
+            if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
             if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
             if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
                 || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
@@ -579,6 +575,19 @@ protected:
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
     std::shared_ptr<Mutex> mutex;
+
+private:
+    template<typename LorentzVector>
+    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period)
+    {
+        if(period !=  analysis::Period::Run2017)
+            return true;
+
+        const double abs_eta = std::abs(jet_p4.eta());
+        return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
+                    abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
+                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto);
+    }
 
 private:
     EventIdentifier eventIdentifier;
