@@ -401,8 +401,8 @@ public:
     {
         Lock lock(mutex);
         if(!leg1) {
-            tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, 1));
-            leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1, tuple_leg1->iso()));
+            tuple_leg1 = std::make_shared<FirstTupleLeg>(*event, 1);
+            leg1 = std::make_shared<FirstLeg>(*tuple_leg1, tuple_leg1->iso());
         }
         return *leg1;
     }
@@ -411,8 +411,8 @@ public:
     {
         Lock lock(mutex);
         if(!leg2) {
-            tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, 2));
-            leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2, tuple_leg2->iso()));
+            tuple_leg2 = std::make_shared<SecondTupleLeg>(*event, 2);
+            leg2 = std::make_shared<SecondLeg>(*tuple_leg2, tuple_leg2->iso());
         }
         return *leg2;
     }

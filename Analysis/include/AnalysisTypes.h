@@ -32,16 +32,52 @@ ENUM_NAMES(UncertaintyScale) = {
 
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
-enum class DiscriminatorWP { VLoose, Loose, Medium, Tight, VTight, VVTight };
+enum class DiscriminatorWP { VVVLoose = 0, VVLoose = 1, VLoose = 2, Loose = 3, Medium = 4, Tight = 5,
+                             VTight = 6, VVTight = 7, VVVTight = 8 };
 ENUM_NAMES(DiscriminatorWP) = {
+    { DiscriminatorWP::VVVLoose, "VVVLoose" }, { DiscriminatorWP::VVLoose, "VVLoose" },
     { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" }, { DiscriminatorWP::Medium, "Medium" },
-    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" }
+    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" },
+    { DiscriminatorWP::VVVTight, "VVVTight" }
 };
 const EnumNameMap<DiscriminatorWP> __DiscriminatorWP_short_names("ShortWPNames", {
-    { DiscriminatorWP::VLoose, "VL" }, { DiscriminatorWP::Loose, "L" }, { DiscriminatorWP::Medium, "M" },
-    { DiscriminatorWP::Tight, "T" }, { DiscriminatorWP::VTight, "VT" }, { DiscriminatorWP::VVTight, "VVT" }
+    { DiscriminatorWP::VVVLoose, "VVVL" }, { DiscriminatorWP::VVLoose, "VVL" }, { DiscriminatorWP::VLoose, "VL" },
+    { DiscriminatorWP::Loose, "L" }, { DiscriminatorWP::Medium, "M" }, { DiscriminatorWP::Tight, "T" },
+    { DiscriminatorWP::VTight, "VT" }, { DiscriminatorWP::VVTight, "VVT" }, { DiscriminatorWP::VVVTight, "VVVT" }
 });
 
+struct DiscriminatorIdResults {
+    using BitsContainer = uint16_t;
+    static constexpr size_t MaxNumberOfWorkingPoints = std::numeric_limits<BitsContainer>::digits;
+
+    DiscriminatorIdResults() : results(0) {}
+    DiscriminatorIdResults(BitsContainer _results) : results(_results) {}
+
+    bool Passed(DiscriminatorWP wp) const
+    {
+        const unsigned bit_index = static_cast<unsigned>(wp);
+        if(bit_index > MaxNumberOfWorkingPoints)
+            throw exception("Discriminator WP = '{}' is not supported.") % wp;
+
+        const BitsContainer mask = static_cast<BitsContainer>(BitsContainer(1) << bit_index);
+        return (results & mask) != BitsContainer(0);
+    }
+    bool Failed(DiscriminatorWP wp) const { return !Passed(wp); }
+
+    void SetResult(DiscriminatorWP wp, bool result)
+    {
+        const unsigned bit_index = static_cast<unsigned>(wp);
+        if(bit_index > MaxNumberOfWorkingPoints)
+            throw exception("Discriminator WP = '{}' is not supported.") % wp;
+        const BitsContainer mask = static_cast<BitsContainer>(BitsContainer(1) << bit_index);
+        results = (results & ~mask) | static_cast<BitsContainer>(BitsContainer(result) << bit_index);
+    }
+
+    BitsContainer GetResultBits() const { return results; }
+
+private:
+    BitsContainer results;
+};
 
 enum class MetType { PF, MVA, PUPPI };
 ENUM_NAMES(MetType) = {

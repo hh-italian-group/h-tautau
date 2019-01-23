@@ -14,6 +14,7 @@ class TupleObject {
 public:
     using MetType = analysis::MetType;
     using DiscriminatorWP = analysis::DiscriminatorWP;
+    using DiscriminatorIdResults = analysis::DiscriminatorIdResults;
     using DiscriminatorResult = float;
     using Integer = int;
     using RealNumber = float;
@@ -25,7 +26,7 @@ protected:
 };
 
 class TupleLepton : public TupleObject {
-public:    
+public:
     TupleLepton(const ntuple::Event& _event, size_t _leg_id)
         : TupleObject(_event), leg_id(_leg_id)
     {
@@ -47,11 +48,13 @@ protected:
 class TupleElectron : public TupleLepton {
 public:
     explicit TupleElectron(const ntuple::Event& _event, size_t _leg_id = 1) : TupleLepton(_event, _leg_id) {}
+    DiscriminatorIdResults iso_wp() const { return DiscriminatorIdResults(); }
 };
 
 class TupleMuon : public TupleLepton {
 public:
     explicit TupleMuon(const ntuple::Event& _event, size_t _leg_id = 1) : TupleLepton(_event, _leg_id) {}
+    DiscriminatorIdResults iso_wp() const { return DiscriminatorIdResults(); }
 };
 
 class TupleTau : public TupleLepton {
@@ -133,6 +136,18 @@ public:
             iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
         }
         return _tauID(iter->second.second, iter->second.first) > 0.5;
+    }
+
+    DiscriminatorIdResults iso_wp() const
+    {
+        static const std::vector<DiscriminatorWP> available_wp = {
+            DiscriminatorWP::VLoose, DiscriminatorWP::Loose, DiscriminatorWP::Medium, DiscriminatorWP::Tight,
+            DiscriminatorWP::VTight, DiscriminatorWP::VVTight
+        };
+        DiscriminatorIdResults id_results;
+        for(auto wp : available_wp)
+            id_results.SetResult(wp, byIsolationMVA(wp));
+        return id_results;
     }
 
 private:

@@ -46,9 +46,17 @@ public:
     using PATObject = _PATObject;
     using PATObjectConstPtr = _PATObjectConstPtr;
 
-    explicit Candidate(const PATObject& _patObject) : AnalysisObject(_patObject.p4()), patObject(&_patObject) {}
-    explicit Candidate(const PATObjectConstPtr& _patObjectPtr)
-        : AnalysisObject(_patObjectPtr->p4()), patObject(&(*_patObjectPtr)), patObjectPtr(_patObjectPtr) {}
+    explicit Candidate(const PATObject& _patObject, int _charge = UnknownCharge, double _isolation = UnknownIsolation) :
+        AnalysisObject(_patObject.p4(), _charge, _isolation), patObject(&_patObject)
+    {
+    }
+
+    explicit Candidate(const PATObjectConstPtr& _patObjectPtr, int _charge = UnknownCharge,
+                       double _isolation = UnknownIsolation) :
+        AnalysisObject(_patObjectPtr->p4(), _charge, _isolation), patObject(&(*_patObjectPtr)),
+        patObjectPtr(_patObjectPtr)
+    {
+    }
 
     const PATObject& operator*() const { return *patObject; }
     const PATObject* operator->() const { return patObject; }
@@ -70,26 +78,19 @@ template<typename PATObject, typename PATObjectConstPtr = const PATObject*>
 class LeptonCandidate : public Candidate<PATObject, PATObjectConstPtr> {
 public:
     LeptonCandidate(const PATObject& _patObject, double _isolation)
-        : Candidate<PATObject, PATObjectConstPtr>(_patObject), isolation(_isolation)
+        : Candidate<PATObject, PATObjectConstPtr>(_patObject, _patObject.charge(), _isolation)
     {
-        this->SetCharge(_patObject.charge());
     }
 
     LeptonCandidate(const PATObjectConstPtr& _patObjectPtr, double _isolation)
-        : Candidate<PATObject, PATObjectConstPtr>(_patObjectPtr), isolation(_isolation)
+        : Candidate<PATObject, PATObjectConstPtr>(_patObjectPtr, _patObjectPtr->charge(), _isolation)
     {
-        this->SetCharge(_patObjectPtr->charge());
     }
-
-    double GetIsolation() const { return isolation; }
 
     bool IsMoreIsolated(const LeptonCandidate<PATObject, PATObjectConstPtr>& other) const
     {
-        return detail::CompareIsolations<PATObject>(isolation, other.isolation);
+        return detail::CompareIsolations<PATObject>(this->GetIsolation(), other.GetIsolation());
     }
-
-private:
-    double isolation;
 };
 
 template<typename _FirstDaughter, typename _SecondDaughter>
