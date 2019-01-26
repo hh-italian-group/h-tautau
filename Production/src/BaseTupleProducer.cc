@@ -45,6 +45,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, const std
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
+    tauAgainstElectron(iConfig.getParameter<std::string>("tauAgainstElectron")),
     eventTuple(treeName, &edm::Service<TFileService>()->file(), false),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
@@ -557,7 +558,7 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
 {
     using namespace cuts::H_tautau_2016::electronVeto;
 
-    cut(true, "gt0_ele_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -584,7 +585,7 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
 {
     using namespace cuts::H_tautau_2016::muonVeto;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -612,7 +613,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 {
     using namespace cuts::H_tautau_2016::jetID;
 
-    cut(true, "gt0_jet_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = jet.GetMomentum();
     cut(p4.Pt() > pt, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());

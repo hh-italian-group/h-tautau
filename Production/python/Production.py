@@ -7,29 +7,31 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 options = VarParsing('analysis')
-options.register('globalTag', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+options.register('globalTag', '94X_mcRun2_asymptotic_v3', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Global Tag to use.")
-options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+options.register('sampleType', 'Summer16MC', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('ReRunJEC', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Re-run Jet Energy Corrections. Default: False")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger matching for signal objects. Default: True")
 options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                        "List of root files to process.")
+                        "Txt file with a list of root files to process.")
+options.register('fileNames', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                        "List of root file names to process.")
 options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Prefix to add to input file names.")
-options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+options.register('anaChannels', 'eTau,muTau,tauTau', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Analysis channels to run.")
-options.register('energyScales', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+options.register('energyScales', 'Central', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Event energy scales to run.")
 options.register('productionMode', 'hh', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Selections that should be used for the production.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Event tuple file.")
-options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register('runSVfit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run SVfit algorithm on the selected tau pair.")
-options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register('runKinFit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
 options.register('applyRecoilCorr', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply Met Recoil Corrections")
@@ -43,12 +45,16 @@ options.register('saveGenTopInfo', False, VarParsing.multiplicity.singleton, Var
                         "Save generator-level information for top quarks.")
 options.register('saveGenBosonInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Save generator-level information for bosons.")
-options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register('saveGenJetInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Save generator-level information for jets.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Dump full config into stdout.")
 options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
                         "Number of threads.")
+options.register('againstElectronWP', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                        "List of tau against electron discriminator working points.\n"
+                        "Available WPs: VLoose, Loose, Medium, Tight, VTight")
+
 
 options.parseArguments()
 
@@ -63,9 +69,6 @@ process.options.allowUnscheduled = cms.untracked.bool(True)
 process.options.numberOfThreads = cms.untracked.uint32(options.numberOfThreads)
 process.options.numberOfStreams=cms.untracked.uint32(0)
 
-process.load('FWCore.MessageLogger.MessageLogger_cfi')
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
-
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
@@ -78,6 +81,11 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(0) )
 if len(options.fileList) > 0:
     from AnalysisTools.Run.readFileList import *
     readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
+    process.maxEvents.input = options.maxEvents
+
+if len(options.fileNames) > 0:
+    for name in options.fileNames.split(','):
+        process.source.fileNames.append(options.fileNamePrefix + name)
     process.maxEvents.input = options.maxEvents
 
 if len(options.lumiFile) > 0:
@@ -183,6 +191,7 @@ if options.energyScales == 'all':
 else:
     energyScales = re.split(',', options.energyScales)
 
+
 for channel in channels:
     producerName = 'tupleProducer_{}'.format(channel)
     producerClassName = 'TupleProducer_{}'.format(channel)
@@ -191,6 +200,11 @@ for channel in channels:
         channel = cms.string(channel),
         hltPaths = hltPaths
     ))
+
+    tauAgainstElectron = ''
+    if len(options.againstElectronWP) and options.againstElectronWP != "None":
+        tauAgainstElectron = 'againstElectron%sMVA6' % options.againstElectronWP
+
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
         eleTightIdMap           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80'),
@@ -225,6 +239,7 @@ for channel in channels:
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
+        tauAgainstElectron      = cms.string(tauAgainstElectron) #againstElectronWP[channel])
     ))
     process.tupleProductionSequence += getattr(process, producerName)
 
@@ -232,12 +247,18 @@ process.p = cms.Path(
     process.egmGsfElectronIDSequence *
     process.electronMVAValueMapProducer *
     process.JECsequence *
-    process.fullPatMetSequence *
+#    process.fullPatMetSequence *
     process.BadPFMuonFilter *
     process.BadChargedCandidateFilter *
     process.topGenSequence *
     process.tupleProductionSequence
 )
+
+process.load('FWCore.MessageLogger.MessageLogger_cfi')
+if process.maxEvents.input.value() > 10:
+     process.MessageLogger.cerr.FwkReport.reportEvery = process.maxEvents.input.value() // 10
+if process.maxEvents.input.value() > 10000 or process.maxEvents.input.value() < 0:
+     process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 if options.dumpPython:
     print process.dumpPython()

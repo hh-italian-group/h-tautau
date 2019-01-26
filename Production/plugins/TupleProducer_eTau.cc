@@ -16,14 +16,16 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
-    //Di-Lepton Veto
-    const auto z_electrons = CollectZelectrons();
-    const auto z_electrons_candidates = FindCompatibleObjects(z_electrons, z_electrons, ZeeVeto::deltaR, "Z_e_e",0);
-    selection.Zveto = z_electrons_candidates.size();
-
     // Signal-like leptons selection
     const auto selectedElectrons = CollectSignalElectrons();
     cut(selectedElectrons.size(), "electrons");
+
+    //Third-Lepton Veto
+    const auto electronVetoCollection = CollectVetoElectrons({ &selectedElectrons.front() });
+    const auto muonVetoCollection = CollectVetoMuons();
+    cut(selectedElectrons.size() == 1 && !electronVetoCollection.size(), "3rd_ele_veto");
+    cut(!muonVetoCollection.size(), "3rd_muon_veto");
+
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");
 
@@ -41,12 +43,6 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
                                          cuts::H_tautau_2016::DeltaR_triggerMatch, false);
 
     selection.SetHiggsCandidate(selected_higgs);
-
-    //Third-Lepton Veto
-    const auto electronVetoCollection = CollectVetoElectrons({ &selection.higgs->GetFirstDaughter() });
-    const auto muonVetoCollection = CollectVetoMuons();
-    selection.electronVeto = electronVetoCollection.size();
-    selection.muonVeto = muonVetoCollection.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
     if(runSVfit)
@@ -81,7 +77,7 @@ void TupleProducer_eTau::SelectZElectron(const ElectronCandidate& electron, Cutt
 {
     using namespace cuts::H_tautau_2016::ETau::ZeeVeto;
 
-    cut(true, "gt0_ele_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -100,7 +96,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
 {
     using namespace cuts::H_tautau_2016::ETau::electronID;
 
-    cut(true, "gt0_ele_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     double pt_cut = pt;
     if( productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::ETau::electronID::pt;
@@ -125,7 +121,7 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 {
     using namespace cuts::H_tautau_2016::ETau::tauID;
 
-    cut(true, "gt0_tau_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     const double pt_cut = productionMode == ProductionMode::h_tt_mssm ?  cuts::H_tautau_2016_mssm::ETau::tauID::pt : pt;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
@@ -136,8 +132,10 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
     if(productionMode == ProductionMode::hh) {
-        cut(tau->tauID("againstElectronTightMVA6") > againstElectronTightMVA6, "againstElectron");
+        if(!tauAgainstElectron.empty())
+            cut(tau->tauID(tauAgainstElectron) > 0.5, "againstElectron");
         cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
+        cut(tau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") > 0.5, "isolation");
     }
 }
 

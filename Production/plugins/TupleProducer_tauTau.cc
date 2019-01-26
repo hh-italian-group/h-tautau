@@ -16,6 +16,13 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
+    //Third-Lepton Veto
+    const auto electronVetoCollection = CollectVetoElectrons();
+    const auto muonVetoCollection = CollectVetoMuons();
+    cut(!electronVetoCollection.size(), "3rd_ele_veto");
+    cut(!muonVetoCollection.size(), "3rd_muon_veto");
+
+
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");
 
@@ -35,12 +42,6 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
                                          cuts::H_tautau_2016::DeltaR_triggerMatch, true);
 
     selection.SetHiggsCandidate(selected_higgs);
-
-    //Third-Lepton Veto
-    const auto electronVetoCollection = CollectVetoElectrons();
-    const auto muonVetoCollection = CollectVetoMuons();
-    selection.electronVeto = electronVetoCollection.size();
-    selection.muonVeto = muonVetoCollection.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
     if(runSVfit)
@@ -62,7 +63,7 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::TauTau::tauID;
 
-    cut(true, "gt0_tau_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     cut(p4.Pt() > pt, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
@@ -72,8 +73,10 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
     if(productionMode == ProductionMode::hh) {
-        cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+        if(!tauAgainstElectron.empty())
+            cut(tau->tauID(tauAgainstElectron) > 0.5, "againstElectron");
         cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
+        cut(tau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") > 0.5, "isolation");
     }
 }
 

@@ -145,6 +145,7 @@ protected:
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
+    const std::string tauAgainstElectron;
     analysis::TriggerDescriptors triggerDescriptors;
     ntuple::EventTuple eventTuple;
     analysis::TriggerTools triggerTools;
@@ -263,7 +264,9 @@ protected:
     {
         static constexpr double weight = 1;
         std::ostringstream ss_suffix;
-        ss_suffix << selection_label << "_" << eventEnergyScale;
+        ss_suffix << selection_label;
+        if(eventEnergyScale != analysis::EventEnergyScale::Central)
+            ss_suffix << "_" << eventEnergyScale;
         const std::string suffix = ss_suffix.str();
         cuts::ObjectSelector& objectSelector = GetAnaData().Selection(suffix);
         if(!anaDataBeforeCut.count(suffix))

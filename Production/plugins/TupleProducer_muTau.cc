@@ -24,6 +24,13 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     // Signal-like leptons selection
     const auto selectedMuons = CollectSignalMuons();
     cut(selectedMuons.size(), "muons");
+
+    //Third-Lepton Veto
+    const auto electronVetoCollection = CollectVetoElectrons();
+    const auto muonVetoCollection = CollectVetoMuons({ &selectedMuons.front() });
+    cut(!electronVetoCollection.size(), "3rd_ele_veto");
+    cut(selectedMuons.size() == 1 && !muonVetoCollection.size(), "3rd_muon_veto");
+
     const auto selectedTaus = CollectSignalTaus();
     cut(selectedTaus.size(), "taus");
 
@@ -41,12 +48,6 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
                                          cuts::H_tautau_2016::DeltaR_triggerMatch, false);
 
     selection.SetHiggsCandidate(selected_higgs);
-
-    //Third-Lepton Veto
-    const auto electronVetoCollection = CollectVetoElectrons();
-    const auto muonVetoCollection = CollectVetoMuons({ &selection.higgs->GetFirstDaughter() });
-    selection.electronVeto = electronVetoCollection.size();
-    selection.muonVeto = muonVetoCollection.size();
 
     ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
     if(runSVfit)
@@ -82,7 +83,7 @@ void TupleProducer_muTau::SelectZMuon(const MuonCandidate& muon, Cutter& cut) co
 {
     using namespace cuts::H_tautau_2016::MuTau::ZmumuVeto;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
@@ -100,14 +101,14 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 {
     using namespace cuts::H_tautau_2016::MuTau::muonID;
 
-    cut(true, "gt0_mu_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     double pt_cut = pt;
     if(productionMode == ProductionMode::hh) pt_cut = cuts::hh_bbtautau_2016::MuTau::muonID::pt;
     else if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::muonID::pt;
     else if (productionMode == ProductionMode::h_tt_sm) pt_cut = cuts::H_tautau_2016_sm::MuTau::muonID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
-    const double eta_cut  = productionMode == ProductionMode::h_tt_sm ? cuts::H_tautau_2016_sm::MuTau::muonID::eta : eta; 
+    const double eta_cut  = productionMode == ProductionMode::h_tt_sm ? cuts::H_tautau_2016_sm::MuTau::muonID::eta : eta;
     cut(std::abs(p4.eta()) < eta_cut, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
     cut(muon_dxy < dxy, "dxy", muon_dxy);
@@ -116,18 +117,18 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     if(productionMode == ProductionMode::hh){
         cut(muon->isTightMuon(*primaryVertex), "muonID");
         cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
-    } 
-    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm) 
-            cut(PassICHEPMuonMediumId(*muon),"muonID");  
+    }
+    else if(productionMode == ProductionMode::h_tt_mssm || productionMode == ProductionMode::h_tt_sm)
+            cut(PassICHEPMuonMediumId(*muon),"muonID");
     else cut(muon->isMediumMuon(), "muonID");
-    
+
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
     using namespace cuts::H_tautau_2016::MuTau::tauID;
 
-    cut(true, "gt0_tau_cand");
+    cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
     const double pt_cut= productionMode == ProductionMode::h_tt_mssm ? cuts::H_tautau_2016_mssm::MuTau::tauID::pt : pt;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
@@ -138,8 +139,10 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
     if(productionMode == ProductionMode::hh) {
-        cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+        if(!tauAgainstElectron.empty())
+            cut(tau->tauID(tauAgainstElectron) > 0.5, "againstElectron");
         cut(tau->tauID("againstMuonTight3") > againstMuonTight3, "againstMuon");
+        cut(tau->tauID("byMediumIsolationMVArun2v1DBoldDMwLT") > 0.5, "isolation");
     }
 }
 
