@@ -369,7 +369,7 @@ public:
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
                              JetOrdering jet_ordering = JetOrdering::CSV,
-                             const std::set<size_t>& bjet_indexes = {})
+                             const std::set<size_t>& jet_to_exclude_indexes = {})
     {
         Lock lock(*mutex);
         BTagger bTagger(period,jet_ordering);
@@ -379,7 +379,7 @@ public:
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
             if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
-            if(bjet_indexes.count(n) || !(bTagger.Pass(*event,n))) continue;
+            if(jet_to_exclude_indexes.count(n)) continue;
             jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
         }
 
