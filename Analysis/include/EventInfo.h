@@ -225,14 +225,7 @@ public:
             for(size_t n = 0; n < event.jets_p4.size(); ++n) {
                 if(selected_signal_jets.isSelectedBjet(n)) continue;
                 if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-                // if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
-
-                if(period ==  analysis::Period::Run2017){
-                  const double abs_eta = std::abs(event.jets_p4.at(n).eta());
-                  if(event.jets_p4.at(n).pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
-                      abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                      abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto) continue;
-                  }
+                if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
 
                 const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
                 jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -376,7 +369,7 @@ public:
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
                              JetOrdering jet_ordering = JetOrdering::CSV,
-                             const std::set<size_t>& bjet_indexes = {})
+                             const std::set<size_t>& jet_to_exclude_indexes = {})
     {
         Lock lock(*mutex);
         BTagger bTagger(period,jet_ordering);
@@ -386,7 +379,7 @@ public:
         for(size_t n = 0; n < all_jets.size(); ++n) {
             const JetCandidate& jet = all_jets.at(n);
             if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
-            if(bjet_indexes.count(n)) continue;
+            if(jet_to_exclude_indexes.count(n)) continue;
             jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
         }
 
