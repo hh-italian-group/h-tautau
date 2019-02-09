@@ -4,8 +4,8 @@
 
 declare -A INSTALL_MODES
 INSTALL_MODES=( ["prod16"]="CMSSW_8_0_30 slc6_amd64_gcc530" \
-                ["prod17"]="CMSSW_9_4_8 slc6_amd64_gcc630" \
-                ["ana"]="CMSSW_9_4_4 slc6_amd64_gcc630" \
+                ["prod17"]="CMSSW_10_2_11 slc6_amd64_gcc700" \
+                ["ana"]="CMSSW_10_2_11 slc6_amd64_gcc7000" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=8
 
@@ -140,8 +140,8 @@ fi
 # Install analysis packages
 declare -A ANA_PACKAGES
 ANA_PACKAGES=( ["AnalysisTools"]="prod16:master prod17:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod16:prod_v4 prod17:prod_v4 ana:ana_v3 ana_osx:ana_v3" \
-               ["hh-bbtautau"]="prod16:ana_v4 prod17:ana_v4 ana:ana_v3 ana_osx:ana_v3" )
+               ["h-tautau"]="prod16:prod_v4 prod17:ana_v4 ana:ana_v4 ana_osx:ana_v4" \
+               ["hh-bbtautau"]="prod16:ana_v4 prod17:ana_v4 ana:ana_v4 ana_osx:ana_v4" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do

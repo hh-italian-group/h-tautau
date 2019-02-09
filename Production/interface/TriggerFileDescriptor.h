@@ -3,15 +3,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include <list>
-#include <istream>
-#include <ostream>
-#include "AnalysisTools/Core/include/EnumNameMap.h"
-#include "AnalysisTools/Core/include/NumericPrimitives.h"
-#include "AnalysisTools/Core/include/PhysicalValue.h"
-#include "h-tautau/Analysis/include/SummaryTuple.h"
-#include "AnalysisTools/Core/include/ConfigReader.h"
-
 namespace trigger_tools {
 
 struct SetupDescriptor {

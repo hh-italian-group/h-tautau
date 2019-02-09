@@ -10,7 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TauAnalysis/ClassicSVfit/interface/MeasuredTauLepton.h"
 #include "TauAnalysis/ClassicSVfit/interface/svFitHistogramAdapter.h"
 
-#include "h-tautau/Analysis/include/Candidate.h"
+#include "h-tautau/Core/include/Candidate.h"
 #include "AnalysisTools/Core/include/RootExt.h"
 
 namespace analysis {

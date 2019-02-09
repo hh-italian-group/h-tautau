@@ -50,16 +50,16 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //HHbbTauTau Framework
 #include "AnalysisTools/Core/include/AnalyzerData.h"
 #include "AnalysisTools/Core/include/CutTools.h"
-#include "h-tautau/Analysis/include/AnalysisTypes.h"
-#include "h-tautau/Analysis/include/Candidate.h"
-#include "h-tautau/Analysis/include/EventTuple.h"
+#include "h-tautau/Core/include/AnalysisTypes.h"
+#include "h-tautau/Core/include/Candidate.h"
+#include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_mssm.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Analysis/include/EventLoader.h"
-#include "h-tautau/Analysis/include/TauIdResults.h"
+#include "h-tautau/Core/include/TauIdResults.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"

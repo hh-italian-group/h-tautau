@@ -32,6 +32,9 @@
 <use name="JetMETCorrections/Modules"/>
 <use name="AnalysisDataFormats/TopObjects"/>
 <use name="HTT-utilities/RecoilCorrections"/>
+<use name="AnalysisTools/Core"/>
+<use name="h-tautau/Core"/>
+<use name="h-tautau/Analysis"/>
 <export>
     <lib   name="1"/>
 </export>

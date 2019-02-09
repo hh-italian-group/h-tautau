@@ -3,24 +3,21 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include <list>
-#include <algorithm>
-#include "EventTuple.h"
-#include "AnalysisTypes.h"
-#include "AnalysisTools/Core/include/RootExt.h"
-#include "KinFitInterface.h"
-#include "Candidate.h"
-#include "TupleObjects.h"
-#include "TriggerResults.h"
-#include "SummaryTuple.h"
 #include "AnalysisTools/Core/include/EventIdentifier.h"
-#include "hh-bbtautau/Analysis/include/MT2.h"
-#include "h-tautau/McCorrections/include/JECUncertaintiesWrapper.h"
-#include "h-tautau/Cuts/include/Btag_2017.h"
-#include "h-tautau/Cuts/include/Btag_2016.h"
-#include "h-tautau/Analysis/include/BTagger.h"
-#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
+#include "AnalysisTools/Core/include/RootExt.h"
 
+#include "h-tautau/Core/include/AnalysisTypes.h"
+#include "h-tautau/Core/include/Candidate.h"
+#include "h-tautau/Core/include/EventTuple.h"
+#include "h-tautau/Core/include/SummaryTuple.h"
+#include "h-tautau/Core/include/TupleObjects.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
+#include "h-tautau/JetTools/include/BTagger.h"
+#include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
+
+#include "KinFitInterface.h"
+#include "MT2.h"
+#include "TriggerResults.h"
 
 namespace analysis {
 
@@ -132,42 +129,16 @@ class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source = "")
-        : summary(_summary)
-    {
-        for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
-            const int channel_id = summary.triggers_channel.at(n);
-            const Channel channel = static_cast<Channel>(channel_id);
-            if(!triggerDescriptors.count(channel))
-                triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
-            triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
-        }
-        if(!_uncertainties_source.empty())
-            jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
-    }
-
-    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const
-    {
-        if(!triggerDescriptors.count(channel))
-            throw exception("Information for channel %1% not found.") % channel;
-        return triggerDescriptors.at(channel);
-    }
-
-    const ProdSummary& operator*() const { return summary; }
-    const ProdSummary* operator->() const { return &summary; }
-
-    const jec::JECUncertaintiesWrapper& GetJecUncertainties() const
-    {
-        if(!jecUncertainties)
-            throw exception("Jec Uncertainties not stored.");
-        return *jecUncertainties;
-    }
+    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source = "");
+    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const;
+    const ProdSummary& operator*() const;
+    const ProdSummary* operator->() const;
+    const jec::JECUncertaintiesWrapper& GetJecUncertainties() const;
 
 private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
-
 };
 
 class EventInfoBase {
@@ -185,131 +156,21 @@ public:
         JetPair selectedVBFjetPair;
         size_t n_bjets;
 
-        SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedJetPair()),
-            selectedVBFjetPair(ntuple::UndefinedJetPair()), n_bjets(0) { }
-
-        bool HasBjetPair(size_t njets) const
-        {
-            return selectedBjetPair.first < njets && selectedBjetPair.second < njets;
-        }
-
-        bool HasVBFPair(size_t njets) const
-        {
-            return selectedVBFjetPair.first < njets && selectedVBFjetPair.second < njets;
-        }
-
-        bool isSelectedBjet(size_t n) const
-        {
-            return selectedBjetPair.first == n || selectedBjetPair.second == n;
-        }
-
-        bool isSelectedVBFjet(size_t n) const
-        {
-            return selectedVBFjetPair.first == n || selectedVBFjetPair.second == n;
-        }
-
+        SelectedSignalJets();
+        bool HasBjetPair(size_t njets) const;
+        bool HasVBFPair(size_t njets) const;
+        bool isSelectedBjet(size_t n) const;
+        bool isSelectedVBFjet(size_t n) const;
     };
 
     static SelectedSignalJets SelectSignalJets(const Event& event,
                                                const analysis::Period& period,
-                                               JetOrdering jet_ordering = JetOrdering::CSV)
-    {
-        double bjet_pt_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::pt : cuts::btag_2016::pt;
-        double bjet_eta_cut = period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
-        BTagger bTagger(period,jet_ordering);
-
-        SelectedSignalJets selected_signal_jets;
-
-        const auto CreateJetInfo = [&](bool useBTag) -> auto {
-            std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
-            for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-                if(selected_signal_jets.isSelectedBjet(n)) continue;
-                if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-                if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
-
-                const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
-                jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
-            }
-            return jet_info_vector;
-        };
-
-        auto jet_info_vector = CreateJetInfo(true);
-        auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
-        selected_signal_jets.n_bjets = bjets_ordered.size();
-        if(bjets_ordered.size() >= 1){
-            selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
-        }
-
-        if(bjets_ordered.size() >= 2){
-            if(bTagger.Pass(event,bjets_ordered.at(1).index)){
-                selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
-            }
-        }
-
-        auto jet_info_vector_vbf = CreateJetInfo(false);
-        auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,
-                                                        cuts::hh_bbtautau_2017::jetID::vbf_pt_cut,
-                                                        cuts::hh_bbtautau_2017::jetID::vbf_eta_cut);
-
-        double max_mjj = -std::numeric_limits<double>::infinity();
-        for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
-            const auto& jet_1 = vbf_jets_ordered.at(n);
-            for(size_t h = n+1; h < vbf_jets_ordered.size(); ++h) {
-                const auto& jet_2 = vbf_jets_ordered.at(h);
-                const auto jet_12 = jet_1.p4 + jet_2.p4;
-                if(jet_12.M() > max_mjj){
-                    max_mjj = jet_12.M();
-                    selected_signal_jets.selectedVBFjetPair = std::make_pair(vbf_jets_ordered.at(n).index,
-                                                                             vbf_jets_ordered.at(h).index);
-                }
-            }
-        }
-
-
-        if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
-
-        auto jet_info_vector_new = CreateJetInfo(true);
-        auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
-        if(new_bjets_ordered.size() >= 1)
-            selected_signal_jets.selectedBjetPair.second = new_bjets_ordered.at(0).index;
-        else{
-            selected_signal_jets.selectedVBFjetPair = ntuple::UndefinedJetPair();
-            if (bjets_ordered.size() >= 2)
-                selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
-        }
-
-        return selected_signal_jets;
-    }
-
-    std::array<size_t,2> GetSelectedBjetIndices() const
-    {
-        std::array<size_t,2> bjet_indexes;
-        bjet_indexes[0] = selected_signal_jets.selectedBjetPair.first;
-        bjet_indexes[1] = selected_signal_jets.selectedBjetPair.second;
-        return bjet_indexes;
-    }
-
-    std::set<size_t> GetSelectedBjetIndicesSet() const
-    {
-        std::set<size_t> bjet_indexes;
-        bjet_indexes.insert(selected_signal_jets.selectedBjetPair.first);
-        bjet_indexes.insert(selected_signal_jets.selectedBjetPair.second);
-        return bjet_indexes;
-    }
-
-
-    static constexpr int verbosity = 0;
+                                               JetOrdering jet_ordering);
+    std::array<size_t,2> GetSelectedBjetIndices() const;
+    std::set<size_t> GetSelectedBjetIndicesSet() const;
 
     EventInfoBase(const Event& _event, Period _period, JetOrdering _jet_ordering,
-                  const SummaryInfo* _summaryInfo = nullptr) :
-        event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
-        selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)), period(_period),
-        jet_ordering(_jet_ordering)
-    {
-        mutex = std::make_shared<Mutex>();
-        triggerResults.SetAcceptBits(event->trigger_accepts);
-        triggerResults.SetMatchBits(event->trigger_matches);
-    }
+                  const SummaryInfo* _summaryInfo = nullptr);
 
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
     virtual ~EventInfoBase(){} //destructor
@@ -317,157 +178,39 @@ public:
     EventInfoBase& operator= ( const EventInfoBase& ) = default; //assignment
 
 
-    const Event& operator*() const { return *event; }
-    const Event* operator->() const { return event; }
+    const Event& operator*() const;
+    const Event* operator->() const;
 
-    const EventIdentifier& GetEventId() const { return eventIdentifier; }
-    EventEnergyScale GetEnergyScale() const { return static_cast<EventEnergyScale>(event->eventEnergyScale); }
-    const TriggerResults& GetTriggerResults() const { return triggerResults; }
-    const SummaryInfo& GetSummaryInfo() const
-    {
-        if(!summaryInfo)
-            throw exception("SummaryInfo was not provided for this event.");
-        return *summaryInfo;
-    }
+    const EventIdentifier& GetEventId() const;
+    EventEnergyScale GetEnergyScale() const;
+    const TriggerResults& GetTriggerResults() const;
+    const SummaryInfo& GetSummaryInfo() const;
+    static const kin_fit::FitProducer& GetKinFitProducer();
 
-    static const kin_fit::FitProducer& GetKinFitProducer()
-    {
-        static kin_fit::FitProducer kinfitProducer;
-        return kinfitProducer;
-    }
+    virtual const AnalysisObject& GetLeg(size_t /*leg_id*/);
+    virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/);
 
-    virtual const AnalysisObject& GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
-    virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
+    size_t GetNJets() const;
+    size_t GetNFatJets() const;
+    const SelectedSignalJets& GetSelectedSignalJets() const;
+    Period GetPeriod() const;
+    JetOrdering GetJetOrdering() const;
 
-    size_t GetNJets() const { return event->jets_p4.size(); }
-    size_t GetNFatJets() const { return event->fatJets_p4.size(); }
-
-    const SelectedSignalJets& GetSelectedSignalJets() const {return selected_signal_jets; }
-    Period GetPeriod() const { return period; }
-    JetOrdering GetJetOrdering() const {return jet_ordering; }
-
-    const JetCollection& GetJets()
-    {
-        Lock lock(*mutex);
-        if(!jets) {
-            jets = std::shared_ptr<JetCollection>(new JetCollection());
-            tuple_jets = std::make_shared<std::list<ntuple::TupleJet>>();
-            for(size_t n = 0; n < GetNJets(); ++n) {
-                tuple_jets->push_back(ntuple::TupleJet(*event, n));
-                jets->push_back(JetCandidate(tuple_jets->back()));
-            }
-        }
-        return *jets;
-    }
-
-    void SetJets(const JetCollection& new_jets)
-    {
-        Lock lock(*mutex);
-        jets = std::make_shared<JetCollection>(new_jets);
-    }
-
+    const JetCollection& GetJets();
+    void SetJets(const JetCollection& new_jets);
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
-                             JetOrdering jet_ordering = JetOrdering::CSV,
-                             const std::set<size_t>& jet_to_exclude_indexes = {})
-    {
-        Lock lock(*mutex);
-        BTagger bTagger(period,jet_ordering);
-        const JetCollection& all_jets = GetJets();
-        JetCollection selected_jets;
-        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
-        for(size_t n = 0; n < all_jets.size(); ++n) {
-            const JetCandidate& jet = all_jets.at(n);
-            if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
-            if(jet_to_exclude_indexes.count(n)) continue;
-            jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
-        }
+                             JetOrdering jet_ordering = JetOrdering::DeepCSV,
+                             const std::set<size_t>& jet_to_exclude_indexes = {});
 
-        auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
-        for(size_t h = 0; h < jets_ordered.size(); ++h){
-            const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
-            selected_jets.push_back(jet);
-        }
-        return selected_jets;
-    }
-
-    double GetHT(bool includeHbbJets, bool apply_pt_eta_cut)
-    {
-        static constexpr double other_jets_min_pt = 20;
-        static constexpr double other_jets_max_eta = 4.7;
-
-        double ht = 0;
-        const auto& jets = GetJets();
-        for(size_t n = 0; n < jets.size(); ++n) {
-            const auto& jet = jets.at(n);
-
-            if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
-            if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
-            if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
-                || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
-            ht += jet.GetMomentum().pt();
-        }
-        return ht;
-    }
-
-    const FatJetCollection& GetFatJets()
-    {
-        Lock lock(*mutex);
-        if(!fatJets) {
-            fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
-            tuple_fatJets = std::make_shared<std::list<ntuple::TupleFatJet>>();
-            for(size_t n = 0; n < GetNFatJets(); ++n) {
-                tuple_fatJets->push_back(ntuple::TupleFatJet(*event, n));
-                fatJets->push_back(FatJetCandidate(tuple_fatJets->back()));
-            }
-        }
-        return *fatJets;
-    }
-
-    bool HasBjetPair() const { return selected_signal_jets.HasBjetPair(GetNJets()); }
-
-    bool HasVBFjetPair() const { return selected_signal_jets.HasVBFPair(GetNJets()); }
-
-    const JetCandidate& GetVBFJet(const size_t index)
-    {
-        if(!HasVBFjetPair() || (index != 1 && index != 2))
-            throw exception("VBF jet not found.");
-        if(index == 1)
-            return GetJets().at(selected_signal_jets.selectedVBFjetPair.first);
-        return GetJets().at(selected_signal_jets.selectedVBFjetPair.second);
-    }
-
-    const JetCandidate& GetBJet(const size_t index)
-    {
-        if(!HasBjetPair() || (index != 1 && index != 2) )
-            throw exception("B jet not found.");
-        if(index == 1)
-            return GetJets().at(selected_signal_jets.selectedBjetPair.first);
-        return GetJets().at(selected_signal_jets.selectedBjetPair.second);
-    }
-
-    const HiggsBBCandidate& GetHiggsBB()
-    {
-        Lock lock(*mutex);
-        if(!HasBjetPair())
-            throw exception("Can't create H->bb candidate.");
-        if(!higgs_bb) {
-            const auto& jets = GetJets();
-            higgs_bb = std::make_shared<HiggsBBCandidate>(jets.at(selected_signal_jets.selectedBjetPair.first),
-                                                          jets.at(selected_signal_jets.selectedBjetPair.second));
-        }
-        return *higgs_bb;
-    }
-
-    const MET& GetMET()
-    {
-        Lock lock(*mutex);
-        if(!met) {
-            tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
-            met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
-        }
-        return *met;
-    }
+    double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
+    const FatJetCollection& GetFatJets();
+    bool HasBjetPair() const;
+    bool HasVBFjetPair() const;
+    const JetCandidate& GetVBFJet(const size_t index);
+    const JetCandidate& GetBJet(const size_t index);
+    const HiggsBBCandidate& GetHiggsBB();
+    const MET& GetMET();
 
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
@@ -479,93 +222,13 @@ public:
         met->SetMomentum(new_met_p4);
     }
 
-    const kin_fit::FitResults& GetKinFitResults()
-    {
-        Lock lock(*mutex);
-        if(!HasBjetPair())
-            throw exception("Can't retrieve KinFit results.");
-        if(!kinfit_results) {
-            const size_t pairId = ntuple::CombinationPairToIndex(selected_signal_jets.selectedBjetPair, GetNJets());
-            const auto iter = std::find(event->kinFit_jetPairId.begin(), event->kinFit_jetPairId.end(), pairId);
-            kinfit_results = std::make_shared<kin_fit::FitResults>();
-            if(iter == event->kinFit_jetPairId.end()){
-                double energy_resolution_1 = GetBJet(1)->resolution() * GetBJet(1).GetMomentum().E();
-                double energy_resolution_2 = GetBJet(2)->resolution() * GetBJet(2).GetMomentum().E();
-                const auto& kinfitProducer = GetKinFitProducer();
-                const auto& result = kinfitProducer.Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
-                                                        GetBJet(1).GetMomentum(), GetBJet(2).GetMomentum(),
-                                                        GetMET(), energy_resolution_1, energy_resolution_2);
-                kinfit_results->convergence = result.convergence;
-                kinfit_results->chi2 = result.chi2;
-                kinfit_results->probability = TMath::Prob(result.chi2, 2);
-                kinfit_results->mass = result.mass;
-            }
-            else {
-                const size_t index = static_cast<size_t>(std::distance(event->kinFit_jetPairId.begin(), iter));
-                kinfit_results->convergence = event->kinFit_convergence.at(index);
-                kinfit_results->chi2 = event->kinFit_chi2.at(index);
-                kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
-                kinfit_results->mass = event->kinFit_m.at(index);
-            }
-        }
-        return *kinfit_results;
-    }
+    const kin_fit::FitResults& GetKinFitResults();
 
-    LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET)
-    {
-        Lock lock(*mutex);
-        if(useSVfit && addMET)
-            throw exception("Can't add MET and with SVfit applied.");
-        LorentzVector p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum();
-        if(addMET)
-            p4 += GetMET().GetMomentum();
-        return p4;
-    }
-
-    double GetMT2()
-    {
-        Lock lock(*mutex);
-        if(!mt2.is_initialized()) {
-            mt2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
-                                               GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
-        }
-        return *mt2;
-    }
-
-    const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut)
-    {
-        Lock lock(*mutex);
-        using FatJet = ntuple::TupleFatJet;
-        using SubJet = ntuple::TupleSubJet;
-        if(!HasBjetPair()) return nullptr;
-        for(const FatJetCandidate& fatJet : GetFatJets()) {
-            if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
-            if(fatJet->subJets().size() < 2) continue;
-            std::vector<SubJet> subJets = fatJet->subJets();
-            std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
-                return j1.p4().Pt() > j2.p4().Pt(); });
-            std::vector<double> deltaR;
-            for(size_t n = 0; n < 2; ++n) {
-                for(size_t k = 0; k < 2; ++k) {
-                    const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
-                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
-                    deltaR.push_back(dR);
-                }
-            }
-            if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
-                    || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
-                return &fatJet;
-        }
-        return nullptr;
-    }
-
-    void SetMvaScore(double _mva_score)
-    {
-        Lock lock(*mutex);
-        mva_score = _mva_score;
-    }
-
-    double GetMvaScore() const { return mva_score; }
+    LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET);
+    double GetMT2();
+    const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut);
+    void SetMvaScore(double _mva_score);
+    double GetMvaScore() const;
 
     virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
         UncertaintyScale scale) = 0;
@@ -706,24 +369,7 @@ private:
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
 };
 
-inline std::shared_ptr<EventInfoBase> MakeEventInfo(
-        Channel channel, const EventInfoBase::Event& event,
-        Period period, JetOrdering jet_ordering,
-        const SummaryInfo* summaryInfo = nullptr)
-{
-    if(channel == Channel::ETau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    if(channel == Channel::MuTau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    if(channel == Channel::TauTau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<TauCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    if(channel == Channel::MuMu)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, MuonCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    throw exception("Unsupported channel %1%.") % channel;
-}
-
+std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
+                                             Period period, JetOrdering jet_ordering,
+                                             const SummaryInfo* summaryInfo = nullptr);
 } // namespace analysis

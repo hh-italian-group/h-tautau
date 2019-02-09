@@ -7,7 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTools/Core/include/Tools.h"
-#include "h-tautau/Analysis/include/AnalysisTypes.h"
+#include "h-tautau/Core/include/AnalysisTypes.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 
 
@@ -50,7 +50,7 @@ inline LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle,
 
     LorentzVectorXYZ p4;
     for(auto daughter : daughters){
-	if(excludeLightLeptons && light_leptons.count(std::abs(daughter->pdgId())) && daughter->statusFlags().isDirectTauDecayProduct()) continue;     
+	if(excludeLightLeptons && light_leptons.count(std::abs(daughter->pdgId())) && daughter->statusFlags().isDirectTauDecayProduct()) continue;
 	p4 += daughter->p4();
     }
     return p4;
@@ -75,7 +75,7 @@ MatchResult LeptonGenMatch(const LVector& p4, const std::vector<reco::GenParticl
 
     MatchResult result(GenMatch::NoMatch, nullptr);
     double match_dr2 = dR2_threshold;
- 
+
 
 
     for(const reco::GenParticle& particle : genParticles) {
