@@ -2,16 +2,7 @@
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Run/include/program_main.h"
-#include "AnalysisTools/Core/include/RootExt.h"
-#include "AnalysisTools/Core/include/EnumNameMap.h"
-#include "AnalysisTools/Core/include/AnalysisMath.h"
-#include "AnalysisTools/Core/include/TextIO.h"
-#include "h-tautau/Analysis/include/SyncTupleHTT.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
-#include "h-tautau/Analysis/include/AnalysisTypes.h"
-#include "h-tautau/Cuts/include/Btag_2016.h"
-#include "h-tautau/Cuts/include/Btag_2017.h"
-#include "h-tautau/McCorrections/include/EventWeights.h"
 #include "AnalysisTools/Core/include/AnalyzerData.h"
 
 struct Arguments {

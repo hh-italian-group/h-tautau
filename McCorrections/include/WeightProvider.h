@@ -3,8 +3,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include "h-tautau/Analysis/include/EventTuple.h"
-#include "h-tautau/Analysis/include/SummaryTuple.h"
+#include "h-tautau/Core/include/EventTuple.h"
+#include "h-tautau/Core/include/SummaryTuple.h"
 
 namespace analysis {
 namespace mc_corrections {

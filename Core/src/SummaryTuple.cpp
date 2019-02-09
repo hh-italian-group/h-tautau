@@ -1,97 +1,21 @@
 /*! Definition of a tuple with summary information about production.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
-#pragma once
-
-#include "EventTuple.h"
-#include "AnalysisTypes.h"
-
-#define SUMMARY_DATA() \
-    /* Run statistics */ \
-    VAR(UInt_t, exeTime) \
-    VAR(ULong64_t, numberOfProcessedEvents) \
-    VAR(Double_t, totalShapeWeight) \
-    VAR(Double_t, totalShapeWeight_withTopPt) \
-    /* Tau ID information */ \
-    VAR(std::vector<std::string>, tauId_names) \
-    /* Trigger information */ \
-    VAR(std::vector<Int_t>, triggers_channel) \
-    VAR(std::vector<std::string>, triggers_pattern) \
-    /* Skimmer Variables */\
-    VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
-    VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
-    VAR(UInt_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
-    VAR(UInt_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
-    /* MC truth event splitting */ \
-    VAR(std::vector<UInt_t>, lhe_n_partons) \
-    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
-    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
-    VAR(std::vector<ULong64_t>, lhe_n_events) \
-    /* Top reweighting */ \
-    VAR(std::vector<Int_t>, genEventType) /* top gen event type */ \
-    VAR(std::vector<ULong64_t>, genEventType_n_events) /* n events for top gen event type */ \
-    /**/
-
-#define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
-DECLARE_TREE(ntuple, ProdSummary, SummaryTuple, SUMMARY_DATA, "summary")
-#undef VAR
-
-#define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
-INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
-#undef VAR
-#undef SUMMARY_DATA
-
-
-#define EVENT_EXPRESS_DATA() \
-    VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
-    VAR(UInt_t, run) /* run */ \
-    VAR(UInt_t, lumi) /* lumi section */ \
-    VAR(ULong64_t, evt) /* event number */ \
-    VAR(Float_t, genEventWeight) /* gen event weight */ \
-    VAR(Float_t, gen_top_pt) /* pt of gen ME top */ \
-    VAR(Float_t, gen_topBar_pt) /* pt of gen ME anti-top */ \
-    VAR(Int_t,   genEventType) /* top gen event type */ \
-    VAR(Float_t, lhe_H_m) /* mass of lhe H */ \
-    VAR(Float_t, lhe_hh_m) /* mass of lhe hh pair */ \
-    VAR(Float_t, lhe_hh_cosTheta) /* cos(theta) between h and z-axis in the hh reference frame */ \
-    /* MC truth event splitting */ \
-    VAR(UInt_t, file_desc_id)  /*File id in ExpressTuple.*/  \
-    VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
-    VAR(UInt_t, lhe_n_partons) \
-    VAR(UInt_t, lhe_n_b_partons) \
-    VAR(UInt_t, lhe_ht10_bin) \
-    /**/
-
-#define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
-DECLARE_TREE(ntuple, ExpressEvent, ExpressTuple, EVENT_EXPRESS_DATA, "all_events")
-#undef VAR
-
-#define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
-INITIALIZE_TREE(ntuple, ExpressTuple, EVENT_EXPRESS_DATA)
-#undef VAR
-#undef SUMMARY_DATA
+#include "h-tautau/Core/include/SummaryTuple.h"
 
 namespace ntuple {
-struct GenId {
-    size_t n_partons;
-    size_t n_b_partons;
-    size_t ht10_bin;
+GenId::GenId() : n_partons(0), n_b_partons(0), ht10_bin(0) {}
+GenId::GenId(size_t _n_partons, size_t _n_b_partons, size_t _ht10_bin) :
+    n_partons(_n_partons), n_b_partons(_n_b_partons), ht10_bin(_ht10_bin) {}
 
-    GenId() : n_partons(0), n_b_partons(0), ht10_bin(0) {}
-    GenId(size_t _n_partons, size_t _n_b_partons, size_t _ht10_bin) :
-        n_partons(_n_partons), n_b_partons(_n_b_partons), ht10_bin(_ht10_bin) {}
+bool GenId::operator<(const GenId& other) const
+{
+    if(n_partons != other.n_partons) return n_partons < other.n_partons;
+    if(n_b_partons != other.n_b_partons) return n_b_partons < other.n_b_partons;
+    return ht10_bin < other.ht10_bin;
+}
 
-    bool operator<(const GenId& other) const
-    {
-        if(n_partons != other.n_partons) return n_partons < other.n_partons;
-        if(n_b_partons != other.n_b_partons) return n_b_partons < other.n_b_partons;
-        return ht10_bin < other.ht10_bin;
-    }
-};
-
-using GenEventCountMap = std::map<GenId, size_t>;
-
-inline GenEventCountMap ExtractGenEventCountMap(const ProdSummary& s)
+GenEventCountMap ExtractGenEventCountMap(const ProdSummary& s)
 {
     GenEventCountMap m;
     for(size_t n = 0; n < s.lhe_n_partons.size(); ++n) {
@@ -103,7 +27,7 @@ inline GenEventCountMap ExtractGenEventCountMap(const ProdSummary& s)
     return m;
 }
 
-inline void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genCountMap)
+void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genCountMap)
 {
     s.lhe_n_partons.clear();
     s.lhe_n_b_partons.clear();
@@ -117,10 +41,8 @@ inline void ConvertGenEventCountMap(ProdSummary& s, const GenEventCountMap& genC
         s.lhe_n_events.push_back(bin.second);
     }
 }
-//genEventType part
-using GenEventTypeCountMap = std::map<analysis::GenEventType, size_t>;
 
-inline GenEventTypeCountMap ExtractGenEventTypeCountMap(const ProdSummary& s)
+GenEventTypeCountMap ExtractGenEventTypeCountMap(const ProdSummary& s)
 {
     GenEventTypeCountMap m;
     for(size_t n = 0; n < s.genEventType.size(); ++n) {
@@ -132,7 +54,7 @@ inline GenEventTypeCountMap ExtractGenEventTypeCountMap(const ProdSummary& s)
     return m;
 }
 
-inline void ConvertGenEventTypeCountMap(ProdSummary& s, const GenEventTypeCountMap& genCountMap)
+void ConvertGenEventTypeCountMap(ProdSummary& s, const GenEventTypeCountMap& genCountMap)
 {
     s.genEventType.clear();
     s.genEventType_n_events.clear();
@@ -144,7 +66,7 @@ inline void ConvertGenEventTypeCountMap(ProdSummary& s, const GenEventTypeCountM
 }
 
 
-inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
+std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
                                                         bool readMode, TreeState treeState)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
@@ -157,7 +79,7 @@ inline std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name,
     return std::make_shared<SummaryTuple>(name, directory, readMode, disabled);
 }
 
-inline void CheckProdSummaryConsistency(const ProdSummary& s)
+void CheckProdSummaryConsistency(const ProdSummary& s)
 {
     if(s.triggers_pattern.size() != s.triggers_channel.size())
         throw analysis::exception("Inconsistent trigger info in prod summary.");
@@ -169,7 +91,7 @@ inline void CheckProdSummaryConsistency(const ProdSummary& s)
         throw analysis::exception("Inconsistent genEventType info in prod summary.");
 }
 
-inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os = nullptr)
+bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os)
 {
     if(s1.tauId_names.size() != s2.tauId_names.size()) {
         if(os) *os << "Number of tau id are not compatible: " << s1.tauId_names.size() << "!="
@@ -193,7 +115,7 @@ inline bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSumma
     return true;
 }
 
-inline void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSummary)
+void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSummary)
 {
     CheckProdSummaryConsistency(summary);
     CheckProdSummaryConsistency(otherSummary);
@@ -218,7 +140,7 @@ inline void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSum
     ConvertGenEventTypeCountMap(summary, genEventTypeCountMap);
 }
 
-inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
+ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
 {
     ProdSummary summary;
     const Long64_t n_entries = tuple.GetEntries();
@@ -260,7 +182,7 @@ inline ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
 }
 
 
-inline std::shared_ptr<ExpressTuple> CreateExpressTuple(const std::string& name, TDirectory* directory,
+std::shared_ptr<ExpressTuple> CreateExpressTuple(const std::string& name, TDirectory* directory,
                                                         bool readMode, TreeState treeState)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
