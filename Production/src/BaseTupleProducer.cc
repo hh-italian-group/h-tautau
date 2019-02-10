@@ -372,6 +372,10 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
         eventTuple().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
         eventTuple().lhe_hh_m = ntuple::DefaultFillValue<Float_t>();
         eventTuple().lhe_hh_cosTheta = ntuple::DefaultFillValue<Float_t>();
+        eventTuple().lhe_index = ntuple::DefaultFillValue<UInt_t>();
+        eventTuple().lhe_pdgId = ntuple::DefaultFillValue<UInt_t>();
+        eventTuple().lhe_mother_index = ntuple::DefaultFillValue<UInt_t>();
+        eventTuple().lhe_p4 = ntuple::LorentzVectorM();
         return;
     }
 
@@ -383,6 +387,10 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     eventTuple().lhe_H_m = lheSummary.m_H;
     eventTuple().lhe_hh_m = lheSummary.m_hh;
     eventTuple().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
+    eventTuple().lhe_index = lheSummary.index;
+    eventTuple().lhe_pdgId = lheSummary.pdgId;
+    eventTuple().lhe_mother_index = lheSummary.mother_index;
+    eventTuple().lhe_p4 = lheSummary.p4;
 }
 
 void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& jets)
@@ -496,6 +504,7 @@ void BaseTupleProducer::FillGenJetInfo()
     for(const reco::GenJet& gen_jet : *genJets) {
         if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
+        eventTuple().genJets_pdgId.push_back(gen_jet.genParticle()->pdgId());
 
         const auto findRecoJetFlavour = [&]() {
             for(const JetCandidate& reco_jet : jets) {
@@ -506,7 +515,7 @@ void BaseTupleProducer::FillGenJetInfo()
         };
 
         const auto flavour = findRecoJetFlavour();
-        eventTuple().genJets_hadronFlavour.push_back(flavour);
+        //eventTuple().genJets_hadronFlavour.push_back(flavour);
     }
 }
 
