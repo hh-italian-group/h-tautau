@@ -512,7 +512,7 @@ void BaseTupleProducer::FillGenJetInfo()
         const reco::GenJet& gen_jet = genJets->at(n);
         if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
-        eventTuple().genJets_pdgId.push_back(gen_jet.getGenConstituent(n)->pdgId());
+        eventTuple().genJets_pdgId.push_back(gen_jet.pdgId());
 
         const auto findRecoJetFlavour = [&]() {
             for(const JetCandidate& reco_jet : jets) {
