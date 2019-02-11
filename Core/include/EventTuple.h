@@ -173,7 +173,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
     VAR(std::vector<UInt_t>, genJets_pdgId) \
-    //VAR(std::vector<Int_t>, genJets_hadronFlavour) \
+    VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
     VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \

@@ -508,10 +508,11 @@ void BaseTupleProducer::FillGenJetInfo()
 
     if(!saveGenJetInfo) return;
 
-    for(const reco::GenJet& gen_jet : *genJets) {
+    for(unsigned n = 0; n < genJets->size(); ++n) {
+        const reco::GenJet& gen_jet = genJets->at(n);
         if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
-        eventTuple().genJets_pdgId.push_back(gen_jet.genParticle()->pdgId());
+        eventTuple().genJets_pdgId.push_back(gen_jet.getGenConstituent(n)->pdgId());
 
         const auto findRecoJetFlavour = [&]() {
             for(const JetCandidate& reco_jet : jets) {
@@ -522,7 +523,7 @@ void BaseTupleProducer::FillGenJetInfo()
         };
 
         const auto flavour = findRecoJetFlavour();
-        //eventTuple().genJets_hadronFlavour.push_back(flavour);
+        eventTuple().genJets_hadronFlavour.push_back(flavour);
     }
 }
 
