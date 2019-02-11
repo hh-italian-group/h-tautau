@@ -13,7 +13,9 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     if(applyTriggerMatch) {
         triggerTools.SetTriggerAcceptBits(selection.triggerResults);
-        cut(selection.triggerResults.AnyAccpet(), "trigger");
+        if(applyTriggerCut){
+            cut(selection.triggerResults.AnyAccpet(), "trigger");
+        }
     }
 
     const auto selectedMuons = CollectSignalMuons();

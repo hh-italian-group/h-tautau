@@ -41,6 +41,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
     runKinFit(iConfig.getParameter<bool>("runKinFit")),
+    applyTriggerCut(iConfig.getParameter<bool>("applyTriggerCut")),
+    storeLHEinfo(iConfig.getParameter<bool>("storeLHEinfo")),
     applyRecoilCorr(iConfig.getParameter<bool>("applyRecoilCorr")),
     nJetsRecoilCorr(iConfig.getParameter<int>("nJetsRecoilCorr")),
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
@@ -372,10 +374,12 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
         eventTuple().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
         eventTuple().lhe_hh_m = ntuple::DefaultFillValue<Float_t>();
         eventTuple().lhe_hh_cosTheta = ntuple::DefaultFillValue<Float_t>();
-        eventTuple().lhe_index = ntuple::DefaultFillValue<UInt_t>();
-        eventTuple().lhe_pdgId = ntuple::DefaultFillValue<UInt_t>();
-        eventTuple().lhe_mother_index = ntuple::DefaultFillValue<UInt_t>();
-        eventTuple().lhe_p4 = ntuple::LorentzVectorM();
+        if(storeLHEinfo){
+            eventTuple().lhe_index = ntuple::DefaultFillValue<UInt_t>();
+            eventTuple().lhe_pdgId = ntuple::DefaultFillValue<UInt_t>();
+            eventTuple().lhe_mother_index = ntuple::DefaultFillValue<UInt_t>();
+            eventTuple().lhe_p4 = ntuple::LorentzVectorM();
+        }
         return;
     }
 
@@ -387,10 +391,13 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     eventTuple().lhe_H_m = lheSummary.m_H;
     eventTuple().lhe_hh_m = lheSummary.m_hh;
     eventTuple().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
-    eventTuple().lhe_index = lheSummary.index;
-    eventTuple().lhe_pdgId = lheSummary.pdgId;
-    eventTuple().lhe_mother_index = lheSummary.mother_index;
-    eventTuple().lhe_p4 = lheSummary.p4;
+    if(storeLHEinfo){
+        eventTuple().lhe_index = lheSummary.index;
+        eventTuple().lhe_pdgId = lheSummary.pdgId;
+        eventTuple().lhe_mother_index = lheSummary.mother_index;
+        eventTuple().lhe_p4 = lheSummary.p4;
+    }
+
 }
 
 void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& jets)

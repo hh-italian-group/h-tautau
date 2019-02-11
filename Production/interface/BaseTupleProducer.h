@@ -148,6 +148,7 @@ protected:
     const ProductionMode productionMode;
     const analysis::Period period;
     const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyRecoilCorr;
+    const bool applyTriggerCut, storeLHEinfo;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo;
     std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
