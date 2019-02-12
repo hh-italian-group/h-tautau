@@ -47,6 +47,8 @@ options.register('saveGenBosonInfo', False, VarParsing.multiplicity.singleton, V
                         "Save generator-level information for bosons.")
 options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Save generator-level information for jets.")
+options.register('saveGenParticleInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Save generator-level information for particles.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Dump full config into stdout.")
 options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
@@ -266,6 +268,7 @@ for channel in channels:
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
+        saveGenParticleInfo     = cms.bool(options.saveGenParticleInfo),
         rho                     = cms.InputTag('fixedGridRhoAll'),
     ))
 

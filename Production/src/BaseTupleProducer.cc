@@ -48,6 +48,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
+    saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
     eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
     eventTuple(*eventTuple_ptr),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
@@ -454,7 +455,42 @@ void BaseTupleProducer::FillGenParticleInfo()
     std::vector<const reco::GenParticle*> particles_to_store;
 
     std::map<int, size_t> particle_counts;
-    for(const auto& particle : *genParticles) {
+    for(unsigned n = 0; n < genParticles->size(); ++n) {
+        const auto& particle = genParticles->at(n);
+        if(saveGenParticleInfo){
+            eventTuple().genParticles_Info_indexes.push_back(n);
+            eventTuple().genParticles_Info_pdg.push_back(particle.pdgId());
+            eventTuple().genParticles_Info_status.push_back(particle.status());
+
+            eventTuple().genParticles_Info_p4.push_back(ntuple::LorentzVectorM(particle.p4()));
+
+            const auto first_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle.mother(0));
+            const auto second_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle.mother(1));
+
+            size_t first_mother_index = 0;
+            size_t second_mother_index = 0;
+            if(first_mother_ptr == nullptr){
+                first_mother_index = -1;
+            }
+            else{
+                first_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
+            }
+
+            if(second_mother_ptr == nullptr){
+                second_mother_index = -1;
+            }
+            else{
+                second_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
+            }
+
+            std::cout << "GenParticle: " << particle.pdgId() << ",  mother indexes: " << first_mother_index
+                          << " - " << second_mother_index << std::endl;
+            if(first_mother_index > genParticles->size() || second_mother_index > genParticles->size())
+                throw std::runtime_error("Mother particle index exceeds the size.");
+
+            eventTuple().genParticles_Info_firstMother.push_back(first_mother_index);
+            eventTuple().genParticles_Info_secondMother.push_back(second_mother_index);
+        }
         const auto& flag = particle.statusFlags();
         if(!flag.isPrompt() || !flag.isLastCopy()) continue;
         const int abs_pdg = std::abs(particle.pdgId());
