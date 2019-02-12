@@ -164,12 +164,10 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, lhe_pdgId) \
     VAR(UInt_t, lhe_mother_index) \
     VAR(LorentzVectorM, lhe_p4) \
-    VAR(std::vector<UInt_t>, genParticles_Info_indexes) \
-    VAR(std::vector<Int_t>, genParticles_Info_pdg) \
-    VAR(std::vector<Int_t>, genParticles_Info_status) \
-    VAR(std::vector<size_t>, genParticles_Info_firstMother) \
-    VAR(std::vector<size_t>, genParticles_Info_secondMother) \
-    VAR(std::vector<LorentzVectorM>, genParticles_Info_p4) \
+    VAR(std::vector<UInt_t>, genParticles_indexes) \
+    VAR(std::vector<Int_t>, genParticles_status) \
+    VAR(std::vector<Int_t>, genParticles_firstMother) \
+    VAR(std::vector<Int_t>, genParticles_secondMother) \
     VAR(std::vector<Int_t>, genParticles_pdg) \
     VAR(std::vector<LorentzVectorM>, genParticles_p4) \
     VAR(UInt_t, genParticles_nPromptElectrons) \

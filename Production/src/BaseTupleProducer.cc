@@ -458,38 +458,7 @@ void BaseTupleProducer::FillGenParticleInfo()
     for(unsigned n = 0; n < genParticles->size(); ++n) {
         const auto& particle = genParticles->at(n);
         if(saveGenParticleInfo){
-            eventTuple().genParticles_Info_indexes.push_back(n);
-            eventTuple().genParticles_Info_pdg.push_back(particle.pdgId());
-            eventTuple().genParticles_Info_status.push_back(particle.status());
-
-            eventTuple().genParticles_Info_p4.push_back(ntuple::LorentzVectorM(particle.p4()));
-
-            const auto first_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle.mother(0));
-            const auto second_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle.mother(1));
-
-            size_t first_mother_index = 0;
-            size_t second_mother_index = 0;
-            if(first_mother_ptr == nullptr){
-                first_mother_index = -1;
-            }
-            else{
-                first_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
-            }
-
-            if(second_mother_ptr == nullptr){
-                second_mother_index = -1;
-            }
-            else{
-                second_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
-            }
-
-            std::cout << "GenParticle: " << particle.pdgId() << ",  mother indexes: " << first_mother_index
-                          << " - " << second_mother_index << std::endl;
-            if(first_mother_index > genParticles->size() || second_mother_index > genParticles->size())
-                throw std::runtime_error("Mother particle index exceeds the size.");
-
-            eventTuple().genParticles_Info_firstMother.push_back(first_mother_index);
-            eventTuple().genParticles_Info_secondMother.push_back(second_mother_index);
+            particles_to_store.push_back(&particle);
         }
         const auto& flag = particle.statusFlags();
         if(!flag.isPrompt() || !flag.isLastCopy()) continue;
@@ -521,9 +490,44 @@ void BaseTupleProducer::FillGenParticleInfo()
             particles_to_store.push_back(top_bar);
     }
 
-    for(auto particle : particles_to_store) {
+    for(unsigned n = 0; n < particles_to_store.size();++n) {
+        const auto particle = particles_to_store.at(n);
+
+        eventTuple().genParticles_indexes.push_back(n);
         eventTuple().genParticles_pdg.push_back(particle->pdgId());
+        eventTuple().genParticles_status.push_back(particle->status());
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+
+        const auto first_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(0));
+        const auto second_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(1));
+
+        size_t first_mother_index = 0;
+        size_t second_mother_index = 0;
+        if(first_mother_ptr == nullptr){
+            first_mother_index = -1;
+        }
+        else{
+            first_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
+            if(first_mother_index > genParticles->size())
+                throw std::runtime_error("First Mother particle index exceeds the size.");
+        }
+
+        if(second_mother_ptr == nullptr){
+            second_mother_index = -1;
+        }
+        else{
+            second_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
+            if(second_mother_index > genParticles->size())
+                throw std::runtime_error("Second Mother particle index exceeds the size.");
+        }
+
+        std::cout << "GenParticle: " << particle->pdgId() << ", numOfMothers: " << particle->numberOfMothers()
+                  << ",  mother indexes: " << first_mother_index
+                  << " - " << second_mother_index << std::endl;
+
+
+        eventTuple().genParticles_firstMother.push_back(first_mother_index);
+        eventTuple().genParticles_secondMother.push_back(second_mother_index);
     }
 
 }
@@ -548,7 +552,6 @@ void BaseTupleProducer::FillGenJetInfo()
         const reco::GenJet& gen_jet = genJets->at(n);
         if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
-        eventTuple().genJets_pdgId.push_back(gen_jet.pdgId());
 
         const auto findRecoJetFlavour = [&]() {
             for(const JetCandidate& reco_jet : jets) {
