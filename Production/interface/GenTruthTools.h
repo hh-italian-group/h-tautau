@@ -131,7 +131,7 @@ inline LheSummary ExtractLheSummary(const LHEEventProduct& lheEventProduct)
     for(size_t n = 0; n < lheParticles.size(); ++n) {
         summary.index.push_back(n);
         const int absPdgId = std::abs(lheEvent.IDUP[n]);
-        summary.pdgId.push_back(absPdgId);
+        summary.pdgId.push_back(lheEvent.IDUP[n]);
         const int status = lheEvent.ISTUP[n];
         const auto mother_indices = lheEvent.MOTHUP[n];
         summary.mother_index.push_back(mother_indices.first);

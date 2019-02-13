@@ -505,7 +505,7 @@ void BaseTupleProducer::FillGenParticleInfo()
 		const auto particle_ptr = dynamic_cast<const reco::GenParticle*>(particle);
 		int index = returnIndex(particle_ptr);
                 eventTuple().genParticles_index.push_back(index);
-		eventTuple().genParticles_vertex.push_back(particle->vertex());
+		eventTuple().genParticles_vertex.push_back(particle->vertex()); //PositionVector3D< Cartesian3D<float>, DefaultCoordinateSystemTag > ROOT::Math::XYZPointF
         	eventTuple().genParticles_pdg.push_back(particle->pdgId());
         	eventTuple().genParticles_status.push_back(particle->status());
 		eventTuple().genParticles_statusFlags.push_back(particle->statusFlags().flags_.to_ulong());
@@ -517,7 +517,7 @@ void BaseTupleProducer::FillGenParticleInfo()
 			int index = returnIndex(mother_ptr);
 			mother_indices.fill(index);
 		}
-		
+		std::cout << "GenParticle: " << particle->pdgId() << ", numMothers: " << particle->numberOfMothers() << std::endl;
 		eventTuple().genParticles_mother_index_1.push_back(mother_indices.at(0));
         	eventTuple().genParticles_mother_index_2.push_back(mother_indices.at(1));
 

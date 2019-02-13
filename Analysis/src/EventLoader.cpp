@@ -77,6 +77,8 @@ StorageMode EventLoader::Load(Event& event, const Event* ref)
         CP_BR(lhe_p4);
         CP_BR(genParticles_index);
         CP_BR(genParticles_status);
+	CP_BR(genParticles_statusFlags);
+	CP_BR(genParticles_vertex);
         CP_BR(genParticles_mother_index_1);
         CP_BR(genParticles_mother_index_2);
         CP_BR(genParticles_pdg);
