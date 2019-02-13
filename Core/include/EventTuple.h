@@ -164,10 +164,10 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, lhe_pdgId) \
     VAR(UInt_t, lhe_mother_index) \
     VAR(LorentzVectorM, lhe_p4) \
-    VAR(std::vector<UInt_t>, genParticles_indexes) \
+    VAR(std::vector<UInt_t>, genParticles_index) \
     VAR(std::vector<Int_t>, genParticles_status) \
-    VAR(std::vector<Int_t>, genParticles_firstMother) \
-    VAR(std::vector<Int_t>, genParticles_secondMother) \
+    VAR(std::vector<Int_t>, genParticles_mother_index_1) \
+    VAR(std::vector<Int_t>, genParticles_mother_index_2) \
     VAR(std::vector<Int_t>, genParticles_pdg) \
     VAR(std::vector<LorentzVectorM>, genParticles_p4) \
     VAR(UInt_t, genParticles_nPromptElectrons) \
@@ -177,7 +177,6 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(UInt_t, jets_nTotal_hadronFlavour_b) \
     VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
-    VAR(std::vector<UInt_t>, genJets_pdgId) \
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
     VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \

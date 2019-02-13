@@ -75,10 +75,10 @@ StorageMode EventLoader::Load(Event& event, const Event* ref)
         CP_BR(lhe_pdgId);
         CP_BR(lhe_mother_index);
         CP_BR(lhe_p4);
-        CP_BR(genParticles_indexes);
+        CP_BR(genParticles_index);
         CP_BR(genParticles_status);
-        CP_BR(genParticles_firstMother);
-        CP_BR(genParticles_secondMother);
+        CP_BR(genParticles_mother_index_1);
+        CP_BR(genParticles_mother_index_2);
         CP_BR(genParticles_pdg);
         CP_BR(genParticles_p4);
         CP_BR(genParticles_nPromptElectrons);
@@ -88,7 +88,6 @@ StorageMode EventLoader::Load(Event& event, const Event* ref)
         CP_BR(jets_nTotal_hadronFlavour_b);
         CP_BR(jets_nTotal_hadronFlavour_c);
         CP_BR(genJets_p4);
-        CP_BR(genJets_pdgId);
         CP_BR(genJets_hadronFlavour);
     }
 

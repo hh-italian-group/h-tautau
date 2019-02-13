@@ -455,8 +455,7 @@ void BaseTupleProducer::FillGenParticleInfo()
     std::vector<const reco::GenParticle*> particles_to_store;
 
     std::map<int, size_t> particle_counts;
-    for(unsigned n = 0; n < genParticles->size(); ++n) {
-        const auto& particle = genParticles->at(n);
+    for(const auto& particle : *genParticles) {
         if(saveGenParticleInfo){
             particles_to_store.push_back(&particle);
         }
@@ -493,7 +492,7 @@ void BaseTupleProducer::FillGenParticleInfo()
     for(unsigned n = 0; n < particles_to_store.size();++n) {
         const auto particle = particles_to_store.at(n);
 
-        eventTuple().genParticles_indexes.push_back(n);
+        eventTuple().genParticles_index.push_back(n);
         eventTuple().genParticles_pdg.push_back(particle->pdgId());
         eventTuple().genParticles_status.push_back(particle->status());
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
@@ -521,13 +520,8 @@ void BaseTupleProducer::FillGenParticleInfo()
                 throw std::runtime_error("Second Mother particle index exceeds the size.");
         }
 
-        std::cout << "GenParticle: " << particle->pdgId() << ", numOfMothers: " << particle->numberOfMothers()
-                  << ",  mother indexes: " << first_mother_index
-                  << " - " << second_mother_index << std::endl;
-
-
-        eventTuple().genParticles_firstMother.push_back(first_mother_index);
-        eventTuple().genParticles_secondMother.push_back(second_mother_index);
+        eventTuple().genParticles_mother_index_1.push_back(first_mother_index);
+        eventTuple().genParticles_mother_index_2.push_back(second_mother_index);
     }
 
 }
@@ -548,8 +542,7 @@ void BaseTupleProducer::FillGenJetInfo()
 
     if(!saveGenJetInfo) return;
 
-    for(unsigned n = 0; n < genJets->size(); ++n) {
-        const reco::GenJet& gen_jet = genJets->at(n);
+    for(const reco::GenJet& gen_jet : *genJets) {
         if(gen_jet.pt() <= pt_cut) continue;
         eventTuple().genJets_p4.push_back(ntuple::LorentzVectorE(gen_jet.p4()));
 

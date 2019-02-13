@@ -135,7 +135,7 @@ inline LheSummary ExtractLheSummary(const LHEEventProduct& lheEventProduct)
         summary.mother_index = mother_indices.first;
         const analysis::LorentzVectorXYZ p4_XYZ = analysis::LorentzVectorXYZ(lheParticles[n][0], lheParticles[n][1],
                                                           lheParticles[n][2], lheParticles[n][3]);
-        summary.p4 = ntuple::LorentzVectorM(p4_XYZ.Pt(),p4_XYZ.Eta(),p4_XYZ.Phi(),p4_XYZ.M());
+        summary.p4 = ntuple::LorentzVectorM(p4_XYZ);
 
         if(absPdgId == H0) summary.m_H = lheParticles[n][4];
         if(absPdgId == h0)
