@@ -160,11 +160,11 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, lhe_H_m) \
     VAR(Float_t, lhe_hh_m) \
     VAR(Float_t, lhe_hh_cosTheta) \
-    VAR(UInt_t, lhe_index) \
-    VAR(UInt_t, lhe_pdgId) \
-    VAR(UInt_t, lhe_mother_index) \
-    VAR(LorentzVectorM, lhe_p4) \
-    VAR(std::vector<UInt_t>, genParticles_index) \
+    VAR(std::vector<Int_t>, lhe_index) \
+    VAR(std::vector<Int_t>, lhe_pdgId) \
+    VAR(std::vector<Int_t>, lhe_mother_index) \
+    VAR(std::vector<LorentzVectorM>, lhe_p4) \
+    VAR(std::vector<Int_t>, genParticles_index) \
     VAR(std::vector<Int_t>, genParticles_status) \
     VAR(std::vector<Int_t>, genParticles_mother_index_1) \
     VAR(std::vector<Int_t>, genParticles_mother_index_2) \
