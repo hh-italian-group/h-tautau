@@ -456,9 +456,6 @@ void BaseTupleProducer::FillGenParticleInfo()
 
     std::map<int, size_t> particle_counts;
     for(const auto& particle : *genParticles) {
-        if(saveGenParticleInfo){
-            particles_to_store.push_back(&particle);
-        }
         const auto& flag = particle.statusFlags();
         if(!flag.isPrompt() || !flag.isLastCopy()) continue;
         const int abs_pdg = std::abs(particle.pdgId());
@@ -489,40 +486,39 @@ void BaseTupleProducer::FillGenParticleInfo()
             particles_to_store.push_back(top_bar);
     }
 
-    for(unsigned n = 0; n < particles_to_store.size();++n) {
-        const auto particle = particles_to_store.at(n);
+    int returnIndex = [&](reco::GenParticle* particle){
+		const auto particle_ptr = dynamic_cast<reco::GenParticle*>(particle);
 
-        eventTuple().genParticles_index.push_back(n);
-        eventTuple().genParticles_pdg.push_back(particle->pdgId());
-        eventTuple().genParticles_status.push_back(particle->status());
-        eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+		int particle_index = -1;
+		if(particle_ptr != nullptr){
+		    particle_index = static_cast<size_t>(particle_ptr - genParticles->data());
+		    if(particle_index > (int)genParticles->size())
+		        throw std::runtime_error("Particle index exceeds the size.");
+		}
+		return particle_index;
+	};
 
-        const auto first_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(0));
-        const auto second_mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(1));
+    void fillGenInfo = [&](std::vector<reco::GenParticle*> particles) {
+            for(const auto& particle : particles) {
+		int index = returnIndex(particle);
+                eventTuple().genParticles_index.push_back(index);
+        	eventTuple().genParticles_pdg.push_back(particle->pdgId());
+        	eventTuple().genParticles_status.push_back(particle->status());
+        	eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+		eventTuple().genParticles_mother_index_1.push_back(returnIndex(particle->mother(0)));
+        	eventTuple().genParticles_mother_index_2.push_back(returnIndex(particle->mother(1)));
+            }
+        };
 
-        size_t first_mother_index = 0;
-        size_t second_mother_index = 0;
-        if(first_mother_ptr == nullptr){
-            first_mother_index = -1;
-        }
-        else{
-            first_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
-            if(first_mother_index > genParticles->size())
-                throw std::runtime_error("First Mother particle index exceeds the size.");
-        }
+    
 
-        if(second_mother_ptr == nullptr){
-            second_mother_index = -1;
-        }
-        else{
-            second_mother_index = static_cast<size_t>(first_mother_ptr - genParticles->data());
-            if(second_mother_index > genParticles->size())
-                throw std::runtime_error("Second Mother particle index exceeds the size.");
-        }
-
-        eventTuple().genParticles_mother_index_1.push_back(first_mother_index);
-        eventTuple().genParticles_mother_index_2.push_back(second_mother_index);
+    if(saveGenParticleInfo){
+	fillGenInfo(genParticles);
     }
+    else{
+    	fillGenInfo(particles_to_store);
+    }
+
 
 }
 
