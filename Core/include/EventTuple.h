@@ -166,6 +166,8 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(std::vector<LorentzVectorM>, lhe_p4) \
     VAR(std::vector<Int_t>, genParticles_index) \
     VAR(std::vector<Int_t>, genParticles_status) \
+    VAR(std::vector<math::XYZPoint>, genParticles_vertex) \
+    VAR(std::vector<uint16_t>, genParticles_statusFlags) \
     VAR(std::vector<Int_t>, genParticles_mother_index_1) \
     VAR(std::vector<Int_t>, genParticles_mother_index_2) \
     VAR(std::vector<Int_t>, genParticles_pdg) \

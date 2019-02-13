@@ -112,8 +112,10 @@ inline float GetNumberOfPileUpInteractions(edm::Handle<std::vector<PileupSummary
 struct LheSummary {
     size_t n_partons = 0, n_b_partons = 0, n_c_partons = 0;
     double HT = 0., m_H = 0., m_hh = 0., cosTheta_hh = 0.;
-    int index = 0., pdgId = 0., mother_index = 0.;
-    ntuple::LorentzVectorM p4;
+    std::vector<int> index;
+    std::vector<int> pdgId;
+    std::vector<int> mother_index;
+    std::vector<ntuple::LorentzVectorM> p4;
 
 };
 
@@ -127,15 +129,15 @@ inline LheSummary ExtractLheSummary(const LHEEventProduct& lheEventProduct)
     const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
     std::vector<analysis::LorentzVectorXYZ> h0_p4;
     for(size_t n = 0; n < lheParticles.size(); ++n) {
-        summary.index = n;
+        summary.index.push_back(n);
         const int absPdgId = std::abs(lheEvent.IDUP[n]);
-        summary.pdgId = absPdgId;
+        summary.pdgId.push_back(absPdgId);
         const int status = lheEvent.ISTUP[n];
         const auto mother_indices = lheEvent.MOTHUP[n];
-        summary.mother_index = mother_indices.first;
+        summary.mother_index.push_back(mother_indices.first);
         const analysis::LorentzVectorXYZ p4_XYZ = analysis::LorentzVectorXYZ(lheParticles[n][0], lheParticles[n][1],
                                                           lheParticles[n][2], lheParticles[n][3]);
-        summary.p4 = ntuple::LorentzVectorM(p4_XYZ);
+        summary.p4.push_back(ntuple::LorentzVectorM(p4_XYZ));
 
         if(absPdgId == H0) summary.m_H = lheParticles[n][4];
         if(absPdgId == h0)

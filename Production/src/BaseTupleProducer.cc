@@ -393,10 +393,13 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     eventTuple().lhe_hh_m = lheSummary.m_hh;
     eventTuple().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
     if(storeLHEinfo){
-        eventTuple().lhe_index.push_back(lheSummary.index);
-        eventTuple().lhe_pdgId.push_back(lheSummary.pdgId);
-        eventTuple().lhe_mother_index.push_back(lheSummary.mother_index);
-        eventTuple().lhe_p4.push_back(lheSummary.p4);
+	for(unsigned n = 0; n < lheSummary.index.size(); ++n){
+	     	eventTuple().lhe_index.push_back(lheSummary.index.at(n));
+        	eventTuple().lhe_pdgId.push_back(lheSummary.pdgId.at(n));
+        	eventTuple().lhe_mother_index.push_back(lheSummary.mother_index.at(n));
+        	eventTuple().lhe_p4.push_back(lheSummary.p4.at(n));
+	}
+        
     }
 
 }
@@ -502,8 +505,10 @@ void BaseTupleProducer::FillGenParticleInfo()
 		const auto particle_ptr = dynamic_cast<const reco::GenParticle*>(particle);
 		int index = returnIndex(particle_ptr);
                 eventTuple().genParticles_index.push_back(index);
+		eventTuple().genParticles_vertex.push_back(particle->vertex());
         	eventTuple().genParticles_pdg.push_back(particle->pdgId());
         	eventTuple().genParticles_status.push_back(particle->status());
+		eventTuple().genParticles_statusFlags.push_back(particle->statusFlags().flags_.to_ulong());
         	eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
 
 		std::array<double, 2> mother_indices = { {-1, -1} };
