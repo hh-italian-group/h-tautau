@@ -375,12 +375,6 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
         eventTuple().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
         eventTuple().lhe_hh_m = ntuple::DefaultFillValue<Float_t>();
         eventTuple().lhe_hh_cosTheta = ntuple::DefaultFillValue<Float_t>();
-        if(storeLHEinfo){
-            eventTuple().lhe_index.push_back(ntuple::DefaultFillValue<Int_t>());
-            eventTuple().lhe_pdgId.push_back(ntuple::DefaultFillValue<Int_t>());
-            eventTuple().lhe_mother_index.push_back(ntuple::DefaultFillValue<Int_t>());
-            eventTuple().lhe_p4.push_back(ntuple::LorentzVectorM());
-        }
         return;
     }
 
@@ -393,13 +387,13 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     eventTuple().lhe_hh_m = lheSummary.m_hh;
     eventTuple().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
     if(storeLHEinfo){
-	for(unsigned n = 0; n < lheSummary.index.size(); ++n){
-	     	eventTuple().lhe_index.push_back(lheSummary.index.at(n));
+    	for(size_t n = 0; n < lheSummary.index.size(); ++n){
+         	eventTuple().lhe_index.push_back(lheSummary.index.at(n));
         	eventTuple().lhe_pdgId.push_back(lheSummary.pdgId.at(n));
-        	eventTuple().lhe_mother_index.push_back(lheSummary.mother_index.at(n));
+        	eventTuple().lhe_first_mother_index.push_back(lheSummary.first_mother_index.at(n));
+            eventTuple().lhe_last_mother_index.push_back(lheSummary.last_mother_index.at(n));
         	eventTuple().lhe_p4.push_back(lheSummary.p4.at(n));
-	}
-        
+    	}
     }
 
 }
@@ -490,7 +484,7 @@ void BaseTupleProducer::FillGenParticleInfo()
     }
 
     auto returnIndex = [&](const reco::GenParticle* particle_ptr){
-		
+
 		int particle_index = -1;
 		if(particle_ptr != nullptr){
 		    particle_index = static_cast<int>(particle_ptr - genParticles->data());
@@ -501,41 +495,36 @@ void BaseTupleProducer::FillGenParticleInfo()
 	};
 
     auto fillGenInfo = [&](const reco::GenParticle* particle) {
-            
+
 		const auto particle_ptr = dynamic_cast<const reco::GenParticle*>(particle);
 		int index = returnIndex(particle_ptr);
-                eventTuple().genParticles_index.push_back(index);
-		eventTuple().genParticles_vertex.push_back(particle->vertex()); //PositionVector3D< Cartesian3D<float>, DefaultCoordinateSystemTag > ROOT::Math::XYZPointF
-        	eventTuple().genParticles_pdg.push_back(particle->pdgId());
-        	eventTuple().genParticles_status.push_back(particle->status());
-		eventTuple().genParticles_statusFlags.push_back(particle->statusFlags().flags_.to_ulong());
-        	eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+        eventTuple().genParticles_index.push_back(index);
+		eventTuple().genParticles_vertex.push_back(static_cast<analysis::Point3D_Float>(particle->vertex()));
+    	eventTuple().genParticles_pdg.push_back(particle->pdgId());
+    	eventTuple().genParticles_status.push_back(particle->status());
+		eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(particle->statusFlags().flags_.to_ulong()));
+	    eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
 
-		std::array<double, 2> mother_indices = { {-1, -1} };
-		for(size_t mother_id = 0; mother_id < mother_indices.size(); ++mother_id) { 
+		eventTuple().genParticles_rel_pIndex.push_back(index);
+		for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
 			const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
 			int index = returnIndex(mother_ptr);
-			mother_indices.fill(index);
+			eventTuple().genParticles_rel_mIndex.push_back(index);
 		}
-		std::cout << "GenParticle: " << particle->pdgId() << ", numMothers: " << particle->numberOfMothers() << std::endl;
-		eventTuple().genParticles_mother_index_1.push_back(mother_indices.at(0));
-        	eventTuple().genParticles_mother_index_2.push_back(mother_indices.at(1));
 
-        };
+    };
 
-    
+
 
     if(saveGenParticleInfo){
-	for(const auto& particle : *genParticles) {
-	    fillGenInfo(&particle);
+    	for(const auto& particle : *genParticles) {
+    	    fillGenInfo(&particle);
+    	}
 	}
-	
-    }
     else{
-	for(const auto& particle : particles_to_store) {
-	    fillGenInfo(particle);
-	}
-    	
+    	for(const auto& particle : particles_to_store) {
+    	    fillGenInfo(particle);
+    	}
     }
 
 

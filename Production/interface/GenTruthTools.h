@@ -114,7 +114,8 @@ struct LheSummary {
     double HT = 0., m_H = 0., m_hh = 0., cosTheta_hh = 0.;
     std::vector<int> index;
     std::vector<int> pdgId;
-    std::vector<int> mother_index;
+    std::vector<int> first_mother_index;
+    std::vector<int> last_mother_index;
     std::vector<ntuple::LorentzVectorM> p4;
 
 };
@@ -134,7 +135,8 @@ inline LheSummary ExtractLheSummary(const LHEEventProduct& lheEventProduct)
         summary.pdgId.push_back(lheEvent.IDUP[n]);
         const int status = lheEvent.ISTUP[n];
         const auto mother_indices = lheEvent.MOTHUP[n];
-        summary.mother_index.push_back(mother_indices.first);
+        summary.first_mother_index.push_back(mother_indices.first);
+        summary.last_mother_index.push_back(mother_indices.second);
         const analysis::LorentzVectorXYZ p4_XYZ = analysis::LorentzVectorXYZ(lheParticles[n][0], lheParticles[n][1],
                                                           lheParticles[n][2], lheParticles[n][3]);
         summary.p4.push_back(ntuple::LorentzVectorM(p4_XYZ));

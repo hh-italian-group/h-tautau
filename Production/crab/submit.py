@@ -28,8 +28,8 @@ parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', typ
 					help="suffix that will be added to each job name")
 parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
 					help="number of units per job (default: use values from the config file)")
-parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2000,
-					help="maximum amount of memory (in MB) a job is allowed to use (default: 2000 MB )")
+parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2500,
+					help="maximum amount of memory (in MB) a job is allowed to use (default: 2500 MB )")
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
 args = parser.parse_args()
 

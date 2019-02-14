@@ -10,6 +10,7 @@ namespace ntuple {
 using LorentzVectorE = analysis::LorentzVectorE_Float;
 using LorentzVectorM = analysis::LorentzVectorM_Float;
 using MetCovMatrix = analysis::SquareMatrix<2>;
+using Point3D_Float = analysis::Point3D_Float;
 }
 
 #define LVAR(type, name, n) VAR(type, name##_##n)
@@ -161,14 +162,15 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, lhe_hh_cosTheta) \
     VAR(std::vector<Int_t>, lhe_index) \
     VAR(std::vector<Int_t>, lhe_pdgId) \
-    VAR(std::vector<Int_t>, lhe_mother_index) \
+    VAR(std::vector<Int_t>, lhe_first_mother_index) \
+    VAR(std::vector<Int_t>, lhe_last_mother_index) \
     VAR(std::vector<LorentzVectorM>, lhe_p4) \
     VAR(std::vector<Int_t>, genParticles_index) \
     VAR(std::vector<Int_t>, genParticles_status) \
-    VAR(std::vector<ROOT::Math::XYZPointF>, genParticles_vertex) \
+    VAR(std::vector<Point3D_Float>, genParticles_vertex) \
     VAR(std::vector<uint16_t>, genParticles_statusFlags) \
-    VAR(std::vector<Int_t>, genParticles_mother_index_1) \
-    VAR(std::vector<Int_t>, genParticles_mother_index_2) \
+    VAR(std::vector<Int_t>, genParticles_rel_pIndex) \
+    VAR(std::vector<Int_t>, genParticles_rel_mIndex) \
     VAR(std::vector<Int_t>, genParticles_pdg) \
     VAR(std::vector<LorentzVectorM>, genParticles_p4) \
     VAR(UInt_t, genParticles_nPromptElectrons) \
