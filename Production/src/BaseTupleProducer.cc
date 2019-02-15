@@ -487,7 +487,7 @@ void BaseTupleProducer::FillGenParticleInfo()
 
 		int particle_index = -1;
 		if(particle_ptr != nullptr){
-		    particle_index = static_cast<int>(particle_ptr - genParticles->data());
+            particle_index = static_cast<int>(particle_ptr - genParticles->data());
 		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0)
 		        throw std::runtime_error("Particle index exceeds the size.");
 		}
@@ -495,22 +495,21 @@ void BaseTupleProducer::FillGenParticleInfo()
 	};
 
     auto fillGenInfo = [&](const reco::GenParticle* particle) {
-
-		const auto particle_ptr = dynamic_cast<const reco::GenParticle*>(particle);
-		int index = returnIndex(particle_ptr);
+    	int index = returnIndex(particle);
         eventTuple().genParticles_index.push_back(index);
-		eventTuple().genParticles_vertex.push_back(static_cast<analysis::Point3D_Float>(particle->vertex()));
+    	eventTuple().genParticles_vertex.push_back(ntuple::Point3D(particle->vertex()));
     	eventTuple().genParticles_pdg.push_back(particle->pdgId());
     	eventTuple().genParticles_status.push_back(particle->status());
-		eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(particle->statusFlags().flags_.to_ulong()));
-	    eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+    	eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(particle->statusFlags().flags_.to_ulong()));
+        eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
 
-		eventTuple().genParticles_rel_pIndex.push_back(index);
-		for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
-			const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
-			int index = returnIndex(mother_ptr);
-			eventTuple().genParticles_rel_mIndex.push_back(index);
-		}
+
+    	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
+            eventTuple().genParticles_rel_pIndex.push_back(index);
+    		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
+    		int index = returnIndex(mother_ptr);
+    		eventTuple().genParticles_rel_mIndex.push_back(index);
+    	}
 
     };
 

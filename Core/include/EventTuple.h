@@ -10,7 +10,7 @@ namespace ntuple {
 using LorentzVectorE = analysis::LorentzVectorE_Float;
 using LorentzVectorM = analysis::LorentzVectorM_Float;
 using MetCovMatrix = analysis::SquareMatrix<2>;
-using Point3D_Float = analysis::Point3D_Float;
+using Point3D = analysis::Point3D_Float;
 }
 
 #define LVAR(type, name, n) VAR(type, name##_##n)
@@ -167,7 +167,7 @@ using Point3D_Float = analysis::Point3D_Float;
     VAR(std::vector<LorentzVectorM>, lhe_p4) \
     VAR(std::vector<Int_t>, genParticles_index) \
     VAR(std::vector<Int_t>, genParticles_status) \
-    VAR(std::vector<Point3D_Float>, genParticles_vertex) \
+    VAR(std::vector<Point3D>, genParticles_vertex) \
     VAR(std::vector<uint16_t>, genParticles_statusFlags) \
     VAR(std::vector<Int_t>, genParticles_rel_pIndex) \
     VAR(std::vector<Int_t>, genParticles_rel_mIndex) \
