@@ -71,6 +71,17 @@ StorageMode EventLoader::Load(Event& event, const Event* ref)
         CP_BR(lhe_H_m);
         CP_BR(lhe_hh_m);
         CP_BR(lhe_hh_cosTheta);
+        CP_BR(lhe_index);
+        CP_BR(lhe_pdgId);
+        CP_BR(lhe_first_mother_index);
+        CP_BR(lhe_last_mother_index);
+        CP_BR(lhe_p4);
+        CP_BR(genParticles_index);
+        CP_BR(genParticles_status);
+	    CP_BR(genParticles_statusFlags);
+	    CP_BR(genParticles_vertex);
+        CP_BR(genParticles_rel_pIndex);
+        CP_BR(genParticles_rel_mIndex);
         CP_BR(genParticles_pdg);
         CP_BR(genParticles_p4);
         CP_BR(genParticles_nPromptElectrons);

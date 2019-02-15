@@ -27,8 +27,12 @@ options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singl
                         "Event tuple file.")
 options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run SVfit algorithm on the selected tau pair.")
-options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register('runKinFit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
+options.register('applyTriggerCut', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Apply trigger cut for signal objects. Default: True")
+options.register('storeLHEinfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Store LHE information. Default: False")
 options.register('applyRecoilCorr', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply Met Recoil Corrections")
 options.register('nJetsRecoilCorr', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int,
@@ -43,6 +47,8 @@ options.register('saveGenBosonInfo', False, VarParsing.multiplicity.singleton, V
                         "Save generator-level information for bosons.")
 options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Save generator-level information for jets.")
+options.register('saveGenParticleInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Save generator-level information for particles.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Dump full config into stdout.")
 options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
@@ -251,6 +257,8 @@ for channel in channels:
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
+        applyTriggerCut         = cms.bool(options.applyTriggerCut),
+        storeLHEinfo            = cms.bool(options.storeLHEinfo),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
         energyScales            = cms.vstring(energyScales),
@@ -260,6 +268,7 @@ for channel in channels:
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
+        saveGenParticleInfo     = cms.bool(options.saveGenParticleInfo),
         rho                     = cms.InputTag('fixedGridRhoAll'),
     ))
 

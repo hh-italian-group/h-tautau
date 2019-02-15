@@ -41,11 +41,14 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
     runKinFit(iConfig.getParameter<bool>("runKinFit")),
+    applyTriggerCut(iConfig.getParameter<bool>("applyTriggerCut")),
+    storeLHEinfo(iConfig.getParameter<bool>("storeLHEinfo")),
     applyRecoilCorr(iConfig.getParameter<bool>("applyRecoilCorr")),
     nJetsRecoilCorr(iConfig.getParameter<int>("nJetsRecoilCorr")),
     saveGenTopInfo(iConfig.getParameter<bool>("saveGenTopInfo")),
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
+    saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
     eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
     eventTuple(*eventTuple_ptr),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
@@ -383,6 +386,16 @@ void BaseTupleProducer::FillLheInfo(bool haveReference)
     eventTuple().lhe_H_m = lheSummary.m_H;
     eventTuple().lhe_hh_m = lheSummary.m_hh;
     eventTuple().lhe_hh_cosTheta = lheSummary.cosTheta_hh;
+    if(storeLHEinfo){
+    	for(size_t n = 0; n < lheSummary.index.size(); ++n){
+         	eventTuple().lhe_index.push_back(lheSummary.index.at(n));
+        	eventTuple().lhe_pdgId.push_back(lheSummary.pdgId.at(n));
+        	eventTuple().lhe_first_mother_index.push_back(lheSummary.first_mother_index.at(n));
+            eventTuple().lhe_last_mother_index.push_back(lheSummary.last_mother_index.at(n));
+        	eventTuple().lhe_p4.push_back(lheSummary.p4.at(n));
+    	}
+    }
+
 }
 
 void BaseTupleProducer::ApplyRecoilCorrection(const std::vector<JetCandidate>& jets)
@@ -470,10 +483,49 @@ void BaseTupleProducer::FillGenParticleInfo()
             particles_to_store.push_back(top_bar);
     }
 
-    for(auto particle : particles_to_store) {
-        eventTuple().genParticles_pdg.push_back(particle->pdgId());
+    auto returnIndex = [&](const reco::GenParticle* particle_ptr){
+
+		int particle_index = -1;
+		if(particle_ptr != nullptr){
+            particle_index = static_cast<int>(particle_ptr - genParticles->data());
+		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0)
+		        throw std::runtime_error("Particle index exceeds the size.");
+		}
+		return particle_index;
+	};
+
+    auto fillGenInfo = [&](const reco::GenParticle* particle) {
+    	int index = returnIndex(particle);
+        eventTuple().genParticles_index.push_back(index);
+    	eventTuple().genParticles_vertex.push_back(ntuple::Point3D(particle->vertex()));
+    	eventTuple().genParticles_pdg.push_back(particle->pdgId());
+    	eventTuple().genParticles_status.push_back(particle->status());
+    	eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(particle->statusFlags().flags_.to_ulong()));
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
+
+
+    	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
+            eventTuple().genParticles_rel_pIndex.push_back(index);
+    		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
+    		int mother_index = returnIndex(mother_ptr);
+    		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
+    	}
+
+    };
+
+
+
+    if(saveGenParticleInfo){
+    	for(const auto& particle : *genParticles) {
+    	    fillGenInfo(&particle);
+    	}
+	}
+    else{
+    	for(const auto& particle : particles_to_store) {
+    	    fillGenInfo(particle);
+    	}
     }
+
 
 }
 
