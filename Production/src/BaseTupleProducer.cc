@@ -507,8 +507,8 @@ void BaseTupleProducer::FillGenParticleInfo()
     	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
             eventTuple().genParticles_rel_pIndex.push_back(index);
     		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
-    		int index = returnIndex(mother_ptr);
-    		eventTuple().genParticles_rel_mIndex.push_back(index);
+    		int mother_index = returnIndex(mother_ptr);
+    		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
     	}
 
     };
