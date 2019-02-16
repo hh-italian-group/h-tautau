@@ -22,7 +22,7 @@ public:
     virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int decay_mode, DiscriminatorWP anti_ele_wp,
                       DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const = 0;
 
-    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const = 0;
+    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp, GenMatch /*gen_match*/) const = 0;
 
     virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP anti_mu_wp) const = 0;
 
@@ -40,7 +40,7 @@ public:
         return 1;
     }
 
-    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP /*iso_wp*/) const override
+    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP /*iso_wp*/ , GenMatch /*gen_match*/) const override
     {
         return 0;
     }
@@ -62,16 +62,16 @@ public:
     virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int /*decay_mode*/, DiscriminatorWP anti_ele_wp,
                              DiscriminatorWP anti_mu_wp, DiscriminatorWP iso_wp) const override
     {
-        auto tauSF = gen_match == GenMatch::Tau ? getTauIso(iso_wp).GetValue() : 1;
+        auto tauSF = getTauIso(iso_wp, gen_match).GetValue();
         auto muonSF = getMuonMissId(p4, gen_match, anti_mu_wp).GetValue();
         auto eleSF = getEleMissId(p4, gen_match, anti_ele_wp).GetValue();
 
-        return tauSF * muonSF * eleSF;
+        return tauSF * muonSF * eleSF ;
     }
 
-    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const override
+    virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp, GenMatch gen_match) const override
     {
-        return getTauIso(iso_wp).GetRelativeStatisticalError();
+        return getTauIso(iso_wp, gen_match).GetRelativeStatisticalError();
     }
 
     virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP anti_mu_wp) const override
@@ -84,7 +84,7 @@ public:
         return getEleMissId(p4, gen_match, anti_ele_wp).GetRelativeStatisticalError();
     }
 
-private:
+public:
 
     PhysicalValue getMuonMissId(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP iso_wp) const {
         //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
@@ -161,19 +161,33 @@ private:
     }
 
     //Isolation sum with deltaR=0.5
-    PhysicalValue getTauIso(DiscriminatorWP iso_wp) const{
+    PhysicalValue getTauIso(DiscriminatorWP iso_wp, GenMatch gen_match) const{
         //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
         //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
 
-        if(iso_wp == DiscriminatorWP::VLoose)
-            return  PhysicalValue(0.88,0.03);
-        else if(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)
-            return  PhysicalValue(0.89,0.03);
-        else if(iso_wp == DiscriminatorWP::VTight)
-            return  PhysicalValue(0.86,0.03);
-        else if(iso_wp == DiscriminatorWP::VVTight)
-            return  PhysicalValue(0.84,0.03);
-        else throw exception("WP %1% is not supported.") % iso_wp;
+        if(gen_match == GenMatch::Tau){
+            if(iso_wp == DiscriminatorWP::VLoose)
+                return  PhysicalValue(0.88,0.03);
+            else if(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)
+                return  PhysicalValue(0.89,0.03);
+            else if(iso_wp == DiscriminatorWP::VTight)
+                return  PhysicalValue(0.86,0.03);
+            else if(iso_wp == DiscriminatorWP::VVTight)
+                return  PhysicalValue(0.84,0.03);
+            else throw exception("WP %1% is not supported.") % iso_wp;
+        }
+        else
+            return PhysicalValue(1,0);
+    }
+
+    PhysicalValue tauIdForDM(GenMatch gen_match, int decay_mode) const{
+
+        std::map<int, double> decay_SF_map = {{0, 1.06}, {1,1.01}, {10, 0.90}};
+
+        if (gen_match == GenMatch::Tau)
+            return PhysicalValue(decay_SF_map[decay_mode],0);
+        else
+            return PhysicalValue(1,0);
     }
 };
 } // namespace mc_corrections
