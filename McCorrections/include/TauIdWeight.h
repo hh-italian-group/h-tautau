@@ -66,7 +66,7 @@ public:
         auto muonSF = getMuonMissId(p4, gen_match, anti_mu_wp).GetValue();
         auto eleSF = getEleMissId(p4, gen_match, anti_ele_wp).GetValue();
 
-        return tauSF * muonSF * eleSF ;
+        return tauSF * muonSF * eleSF;
     }
 
     virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp, GenMatch gen_match) const override
