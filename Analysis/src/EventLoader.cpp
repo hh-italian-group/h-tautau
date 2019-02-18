@@ -23,11 +23,11 @@ StorageMode EventLoader::Load(Event& event, const Event* ref)
         throw analysis::exception("Incomplete reference event. Ref event storage mode = %1%") % ref_mode.Mode();
 
     if(mode.IsMissing(EventPart::FirstTauIds)) {
-        RAW_TAU_IDS(1)
+        TAU_IDS()
     }
 
     if(mode.IsMissing(EventPart::SecondTauIds)) {
-        RAW_TAU_IDS(2)
+        TAU_IDS()
     }
 
     if(mode.IsMissing(EventPart::Jets)) {

@@ -51,6 +51,7 @@ private:
 struct SelectionResultsBase {
     static constexpr size_t NumberOfLegs = 2;
     using TauCandidate = LeptonCandidate<pat::Tau>;
+    using TauCandidateVector = std::vector<TauCandidate>;
     using JetCandidate = Candidate<pat::Jet>;
     using JetCandidateVector = std::vector<JetCandidate>;
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -66,6 +67,9 @@ struct SelectionResultsBase {
     sv_fit::FitResults svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;
+    TauCandidateVector taus;
+    ElectronCandidateVector electrons;
+    MuonCandidateVector muons;
     ElectronCandidateVector other_electrons;
     MuonCandidateVector other_muons;
     const Vertex* primaryVertex;

@@ -101,16 +101,18 @@ ENUM_NAMES(UncertaintySource) = {
 
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
-enum class DiscriminatorWP { VVLoose, VLoose, Loose, Medium, Tight, VTight, VVTight };
+enum class DiscriminatorWP { VVVLoose = 0, VVLoose = 1, VLoose = 2, Loose = 3, Medium = 4, Tight = 5,
+                             VTight = 6, VVTight = 7, VVVTight = 8 };
 ENUM_NAMES(DiscriminatorWP) = {
-    { DiscriminatorWP::VVLoose, "VVLoose" }, { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" },
-    { DiscriminatorWP::Medium, "Medium" }, { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" },
-    { DiscriminatorWP::VVTight, "VVTight" }
+    { DiscriminatorWP::VVVLoose, "VVVLoose" }, { DiscriminatorWP::VVLoose, "VVLoose" },
+    { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" }, { DiscriminatorWP::Medium, "Medium" },
+    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" },
+    { DiscriminatorWP::VVVTight, "VVVTight" }
 };
 const EnumNameMap<DiscriminatorWP> __DiscriminatorWP_short_names("ShortWPNames", {
-    { DiscriminatorWP::VVLoose, "VVL" }, { DiscriminatorWP::VLoose, "VL" }, { DiscriminatorWP::Loose, "L" },
-    { DiscriminatorWP::Medium, "M" }, { DiscriminatorWP::Tight, "T" }, { DiscriminatorWP::VTight, "VT" },
-    { DiscriminatorWP::VVTight, "VVT" }
+    { DiscriminatorWP::VVVLoose, "VVVL" }, { DiscriminatorWP::VVLoose, "VVL" }, { DiscriminatorWP::VLoose, "VL" },
+    { DiscriminatorWP::Loose, "L" }, { DiscriminatorWP::Medium, "M" }, { DiscriminatorWP::Tight, "T" },
+    { DiscriminatorWP::VTight, "VT" }, { DiscriminatorWP::VVTight, "VVT" }, { DiscriminatorWP::VVVTight, "VVVT" }
 });
 
 enum class MetType { PF, MVA, PUPPI };

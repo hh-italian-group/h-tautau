@@ -17,10 +17,10 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     }
 
     // Signal-like leptons selection
-    const auto selectedElectrons = CollectSignalElectrons();
-    cut(selectedElectrons.size(), "electrons");
-    const auto selectedTaus = CollectSignalTaus();
-    cut(selectedTaus.size(), "taus");
+    selection.electrons = CollectSignalElectrons();
+    //cut(selectedElectrons.size(), "electrons");
+    selection.taus = CollectSignalTaus();
+    //cut(selectedTaus.size(), "taus");
 
     const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
@@ -134,8 +134,7 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
     storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds);
     eventTuple().storageMode = storageMode.Mode();
 
-    FillElectronLeg(1, selection.higgs->GetFirstDaughter());
-    FillTauLeg(2, selection.higgs->GetSecondDaughter(), store_tauIds);
+    FillElectron(selection);
 
     eventTuple.Fill();
 }

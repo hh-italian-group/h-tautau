@@ -9,12 +9,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-struct TauIdResults {
+struct DiscriminatorIdResults {
     using BitsContainer = uint16_t;
     static constexpr size_t MaxNumberOfWorkingPoints = std::numeric_limits<BitsContainer>::digits;
 
-    TauIdResults() : results(0) {}
-    TauIdResults(BitsContainer _results) : results(_results) {}
+    DiscriminatorIdResults() : results(0) {}
+    DiscriminatorIdResults(BitsContainer _results) : results(_results) {}
 
     bool Passed(DiscriminatorWP wp) const
     {
@@ -133,12 +133,12 @@ struct TauIdDescriptor {
         if(has_raw)
             tuple.template get<float>(prefix + disc_name + raw_suffix) = tau ? tau->tauID(raw_name) : default_value;
         if(!working_points.empty()) {
-            TauIdResults id_results;
+            DiscriminatorIdResults id_results;
             for(const auto& wp_entry : working_points) {
                 const bool result = tau && tau->tauID(wp_entry.second) > 0.5;
                 id_results.SetResult(wp_entry.first, result);
             }
-            tuple.template get<TauIdResults::BitsContainer>(prefix + disc_name) = id_results.GetResultBits();
+            tuple.template get<DiscriminatorIdResults::BitsContainer>(prefix + disc_name) = id_results.GetResultBits();
         }
     }
 };

@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "DiscriminatorIdResults.h"
 
 namespace ntuple {
 using LorentzVectorE = analysis::LorentzVectorE_Float;
@@ -12,35 +13,22 @@ using LorentzVectorM = analysis::LorentzVectorM_Float;
 using MetCovMatrix = analysis::SquareMatrix<2>;
 }
 
-#define LVAR(type, name, n) VAR(type, name##_##n)
+#define LVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 #define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
-#define RAW_ID(name, n) VAR(Float_t, tauId_##name##_##n)
+#define TAU_ID(name, pattern, has_raw, wp_list) VAR(uint16_t, name) VAR(Float_t, name##raw)
 
-#define RAW_TAU_IDS(n) \
-    RAW_ID(againstElectronMVA6Raw, n) /* */ \
-    RAW_ID(againstElectronMVA6category, n) /* */ \
-    RAW_ID(againstElectronMVA6RawNew, n) /* */ \
-    RAW_ID(againstElectronMVA6categoryNew, n) /* */ \
-    RAW_ID(byCombinedIsolationDeltaBetaCorrRaw3Hits, n) /* */ \
-    RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw, n) /* */ \
-    RAW_ID(byIsolationMVArun2v1DBdR03oldDMwLTraw, n) /* */ \
-    RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw2016, n) /* */ \
-    RAW_ID(byIsolationMVArun2017v2DBoldDMwLTraw2017, n) /* */ \
-    RAW_ID(byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017, n) /* */ \
-    /**/
 
-#define LEG_DATA(n) \
-    LVAR(LorentzVectorM, p4, n) /* 4-momentum */ \
-    LVAR(Int_t, q, n) /* Charge */ \
-    LVAR(Float_t, dxy, n) /* dxy with respect to primary vertex */ \
-    LVAR(Float_t, dz, n) /* dz with respect to primary vertex */ \
-    LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    LVAR(Bool_t, es_shift_applied, n) /* ES shift is applied to the central value */\
-    LVAR(Int_t, gen_match, n) /* Generator matching, see Htautau Twiki*/\
-    LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
-    LVAR(Int_t, decayMode, n) /* tau decay mode */ \
-    LVAR(ULong64_t, tauId_flags, n) /* boolean tau id variables */ \
-    RAW_TAU_IDS(n) /* raw values of tau ID discriminators */ \
+
+#define LEG_DATA(col) \
+    LVAR(LorentzVectorM, p4, col) /* 4-momentum */ \
+    LVAR(Int_t, q, col) /* Charge */ \
+    LVAR(Float_t, dxy, col) /* dxy with respect to primary vertex */ \
+    LVAR(Float_t, dz, col) /* dz with respect to primary vertex */ \
+    LVAR(Float_t, iso, collect_objects) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Bool_t, es_shift_applied, col) /* ES shift is applied to the central value */\
+    LVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/\
+    LVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
+    LVAR(Int_t, decayMode, col) /* tau decay mode */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
@@ -136,8 +124,9 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
     VAR(Float_t, SVfit_mt_error) /* SVfit using integration method */ \
     /* Signal leptons */ \
-    LEG_DATA(1) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
-    LEG_DATA(2) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \
+    LEG_DATA(lep) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
+    LEG_DATA(tau) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \
+    TAU_IDS() /* raw values of tau ID discriminators */ \
     /* Met related variables */ \
     MET_DATA(pfMET) \
     VAR(UInt_t, metFilters) \
@@ -197,7 +186,7 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef JVAR
 #undef MET_DATA
 #undef MVAR
-#undef RAW_ID
+#undef TAU_ID
 
 namespace ntuple {
 template<typename T>

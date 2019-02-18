@@ -59,7 +59,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Analysis/include/EventLoader.h"
-#include "h-tautau/Core/include/TauIdResults.h"
+#include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -215,9 +215,8 @@ protected:
                             const std::vector<LorentzVector>& signalLeptonMomentums);
     void FillEventTuple(const analysis::SelectionResultsBase& selection,
                         const analysis::SelectionResultsBase* reference = nullptr);
-    void FillElectronLeg(size_t leg_id, const ElectronCandidate& electron);
-    void FillMuonLeg(size_t leg_id, const MuonCandidate& muon);
-    void FillTauLeg(size_t leg_id, const TauCandidate& tau, bool fill_tauIds);
+    void FillElectron(const analysis::SelectionResultsBase& selection);
+    void FillMuon(const analysis::SelectionResultsBase& selection);
     void FillLheInfo(bool haveReference);
     void FillGenParticleInfo();
     void FillGenJetInfo();

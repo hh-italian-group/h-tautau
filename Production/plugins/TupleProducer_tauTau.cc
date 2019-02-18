@@ -16,8 +16,8 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
         cut(selection.triggerResults.AnyAccpet(), "trigger");
     }
 
-    const auto selectedTaus = CollectSignalTaus();
-    cut(selectedTaus.size(), "taus");
+    selection.taus = CollectSignalTaus();
+    //cut(selection.taus.size(), "taus");
 
     const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
@@ -76,11 +76,11 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
     if(productionMode == ProductionMode::hh) {
-        cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+        //cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
         cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
-        if(period == analysis::Period::Run2017) {
-            cut(tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5, "VVLooseIso");
-        }
+        // if(period == analysis::Period::Run2017) {
+        //     cut(tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5, "VVLooseIso");
+        // }
     }
 }
 
@@ -98,9 +98,6 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
     storageMode.SetPresence(EventPart::FirstTauIds, store_tauIds_1);
     storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds_2);
     eventTuple().storageMode = storageMode.Mode();
-
-    FillTauLeg(1, selection.higgs->GetFirstDaughter(), store_tauIds_1);
-    FillTauLeg(2, selection.higgs->GetSecondDaughter(), store_tauIds_2);
 
     eventTuple.Fill();
 }
