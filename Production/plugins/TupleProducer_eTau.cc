@@ -135,6 +135,7 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
     eventTuple().storageMode = storageMode.Mode();
 
     FillElectron(selection);
+    FillTau(selection);
 
     eventTuple.Fill();
 }

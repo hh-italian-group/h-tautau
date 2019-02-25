@@ -94,8 +94,7 @@ void TupleProducer_muMu::FillEventTuple(const SelectionResults& selection)
     BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
     eventTuple().channelId = static_cast<int>(Channel::MuMu);
 
-    FillMuonLeg(1, selection.higgs->GetFirstDaughter());
-    FillMuonLeg(2, selection.higgs->GetSecondDaughter());
+    FillMuon(selection);
 
     eventTuple.Fill();
 }

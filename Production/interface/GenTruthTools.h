@@ -15,23 +15,30 @@ namespace analysis {
 
 namespace gen_truth {
 
-using MatchResult = std::pair<GenMatch, const reco::GenParticle*>;
 
-inline void FindFinalStateDaughters(const reco::GenParticle& particle, std::vector<const reco::GenParticle*>& daughters,
-                                    const std::set<int>& pdg_to_exclude = {})
+
+struct LeptonMatchResult {
+    GenLeptonMatch match{GenLeptonMatch::NoMatch};
+    const GenParticle* gen_particle{nullptr};
+    std::vector<const GenParticle*> visible_daughters;
+    LorentzVectorXYZ visible_daughters_p4;
+};
+
+void FindFinalStateDaughters(const GenParticle& particle, std::set<const GenParticle*>& daughters,
+                             const std::set<int>& pdg_to_exclude)
 {
     if(!particle.daughterRefVector().size()) {
         const int abs_pdg = std::abs(particle.pdgId());
         if(!pdg_to_exclude.count(abs_pdg))
-            daughters.push_back(&particle);
+            daughters.insert(&particle);
     } else {
         for(const auto& daughter : particle.daughterRefVector())
             FindFinalStateDaughters(*daughter, daughters, pdg_to_exclude);
     }
 }
 
-inline LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle, bool excludeInvisible,
-                                              bool excludeLightLeptons)
+LorentzVectorXYZ GetFinalStateMomentum(const GenParticle& particle, std::vector<const GenParticle*>& visible_daughters,
+                                       bool excludeInvisible, bool excludeLightLeptons)
 {
     using set = std::set<int>;
     using pair = std::pair<bool, bool>;
@@ -45,19 +52,23 @@ inline LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle,
         { pair(false, true), &light_leptons }, { pair(true, true), &light_and_invisible },
     };
 
-    std::vector<const reco::GenParticle*> daughters;
-    FindFinalStateDaughters(particle, daughters, *to_exclude.at(pair(excludeInvisible, false)));
+
+
+    std::set<const GenParticle*> daughters_set;
+    FindFinalStateDaughters(particle, daughters_set, *to_exclude.at(pair(excludeInvisible, false)));
+    visible_daughters.clear();
+    visible_daughters.insert(visible_daughters.begin(), daughters_set.begin(), daughters_set.end());
 
     LorentzVectorXYZ p4;
-    for(auto daughter : daughters){
-	if(excludeLightLeptons && light_leptons.count(std::abs(daughter->pdgId())) && daughter->statusFlags().isDirectTauDecayProduct()) continue;
-	p4 += daughter->p4();
+    for(auto daughter : visible_daughters) {
+        if(excludeLightLeptons && light_leptons.count(std::abs(daughter->pdgId()))
+                && daughter->statusFlags().isDirectTauDecayProduct()) continue;
+            p4 += daughter->p4();
     }
     return p4;
 }
 
-template<typename LVector>
-MatchResult LeptonGenMatch(const LVector& p4, const std::vector<reco::GenParticle>& genParticles)
+LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const GenParticleCollection& genParticles)
 {
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
     static constexpr double dR2_threshold = std::pow(0.2, 2);
@@ -67,33 +78,35 @@ MatchResult LeptonGenMatch(const LVector& p4, const std::vector<reco::GenParticl
     };
 
     using pair = std::pair<int, bool>;
-    static const std::map<pair, GenMatch> genMatches = {
-        { { electronPdgId, false }, GenMatch::Electron }, { { electronPdgId, true }, GenMatch::TauElectron },
-        { { muonPdgId, false }, GenMatch::Muon }, { { muonPdgId, true }, GenMatch::TauMuon },
-        { { tauPdgId, false }, GenMatch::Tau }, { { tauPdgId, true }, GenMatch::Tau }
+    static const std::map<pair, GenLeptonMatch> genMatches = {
+        { { electronPdgId, false }, GenLeptonMatch::Electron }, { { electronPdgId, true }, GenLeptonMatch::TauElectron },
+        { { muonPdgId, false }, GenLeptonMatch::Muon }, { { muonPdgId, true }, GenLeptonMatch::TauMuon },
+        { { tauPdgId, false }, GenLeptonMatch::Tau }, { { tauPdgId, true }, GenLeptonMatch::Tau }
     };
 
-    MatchResult result(GenMatch::NoMatch, nullptr);
+    LeptonMatchResult result;
     double match_dr2 = dR2_threshold;
-
-
 
     for(const reco::GenParticle& particle : genParticles) {
         const bool isTauProduct = particle.statusFlags().isDirectPromptTauDecayProduct();
-        if((!particle.statusFlags().isPrompt() && !isTauProduct) || !particle.statusFlags().isLastCopy()) continue;
+        if((!particle.statusFlags().isPrompt() && !isTauProduct) /*|| !particle.statusFlags().isLastCopy()*/) continue;
 
         const int abs_pdg = std::abs(particle.pdgId());
         if(!pt_thresholds.count(abs_pdg)) continue;
 
-        const auto particle_p4 = abs_pdg == tauPdgId ? GetFinalStateMomentum(particle, true, true) : particle.p4();
+        std::vector<const GenParticle*> visible_daughters;
+        const auto particle_p4 = abs_pdg == tauPdgId ? GetFinalStateMomentum(particle, visible_daughters, true, true)
+                                                     : particle.p4();
 
         const double dr2 = ROOT::Math::VectorUtil::DeltaR2(p4, particle_p4);
         if(dr2 >= match_dr2) continue;
         if(particle_p4.pt() <= pt_thresholds.at(abs_pdg)) continue;
 
         match_dr2 = dr2;
-        result.first = genMatches.at(pair(abs_pdg, isTauProduct));
-        result.second = &particle;
+        result.match = genMatches.at(pair(abs_pdg, isTauProduct));
+        result.gen_particle = &particle;
+        result.visible_daughters = visible_daughters;
+        result.visible_daughters_p4 = particle_p4;
     }
     return result;
 }

@@ -538,22 +538,26 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
     }
 }
 
-void BaseTupleProducer::FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4)
+void BaseTupleProducer::FillLegGenMatch(std::string lepton, const analysis::LorentzVectorXYZ& p4)
 {
     using namespace analysis;
     static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
-    auto& gen_match = leg_id == 1 ? eventTuple().gen_match_1 : eventTuple().gen_match_2;
-    auto& gen_p4 = leg_id == 1 ? eventTuple().gen_p4_1 : eventTuple().gen_p4_2;
+    auto& gen_match = lepton == "tau" ? eventTuple().tau_gen_match : eventTuple().lep_gen_match;
+    auto& gen_p4 = lepton == "tau" ? eventTuple().tau_gen_p4 : eventTuple().lep_gen_p4;
+    auto& gen_visible_p4 = lepton == "tau" ? eventTuple().tau_gen_visible_p4 : eventTuple().lep_gen_visible_p4;
 
     if(isMC) {
         const auto match = gen_truth::LeptonGenMatch(p4, *genParticles);
-        gen_match = static_cast<int>(match.first);
-        const auto metched_p4 = match.second ? match.second->p4() : LorentzVectorXYZ();
-        gen_p4 = ntuple::LorentzVectorM(metched_p4);
+        gen_match = static_cast<int>(match.match);
+        const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : LorentzVectorXYZ();
+        gen_p4 = ntuple::LorentzVectorM(matched_p4);
+        const auto matched_visible_p4 = match.visible_daughters_p4;
+        gen_visible_p4 = ntuple::LorentzVectorM(matched_visible_p4);
     } else {
         gen_match = default_int_value;
         gen_p4 = ntuple::LorentzVectorM();
+        gen_visible_p4 = ntuple::LorentzVectorM();
     }
 }
 
@@ -715,9 +719,6 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
 }
 
 
-#define GET_LEG(x) (leg_id == 1 ? eventTuple().x##_1 : eventTuple().x##_2)
-#define RAW_ID(name, n) GET_LEG(tauId_##name) = fill_tauIds && !ignore.count(#name) ? tau->tauID(#name) : default_value;
-
 void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selection)
 {
     for(const ElectronCandidate& electron : selection.electrons){
@@ -727,8 +728,10 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
         eventTuple().lep_dz.push_back(electron->gsfTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(electron.GetIsolation());
         eventTuple().lep_decayMode.push_back(-1);
+        eventTuple().lep_oldDecayModeFinding.push_back(-1);
+        eventTuple().lep_newDecayModeFinding.push_back(-1);
         eventTuple().lep_es_shift_applied.push_back(false);
-        FillLegGenMatch(leg_id, electron->p4()); // to be fixed
+        FillLegGenMatch("lep", electron->p4()); // to be fixed
     }
 
 }
@@ -742,14 +745,38 @@ void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection
         eventTuple().lep_dz.push_back(muon->muonBestTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(muon.GetIsolation());
         eventTuple().lep_decayMode.push_back(-1);
+        eventTuple().lep_oldDecayModeFinding.push_back(-1);
+        eventTuple().lep_newDecayModeFinding.push_back(-1);
         eventTuple().lep_es_shift_applied.push_back(false);
-        FillLegGenMatch(leg_id, muon->p4()); // to be fixed
+        FillLegGenMatch("lep", muon->p4()); // to be fixed
+    }
+}
+
+void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
+{
+    static const float default_value = ntuple::DefaultFillValue<float>();
+    for(const TauCandidate& tau : selection.taus) {
+        eventTuple().tau_p4.push_back(ntuple::LorentzVectorM(tau.GetMomentum()));
+        eventTuple().tau_q.push_back(tau.GetCharge());
+        const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
+        eventTuple().tau_dxy.push_back(packedLeadTauCand->dxy());
+        eventTuple().tau_dz.push_back(packedLeadTauCand->dz());
+        eventTuple().tau_iso.push_back(default_value);
+        eventTuple().tau_decayMode.push_back(tau->decayMode());
+        eventTuple().tau_es_shift_applied.push_back(tau.MomentumChanged());
+        bool oldDM = tau->tauID("decayModeFinding") > 0.5f;
+        eventTuple().tau_oldDecayModeFinding.push_back(oldDM);
+        bool newDM = tau->tauID("decayModeFindingNewDMs") > 0.5f;
+        eventTuple().tau_newDecayModeFinding.push_back(newDM);
+        for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
+            const auto& desc = tau_id_entry.second;
+            desc.FillTuple(eventTuple, *tau, default_value); //or tau->getPtr()
+        }
+        FillLegGenMatch("tau", tau->p4());
     }
 }
 
 
-#undef GET_LEG
-#undef RAW_ID
 
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection,
                                        const analysis::SelectionResultsBase* reference)
@@ -781,23 +808,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
     FillMetFilters(period);
-
-    static const float default_value = ntuple::DefaultFillValue<float>();
-    for(const TauCandidate& tau : selection.taus) {
-        eventTuple().tau_p4.push_back(ntuple::LorentzVectorM(tau.GetMomentum()));
-        eventTuple().tau_q.push_back(tau.GetCharge());
-        const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-        eventTuple().tau_dxy.push_back(packedLeadTauCand->dxy());
-        eventTuple().tau_dz.push_back(packedLeadTauCand->dz());
-        eventTuple().tau_iso.push_back(tau.GetIsolation());
-        eventTuple().tau_decayMode.push_back(tau->decayMode());
-        eventTuple().tau_es_shift_applied.push_back(tau.MomentumChanged());
-        for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
-            const auto& desc = tau_id_entry.second;
-            desc.FillTuple(eventTuple, dynamic_cast<const pat::Tau*>(tau), default_value);
-        }
-        FillLegGenMatch(leg_id, tau->p4()); // to be fixed!!!
-    }
 
     std::set<const pat::Jet*> selected_jets;
     if(!reference || !selection.HaveSameJets(*reference)) {

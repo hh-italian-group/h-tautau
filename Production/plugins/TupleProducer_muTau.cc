@@ -34,7 +34,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     if(applyTriggerMatch){
         triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
                                       cuts::H_tautau_2016::DeltaR_triggerMatch);
-        cut(selection.triggerResults.AnyAcceptAndMatch(), "trigger_match");
+        cut(selection.triggerResults.AnyAcceptAndMatch(), "trigger_match"); //non tagliamo
     }
 
     selection.SetHiggsCandidate(selected_higgs);
@@ -133,6 +133,7 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
     eventTuple().storageMode = storageMode.Mode();
 
     FillMuon(selection);
+    FillTau(selection);
 
     eventTuple.Fill();
 }

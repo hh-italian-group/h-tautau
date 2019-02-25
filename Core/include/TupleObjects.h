@@ -59,118 +59,12 @@ public:
     using ValueKeyPair = std::pair<std::string, IdKey>;
 
 public:
-//     static ValueKeyPair GetNameKeyPair(const std::string& discriminator)
-//     {
-//         static std::map<std::string, IdKey> hashes;
-//         auto iter = hashes.find(discriminator);
-//         if(iter == hashes.end()) {
-//             const IdKey key = analysis::tools::hash(discriminator);
-//             iter = hashes.emplace(discriminator, key).first;
-//         }
-//         return *iter;
-//     }
-//
-//     DiscriminatorResult tauID(const std::string& discriminator) const
-//     {
-//         const IdKey key = GetNameKeyPair(discriminator).second;
-//         return _tauID(key, discriminator);
-//     }
-//
-//     bool tauID(IdKey key, DiscriminatorResult& result) const
-//     {
-//         if(!tauIds.size()) {
-//             const auto& keys = leg_id == 1 ? event->tauId_flags_1 :event->tauId_flags_2;
-//             const auto& values = leg_id == 1 ? event->tauId_flags_1 :event->tauId_flags_2;
-//             if(keys.size() != values.size())
-//                 throw analysis::exception("Invalid tauID data");
-//             for(size_t n = 0; n < keys.size(); ++n)
-//                 tauIds[keys.at(n)] = values.at(n);
-//         }
-//         auto result_iter = tauIds.find(key);
-//         bool has_result = result_iter != tauIds.end();
-//         if(has_result)
-//             result = result_iter->second;
-//         return has_result;
-//     }
-//
-    // DiscriminatorResult againstElectronMVA6(DiscriminatorWP wp) const
-    // {
-    //     std::ostringstream ss_name;
-    //     ss_name << "againstElectron" << wp << "MVA6";
-    //     return tauID(ss_name.str());
-    // }
-    //
-    // DiscriminatorResult againstMuon3(DiscriminatorWP wp) const
-    // {
-    //     std::ostringstream ss_name;
-    //     ss_name << "againstMuon" << wp << "3";
-    //     return tauID(ss_name.str());
-    // }
-//
-//     DiscriminatorResult byIsolationMVAraw(bool use_new_dm = false, bool use_lifetime = true) const
-//     {
-//         using IsoKey = std::tuple<bool, bool>;
-//         static std::map<IsoKey, ValueKeyPair> keys;
-//         auto iso_key = std::make_tuple(use_new_dm, use_lifetime);
-//         auto iter = keys.find(iso_key);
-//         if(iter == keys.end()) {
-//             const std::string discriminator = GetByIsolationName(use_new_dm, use_lifetime, true);
-//             iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
-//         }
-//         return _tauID(iter->second.second, iter->second.first);
-//     }
-//
-//     bool byIsolationMVA(DiscriminatorWP wp, bool use_new_dm = false, bool use_lifetime = true) const
-//     {
-//         using IsoKey = std::tuple<DiscriminatorWP, bool, bool>;
-//         static std::map<IsoKey, ValueKeyPair> keys;
-//         auto iso_key = std::make_tuple(wp, use_new_dm, use_lifetime);
-//         auto iter = keys.find(iso_key);
-//         if(iter == keys.end()) {
-//             const std::string discriminator = GetByIsolationName(use_new_dm, use_lifetime, false, wp);
-//             iter = keys.emplace(iso_key, GetNameKeyPair(discriminator)).first;
-//         }
-//         return _tauID(iter->second.second, iter->second.first) > 0.5;
-//     }
-//
-//     DiscriminatorIdResults iso_wp() const
-//     {
-//         static const std::vector<DiscriminatorWP> available_wp = {
-//             DiscriminatorWP::VLoose, DiscriminatorWP::Loose, DiscriminatorWP::Medium, DiscriminatorWP::Tight,
-//             DiscriminatorWP::VTight, DiscriminatorWP::VVTight
-//         };
-//         DiscriminatorIdResults id_results;
-//         for(auto wp : available_wp)
-//             id_results.SetResult(wp, byIsolationMVA(wp));
-//         return id_results;
-//     }
-//
-// private:
-//     DiscriminatorResult _tauID(IdKey key, const std::string& discriminator) const
-//     {
-//         DiscriminatorResult result;
-//         if(!tauID(key, result))
-//             throw analysis::exception("TauID discriminator '%1%' not found.") % discriminator;
-//         return result;
-//     }
-//
-//     static std::string GetByIsolationName(bool use_new_dm, bool use_lifetime, bool raw,
-//                                           DiscriminatorWP wp = DiscriminatorWP::Medium)
-//     {
-//         const std::string dm_str = use_new_dm ? "new" : "old";
-//         const std::string lt_str = use_lifetime ? "w" : "wo";
-//         std::ostringstream ss_name;
-//         ss_name << "by";
-//         if(!raw)
-//             ss_name << wp;
-//         ss_name << "IsolationMVArun2v1DB" << dm_str << "DM" << lt_str << "LT";
-//         if(raw)
-//             ss_name << "raw";
-//         return ss_name.str();
-//     }
+    bool Passed(disc, wp) const
+    {
 
-private:
-    mutable std::map<IdKey, DiscriminatorResult> tauIds;
+    }
+
+
 };
 
 class TupleJet : public TupleObject {
