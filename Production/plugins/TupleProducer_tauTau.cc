@@ -35,23 +35,23 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     cut(higgses.size(), "tau_tau_pair");
 
     for(size_t n = 0; n < higgses.size(); ++n){
+        auto selected_higgs;
         if (higgses.at(n).GetFirstDaughter().GetMomentum().Pt() < higgses.at(n).GetSecondDaughter().GetMomentum().Pt())
-            auto selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
+            selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
 
         if(applyTriggerMatch){
             triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
                                           cuts::H_tautau_2016::DeltaR_triggerMatch);
         }
+        selection.SetHiggsCandidate(selected_higgs);
+        selection.higgses.push_back(selected_higgs);
+
+        if(runSVfit)
+            selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
     }
 
+    ApplyBaseSelection(selection);
 
-    selection.SetHiggsCandidate(selected_higgs);
-
-
-
-    ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
-    if(runSVfit)
-        selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
     FillEventTuple(selection);
 
     if(eventEnergyScale == analysis::EventEnergyScale::Central)
@@ -75,18 +75,9 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     double eta_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::eta : cuts::H_tautau_2016::TauTau::tauID::eta;
     cut(std::abs(p4.Eta()) < eta_cut, "eta", p4.Eta());
-    //const auto dmFinding = tau->tauID("decayModeFinding");
-    //cut(dmFinding > decayModeFinding, "oldDecayMode", dmFinding);
     const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
-    if(productionMode == ProductionMode::hh) {
-        //cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
-        //cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
-        // if(period == analysis::Period::Run2017) {
-        //     cut(tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5, "VVLooseIso");
-        // }
-    }
 }
 
 void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)

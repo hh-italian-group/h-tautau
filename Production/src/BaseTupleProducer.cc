@@ -601,12 +601,11 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     eventTuple().metFilters = filters.FilterResults();
 }
 
-void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selection,
-                        const std::vector<LorentzVector>& signalLeptonMomentums)
+void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selection)
 {
     using namespace cuts::btag_2016;
 
-    selection.jets = CollectJets(signalLeptonMomentums);
+    selection.jets = CollectJets();
     if(applyRecoilCorr)
         ApplyRecoilCorrection(selection.jets);
 
@@ -628,12 +627,11 @@ std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectVetoMuon
     return CollectObjects("vetoMuons", base_selector, muons);
 }
 
-std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets(
-        const std::vector<LorentzVector>& signalLeptonMomentums)
+std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets()
 {
     using namespace cuts::btag_2016;
     using namespace std::placeholders;
-    const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2, signalLeptonMomentums);
+    const auto baseSelector = std::bind(&BaseTupleProducer::SelectJet, this, _1, _2);
 
     const auto comparitor = [](const JetCandidate& j1, const JetCandidate& j2) {
         const auto deepcsv1 = j1->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll");
@@ -700,8 +698,7 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     }
 }
 
-void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
-                                  const std::vector<LorentzVector>& signalLeptonMomentums) const
+void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut) const
 {
     using namespace cuts::H_tautau_2016::jetID;
 
@@ -710,12 +707,12 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut,
     cut(p4.Pt() > pt - pt_safety, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < cuts::hh_bbtautau_2017::jetID::eta, "eta", p4.Eta());
     cut(PassPFTightId(*jet,period), "jet_id");
-    for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
-        std::ostringstream cut_name;
-        cut_name << "deltaR_lep" << n + 1;
-        const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalLeptonMomentums.at(n));
-        cut(deltaR > deltaR_signalObjects, cut_name.str(), deltaR);
-    }
+    // for(size_t n = 0; n < signalLeptonMomentums.size(); ++n) {
+    //     std::ostringstream cut_name;
+    //     cut_name << "deltaR_lep" << n + 1;
+    //     const double deltaR = ROOT::Math::VectorUtil::DeltaR(p4, signalLeptonMomentums.at(n));
+    //     cut(deltaR > deltaR_signalObjects, cut_name.str(), deltaR);
+    // }
 }
 
 

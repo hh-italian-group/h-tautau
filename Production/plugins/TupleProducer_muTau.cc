@@ -18,9 +18,9 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
     // Signal-like leptons selection
     selection.muons = CollectSignalMuons();
-    //cut(selectedMuons.size(), "muons");
+    cut(selection.muons.size() > 0, "muons");
     selection.taus = CollectSignalTaus();
-    //cut(selectedTaus.size(), "taus");
+    cut(selection.taus.size() > 0, "taus");
 
     const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
@@ -28,26 +28,34 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     auto higgses = FindCompatibleObjects(selectedMuons, selectedTaus, DeltaR_betweenSignalObjects, "H_mu_tau");
     cut(higgses.size(), "mu_tau_pair");
 
-    std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
-    auto selected_higgs = higgses.front();
+    for(size_t n = 0; n < higgses.size(); ++n){
+        auto selected_higgs;
+        if (higgses.at(n).GetFirstDaughter().GetMomentum().Pt() < higgses.at(n).GetSecondDaughter().GetMomentum().Pt())
+            selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
 
-    if(applyTriggerMatch){
-        triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
-                                      cuts::H_tautau_2016::DeltaR_triggerMatch);
-        cut(selection.triggerResults.AnyAcceptAndMatch(), "trigger_match"); //non tagliamo
+        if(applyTriggerMatch){
+            triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
+                                          cuts::H_tautau_2016::DeltaR_triggerMatch);
+        }
+        selection.SetHiggsCandidate(selected_higgs);
+        selection.higgses.push_back(selected_higgs);
+
+        if(runSVfit)
+            selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
+
+        selection.other_muons = CollectVetoMuons({ &selection.higgs->GetFirstDaughter() });
+
     }
-
-    selection.SetHiggsCandidate(selected_higgs);
 
     //Third-Lepton Veto
     selection.other_electrons = CollectVetoElectrons();
-    selection.other_muons = CollectVetoMuons({ &selection.higgs->GetFirstDaughter() });
     selection.electronVeto = selection.other_electrons.size();
+    cut(!selection.electronVeto, "no_extra_ele");
     selection.muonVeto = selection.other_muons.size();
+    cut(!selection.muonVeto, "no_extra_muon");
 
-    ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
-    if(runSVfit)
-        selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
+    ApplyBaseSelection(selection);
+
     FillEventTuple(selection);
 
     if(eventEnergyScale == analysis::EventEnergyScale::Central)

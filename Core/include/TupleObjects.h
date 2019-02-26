@@ -8,6 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTypes.h"
 #include "EventTuple.h"
 #include "DiscriminatorIdResults.h"
+#include "TauIdResults.h"
 
 namespace ntuple {
 
@@ -28,7 +29,7 @@ protected:
 
 class TupleLepton : public TupleObject {
 public:
-    TupleLepton(const ntuple::Event& _event, size_t _leg_id);
+    TupleLepton(const ntuple::Event& _event, size_t _object_id);
     const LorentzVectorM& p4() const;
     Integer charge() const;
     RealNumber dxy() const;
@@ -37,18 +38,18 @@ public:
     Integer gen_match() const;
 
 protected:
-    size_t leg_id;
+    size_t object_id;
 };
 
 class TupleElectron : public TupleLepton {
 public:
-    explicit TupleElectron(const ntuple::Event& _event, size_t _leg_id = 1);
+    explicit TupleElectron(const ntuple::Event& _event, size_t _object_id = 0);
     DiscriminatorIdResults iso_wp() const { return DiscriminatorIdResults(); }
 };
 
 class TupleMuon : public TupleLepton {
 public:
-    explicit TupleMuon(const ntuple::Event& _event, size_t _leg_id = 1);
+    explicit TupleMuon(const ntuple::Event& _event, size_t _object_id = 0);
     DiscriminatorIdResults iso_wp() const { return DiscriminatorIdResults(); }
 };
 
@@ -59,11 +60,19 @@ public:
     using ValueKeyPair = std::pair<std::string, IdKey>;
 
 public:
-    bool Passed(disc, wp) const
+    bool Passed(TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
     {
-
+        const TauIdDescriptor tauIdDescriptor = GetTauIdDescriptors().at(tauIdDiscriminator);
+        const DiscriminatorIdResults discriminator = tauIdDescriptor.GetIdResult(event,object_id);
+        return discriminator.Passed(wp);
     }
 
+    Float_t GetRawValue(TauIdDiscriminator tauIdDiscriminator) const
+    {
+        const TauIdDescriptor tauIdDescriptor = GetTauIdDescriptors().at(tauIdDiscriminator);
+        Float_t raw_value = tauIdDescriptor.GetRawId(event,object_id);
+        return raw_value;
+    }
 
 };
 

@@ -123,8 +123,10 @@ struct SelectionResults : SelectionResultsBase {
     using SecondLeg = _SecondLeg;
     using HiggsCandidate = CompositCandidate<FirstLeg, SecondLeg>;
     using HiggsCandidatePtr = std::shared_ptr<HiggsCandidate>;
+    using HiggsCandidatePtrVector = std::vector<HiggsCandidatePtr>;
 
     HiggsCandidatePtr higgs;
+    HiggsCandidatePtrVector higgses;
 
     using SelectionResultsBase::SelectionResultsBase;
 

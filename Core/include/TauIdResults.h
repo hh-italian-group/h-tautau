@@ -6,6 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <bitset>
 #include "AnalysisTypes.h"
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "DiscriminatorIdResults.h"
 
 namespace analysis {
 
@@ -109,6 +110,20 @@ struct TauIdDescriptor {
             }
             tuple.template get<DiscriminatorIdResults::BitsContainer>(prefix + disc_name).push_back(id_results.GetResultBits());
         }
+    }
+
+    template<typename Tuple>
+    DiscriminatorIdResults GetIdResult(Tuple& tuple, int_t n, const std::string& prefix = "")
+    {
+        const std::string disc_name = ::analysis::ToString(discriminator);
+        return DiscriminatorIdResults(tuple.template get<DiscriminatorIdResults::BitsContainer>(prefix + disc_name).at(n));
+    }
+
+    template<typename Tuple>
+    Float_t GetRawId(Tuple& tuple, int_t n, const std::string& prefix = "", const std::string& raw_suffix = "raw")
+    {
+        const std::string disc_name = ::analysis::ToString(discriminator);
+        return tuple.template get<float>(prefix + disc_name + raw_suffix).at(n);
     }
 };
 

@@ -211,8 +211,7 @@ protected:
     static analysis::TauIdResults CreateTauIdResults(const pat::Tau& tau, analysis::Period period);
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
-    void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
-                            const std::vector<LorentzVector>& signalLeptonMomentums);
+    void ApplyBaseSelection(analysis::SelectionResultsBase& selection);
     void FillEventTuple(const analysis::SelectionResultsBase& selection,
                         const analysis::SelectionResultsBase* reference = nullptr);
     void FillElectron(const analysis::SelectionResultsBase& selection);
@@ -228,14 +227,13 @@ protected:
     std::vector<ElectronCandidate> CollectVetoElectrons(
             const std::vector<const ElectronCandidate*>& signalElectrons = {});
     std::vector<MuonCandidate> CollectVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
-    std::vector<JetCandidate> CollectJets(const std::vector<LorentzVector>& signalLeptonMomentums);
+    std::vector<JetCandidate> CollectJets();
 
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
                             const std::vector<const ElectronCandidate*>& signalElectrons) const;
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
                         const std::vector<const MuonCandidate*>& signalMuons) const;
-    void SelectJet(const JetCandidate& jet, Cutter& cut,
-                   const std::vector<LorentzVector>& signalLeptonMomentums) const;
+    void SelectJet(const JetCandidate& jet, Cutter& cut) const;
 
     template<typename Candidate1, typename Candidate2,
              typename ResultCandidate = analysis::CompositCandidate<Candidate1, Candidate2>>
