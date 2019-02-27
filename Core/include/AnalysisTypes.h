@@ -128,14 +128,14 @@ ENUM_NAMES(Period) = {
     { Period::Run2018, "Run2018" },
 };
 
-enum class GenMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };
-ENUM_NAMES(GenMatch) = {
-    { GenMatch::Electron, "gen_electron" },
-    { GenMatch::Muon, "gen_muon" },
-    { GenMatch::TauElectron, "gen_electron_from_tau" },
-    { GenMatch::TauMuon, "gen_muon_from_tau" },
-    { GenMatch::Tau, "gen_tau" },
-    { GenMatch::NoMatch, "no_gen_match" }
+enum class GenLeptonMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };
+ENUM_NAMES(GenLeptonMatch) = {
+    { GenLeptonMatch::Electron, "gen_electron" },
+    { GenLeptonMatch::Muon, "gen_muon" },
+    { GenLeptonMatch::TauElectron, "gen_electron_from_tau" },
+    { GenLeptonMatch::TauMuon, "gen_muon_from_tau" },
+    { GenLeptonMatch::Tau, "gen_tau" },
+    { GenLeptonMatch::NoMatch, "no_gen_match" }
 };
 
 enum class GenEventType { Other = 0, TTbar_Hadronic = 1, TTbar_SemiLeptonic = 2, TTbar_Leptonic = 3 };

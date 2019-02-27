@@ -2,6 +2,7 @@
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "h-tautau/Analysis/include/EventLoader.h"
+#include "h-tautau/Core/include/TauIdResults.h"
 
 namespace ntuple {
 
@@ -22,13 +23,13 @@ StorageMode EventLoader::Load(Event& event, const Event* ref)
     if(!ref_mode.IsFull())
         throw analysis::exception("Incomplete reference event. Ref event storage mode = %1%") % ref_mode.Mode();
 
-    if(mode.IsMissing(EventPart::FirstTauIds)) {
-        TAU_IDS()
-    }
-
-    if(mode.IsMissing(EventPart::SecondTauIds)) {
-        TAU_IDS()
-    }
+    // if(mode.IsMissing(EventPart::FirstTauIds)) {
+    //     TAU_IDS()
+    // }
+    //
+    // if(mode.IsMissing(EventPart::SecondTauIds)) {
+    //     TAU_IDS()
+    // }
 
     if(mode.IsMissing(EventPart::Jets)) {
         CP_BR(jets_p4);

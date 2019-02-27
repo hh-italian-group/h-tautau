@@ -36,6 +36,7 @@ public:
     RealNumber dz() const;
     RealNumber iso() const;
     Integer gen_match() const;
+    Integer decayMode() const;
 
 protected:
     size_t object_id;
@@ -60,19 +61,9 @@ public:
     using ValueKeyPair = std::pair<std::string, IdKey>;
 
 public:
-    bool Passed(TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
-    {
-        const TauIdDescriptor tauIdDescriptor = GetTauIdDescriptors().at(tauIdDiscriminator);
-        const DiscriminatorIdResults discriminator = tauIdDescriptor.GetIdResult(event,object_id);
-        return discriminator.Passed(wp);
-    }
-
-    Float_t GetRawValue(TauIdDiscriminator tauIdDiscriminator) const
-    {
-        const TauIdDescriptor tauIdDescriptor = GetTauIdDescriptors().at(tauIdDiscriminator);
-        Float_t raw_value = tauIdDescriptor.GetRawId(event,object_id);
-        return raw_value;
-    }
+    explicit TupleTau(const ntuple::Event& _event, size_t _object_id = 0);
+    bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
+    Float_t GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
 };
 

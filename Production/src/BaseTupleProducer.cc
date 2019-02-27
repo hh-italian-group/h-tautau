@@ -291,26 +291,6 @@ const double BaseTupleProducer::Isolation(const pat::Tau& tau)
     return tau.tauID(desc.ToStringRaw());
 }
 
-analysis::TauIdResults BaseTupleProducer::CreateTauIdResults(const pat::Tau& tau, analysis::Period period)
-{
-    using analysis::Period;
-    using analysis::TauIdDiscriminator;
-    using analysis::TauIdResults;
-    static const std::map<Period, std::set<TauIdDiscriminator>> ignore_list {
-        { Period::Run2016, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
-                             TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMdR0p3wLT2017 } },
-        { Period::Run2017, {} }
-    };
-    analysis::TauIdResults results;
-    const auto& descs = analysis::TauIdResults::GetResultDescriptors();
-    const auto& ignore = ignore_list.at(period);
-    for(size_t n = 0; n < descs.size(); ++n) {
-        if(!ignore.count(descs.at(n).discriminator))
-            results.SetResult(n, tau.tauID(descs.at(n).ToString()) > .5f);
-    }
-    return results;
-}
-
 //https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017#Preliminary_Recommendations_for
 //recommended for 2017
 bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period period)
@@ -538,26 +518,24 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
     }
 }
 
-void BaseTupleProducer::FillLegGenMatch(std::string lepton, const analysis::LorentzVectorXYZ& p4)
+void BaseTupleProducer::FillLegGenMatch(const analysis::LorentzVectorXYZ& p4)
 {
     using namespace analysis;
     static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
-    auto& gen_match = lepton == "tau" ? eventTuple().tau_gen_match : eventTuple().lep_gen_match;
-    auto& gen_p4 = lepton == "tau" ? eventTuple().tau_gen_p4 : eventTuple().lep_gen_p4;
-    auto& gen_visible_p4 = lepton == "tau" ? eventTuple().tau_gen_visible_p4 : eventTuple().lep_gen_visible_p4;
+    auto& gen_visible_p4 = lepton == "tau" ? eventTuple().tau_gen_visible_p4 : ;
 
     if(isMC) {
         const auto match = gen_truth::LeptonGenMatch(p4, *genParticles);
-        gen_match = static_cast<int>(match.match);
+        eventTuple().lep_gen_match.push_back(static_cast<int>(match.match));
         const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : LorentzVectorXYZ();
-        gen_p4 = ntuple::LorentzVectorM(matched_p4);
+        eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
         const auto matched_visible_p4 = match.visible_daughters_p4;
-        gen_visible_p4 = ntuple::LorentzVectorM(matched_visible_p4);
+        eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM(matched_visible_p4));
     } else {
-        gen_match = default_int_value;
-        gen_p4 = ntuple::LorentzVectorM();
-        gen_visible_p4 = ntuple::LorentzVectorM();
+        eventTuple().lep_gen_match.push_back(default_int_value);
+        eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM());
+        eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM());
     }
 }
 
@@ -688,7 +666,8 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
 
     bool passMuonId =  muon->isMediumMuon();
-    if( productionMode == ProductionMode::hh) passMuonId = muon->isLooseMuon();
+    if( productionMode == ProductionMode::hh || productionMode == ProductionMode::tau_pog)
+        passMuonId = muon->isLooseMuon();
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;
@@ -721,6 +700,7 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
     for(const ElectronCandidate& electron : selection.electrons){
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
         eventTuple().lep_q.push_back(electron.GetCharge());
+        eventTuple().lep_type.push_back(static_cast<Int_t>(LegType::e));
         eventTuple().lep_dxy.push_back(electron->gsfTrack()->dxy(primaryVertex->position()));
         eventTuple().lep_dz.push_back(electron->gsfTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(electron.GetIsolation());
@@ -738,6 +718,7 @@ void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection
     for(const MuonCandidate& muon : selection.muons){
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
         eventTuple().lep_q.push_back(muon.GetCharge());
+        eventTuple().lep_type.push_back(static_cast<Int_t>(LegType::mu));
         eventTuple().lep_dxy.push_back(muon->muonBestTrack()->dxy(primaryVertex->position()));
         eventTuple().lep_dz.push_back(muon->muonBestTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(muon.GetIsolation());
@@ -753,18 +734,19 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
 {
     static const float default_value = ntuple::DefaultFillValue<float>();
     for(const TauCandidate& tau : selection.taus) {
-        eventTuple().tau_p4.push_back(ntuple::LorentzVectorM(tau.GetMomentum()));
-        eventTuple().tau_q.push_back(tau.GetCharge());
+        eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(tau.GetMomentum()));
+        eventTuple().lep_q.push_back(tau.GetCharge());
+        eventTuple().lep_type.push_back(static_cast<Int_t>(LegType::tau));
         const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-        eventTuple().tau_dxy.push_back(packedLeadTauCand->dxy());
-        eventTuple().tau_dz.push_back(packedLeadTauCand->dz());
-        eventTuple().tau_iso.push_back(default_value);
-        eventTuple().tau_decayMode.push_back(tau->decayMode());
-        eventTuple().tau_es_shift_applied.push_back(tau.MomentumChanged());
+        eventTuple().lep_dxy.push_back(packedLeadTauCand->dxy());
+        eventTuple().lep_dz.push_back(packedLeadTauCand->dz());
+        eventTuple().lep_iso.push_back(default_value);
+        eventTuple().lep_decayMode.push_back(tau->decayMode());
+        eventTuple().lep_es_shift_applied.push_back(tau.MomentumChanged());
         bool oldDM = tau->tauID("decayModeFinding") > 0.5f;
-        eventTuple().tau_oldDecayModeFinding.push_back(oldDM);
+        eventTuple().lep_oldDecayModeFinding.push_back(oldDM);
         bool newDM = tau->tauID("decayModeFindingNewDMs") > 0.5f;
-        eventTuple().tau_newDecayModeFinding.push_back(newDM);
+        eventTuple().lep_newDecayModeFinding.push_back(newDM);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
             desc.FillTuple(eventTuple, *tau, default_value); //or tau->getPtr()

@@ -11,14 +11,14 @@ namespace mc_corrections {
 
 class TopPtWeight : public IWeightProvider {
 public:
-    using Event = ntuple::Event;
     using ExpressEvent = ntuple::ExpressEvent;
 
     TopPtWeight(double p1, double p2) : _p1(p1), _p2(p2) {}
 
-    virtual double Get(const Event& event) const override
+    virtual double Get(EventInfoBase& eventInfo) const override
 	{
 		double topWeight = 1.;
+        const auto& event = *eventInfo;
 		for (size_t n = 0; n < event.genParticles_pdg.size(); ++n)
 		{
 			if (std::abs(event.genParticles_pdg.at(n)) != 6) continue;
@@ -39,7 +39,7 @@ public:
 		*/
 		return 1;
     }
-	
+
 private:
     double _p1, _p2;
 };

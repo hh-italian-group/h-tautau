@@ -6,6 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "DiscriminatorIdResults.h"
+#include "TauIdResults.h"
 
 namespace ntuple {
 using LorentzVectorE = analysis::LorentzVectorE_Float;
@@ -22,16 +23,17 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 #define LEG_DATA(col) \
     LVAR(LorentzVectorM, p4, col) /* 4-momentum */ \
     LVAR(Int_t, q, col) /* Charge */ \
+    LVAR(Int_t, type, col) /* lepton type: e, mu or tau */ \
     LVAR(Float_t, dxy, col) /* dxy with respect to primary vertex */ \
     LVAR(Float_t, dz, col) /* dz with respect to primary vertex */ \
-    LVAR(Float_t, iso, collect_objects) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Float_t, iso, col) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     LVAR(Bool_t, es_shift_applied, col) /* ES shift is applied to the central value */\
     LVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/\
     LVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
     LVAR(LorentzVectorM, gen_visible_p4, col) /* 4-momentum of the matched gen particle */ \
     LVAR(Int_t, decayMode, col) /* tau decay mode */ \
-    LVAR(Int_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
-    LVAR(Int_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
+    LVAR(Int_t, oldDecayModeFinding, col) /* tau passed the old decay mode finding requirements */ \
+    LVAR(Int_t, newDecayModeFinding, col) /* tau passed the new decay mode finding requirements */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
@@ -127,8 +129,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
     VAR(Float_t, SVfit_mt_error) /* SVfit using integration method */ \
     /* Signal leptons */ \
-    LEG_DATA(lep) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
-    LEG_DATA(tau) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \
+    LEG_DATA(lep) /* muon, electron or tau */ \
     TAU_IDS() /* raw values of tau ID discriminators */ \
     /* Met related variables */ \
     MET_DATA(pfMET) \

@@ -100,13 +100,14 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
-enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm };
+enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm,tau_pog };
 
 ENUM_NAMES(ProductionMode) = {
     { ProductionMode::hh, "hh" },
     { ProductionMode::h_tt, "h_tt" },
     { ProductionMode::h_tt_mssm, "h_tt_mssm" },
     { ProductionMode::h_tt_sm, "h_tt_sm" },
+    { ProductionMode::tau_pog, "tau_pog" },
 };
 
 class BaseTupleProducer : public edm::EDAnalyzer {
@@ -208,7 +209,6 @@ public:
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
-    static analysis::TauIdResults CreateTauIdResults(const pat::Tau& tau, analysis::Period period);
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection);
@@ -216,10 +216,11 @@ protected:
                         const analysis::SelectionResultsBase* reference = nullptr);
     void FillElectron(const analysis::SelectionResultsBase& selection);
     void FillMuon(const analysis::SelectionResultsBase& selection);
+    void FillTau(const analysis::SelectionResultsBase& selection);
     void FillLheInfo(bool haveReference);
     void FillGenParticleInfo();
     void FillGenJetInfo();
-    void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
+    void FillLegGenMatch(const analysis::LorentzVectorXYZ& p4);
     void FillMetFilters(analysis::Period period);
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
     void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
@@ -308,6 +309,16 @@ protected:
             GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
 
         return selected;
+    }
+
+    template<typename LeptonCandidate>
+    static bool LeptonComparitor(const LeptonCandidate& l1, const LeptonCandidate& l2)
+    {
+        if(l1 != l2) {
+            if(l1.GetIsolation() != l2.GetIsolation()) return l1.IsMoreIsolated(l2);
+            return false;
+        }
+        return false;
     }
 
     template<typename HiggsCandidate>

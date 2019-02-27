@@ -17,19 +17,31 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     }
 
     // Signal-like leptons selection
-    selection.electrons = CollectSignalElectrons();
-    cut(selection.electrons.size() > 0, "electrons");
+    auto electrons = CollectSignalElectrons();
+    cut(electrons.size(), "electrons");
+
+    std::sort(electrons.begin(),electrons.end(),&LeptonComparitor<ElectronCandidate>);
+    selection.electrons.push_back(electrons.at(0));
+    selection.other_electrons = CollectVetoElectrons({&electrons.at(0)});
+    selection.electronVeto = selection.other_electrons.size();
+    cut(!selection.electronVeto, "no_extra_electron");
+
+    selection.other_muons = CollectVetoMuons();
+    selection.muonVeto = selection.other_muons.size();
+    cut(!selection.muonVeto, "no_extra_muon");
+
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 0, "taus");
 
-    const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
+    const double DeltaR_betweenSignalObjects = (productionMode == ProductionMode::hh ||
+                productionMode == ProductionMode::tau_pog)
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
             : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
-    auto higgses = FindCompatibleObjects(selectedElectrons, selectedTaus, DeltaR_betweenSignalObjects, "H_e_tau");
+    auto higgses = FindCompatibleObjects(selection.electrons, selection.taus, DeltaR_betweenSignalObjects, "H_e_tau");
     cut(higgses.size(), "ele_tau_pair");
 
     for(size_t n = 0; n < higgses.size(); ++n){
-        auto selected_higgs;
+        HiggsCandidate selected_higgs = higgses.at(n);
         if (higgses.at(n).GetFirstDaughter().GetMomentum().Pt() < higgses.at(n).GetSecondDaughter().GetMomentum().Pt())
             selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
 
@@ -43,17 +55,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
         if(runSVfit)
             selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
 
-        selection.other_electrons = CollectVetoElectrons({ &selection.higgs->GetFirstDaughter() });
-
     }
-
-    //Third-Lepton Veto
-
-    selection.other_muons = CollectVetoMuons();
-    selection.electronVeto = selection.other_electrons.size();
-    cut(!selection.electronVeto, "no_extra_ele");
-    selection.muonVeto = selection.other_muons.size();
-    cut(!selection.muonVeto, "no_extra_muon");
 
     ApplyBaseSelection(selection);
 
@@ -83,7 +85,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
     double pt_cut = pt;
-    if( productionMode == ProductionMode::hh) {
+    if( productionMode == ProductionMode::hh || productionMode == ProductionMode::tau_pog) {
         pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::ETau::electronID::pt : cuts::hh_bbtautau_2016::ETau::electronID::pt;
     }
     else if(productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::electronID::pt;
@@ -114,8 +116,10 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::tauID::pt;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
-    const auto dmFinding = tau->tauID("decayModeFinding");
-    cut(dmFinding > decayModeFinding, "decayMode", dmFinding);
+    if(productionMode == ProductionMode::hh) {
+        const auto dmFinding = tau->tauID("decayModeFinding");
+        cut(dmFinding > decayModeFinding, "decayMode", dmFinding);
+    }
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
@@ -142,8 +146,8 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
     storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds);
     eventTuple().storageMode = storageMode.Mode();
 
-    FillElectron(selection);
-    FillTau(selection);
+    BaseTupleProducer::FillElectron(selection);
+    BaseTupleProducer::FillTau(selection);
 
     eventTuple.Fill();
 }

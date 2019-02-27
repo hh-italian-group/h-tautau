@@ -63,35 +63,10 @@ struct TauIdDescriptor {
     std::map<DiscriminatorWP, std::string> working_points;
 
     TauIdDescriptor(TauIdDiscriminator _discriminator, const std::string& _name_pattern, bool _has_raw,
-                    const std::string& wp_list) :
-        discriminator(_discriminator), name_pattern(_name_pattern), has_raw(_has_raw)
-    {
-        if(has_raw)
-            raw_name = ToStringRaw();
-        auto wp_names = SplitValueList(wp_list, false, ", \t", true);
-        for(const auto& wp_name : wp_names) {
-            const DiscriminatorWP wp = ::analysis::Parse<DiscriminatorWP>(wp_name);
-            working_points[wp] = ToString(wp);
-        }
-    }
+                    const std::string& wp_list);
 
-    std::string ToString(DiscriminatorWP wp) const
-    {
-        std::string name = name_pattern;
-        boost::algorithm::replace_all(name, "{wp}", analysis::ToString(wp));
-        boost::algorithm::replace_all(name, "{raw}", "");
-        boost::algorithm::replace_all(name, "{Raw}", "");
-        return name;
-    }
-
-    std::string ToStringRaw() const
-    {
-        std::string name = name_pattern;
-        boost::algorithm::replace_all(name, "{wp}", "");
-        boost::algorithm::replace_all(name, "{raw}", "raw");
-        boost::algorithm::replace_all(name, "{Raw}", "Raw");
-        return name;
-    }
+    std::string ToString(DiscriminatorWP wp) const;
+    std::string ToStringRaw() const;
 
     template<typename Tuple, typename Tau>
     void FillTuple(Tuple& tuple, const Tau* tau, float default_value, const std::string& prefix = "",
@@ -113,17 +88,17 @@ struct TauIdDescriptor {
     }
 
     template<typename Tuple>
-    DiscriminatorIdResults GetIdResult(Tuple& tuple, int_t n, const std::string& prefix = "")
+    DiscriminatorIdResults GetIdResult(Tuple& tuple, size_t n, const std::string& prefix = "") const
     {
         const std::string disc_name = ::analysis::ToString(discriminator);
-        return DiscriminatorIdResults(tuple.template get<DiscriminatorIdResults::BitsContainer>(prefix + disc_name).at(n));
+        return DiscriminatorIdResults(tuple.template get<DiscriminatorIdResults::BitsContainer>(prefix + disc_name)->at(n));
     }
 
     template<typename Tuple>
-    Float_t GetRawId(Tuple& tuple, int_t n, const std::string& prefix = "", const std::string& raw_suffix = "raw")
+    float_t GetRawId(Tuple& tuple, size_t n, const std::string& prefix = "", const std::string& raw_suffix = "raw") const
     {
         const std::string disc_name = ::analysis::ToString(discriminator);
-        return tuple.template get<float>(prefix + disc_name + raw_suffix).at(n);
+        return tuple.template get<float>(prefix + disc_name + raw_suffix)->at(n);
     }
 };
 

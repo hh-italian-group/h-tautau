@@ -24,7 +24,7 @@ struct JetInfo {
     double eff, SF;
     bool bTagOutcome;
 
-    JetInfo(const ntuple::Event& event, size_t jetIndex);
+    JetInfo(EventInfoBase& eventInfo, size_t jetIndex);
 };
 
 struct BTagReaderInfo {
@@ -63,9 +63,9 @@ public:
     BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName,Period period,
                JetOrdering ordering, DiscriminatorWP wp);
 
-    virtual double Get(const ntuple::Event& event) const override;
+    virtual double Get(EventInfoBase& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
-    double GetEx(const ntuple::Event& event, UncertaintyScale unc) const;
+    double GetEx(EventInfoBase& eventInfo, UncertaintyScale unc) const;
 
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);

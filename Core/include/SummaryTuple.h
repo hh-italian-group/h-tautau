@@ -12,8 +12,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(ULong64_t, numberOfProcessedEvents) \
     VAR(Double_t, totalShapeWeight) \
     VAR(Double_t, totalShapeWeight_withTopPt) \
-    /* Tau ID information */ \
-    VAR(std::vector<std::string>, tauId_names) \
     /* Trigger information */ \
     VAR(std::vector<Int_t>, triggers_channel) \
     VAR(std::vector<std::string>, triggers_pattern) \

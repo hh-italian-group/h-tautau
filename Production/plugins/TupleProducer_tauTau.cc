@@ -28,14 +28,15 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 1, "taus");
 
-    const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
+    const double DeltaR_betweenSignalObjects = (productionMode == ProductionMode::hh ||
+        productionMode == ProductionMode::tau_pog)
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
             : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
-    auto higgses = FindCompatibleObjects(selectedTaus, selectedTaus, DeltaR_betweenSignalObjects, "H_tau_tau");
+    auto higgses = FindCompatibleObjects(selection.taus, selection.taus, DeltaR_betweenSignalObjects, "H_tau_tau");
     cut(higgses.size(), "tau_tau_pair");
 
     for(size_t n = 0; n < higgses.size(); ++n){
-        auto selected_higgs;
+        HiggsCandidate selected_higgs = higgses.at(n);
         if (higgses.at(n).GetFirstDaughter().GetMomentum().Pt() < higgses.at(n).GetSecondDaughter().GetMomentum().Pt())
             selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
 
@@ -75,9 +76,20 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     double eta_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::eta : cuts::H_tautau_2016::TauTau::tauID::eta;
     cut(std::abs(p4.Eta()) < eta_cut, "eta", p4.Eta());
+    if(productionMode == ProductionMode::hh){
+        const auto dmFinding = tau->tauID("decayModeFinding");
+        cut(dmFinding > decayModeFinding, "oldDecayMode", dmFinding);
+    }
     const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
+    if(productionMode == ProductionMode::hh) {
+        cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
+        cut(tau->tauID("againstMuonLoose3") > againstMuonLoose3, "againstMuon");
+        if(period == analysis::Period::Run2017) {
+            cut(tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5, "VVLooseIso");
+        }
+    }
 }
 
 void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
@@ -89,13 +101,9 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResults& selection)
     eventTuple().channelId = static_cast<int>(Channel::TauTau);
 
     ntuple::StorageMode storageMode(eventTuple().storageMode);
-    const bool store_tauIds_1 = !previous_selection || !selection.HaveSameFirstLegOrigin(*previous_selection);
-    const bool store_tauIds_2 = !previous_selection || !selection.HaveSameSecondLegOrigin(*previous_selection);
-    storageMode.SetPresence(EventPart::FirstTauIds, store_tauIds_1);
-    storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds_2);
     eventTuple().storageMode = storageMode.Mode();
 
-    FillTau(selection);
+    BaseTupleProducer::FillTau(selection);
 
     eventTuple.Fill();
 }

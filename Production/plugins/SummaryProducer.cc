@@ -128,9 +128,6 @@ private:
 
     virtual void endJob() override
     {
-        for(const auto& desc : analysis::TauIdResults::GetResultDescriptors()) {
-            (*summaryTuple)().tauId_names.push_back(desc.ToString());
-        }
         for(const auto& count_entry : genEventCountMap) {
             (*summaryTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
             (*summaryTuple)().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);

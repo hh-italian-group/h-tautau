@@ -93,18 +93,6 @@ void CheckProdSummaryConsistency(const ProdSummary& s)
 
 bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os)
 {
-    if(s1.tauId_names.size() != s2.tauId_names.size()) {
-        if(os) *os << "Number of tau id are not compatible: " << s1.tauId_names.size() << "!="
-                   << s2.tauId_names.size() << "." << std::endl;
-        return false;
-    }
-    for(size_t n = 0; n < s1.tauId_names.size(); ++n) {
-        if(s1.tauId_names.at(n) != s2.tauId_names.at(n)) {
-            if(os) *os << "Tau id is not compatible: '" << s1.tauId_names.at(n) << "' != '"
-                       << s2.tauId_names.at(n) << "'." << std::endl;
-            return false;
-        }
-    }
     if(s1.triggers_channel.size() != s2.triggers_channel.size())
         return false;
     for(size_t n = 0; n < s1.triggers_channel.size(); ++n) {

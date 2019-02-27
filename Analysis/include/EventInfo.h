@@ -170,6 +170,7 @@ public:
     std::set<size_t> GetSelectedBjetIndicesSet() const;
 
     EventInfoBase(const Event& _event, Period _period, JetOrdering _jet_ordering,
+                  size_t _first_lepton_index, size_t _second_lepton_index,
                   const SummaryInfo* _summaryInfo = nullptr);
 
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
@@ -211,6 +212,7 @@ public:
     const JetCandidate& GetBJet(const size_t index);
     const HiggsBBCandidate& GetHiggsBB();
     const MET& GetMET();
+    const size_t GetLegIndex(const size_t leg_id);
 
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
@@ -257,6 +259,8 @@ private:
     SelectedSignalJets selected_signal_jets;
     Period period;
     JetOrdering jet_ordering;
+    size_t first_lepton_index;
+    size_t second_lepton_index;
 
     std::shared_ptr<std::list<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<JetCollection> jets;
@@ -283,8 +287,10 @@ public:
     static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
 
     EventInfo(const Event& _event, Period _period, JetOrdering _jet_ordering,
+              size_t _first_lepton_index, size_t _second_lepton_index,
               const SummaryInfo* _summaryInfo = nullptr) :
-        EventInfoBase(_event, _period, _jet_ordering, _summaryInfo)
+        EventInfoBase(_event, _period, _jet_ordering, _first_lepton_index,
+            _second_lepton_index, _summaryInfo)
     {
         if(summaryInfo)
             triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
@@ -296,7 +302,7 @@ public:
     {
         Lock lock(*mutex);
         if(!leg1) {
-            tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, 1));
+            tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, GetLegIndex(1)));
             leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1, tuple_leg1->iso()));
         }
         return *leg1;
@@ -306,7 +312,7 @@ public:
     {
         Lock lock(*mutex);
         if(!leg2) {
-            tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, 2));
+            tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, GetLegIndex(2)));
             leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2, tuple_leg2->iso()));
         }
         return *leg2;

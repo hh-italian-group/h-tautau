@@ -19,12 +19,12 @@ namespace gen_truth {
 
 struct LeptonMatchResult {
     GenLeptonMatch match{GenLeptonMatch::NoMatch};
-    const GenParticle* gen_particle{nullptr};
-    std::vector<const GenParticle*> visible_daughters;
+    const reco::GenParticle* gen_particle{nullptr};
+    std::vector<const reco::GenParticle*> visible_daughters;
     LorentzVectorXYZ visible_daughters_p4;
 };
 
-void FindFinalStateDaughters(const GenParticle& particle, std::set<const GenParticle*>& daughters,
+void FindFinalStateDaughters(const reco::GenParticle& particle, std::set<const reco::GenParticle*>& daughters,
                              const std::set<int>& pdg_to_exclude)
 {
     if(!particle.daughterRefVector().size()) {
@@ -37,7 +37,7 @@ void FindFinalStateDaughters(const GenParticle& particle, std::set<const GenPart
     }
 }
 
-LorentzVectorXYZ GetFinalStateMomentum(const GenParticle& particle, std::vector<const GenParticle*>& visible_daughters,
+LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle, std::vector<const reco::GenParticle*>& visible_daughters,
                                        bool excludeInvisible, bool excludeLightLeptons)
 {
     using set = std::set<int>;
@@ -54,7 +54,7 @@ LorentzVectorXYZ GetFinalStateMomentum(const GenParticle& particle, std::vector<
 
 
 
-    std::set<const GenParticle*> daughters_set;
+    std::set<const reco::GenParticle*> daughters_set;
     FindFinalStateDaughters(particle, daughters_set, *to_exclude.at(pair(excludeInvisible, false)));
     visible_daughters.clear();
     visible_daughters.insert(visible_daughters.begin(), daughters_set.begin(), daughters_set.end());
@@ -68,7 +68,7 @@ LorentzVectorXYZ GetFinalStateMomentum(const GenParticle& particle, std::vector<
     return p4;
 }
 
-LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const GenParticleCollection& genParticles)
+LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenParticleCollection& genParticles)
 {
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
     static constexpr double dR2_threshold = std::pow(0.2, 2);
@@ -94,7 +94,7 @@ LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const GenParticleColl
         const int abs_pdg = std::abs(particle.pdgId());
         if(!pt_thresholds.count(abs_pdg)) continue;
 
-        std::vector<const GenParticle*> visible_daughters;
+        std::vector<const reco::GenParticle*> visible_daughters;
         const auto particle_p4 = abs_pdg == tauPdgId ? GetFinalStateMomentum(particle, visible_daughters, true, true)
                                                      : particle.p4();
 

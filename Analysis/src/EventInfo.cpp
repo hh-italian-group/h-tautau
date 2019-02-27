@@ -147,10 +147,12 @@ std::set<size_t> EventInfoBase::GetSelectedBjetIndicesSet() const
 }
 
 EventInfoBase::EventInfoBase(const Event& _event, Period _period, JetOrdering _jet_ordering,
+                size_t _first_lepton_index, size_t _second_lepton_index,
               const SummaryInfo* _summaryInfo) :
     event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
     selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)), period(_period),
-    jet_ordering(_jet_ordering)
+    jet_ordering(_jet_ordering), first_lepton_index(_first_lepton_index),
+    second_lepton_index(_second_lepton_index)
 {
     mutex = std::make_shared<Mutex>();
     triggerResults.SetAcceptBits(event->trigger_accepts);
@@ -310,6 +312,13 @@ const MET& EventInfoBase::GetMET()
     return *met;
 }
 
+const size_t EventInfoBase::GetLegIndex(const size_t leg_id)
+{
+    if(leg_id == 1) return first_lepton_index;
+    if(leg_id == 2) return second_lepton_index;
+    throw exception("Invalid leg id = %1%.") % leg_id;
+}
+
 const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
 {
     Lock lock(*mutex);
@@ -357,8 +366,9 @@ double EventInfoBase::GetMT2()
 {
     Lock lock(*mutex);
     if(!mt2.is_initialized()) {
-        mt2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
-                                           GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
+        mt2 = Calculate_MT2(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
+                            GetHiggsBB().GetFirstDaughter().GetMomentum(),
+                            GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
     }
     return *mt2;
 }
@@ -401,20 +411,22 @@ double EventInfoBase::GetMvaScore() const { return mva_score; }
 
 std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
                                              Period period, JetOrdering jet_ordering,
+                                             size_t first_lepton_index,
+                                             size_t second_lepton_index,
                                              const SummaryInfo* summaryInfo)
 {
     if(channel == Channel::ETau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
+                event, period, jet_ordering, first_lepton_index, second_lepton_index, summaryInfo));
     if(channel == Channel::MuTau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
+                event, period, jet_ordering, first_lepton_index, second_lepton_index, summaryInfo));
     if(channel == Channel::TauTau)
         return std::shared_ptr<EventInfoBase>(new EventInfo<TauCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
+                event, period, jet_ordering, first_lepton_index, second_lepton_index, summaryInfo));
     if(channel == Channel::MuMu)
         return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, MuonCandidate>(
-                event, period, jet_ordering, summaryInfo));
+                event, period, jet_ordering, first_lepton_index, second_lepton_index, summaryInfo));
     throw exception("Unsupported channel %1%.") % channel;
 }
 
