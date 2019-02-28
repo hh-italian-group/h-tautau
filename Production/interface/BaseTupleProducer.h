@@ -241,16 +241,23 @@ protected:
     std::vector<ResultCandidate> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
                                                        const std::vector<Candidate2>& objects2,
                                                        double minDeltaR, const std::string& hist_name,
+                                                       std::vector<std::pair<size_t,size_t>> higgses_indexes,
                                                        int expectedCharge = analysis::AnalysisObject::UnknownCharge)
     {
         const double minDeltaR2 = std::pow(minDeltaR, 2);
         std::vector<ResultCandidate> result;
-        for(const auto& object1 : objects1) {
-            for(const auto& object2 : objects2) {
+        for(size_t n = 0; n < objects1.size(); ++n) {
+            for(size_t m = 0; m < objects2.size(); ++m) {
+                const auto& object1 = objects1.at(n);
+                const auto& object2 = objects2.at(m);
                 if(ROOT::Math::VectorUtil::DeltaR2(object1.GetMomentum(), object2.GetMomentum()) > minDeltaR2) {
                     const ResultCandidate candidate(object1, object2);
                     if (expectedCharge !=analysis::AnalysisObject::UnknownCharge
                             && candidate.GetCharge() != expectedCharge) continue;
+                    std::pair<size_t,size_t> daughter_index;
+                    daughter_index.first = n;
+                    daughter_index.second = m;
+                    higgses_indexes.push_back(daughter_index);
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.GetMomentum().M(), 1);
                 }

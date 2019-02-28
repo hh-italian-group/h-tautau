@@ -121,7 +121,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     /* Trigger results */ \
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
-    VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \
+    VAR(std::vector<ULong64_t>, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
     VAR(Bool_t, SVfit_is_valid) /* SVfit using integration method */ \
     VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
@@ -163,10 +163,11 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
-    VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     OTHER_LEPTON_DATA(other_lepton) \
+    /* Higgs info */ \
+    VAR(std::vector<std::pair<size_t,size_t>>, higgses_pair_indexes) /* Vector of pair of daughters of Higgses */ \
     /* Skimmer Variables */\
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \

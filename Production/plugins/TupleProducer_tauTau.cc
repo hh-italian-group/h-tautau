@@ -12,8 +12,9 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     cut(primaryVertex.isNonnull(), "vertex");
 
     if(applyTriggerMatch) {
-        triggerTools.SetTriggerAcceptBits(selection.triggerResults);
-        cut(selection.triggerResults.AnyAccpet(), "trigger");
+        TriggerResults refTriggerResults;
+        triggerTools.SetTriggerAcceptBits(refTriggerResults);
+        cut(refTriggerResults.AnyAccpet(), "trigger");
     }
 
     //Third-Lepton Veto
@@ -41,8 +42,10 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
             selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
 
         if(applyTriggerMatch){
-            triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
+            TriggerResults triggerResults(refTriggerResults);
+            triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
                                           cuts::H_tautau_2016::DeltaR_triggerMatch);
+            selection.triggerResults.push_back(triggerResults);
         }
         selection.SetHiggsCandidate(selected_higgs);
         selection.higgses.push_back(selected_higgs);

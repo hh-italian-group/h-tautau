@@ -884,9 +884,16 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     else
         storageMode.SetPresence(EventPart::OtherLeptons, false);
 
-    eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
-    eventTuple().trigger_accepts = selection.triggerResults.GetAcceptBits();
-    eventTuple().trigger_matches = selection.triggerResults.GetMatchBits();
+    for(unsigned n = 0; n < selection.higgses_pair_indexes.size(); ++n){
+        eventTuple().higgses_pair_indexes.push_back(selection.higgses_pair_indexes.at(n));
+    }
+
+    // eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
+    eventTuple().trigger_accepts = selection.triggerResults.at(0).GetAcceptBits();
+    for(unsigned n = 0; n < selection.triggerResults.size(); ++n){
+        eventTuple().trigger_matches.push_back(selection.triggerResults.at(n).GetMatchBits());
+    }
+
 
     eventTuple().storageMode = storageMode.Mode();
 }

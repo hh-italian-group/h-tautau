@@ -73,7 +73,7 @@ struct SelectionResultsBase {
     ElectronCandidateVector other_electrons;
     MuonCandidateVector other_muons;
     const Vertex* primaryVertex;
-    TriggerResults triggerResults;
+    std::vector<TriggerResults> triggerResults;
 
     SelectionResultsBase(const edm::EventID& _eventId, EventEnergyScale _energyScale) :
         eventId(_eventId), energyScale(_energyScale) {}
@@ -127,6 +127,7 @@ struct SelectionResults : SelectionResultsBase {
 
     HiggsCandidatePtr higgs;
     HiggsCandidateVector higgses;
+    std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;
 
     using SelectionResultsBase::SelectionResultsBase;
 
