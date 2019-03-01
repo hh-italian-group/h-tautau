@@ -238,14 +238,14 @@ protected:
 
     template<typename Candidate1, typename Candidate2,
              typename ResultCandidate = analysis::CompositCandidate<Candidate1, Candidate2>>
-    std::vector<ResultCandidate> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
+    std::vector<std::pair<size_t,size_t>> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
                                                        const std::vector<Candidate2>& objects2,
                                                        double minDeltaR, const std::string& hist_name,
-                                                       std::vector<std::pair<size_t,size_t>> higgses_indexes,
                                                        int expectedCharge = analysis::AnalysisObject::UnknownCharge)
     {
         const double minDeltaR2 = std::pow(minDeltaR, 2);
         std::vector<ResultCandidate> result;
+        std::vector<std::pair<size_t,size_t>> higgses_indexes;
         for(size_t n = 0; n < objects1.size(); ++n) {
             for(size_t m = 0; m < objects2.size(); ++m) {
                 const auto& object1 = objects1.at(n);
@@ -265,7 +265,7 @@ protected:
         }
 
         GetAnaData().N_objects(hist_name).Fill(result.size(), 1);
-        return result;
+        return higgses_indexes;
     }
 
     template<typename Candidate, typename BaseSelectorType, typename Comparitor = std::less<Candidate>>

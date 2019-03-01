@@ -169,8 +169,8 @@ public:
     std::array<size_t,2> GetSelectedBjetIndices() const;
     std::set<size_t> GetSelectedBjetIndicesSet() const;
 
-    EventInfoBase(const Event& _event, Period _period, JetOrdering _jet_ordering,
-                  size_t _first_lepton_index, size_t _second_lepton_index,
+    EventInfoBase(const Event& _event, size_t _selected_htt_index, Period _period,
+                JetOrdering _jet_ordering,
                   const SummaryInfo* _summaryInfo = nullptr);
 
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
@@ -240,6 +240,7 @@ protected:
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
     std::shared_ptr<Mutex> mutex;
+    size_t selected_htt_index;
 
 private:
     template<typename LorentzVector>
@@ -259,8 +260,7 @@ private:
     SelectedSignalJets selected_signal_jets;
     Period period;
     JetOrdering jet_ordering;
-    size_t first_lepton_index;
-    size_t second_lepton_index;
+
 
     std::shared_ptr<std::list<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<JetCollection> jets;
@@ -286,11 +286,10 @@ public:
 
     static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
 
-    EventInfo(const Event& _event, Period _period, JetOrdering _jet_ordering,
-              size_t _first_lepton_index, size_t _second_lepton_index,
+    EventInfo(const Event& _event, size_t _selected_htt_index, Period _period,
+                JetOrdering _jet_ordering,
               const SummaryInfo* _summaryInfo = nullptr) :
-        EventInfoBase(_event, _period, _jet_ordering, _first_lepton_index,
-            _second_lepton_index, _summaryInfo)
+        EventInfoBase(_event, _selected_htt_index, _period, _jet_ordering, _summaryInfo)
     {
         if(summaryInfo)
             triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
@@ -331,7 +330,7 @@ public:
         if(useSVfit) {
             if(!higgs_tt_sv) {
                 higgs_tt_sv = std::shared_ptr<HiggsTTCandidate>(
-                              new HiggsTTCandidate(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4));
+                              new HiggsTTCandidate(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4.at(selected_htt_index)));
             }
             return *higgs_tt_sv;
         }

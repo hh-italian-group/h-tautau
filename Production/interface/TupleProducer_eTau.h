@@ -29,6 +29,7 @@ private:
 
     void SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
+    void FillHiggsDaughtersIndexes(const SelectionResults& selection);
 
 private:
     SelectionResultsPtr previous_selection;

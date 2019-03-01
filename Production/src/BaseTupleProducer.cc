@@ -494,26 +494,26 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
                                          const std::vector<MuonCandidate>& other_muons)
 {
     for (const auto electron : other_electrons){
-        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
+        eventTuple().other_lepton_p4.push_back(static_cast<ntuple::LorentzVectorM>(electron.GetMomentum()));
         eventTuple().other_lepton_q.push_back(electron.GetCharge());
         eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::e));
         if(isMC) {
-            const auto match = analysis::gen_truth::LeptonGenMatch(electron.GetMomentum(), *genParticles);
-            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
-            const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
-            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+            const auto match = analysis::gen_truth::LeptonGenMatch(static_cast<analysis::LorentzVectorM>(electron.GetMomentum()), *genParticles);
+            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.match));
+            const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : analysis::LorentzVectorXYZ();
+            eventTuple().other_lepton_gen_p4.push_back(static_cast<ntuple::LorentzVectorE>(matched_p4));
         }
     }
 
     for (const auto muon : other_muons){
-        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
+        eventTuple().other_lepton_p4.push_back(static_cast<ntuple::LorentzVectorM>(muon.GetMomentum()));
         eventTuple().other_lepton_q.push_back(muon.GetCharge());
         eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::mu));
         if(isMC) {
-            const auto match = analysis::gen_truth::LeptonGenMatch(muon.GetMomentum(), *genParticles);
-            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.first));
-            const auto matched_p4 = match.second ? match.second->p4() : analysis::LorentzVectorXYZ();
-            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+            const auto match = analysis::gen_truth::LeptonGenMatch(static_cast<analysis::LorentzVectorM>(muon.GetMomentum()), *genParticles);
+            eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.match));
+            const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : analysis::LorentzVectorXYZ();
+            eventTuple().other_lepton_gen_p4.push_back(static_cast<ntuple::LorentzVectorE>(matched_p4));
         }
     }
 }
@@ -523,15 +523,13 @@ void BaseTupleProducer::FillLegGenMatch(const analysis::LorentzVectorXYZ& p4)
     using namespace analysis;
     static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
-    auto& gen_visible_p4 = lepton == "tau" ? eventTuple().tau_gen_visible_p4 : ;
-
     if(isMC) {
-        const auto match = gen_truth::LeptonGenMatch(p4, *genParticles);
+        const auto match = gen_truth::LeptonGenMatch(static_cast<analysis::LorentzVectorM>(p4), *genParticles);
         eventTuple().lep_gen_match.push_back(static_cast<int>(match.match));
         const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : LorentzVectorXYZ();
-        eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
+        eventTuple().lep_gen_p4.push_back(static_cast<ntuple::LorentzVectorM>(matched_p4));
         const auto matched_visible_p4 = match.visible_daughters_p4;
-        eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM(matched_visible_p4));
+        eventTuple().lep_gen_visible_p4.push_back(static_cast<ntuple::LorentzVectorM>(matched_visible_p4));
     } else {
         eventTuple().lep_gen_match.push_back(default_int_value);
         eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM());
@@ -700,7 +698,7 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
     for(const ElectronCandidate& electron : selection.electrons){
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
         eventTuple().lep_q.push_back(electron.GetCharge());
-        eventTuple().lep_type.push_back(static_cast<Int_t>(LegType::e));
+        eventTuple().lep_type.push_back(static_cast<Int_t>(analysis::LegType::e));
         eventTuple().lep_dxy.push_back(electron->gsfTrack()->dxy(primaryVertex->position()));
         eventTuple().lep_dz.push_back(electron->gsfTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(electron.GetIsolation());
@@ -718,7 +716,7 @@ void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection
     for(const MuonCandidate& muon : selection.muons){
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
         eventTuple().lep_q.push_back(muon.GetCharge());
-        eventTuple().lep_type.push_back(static_cast<Int_t>(LegType::mu));
+        eventTuple().lep_type.push_back(static_cast<Int_t>(analysis::LegType::mu));
         eventTuple().lep_dxy.push_back(muon->muonBestTrack()->dxy(primaryVertex->position()));
         eventTuple().lep_dz.push_back(muon->muonBestTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(muon.GetIsolation());
@@ -736,7 +734,7 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
     for(const TauCandidate& tau : selection.taus) {
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(tau.GetMomentum()));
         eventTuple().lep_q.push_back(tau.GetCharge());
-        eventTuple().lep_type.push_back(static_cast<Int_t>(LegType::tau));
+        eventTuple().lep_type.push_back(static_cast<Int_t>(analysis::LegType::tau));
         const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
         eventTuple().lep_dxy.push_back(packedLeadTauCand->dxy());
         eventTuple().lep_dz.push_back(packedLeadTauCand->dz());
@@ -777,11 +775,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().rho = *rho;
 
     // HTT candidate
-    eventTuple().SVfit_is_valid = selection.svfitResult.has_valid_momentum;
-    eventTuple().SVfit_p4 = selection.svfitResult.momentum;
-    eventTuple().SVfit_p4_error = selection.svfitResult.momentum_error;
-    eventTuple().SVfit_mt = selection.svfitResult.transverseMass;
-    eventTuple().SVfit_mt_error = selection.svfitResult.transverseMass_error;
+    for(size_t n = 0; n < selection.svfitResult.size(); ++n)}{
+        eventTuple().SVfit_is_valid.push_back(selection.svfitResult.at(n).has_valid_momentum);
+        eventTuple().SVfit_p4.push_back(selection.svfitResult.at(n).momentum);
+        eventTuple().SVfit_p4_error.push_back(selection.svfitResult.at(n).momentum_error);
+        eventTuple().SVfit_mt.push_back(selection.svfitResult.at(n).transverseMass);
+        eventTuple().SVfit_mt_error.push_back(selection.svfitResult.at(n).transverseMass_error);
+    }
+
 
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
@@ -883,10 +884,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         FillOtherLeptons(selection.other_electrons,selection.other_muons);
     else
         storageMode.SetPresence(EventPart::OtherLeptons, false);
-
-    for(unsigned n = 0; n < selection.higgses_pair_indexes.size(); ++n){
-        eventTuple().higgses_pair_indexes.push_back(selection.higgses_pair_indexes.at(n));
-    }
 
     // eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
     eventTuple().trigger_accepts = selection.triggerResults.at(0).GetAcceptBits();

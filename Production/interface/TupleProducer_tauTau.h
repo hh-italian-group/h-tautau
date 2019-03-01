@@ -26,6 +26,7 @@ private:
 
     std::vector<TauCandidate> CollectSignalTaus();
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
+    void FillHiggsDaughtersIndexes(const SelectionResults& selection);
 
 private:
     SelectionResultsPtr previous_selection;

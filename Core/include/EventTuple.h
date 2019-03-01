@@ -41,7 +41,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     OTHERVAR(Int_t, q, col) /* Charge */ \
     OTHERVAR(Int_t, type, col) /* Type */ \
     OTHERVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/ \
-    OTHERVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
+    OTHERVAR(LorentzVectorE, gen_p4, col) /* 4-momentum of the matched gen particle */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -123,11 +123,11 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(std::vector<ULong64_t>, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
-    VAR(Bool_t, SVfit_is_valid) /* SVfit using integration method */ \
-    VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
-    VAR(LorentzVectorM, SVfit_p4_error) /* SVfit using integration method */ \
-    VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
-    VAR(Float_t, SVfit_mt_error) /* SVfit using integration method */ \
+    VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit using integration method */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit using integration method */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit using integration method */ \
+    VAR(std::vector<Float_t>, SVfit_mt) /* SVfit using integration method */ \
+    VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit using integration method */ \
     /* Signal leptons */ \
     LEG_DATA(lep) /* muon, electron or tau */ \
     TAU_IDS() /* raw values of tau ID discriminators */ \
@@ -167,7 +167,8 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     OTHER_LEPTON_DATA(other_lepton) \
     /* Higgs info */ \
-    VAR(std::vector<std::pair<size_t,size_t>>, higgses_pair_indexes) /* Vector of pair of daughters of Higgses */ \
+    VAR(std::vector<size_t>, first_daughter_indexes) /* Vector of pair of daughters of Higgses */ \
+    VAR(std::vector<size_t>, second_daughter_indexes) /* Vector of pair of daughters of Higgses */ \
     /* Skimmer Variables */\
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \

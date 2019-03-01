@@ -11,8 +11,8 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     SelectionResults selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
+    analysis::TriggerResults refTriggerResults;
     if(applyTriggerMatch) {
-        TriggerResults refTriggerResults;
         triggerTools.SetTriggerAcceptBits(refTriggerResults);
         cut(refTriggerResults.AnyAccpet(), "trigger");
     }
@@ -38,34 +38,24 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
                 productionMode == ProductionMode::tau_pog)
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
             : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
-    std::vector<std::pair<size_t,size_t>> higgses_indexes
-    auto higgses = FindCompatibleObjects(selection.electrons, selection.taus, DeltaR_betweenSignalObjects, "H_e_tau", higgses_indexes);
-    cut(higgses.size(), "ele_tau_pair");
+    auto higgses_indexes = FindCompatibleObjects(selection.electrons, selection.taus, DeltaR_betweenSignalObjects, "H_e_tau");
+    cut(higgses_indexes.size(), "ele_tau_pair");
 
-    for(size_t n = 0; n < higgses.size(); ++n){
-        HiggsCandidate selected_higgs = higgses.at(n);
+    for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
-        if (higgses.at(n).GetFirstDaughter().GetMomentum().Pt() < higgses.at(n).GetSecondDaughter().GetMomentum().Pt()){
-            selected_higgs = HiggsCandidate(higgses.at(n).GetSecondDaughter(), higgses.at(n).GetFirstDaughter());
-            size_t first_daughter_index = daughter_index.first;
-            size_t second_daughter_index = daughter_index.second;
-            daughter_index.first = second_daughter_index;
-            daughter_index.second = first_daughter_index;
-        }
-
+        HiggsCandidate selected_higgs = HiggsCandidate(selection.electrons.at(daughter_index.first), selection.taus.at(daughter_index.second));
 
         if(applyTriggerMatch){
-            TriggerResults triggerResults(refTriggerResults);
+            analysis::TriggerResults triggerResults(refTriggerResults);
             triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
                                           cuts::H_tautau_2016::DeltaR_triggerMatch);
             selection.triggerResults.push_back(triggerResults);
         }
-        selection.SetHiggsCandidate(selected_higgs);
-        selection.higgses.push_back(selected_higgs);
+
         selection.higgses_pair_indexes.push_back(daughter_index);
 
         if(runSVfit)
-            selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
+            selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
 
     }
 
@@ -144,6 +134,15 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     }
 }
 
+void TupleProducer_eTau::FillHiggsDaughtersIndexes(const SelectionResults& selection)
+{
+    for(unsigned n = 0; n < selection.higgses_pair_indexes.size(); ++n){
+        const auto higgs_pair = selection.higgses_pair_indexes.at(n);
+        eventTuple().first_daughter_indexes.push_back(higgs_pair.first);
+        eventTuple().second_daughter_indexes.push_back(selection.electrons.size() + higgs_pair.second);
+    }
+}
+
 
 void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
 {
@@ -158,6 +157,7 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
 
     BaseTupleProducer::FillElectron(selection);
     BaseTupleProducer::FillTau(selection);
+    FillHiggsDaughtersIndexes(selection);
 
     eventTuple.Fill();
 }
