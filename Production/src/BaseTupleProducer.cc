@@ -706,7 +706,7 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
         eventTuple().lep_oldDecayModeFinding.push_back(-1);
         eventTuple().lep_newDecayModeFinding.push_back(-1);
         eventTuple().lep_es_shift_applied.push_back(false);
-        FillLegGenMatch("lep", electron->p4()); // to be fixed
+        FillLegGenMatch(electron->p4());
     }
 
 }
@@ -724,7 +724,7 @@ void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection
         eventTuple().lep_oldDecayModeFinding.push_back(-1);
         eventTuple().lep_newDecayModeFinding.push_back(-1);
         eventTuple().lep_es_shift_applied.push_back(false);
-        FillLegGenMatch("lep", muon->p4()); // to be fixed
+        FillLegGenMatch(muon->p4());
     }
 }
 
@@ -747,9 +747,9 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
         eventTuple().lep_newDecayModeFinding.push_back(newDM);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
-            desc.FillTuple(eventTuple, *tau, default_value); //or tau->getPtr()
+            desc.FillTuple(eventTuple, tau.getPtr(), default_value); //or tau->getPtr()
         }
-        FillLegGenMatch("tau", tau->p4());
+        FillLegGenMatch(tau->p4());
     }
 }
 
@@ -775,10 +775,10 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().rho = *rho;
 
     // HTT candidate
-    for(size_t n = 0; n < selection.svfitResult.size(); ++n)}{
+    for(size_t n = 0; n < selection.svfitResult.size(); ++n){
         eventTuple().SVfit_is_valid.push_back(selection.svfitResult.at(n).has_valid_momentum);
-        eventTuple().SVfit_p4.push_back(selection.svfitResult.at(n).momentum);
-        eventTuple().SVfit_p4_error.push_back(selection.svfitResult.at(n).momentum_error);
+        eventTuple().SVfit_p4.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum));
+        eventTuple().SVfit_p4_error.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum_error));
         eventTuple().SVfit_mt.push_back(selection.svfitResult.at(n).transverseMass);
         eventTuple().SVfit_mt_error.push_back(selection.svfitResult.at(n).transverseMass_error);
     }

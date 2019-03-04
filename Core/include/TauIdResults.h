@@ -74,8 +74,8 @@ struct TauIdDescriptor {
     {
         const std::string disc_name = ::analysis::ToString(discriminator);
         if(has_raw){
-            float value =  tau ? tau->tauID(raw_name) : default_value;
-            tuple.template get<float>(prefix + disc_name + raw_suffix).push_back(value);
+            float_t value =  tau ? tau->tauID(raw_name) : default_value;
+            tuple.template get<std::vector<float_t>>(prefix + disc_name + raw_suffix).push_back(value);
         }
         if(!working_points.empty()) {
             DiscriminatorIdResults id_results;
@@ -83,7 +83,7 @@ struct TauIdDescriptor {
                 const bool result = tau && tau->tauID(wp_entry.second) > 0.5;
                 id_results.SetResult(wp_entry.first, result);
             }
-            tuple.template get<DiscriminatorIdResults::BitsContainer>(prefix + disc_name).push_back(id_results.GetResultBits());
+            tuple.template get<std::vector<DiscriminatorIdResults::BitsContainer>>(prefix + disc_name).push_back(id_results.GetResultBits());
         }
     }
 
