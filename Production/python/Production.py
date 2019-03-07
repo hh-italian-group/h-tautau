@@ -183,6 +183,16 @@ if period == 'Run2017':
                    "deepTau2017v1", "DPFTau_2016_v0", "againstEle2018", ]
     )
     tauIdEmbedder.runTauID()
+    # tauAntiEle = importlib.import_module('h-tautau.Production.runTauAgainstElectron')
+    # embedID = cms.EDProducer("PATTauIDEmbedder",
+    #     src = cms.InputTag('slimmedTaus'),
+    #     tauIDSources = cms.PSet(
+    #         againstElectronMVA6RawNew = cms.InputTag('rerunDiscriminationAgainstElectronMVA6'),
+    #         againstElectronMVA6categoryNew = cms.InputTag("rerunDiscriminationAgainstElectronMVA6:category")
+    #         ),
+    #     )
+    # setattr(process, "NewTauIDsEmbedded", embedID)
+    # tauAntiEle.rerunAgainstElectron(process, process.NewTauIDsEmbedded)
     tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
 
 if period == 'Run2016':
@@ -303,8 +313,9 @@ if period == 'Run2017':
         process.electronMVAValueMapProducer *
         process.jecSequence *
         process.rerunMvaIsolationSequence *
-        #process.NewTauIDsEmbedded *
         getattr(process, updatedTauName) *
+        # process.rerunDiscriminationAgainstElectronMVA6 *
+        # getattr(process, "NewTauIDsEmbedded") *
         process.fullPatMetSequence *
         process.topGenSequence *
         process.tupleProductionSequence

@@ -30,6 +30,16 @@ def rerunAgainstElectron(process, tauIDsEmbedded):
        srcElectrons = cms.InputTag('slimmedElectrons'),
        usePhiAtEcalEntranceExtrapolation = cms.bool(True)
     )
-    tauIDsEmbedded.tauIDSources.againstElectronMVA6RawNew = cms.InputTag('rerunDiscriminationAgainstElectronMVA6')
-    tauIDsEmbedded.tauIDSources.againstElectronMVA6categoryNew = \
-        cms.InputTag("rerunDiscriminationAgainstElectronMVA6:category")
+    #tauIDsEmbedded.tauIDSources.againstElectronMVA6RawNew = cms.InputTag('rerunDiscriminationAgainstElectronMVA6')
+    #tauIDsEmbedded.tauIDSources.againstElectronMVA6categoryNew = \
+    #    cms.InputTag("rerunDiscriminationAgainstElectronMVA6:category")
+
+    # embedID = cms.EDProducer("PATTauIDEmbedder",
+    #     src = cms.InputTag('slimmedTaus'),
+    #     tauIDSources = cms.PSet(
+    #         againstElectronMVA6RawNew = cms.InputTag('rerunDiscriminationAgainstElectronMVA6'),
+    #         againstElectronMVA6categoryNew = cms.InputTag("rerunDiscriminationAgainstElectronMVA6:category")
+    #         ),
+    #     )
+    #self.process.NewTauIDsEmbedded = embedID
+    #setattr(process, "NewTauIDsEmbedded", embedID)
