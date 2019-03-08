@@ -75,6 +75,10 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
+            if(event.jets_p4.at(n).Pt() < 50 &&  event.jets_p4.at(n).Eta() > 2.65 && event.jets_p4.at(n).Eta() < 3.139)
+                if((event.jets_pu_id.at(n) & 2) == 0) continue;
+            if(useBTag && event.jets_p4.at(n).Pt() > 20 &&  std::abs(event.jets_p4.at(n).Eta()) < 2.4)
+                if((event.jets_pu_id.at(n) & 2) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
