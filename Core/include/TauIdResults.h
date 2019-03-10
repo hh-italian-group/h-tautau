@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include <bitset>
 #include "AnalysisTypes.h"
+#include <iostream>
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "DiscriminatorIdResults.h"
 
@@ -69,18 +70,18 @@ struct TauIdDescriptor {
     std::string ToStringRaw() const;
 
     template<typename Tuple, typename Tau>
-    void FillTuple(Tuple& tuple, const Tau* tau, float default_value, const std::string& prefix = "",
+    void FillTuple(Tuple& tuple, const Tau& tau, float default_value, const std::string& prefix = "",
                    const std::string& raw_suffix = "raw") const
     {
         const std::string disc_name = ::analysis::ToString(discriminator);
         if(has_raw){
-            float_t value =  tau ? tau->tauID(raw_name) : default_value;
+            float_t value =  tau.tauID(raw_name);
             tuple.template get<std::vector<float_t>>(prefix + disc_name + raw_suffix).push_back(value);
         }
         if(!working_points.empty()) {
             DiscriminatorIdResults id_results;
             for(const auto& wp_entry : working_points) {
-                const bool result = tau && tau->tauID(wp_entry.second) > 0.5;
+                const bool result = tau.tauID(wp_entry.second) > 0.5;
                 id_results.SetResult(wp_entry.first, result);
             }
             tuple.template get<std::vector<DiscriminatorIdResults::BitsContainer>>(prefix + disc_name).push_back(id_results.GetResultBits());

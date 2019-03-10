@@ -70,7 +70,10 @@ process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 
-process.GlobalTag.globaltag = options.globalTag
+#process.GlobalTag.globaltag = options.globalTag
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag, '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring())
 process.TFileService = cms.Service('TFileService', fileName = cms.string(options.tupleOutput) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(0) )
@@ -178,7 +181,7 @@ if period == 'Run2017':
     import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
     updatedTauName = "slimmedTausNewID"
     tauIdEmbedder = tauIdConfig.TauIDEmbedder(
-        process, cms, debug = False, updatedTauName = updatedTauName,
+        process, cms, debug = True, updatedTauName = updatedTauName,
         toKeep = [ "2017v2", "dR0p32017v2", "newDM2017v2", "2016v1", "newDM2016v1",
                    "deepTau2017v1", "DPFTau_2016_v0", "againstEle2018", ]
     )

@@ -116,6 +116,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     edmEvent = &iEvent;
     eventId = iEvent.id();
     triggerTools.Initialize(iEvent);
+
     iEvent.getByToken(electronsMiniAOD_token, pat_electrons);
     iEvent.getByToken(eleTightIdMap_token, tight_id_decisions);
     iEvent.getByToken(eleMediumIdMap_token, medium_id_decisions);
@@ -747,7 +748,7 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
         eventTuple().lep_newDecayModeFinding.push_back(newDM);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
-            desc.FillTuple(eventTuple, tau.getPtr(), default_value); //or tau->getPtr()
+            desc.FillTuple(eventTuple, *tau, default_value); //or tau->getPtr()
         }
         FillLegGenMatch(tau->p4());
     }

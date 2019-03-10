@@ -60,7 +60,6 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     }
 
     ApplyBaseSelection(selection);
-
     FillEventTuple(selection);
     if(eventEnergyScale == analysis::EventEnergyScale::Central)
         previous_selection = SelectionResultsPtr(new SelectionResults(selection));
