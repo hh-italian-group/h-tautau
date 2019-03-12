@@ -75,10 +75,12 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
-            if(event.jets_p4.at(n).Pt() < 50 &&  event.jets_p4.at(n).Eta() > 2.65 && event.jets_p4.at(n).Eta() < 3.139)
-                if((event.jets_pu_id.at(n) & 2) == 0) continue;
-            if(useBTag && event.jets_p4.at(n).Pt() > 20 &&  std::abs(event.jets_p4.at(n).Eta()) < 2.4)
-                if((event.jets_pu_id.at(n) & 2) == 0) continue;
+            // if(event.jets_p4.at(n).Pt() < 50 &&  event.jets_p4.at(n).Eta() > 2.65 && event.jets_p4.at(n).Eta() < 3.139)
+            //     if((event.jets_pu_id.at(n) & 2) == 0) continue;
+
+            // if(useBTag)
+            //     if((event.jets_pu_id.at(n) & 2) == 0) continue;
+        
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -130,7 +132,6 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         if (bjets_ordered.size() >= 2)
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
     }
-
     return selected_signal_jets;
 }
 
@@ -214,7 +215,16 @@ void EventInfoBase::SetJets(const JetCollection& new_jets)
     jets = std::make_shared<JetCollection>(new_jets);
 }
 
-EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, JetOrdering jet_ordering,
+// JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
+//                          double eta_cut = std::numeric_limits<double>::max(),
+//                          JetOrdering jet_ordering = JetOrdering::DeepCSV,
+//                          const bool& applyPu = false, const bool& applyPt = false, const bool& applyEta = false,
+//                          const bool& passBtag = false, const std::set<size_t>& jet_to_exclude_indexes = {});
+
+
+EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, const bool& applyPu,
+                                                       const bool& applyPt, const bool& applyEta,
+                                                       const bool& passBtag, JetOrdering jet_ordering,
                                                        const std::set<size_t>& jet_to_exclude_indexes)
 {
     Lock lock(*mutex);
@@ -222,13 +232,29 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     const JetCollection& all_jets = GetJets();
     JetCollection selected_jets;
     std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
+
+    const double bjet_pt_cut = bTagger.PtCut();
+    const double bjet_eta_cut = bTagger.EtaCut();
+
+    auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
+        // Pass = bTagger.Pass(*event,bjets_ordered.at(1).index, DiscriminatorWP::Medium);
         if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
+        if(applyPu)
+            if((event->jets_pu_id.at(n) & 2) == 0) continue;
+        if(applyEta && !applyPt)
+            if(jet.GetMomentum().eta() < eta_cut && jet.GetMomentum().pt() > pt_cut) continue;
+        if(applyPt && !applyEta)
+            if(jet.GetMomentum().pt() > pt_cut && jet.GetMomentum().eta() > eta_cut) continue;
+        if(bjets_ordered.size() >= 2){
+            if(passBtag && applyEta && applyPt)
+                if(jet.GetMomentum().eta() < eta_cut && jet.GetMomentum().pt() > pt_cut &&
+                (bTagger.Pass(*event,bjets_ordered.at(1).index, DiscriminatorWP::Medium) == false) ) continue;
+        }
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
     }
-
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
     for(size_t h = 0; h < jets_ordered.size(); ++h){
         const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
