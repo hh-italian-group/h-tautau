@@ -199,8 +199,8 @@ public:
     void SetJets(const JetCollection& new_jets);
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
-                             const bool& applyPu = false, const bool& applyPt = false, const bool& applyEta = false,
-                             const bool& passBtag = false, JetOrdering jet_ordering = JetOrdering::DeepCSV,
+                             const bool& applyPu = false, const bool& passBtag = false,
+                             JetOrdering jet_ordering = JetOrdering::DeepCSV,
                              const std::set<size_t>& jet_to_exclude_indexes = {});
 
     double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
