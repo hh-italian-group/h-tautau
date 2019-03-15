@@ -2,8 +2,8 @@ Automatic
 globalTag=auto:phase1_2017_realistic sampleType=Fall17MC applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=True saveGenBosonInfo=True saveGenJetInfo=True
 
 ST_tW_antitop_5f_inclusiveDecays	                               1000	/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
-ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights	               1000	/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+#ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights	               1000	/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ST_tW_top_5f_inclusiveDecays	                                   1000	/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
-ST_tW_top_5f_inclusiveDecays_TuneCP5_PSweights	                   1000	/ST_tW_top_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+#ST_tW_top_5f_inclusiveDecays_TuneCP5_PSweights	                   1000	/ST_tW_top_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ST_t-channel_top_4f_inclusiveDecays_TuneCP5V2-madspin-pythia8  	   1000	/ST_t-channel_top_4f_inclusiveDecays_TuneCP5_13TeV-powhegV2-madspin-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ST_t-channel_antitop_4f_inclusiveDecays_TuneCP5V2-madspin-pythia8  1000	/ST_t-channel_antitop_4f_inclusiveDecays_TuneCP5_13TeV-powhegV2-madspin-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM

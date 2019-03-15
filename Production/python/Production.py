@@ -214,7 +214,7 @@ if options.saveGenTopInfo:
     process.topGenSequence += process.makeGenEvt
 
 if options.anaChannels == 'all':
-    channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
+    channels = [ 'eTau', 'muTau', 'tauTau' ]
 else:
     channels = re.split(',', options.anaChannels)
 
