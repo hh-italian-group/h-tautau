@@ -1,0 +1,8 @@
+Automatic
+globalTag=auto:phase1_2017_realistic sampleType=Fall17MC applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+
+ZHToTauTau_M125	                            1000	/ZHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+WplusHToTauTau_M125	                        1000	/WplusHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+WminusHToTauTau_M125	                    1000	/WminusHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+VBFHToTauTau_M125	                        1000	/VBFHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+GluGluHToTauTau_M125	                    1000	/GluGluHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
