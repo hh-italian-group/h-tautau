@@ -623,7 +623,7 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     };
 
     setResult(Filter::PrimaryVertex, "Flag_goodVertices");
-    setResult(Filter::BeamHalo, "Flag_globalTightHalo2016Filter");
+    setResult(Filter::BeamHalo, "Flag_globalSuperTightHalo2016Filter");
     setResult(Filter::HBHE_noise, "Flag_HBHENoiseFilter");
     setResult(Filter::HBHEiso_noise, "Flag_HBHENoiseIsoFilter");
     setResult(Filter::ECAL_TP, "Flag_EcalDeadCellTriggerPrimitiveFilter");
@@ -642,7 +642,7 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     if(period == analysis::Period::Run2017){
         setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
         setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
-        setResult(Filter::ecalBadCalib, "Flag_ecalBadCalibFilter");
+        setResult(Filter::ecalBadCalib, "ecalBadCalibReducedMINIAODFilter");
     }
 
 
