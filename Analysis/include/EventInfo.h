@@ -201,7 +201,7 @@ public:
                              double eta_cut = std::numeric_limits<double>::max(),
                              const bool& applyPu = false, const bool& passBtag = false,
                              JetOrdering jet_ordering = JetOrdering::DeepCSV,
-                             const std::set<size_t>& jet_to_exclude_indexes = {});
+                             const std::set<size_t>& jet_to_exclude_indexes = {}, const bool& applyEta = false );
 
     double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
     const FatJetCollection& GetFatJets();
@@ -241,7 +241,7 @@ protected:
 
 private:
     template<typename LorentzVector>
-    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period)
+    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, const bool jets_pu_id)
     {
         if(period !=  analysis::Period::Run2017)
             return true;
@@ -249,7 +249,7 @@ private:
         const double abs_eta = std::abs(jet_p4.eta());
         return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
                     abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto);
+                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto && (jets_pu_id & 2) == 0);
     }
 
 private:

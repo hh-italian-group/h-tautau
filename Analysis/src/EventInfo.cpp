@@ -74,13 +74,9 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
-            // if(event.jets_p4.at(n).Pt() < 50 &&  event.jets_p4.at(n).Eta() > 2.65 && event.jets_p4.at(n).Eta() < 3.139)
-                if((event.jets_pu_id.at(n) & 2) == 0) continue;
-
-            // if(useBTag)
-            //     if((event.jets_pu_id.at(n) & 2) == 0) continue;
-
+            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
+            if((event.jets_pu_id.at(n) & 2) == 0) continue;
+//            if(useBTag && (event.jets_pu_id.at(n) & 2) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -217,7 +213,7 @@ void EventInfoBase::SetJets(const JetCollection& new_jets)
 
 EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, const bool& applyPu,
                                                        const bool& passBtag, JetOrdering jet_ordering,
-                                                       const std::set<size_t>& jet_to_exclude_indexes)
+                                                       const std::set<size_t>& jet_to_exclude_indexes, const bool& applyEta)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
@@ -227,14 +223,12 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
 
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
-        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
+        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
-        if(applyPu)
-            if((event->jets_pu_id.at(n) & 2) == 0) continue;
-        if(all_jets.size() >= 2){
-            if(passBtag)
-                if((bTagger.Pass(*event,n, DiscriminatorWP::Medium) == false) ) continue;
-        }
+        if(applyPu && (event->jets_pu_id.at(n) & 2) == 0) continue;
+        if(applyEta && std::abs(jet.GetMomentum().eta()) < 2.4) continue;
+        if(passBtag && !bTagger.Pass(*event,n,DiscriminatorWP::Medium)) continue;
+
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
     }
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
@@ -255,7 +249,7 @@ double EventInfoBase::GetHT(bool includeHbbJets, bool apply_pt_eta_cut)
     for(size_t n = 0; n < jets.size(); ++n) {
         const auto& jet = jets.at(n);
 
-        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
+        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n))) continue;
         if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
         if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
             || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
