@@ -236,28 +236,24 @@ protected:
                         const std::vector<const MuonCandidate*>& signalMuons) const;
     void SelectJet(const JetCandidate& jet, Cutter& cut) const;
 
-    template<typename Candidate1, typename Candidate2,
-             typename ResultCandidate = analysis::CompositCandidate<Candidate1, Candidate2>>
+    template<typename Candidate1, typename Candidate2>
     std::vector<std::pair<size_t,size_t>> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
                                                        const std::vector<Candidate2>& objects2,
                                                        double minDeltaR, const std::string& hist_name,
                                                        int expectedCharge = analysis::AnalysisObject::UnknownCharge)
     {
         const double minDeltaR2 = std::pow(minDeltaR, 2);
-        std::vector<ResultCandidate> result;
+        std::vector<analysis::CompositCandidate<Candidate1, Candidate2>> result;
         std::vector<std::pair<size_t,size_t>> higgses_indexes;
         for(size_t n = 0; n < objects1.size(); ++n) {
             for(size_t m = 0; m < objects2.size(); ++m) {
                 const auto& object1 = objects1.at(n);
                 const auto& object2 = objects2.at(m);
                 if(ROOT::Math::VectorUtil::DeltaR2(object1.GetMomentum(), object2.GetMomentum()) > minDeltaR2) {
-                    const ResultCandidate candidate(object1, object2);
+                    const analysis::CompositCandidate<Candidate1, Candidate2> candidate(object1, object2);
                     if (expectedCharge !=analysis::AnalysisObject::UnknownCharge
                             && candidate.GetCharge() != expectedCharge) continue;
-                    std::pair<size_t,size_t> daughter_index;
-                    daughter_index.first = n;
-                    daughter_index.second = m;
-                    higgses_indexes.push_back(daughter_index);
+                    higgses_indexes.emplace_back(n,m);
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.GetMomentum().M(), 1);
                 }
@@ -321,11 +317,7 @@ protected:
     template<typename LeptonCandidate>
     static bool LeptonComparitor(const LeptonCandidate& l1, const LeptonCandidate& l2)
     {
-        if(l1 != l2) {
-            if(l1.GetIsolation() != l2.GetIsolation()) return l1.IsMoreIsolated(l2);
-            return false;
-        }
-        return false;
+        return l1.IsMoreIsolated(l2);
     }
 
     template<typename HiggsCandidate>

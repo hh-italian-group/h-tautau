@@ -15,8 +15,7 @@ public:
 
     virtual double Get(EventInfoBase& eventInfo) const override
     {
-        const Event& event = *eventInfo;
-        return event.genEventWeight;
+        return eventInfo->genEventWeight;
     }
     virtual double Get(const ntuple::ExpressEvent& event) const override { return event.genEventWeight; }
 };

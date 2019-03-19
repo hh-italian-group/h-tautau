@@ -41,10 +41,7 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
         HiggsCandidate selected_higgs = HiggsCandidate(selection.taus.at(daughter_index.first), selection.taus.at(daughter_index.second));
         if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt()){
             selected_higgs = HiggsCandidate(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
-            size_t first_daughter_index = daughter_index.first;
-            size_t second_daughter_index = daughter_index.second;
-            daughter_index.first = second_daughter_index;
-            daughter_index.second = first_daughter_index;
+            daughter_index = std::make_pair(daughter_index.second,daughter_index.first);
         }
 
         if(applyTriggerMatch){

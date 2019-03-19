@@ -159,21 +159,6 @@ if period == 'Run2017':
 for idmod in id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
-#if period == 'Run2017':
-#    tauIdConfig = importlib.import_module('h-tautau.Production.TauID_2017')
-#    tauIdConfig.tauId_calculation_2017(process)
-
-#tauIdConfig = importlib.import_module('h-tautau.Production.runTauIdMVA')
-#tauIdList = {
-#    'Run2016': [ "2016v1" ],
-#    'Run2017': [ "2017v2", "dR0p32017v2", "2016v1" ]
-#}
-#tauIdEmbedder = tauIdConfig.TauIDEmbedder(process, cms, debug = True,
-#                    toKeep = tauIdList[period])
-                    #toKeep = [ "2017v1", "2017v2", "newDM2017v2", "dR0p32017v2", "2016v1", "newDM2016v1" ])
-#tauIdEmbedder.runTauID()
-#tauSrc_InputTag = cms.InputTag('NewTauIDsEmbedded')
-
 if period == 'Run2016':
     tauSrc_InputTag = cms.InputTag('slimmedTaus')
 
@@ -186,16 +171,6 @@ if period == 'Run2017':
                    "deepTau2017v1", "DPFTau_2016_v0", "againstEle2018", ]
     )
     tauIdEmbedder.runTauID()
-    # tauAntiEle = importlib.import_module('h-tautau.Production.runTauAgainstElectron')
-    # embedID = cms.EDProducer("PATTauIDEmbedder",
-    #     src = cms.InputTag('slimmedTaus'),
-    #     tauIDSources = cms.PSet(
-    #         againstElectronMVA6RawNew = cms.InputTag('rerunDiscriminationAgainstElectronMVA6'),
-    #         againstElectronMVA6categoryNew = cms.InputTag("rerunDiscriminationAgainstElectronMVA6:category")
-    #         ),
-    #     )
-    # setattr(process, "NewTauIDsEmbedded", embedID)
-    # tauAntiEle.rerunAgainstElectron(process, process.NewTauIDsEmbedded)
     tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
 
 if period == 'Run2016':
@@ -306,7 +281,6 @@ if period == 'Run2016':
         process.topGenSequence *
         process.rerunMvaIsolationSequence *
         process.rerunDiscriminationAgainstElectronMVA6 *
-        #process.NewTauIDsEmbedded *
         process.tupleProductionSequence
     )
 
@@ -317,8 +291,6 @@ if period == 'Run2017':
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
-        # process.rerunDiscriminationAgainstElectronMVA6 *
-        # getattr(process, "NewTauIDsEmbedded") *
         process.fullPatMetSequence *
         process.topGenSequence *
         process.tupleProductionSequence

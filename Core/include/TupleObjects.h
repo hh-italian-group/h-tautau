@@ -35,7 +35,7 @@ public:
     RealNumber dxy() const;
     RealNumber dz() const;
     RealNumber iso() const;
-    Integer gen_match() const;
+    analysis::GenLeptonMatch gen_match() const;
     Integer decayMode() const;
 
 protected:
@@ -44,26 +44,21 @@ protected:
 
 class TupleElectron : public TupleLepton {
 public:
-    explicit TupleElectron(const ntuple::Event& _event, size_t _object_id = 0);
-    DiscriminatorIdResults iso_wp() const { return DiscriminatorIdResults(); }
+    using TupleLepton::TupleLepton;
 };
 
 class TupleMuon : public TupleLepton {
 public:
-    explicit TupleMuon(const ntuple::Event& _event, size_t _object_id = 0);
-    DiscriminatorIdResults iso_wp() const { return DiscriminatorIdResults(); }
+    using TupleLepton::TupleLepton;
 };
 
 class TupleTau : public TupleLepton {
 public:
-    using IdKey = uint32_t;
     using TupleLepton::TupleLepton;
-    using ValueKeyPair = std::pair<std::string, IdKey>;
 
 public:
-    explicit TupleTau(const ntuple::Event& _event, size_t _object_id = 0);
     bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
-    Float_t GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
+    DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
 };
 

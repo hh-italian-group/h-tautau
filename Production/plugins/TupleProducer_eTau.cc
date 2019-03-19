@@ -32,7 +32,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     cut(!selection.muonVeto, "no_extra_muon");
 
     selection.taus = CollectSignalTaus();
-    cut(selection.taus.size() > 0, "taus");
+    cut(selection.taus.size(), "taus");
 
     const double DeltaR_betweenSignalObjects = (productionMode == ProductionMode::hh ||
                 productionMode == ProductionMode::tau_pog)

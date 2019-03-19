@@ -14,26 +14,25 @@ using LorentzVectorM = analysis::LorentzVectorM_Float;
 using MetCovMatrix = analysis::SquareMatrix<2>;
 }
 
-#define LVAR(type, name, col) VAR(std::vector<type>, col##_##name)
+#define LVAR(type, name) VAR(std::vector<type>, name)
 #define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 #define TAU_ID(name, pattern, has_raw, wp_list) VAR(std::vector<uint16_t>, name) VAR(std::vector<Float_t>, name##raw)
 
 
 
-#define LEG_DATA(col) \
-    LVAR(LorentzVectorM, p4, col) /* 4-momentum */ \
-    LVAR(Int_t, q, col) /* Charge */ \
-    LVAR(Int_t, type, col) /* lepton type: e, mu or tau */ \
-    LVAR(Float_t, dxy, col) /* dxy with respect to primary vertex */ \
-    LVAR(Float_t, dz, col) /* dz with respect to primary vertex */ \
-    LVAR(Float_t, iso, col) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    LVAR(Bool_t, es_shift_applied, col) /* ES shift is applied to the central value */\
-    LVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/\
-    LVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
-    LVAR(LorentzVectorM, gen_visible_p4, col) /* 4-momentum of the matched gen particle */ \
-    LVAR(Int_t, decayMode, col) /* tau decay mode */ \
-    LVAR(Int_t, oldDecayModeFinding, col) /* tau passed the old decay mode finding requirements */ \
-    LVAR(Int_t, newDecayModeFinding, col) /* tau passed the new decay mode finding requirements */ \
+#define LEG_DATA() \
+    LVAR(LorentzVectorM, lep_p4) /* 4-momentum */ \
+    LVAR(Int_t, lep_q) /* Charge */ \
+    LVAR(Int_t, lep_type) /* lepton type: e, mu or tau */ \
+    LVAR(Float_t,lep_dxy) /* dxy with respect to primary vertex */ \
+    LVAR(Float_t, lep_dz) /* dz with respect to primary vertex */ \
+    LVAR(Float_t, lep_iso) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Int_t, lep_gen_match) /* Generator matching, see Htautau Twiki*/\
+    LVAR(LorentzVectorM, lep_gen_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(LorentzVectorM, lep_gen_visible_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(Int_t, lep_decayMode) /* tau decay mode */ \
+    LVAR(Int_t, lep_oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
+    LVAR(Int_t, lep_newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
@@ -41,7 +40,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     OTHERVAR(Int_t, q, col) /* Charge */ \
     OTHERVAR(Int_t, type, col) /* Type */ \
     OTHERVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/ \
-    OTHERVAR(LorentzVectorE, gen_p4, col) /* 4-momentum of the matched gen particle */ \
+    OTHERVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -129,7 +128,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(std::vector<Float_t>, SVfit_mt) /* SVfit using integration method */ \
     VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit using integration method */ \
     /* Signal leptons */ \
-    LEG_DATA(lep) /* muon, electron or tau */ \
+    LEG_DATA() /* muon, electron or tau */ \
     TAU_IDS() /* raw values of tau ID discriminators */ \
     /* Met related variables */ \
     MET_DATA(pfMET) \

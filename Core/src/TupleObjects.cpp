@@ -26,13 +26,9 @@ TupleObject::Integer TupleLepton::charge() const { return event->lep_q.at(object
 TupleObject::RealNumber TupleLepton::dxy() const { return event->lep_dxy.at(object_id); }
 TupleObject::RealNumber TupleLepton::dz() const { return event->lep_dz.at(object_id); }
 TupleObject::RealNumber TupleLepton::iso() const { return event->lep_iso.at(object_id); }
-TupleObject::Integer TupleLepton::gen_match() const { return event->lep_gen_match.at(object_id); }
+analysis::GenLeptonMatch TupleLepton::gen_match() const { return analysis::GenLeptonMatch(event->lep_gen_match.at(object_id)); }
 TupleObject::Integer TupleLepton::decayMode() const { return event->lep_decayMode.at(object_id); }
 
-TupleElectron::TupleElectron(const ntuple::Event& _event, size_t _object_id) : TupleLepton(_event, _object_id) {}
-TupleMuon::TupleMuon(const ntuple::Event& _event, size_t _object_id) : TupleLepton(_event, _object_id) {}
-
-TupleTau::TupleTau(const ntuple::Event& _event, size_t _object_id) : TupleLepton(_event, _object_id){}
 
 bool TupleTau::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
 {
@@ -47,8 +43,7 @@ bool TupleTau::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discrimin
     return discriminator.Passed(wp);
 
 }
-
-Float_t TupleTau::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
+TupleObject::DiscriminatorResult TupleTau::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {
     #define TAU_ID(name, pattern, has_raw, wp_list) \
         if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) return event->name##raw.at(object_id);

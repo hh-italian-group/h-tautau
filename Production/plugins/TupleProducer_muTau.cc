@@ -32,7 +32,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     cut(!selection.electronVeto, "no_extra_ele");
 
     selection.taus = CollectSignalTaus();
-    cut(selection.taus.size() > 0, "taus");
+    cut(selection.taus.size(), "taus");
 
 
 

@@ -26,8 +26,7 @@ PileUpWeight::HistPtr PileUpWeight::LoadPUWeights(const std::string& pu_reweight
 
 double PileUpWeight::Get(EventInfoBase& eventInfo) const
 {
-    const Event& event = *eventInfo;
-    return Get(event.npu);
+    return Get(eventInfo->npu);
 }
 double PileUpWeight::Get(const ntuple::ExpressEvent& event) const { return Get(event.npu); }
 
@@ -112,8 +111,7 @@ void PileUpWeightEx::LoadPUWeights(const std::string& pu_data_file_name, const s
 
 double PileUpWeightEx::Get(EventInfoBase& eventInfo) const
 {
-    const Event& event = *eventInfo;
-    return Get(event.npu);
+    return Get(eventInfo->npu);
 }
 double PileUpWeightEx::Get(const ntuple::ExpressEvent& event) const { return Get(event.npu); }
 
