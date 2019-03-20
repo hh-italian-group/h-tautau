@@ -70,9 +70,9 @@ process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 
-#process.GlobalTag.globaltag = options.globalTag
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag, '')
+process.GlobalTag.globaltag = options.globalTag
+#from Configuration.AlCa.GlobalTag import GlobalTag
+#process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag, '')
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring())
 process.TFileService = cms.Service('TFileService', fileName = cms.string(options.tupleOutput) )

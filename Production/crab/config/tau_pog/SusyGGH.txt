@@ -1,5 +1,5 @@
 Automatic
-globalTag=auto:phase1_2017_realistic sampleType=Fall17MC applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+globalTag=102X_mc2017_realistic_v6 sampleType=Fall17MC applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 SUSYGluGluToHToTauTau_M-100_TuneCP5	    1000	/SUSYGluGluToHToTauTau_M-100_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 SUSYGluGluToHToTauTau_M-110_TuneCP5	    1000	/SUSYGluGluToHToTauTau_M-110_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM

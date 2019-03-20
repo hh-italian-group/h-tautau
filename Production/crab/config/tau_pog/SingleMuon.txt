@@ -1,5 +1,5 @@
 Automatic /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt
-globalTag=auto:run2_data sampleType=Run2017 applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False
+globalTag=102X_dataRun2_v8 sampleType=Run2017 applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False
 
 SingleMuon_Run2017B-31Mar2018-v1	1000	/SingleMuon/Run2017B-31Mar2018-v1/MINIAOD
 SingleMuon_Run2017C-31Mar2018-v1	1000	/SingleMuon/Run2017C-31Mar2018-v1/MINIAOD
