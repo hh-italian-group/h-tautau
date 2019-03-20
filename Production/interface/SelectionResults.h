@@ -74,6 +74,7 @@ struct SelectionResultsBase {
     MuonCandidateVector other_muons;
     const Vertex* primaryVertex;
     std::vector<TriggerResults> triggerResults;
+    std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;
 
     SelectionResultsBase(const edm::EventID& _eventId, EventEnergyScale _energyScale) :
         eventId(_eventId), energyScale(_energyScale) {}
@@ -115,34 +116,6 @@ struct SelectionResultsBase {
         }
         return true;
     }
-};
-
-template<typename _FirstLeg, typename _SecondLeg>
-struct SelectionResults : SelectionResultsBase {
-    using FirstLeg = _FirstLeg;
-    using SecondLeg = _SecondLeg;
-    using HiggsCandidate = CompositCandidate<FirstLeg, SecondLeg>;
-    using HiggsCandidatePtr = std::shared_ptr<HiggsCandidate>;
-    using HiggsCandidateVector = std::vector<HiggsCandidate>;
-
-    std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;
-
-    using SelectionResultsBase::SelectionResultsBase;
-
-    // void SetHiggsCandidate(const HiggsCandidate& h) { higgs = HiggsCandidatePtr(new HiggsCandidate(h)); }
-    // virtual const LorentzVector& GetHiggsMomentum() const override { return higgs->GetMomentum(); }
-
-    // bool HaveSameFirstLegOrigin(const SelectionResults<FirstLeg, SecondLeg>& other) const
-    // {
-    //     if(eventId != other.eventId) return false;
-    //     return &(*higgs->GetFirstDaughter()) == &(*other.higgs->GetFirstDaughter());
-    // }
-    //
-    // bool HaveSameSecondLegOrigin(const SelectionResults<FirstLeg, SecondLeg>& other) const
-    // {
-    //     if(eventId != other.eventId) return false;
-    //     return &(*higgs->GetSecondDaughter()) == &(*other.higgs->GetSecondDaughter());
-    // }
 };
 
 } // namespace analysis

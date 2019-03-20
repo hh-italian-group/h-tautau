@@ -155,6 +155,8 @@ EventInfoBase::EventInfoBase(const Event& _event, size_t _selected_hh_index, Per
     mutex = std::make_shared<Mutex>();
     triggerResults.SetAcceptBits(event->trigger_accepts);
     triggerResults.SetMatchBits(event->trigger_matches.at(selected_htt_index));
+    if(summaryInfo)
+        triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(EventInfoBase::GetChannel()));
 }
 
 const EventInfoBase::Event& EventInfoBase::operator*() const { return *event; }
@@ -180,8 +182,8 @@ const kin_fit::FitProducer& EventInfoBase::GetKinFitProducer()
     return kinfitProducer;
 }
 
-const AnalysisObject& EventInfoBase::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
-LorentzVector EventInfoBase::GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
+// const AnalysisObject& EventInfoBase::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
+// LorentzVector EventInfoBase::GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
 
 size_t EventInfoBase::GetNJets() const { return event->jets_p4.size(); }
 size_t EventInfoBase::GetNFatJets() const { return event->fatJets_p4.size(); }
@@ -406,25 +408,5 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
-
-std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
-                                             Period period, JetOrdering jet_ordering,
-                                             size_t selected_htt_index,
-                                             const SummaryInfo* summaryInfo)
-{
-    if(channel == Channel::ETau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
-                event, selected_htt_index, period, jet_ordering, summaryInfo));
-    if(channel == Channel::MuTau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, TauCandidate>(
-                event, selected_htt_index, period, jet_ordering, summaryInfo));
-    if(channel == Channel::TauTau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<TauCandidate, TauCandidate>(
-                event, selected_htt_index, period, jet_ordering, summaryInfo));
-    if(channel == Channel::MuMu)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, MuonCandidate>(
-                event, selected_htt_index, period, jet_ordering, summaryInfo));
-    throw exception("Unsupported channel %1%.") % channel;
-}
 
 } // namespace analysis

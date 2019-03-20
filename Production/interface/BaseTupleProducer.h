@@ -217,6 +217,7 @@ protected:
     void FillElectron(const analysis::SelectionResultsBase& selection);
     void FillMuon(const analysis::SelectionResultsBase& selection);
     void FillTau(const analysis::SelectionResultsBase& selection);
+    void FillHiggsDaughtersIndexes(const analysis::SelectionResultsBase& selection, size_t shift);
     void FillLheInfo(bool haveReference);
     void FillGenParticleInfo();
     void FillGenJetInfo();
@@ -243,24 +244,22 @@ protected:
                                                        int expectedCharge = analysis::AnalysisObject::UnknownCharge)
     {
         const double minDeltaR2 = std::pow(minDeltaR, 2);
-        std::vector<analysis::CompositCandidate<Candidate1, Candidate2>> result;
         std::vector<std::pair<size_t,size_t>> higgses_indexes;
         for(size_t n = 0; n < objects1.size(); ++n) {
             for(size_t m = 0; m < objects2.size(); ++m) {
                 const auto& object1 = objects1.at(n);
                 const auto& object2 = objects2.at(m);
                 if(ROOT::Math::VectorUtil::DeltaR2(object1.GetMomentum(), object2.GetMomentum()) > minDeltaR2) {
-                    const analysis::CompositCandidate<Candidate1, Candidate2> candidate(object1, object2);
+                    const analysis::CompositeCandidate<Candidate1, Candidate2> candidate(object1, object2);
                     if (expectedCharge !=analysis::AnalysisObject::UnknownCharge
                             && candidate.GetCharge() != expectedCharge) continue;
                     higgses_indexes.emplace_back(n,m);
-                    result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.GetMomentum().M(), 1);
                 }
             }
         }
 
-        GetAnaData().N_objects(hist_name).Fill(result.size(), 1);
+        GetAnaData().N_objects(hist_name).Fill(higgses_indexes.size(), 1);
         return higgses_indexes;
     }
 

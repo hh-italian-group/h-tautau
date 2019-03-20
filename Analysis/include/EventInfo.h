@@ -21,48 +21,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-using ElectronCandidate = LeptonCandidate<ntuple::TupleElectron>;
-using MuonCandidate = LeptonCandidate<ntuple::TupleMuon>;
-using TauCandidate = LeptonCandidate<ntuple::TupleTau>;
+using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
 using JetCandidate = Candidate<ntuple::TupleJet>;
 using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
 using MET = MissingET<ntuple::TupleMet>;
-
-namespace detail {
-template<typename FirstLeg, typename SecondLeg>
-constexpr Channel IdentifyChannel();
-
-template<>
-inline constexpr Channel IdentifyChannel<ElectronCandidate, TauCandidate>() { return Channel::ETau; }
-
-template<>
-inline constexpr Channel IdentifyChannel<MuonCandidate, TauCandidate>() { return Channel::MuTau; }
-
-template<>
-inline constexpr Channel IdentifyChannel<TauCandidate, TauCandidate>() { return Channel::TauTau; }
-
-template<>
-inline constexpr Channel IdentifyChannel<MuonCandidate, MuonCandidate>() { return Channel::MuMu; }
-}
-
-struct ChannelInfo {
-    template<typename FirstLeg, typename SecondLeg>
-    static constexpr Channel IdentifyChannel() { return detail::IdentifyChannel<FirstLeg, SecondLeg>(); }
-};
-
-template<int channel_id> struct ChannelLegInfo;
-template<> struct ChannelLegInfo<static_cast<int>(Channel::ETau)> {
-    using FirstLeg = ElectronCandidate; using SecondLeg = TauCandidate;
-};
-template<> struct ChannelLegInfo<static_cast<int>(Channel::MuTau)> {
-    using FirstLeg = MuonCandidate; using SecondLeg = TauCandidate;
-};
-template<> struct ChannelLegInfo<static_cast<int>(Channel::TauTau)> {
-    using FirstLeg = TauCandidate; using SecondLeg = TauCandidate;
-};
-template<> struct ChannelLegInfo<static_cast<int>(Channel::MuMu)> {
-    using FirstLeg = MuonCandidate; using SecondLeg = MuonCandidate;
-};
 
 namespace jet_ordering {
 
@@ -147,9 +109,10 @@ public:
     using JetPair = ntuple::JetPair;
     using JetCollection = std::vector<JetCandidate>;
     using FatJetCollection = std::vector<FatJetCandidate>;
-    using HiggsBBCandidate = CompositCandidate<JetCandidate, JetCandidate>;
+    using HiggsBBCandidate = CompositeCandidate<JetCandidate, JetCandidate>;
     using Mutex = std::recursive_mutex;
     using Lock = std::lock_guard<Mutex>;
+    using HiggsTTCandidate = CompositeCandidate<LepCandidate, LepCandidate>;
 
     struct SelectedSignalJets{
         JetPair selectedBjetPair;
@@ -168,6 +131,8 @@ public:
                                                JetOrdering jet_ordering);
     std::array<size_t,2> GetSelectedBjetIndices() const;
     std::set<size_t> GetSelectedBjetIndicesSet() const;
+
+    Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
 
     EventInfoBase(const Event& _event, size_t _selected_htt_index, Period _period,
                 JetOrdering _jet_ordering,
@@ -188,8 +153,8 @@ public:
     const SummaryInfo& GetSummaryInfo() const;
     static const kin_fit::FitProducer& GetKinFitProducer();
 
-    virtual const AnalysisObject& GetLeg(size_t /*leg_id*/);
-    virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/);
+    // virtual const Candidate& GetLeg(size_t /*leg_id*/);
+    // virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/);
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
@@ -232,8 +197,73 @@ public:
     void SetMvaScore(double _mva_score);
     double GetMvaScore() const;
 
-    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
-        UncertaintyScale scale) = 0;
+    const LepCandidate& GetFirstLeg()
+    {
+        Lock lock(*mutex);
+        if(!leg1) {
+            tuple_leg1 = std::make_shared<ntuple::TupleLepton>(*event, GetLegIndex(1));
+            leg1 = std::make_shared<LepCandidate>(*tuple_leg1, tuple_leg1->iso());
+        }
+        return *leg1;
+    }
+
+    const LepCandidate& GetSecondLeg()
+    {
+        Lock lock(*mutex);
+        if(!leg2) {
+            tuple_leg2 = std::make_shared<ntuple::TupleLepton>(*event, GetLegIndex(2));
+            leg2 = std::make_shared<LepCandidate>(*tuple_leg2, tuple_leg2->iso());
+        }
+        return *leg2;
+    }
+
+    const LepCandidate& GetLeg(size_t leg_id)
+    {
+        if(leg_id == 1) return GetFirstLeg();
+        if(leg_id == 2) return GetSecondLeg();
+        throw exception("Invalid leg id = %1%.") % leg_id;
+    }
+
+    const HiggsTTCandidate& GetHiggsTT(bool useSVfit)
+    {
+        Lock lock(*mutex);
+        if(useSVfit) {
+            if(!higgs_tt_sv) {
+                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4.at(selected_htt_index));
+            }
+            return *higgs_tt_sv;
+        }
+        if(!higgs_tt)
+            higgs_tt = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg());
+        return *higgs_tt;
+    }
+
+    LorentzVector GetHiggsTTMomentum(bool useSVfit)
+    {
+        return GetHiggsTT(useSVfit).GetMomentum();
+    }
+
+    std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
+        UncertaintyScale scale)
+    {
+        EventInfoBase event_info = ApplyShift(uncertainty_source, scale);
+        return std::make_shared<EventInfoBase>(std::move(event_info));
+    }
+
+    EventInfoBase ApplyShift(UncertaintySource uncertainty_source,
+        UncertaintyScale scale)
+    {
+        EventInfoBase shifted_event_info(*this);
+        const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
+        const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
+        const JetCollection& jets = shifted_event_info.GetJets();
+        const auto& other_jets_p4 = event->other_jets_p4;
+        auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
+        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
+        shifted_event_info.SetJets(corrected_jets);
+        shifted_event_info.SetMetMomentum(shifted_met_p4);
+        return shifted_event_info;
+    }
 
 protected:
     const Event* event;
@@ -272,109 +302,12 @@ private:
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     boost::optional<double> mt2;
     double mva_score;
-
-};
-
-template<typename _FirstLeg, typename _SecondLeg>
-class EventInfo : public EventInfoBase {
-public:
-    using FirstLeg = _FirstLeg;
-    using SecondLeg = _SecondLeg;
-    using FirstTupleLeg = typename FirstLeg::PATObject;
-    using SecondTupleLeg = typename SecondLeg::PATObject;
-    using HiggsTTCandidate = CompositCandidate<FirstLeg, SecondLeg>;
-
-    static constexpr Channel channel = ChannelInfo::IdentifyChannel<FirstLeg, SecondLeg>();
-
-    EventInfo(const Event& _event, size_t _selected_htt_index, Period _period,
-                JetOrdering _jet_ordering,
-              const SummaryInfo* _summaryInfo = nullptr) :
-        EventInfoBase(_event, _selected_htt_index, _period, _jet_ordering, _summaryInfo)
-    {
-        if(summaryInfo)
-            triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(channel));
-    }
-
-    using EventInfoBase::EventInfoBase;
-
-    const FirstLeg& GetFirstLeg()
-    {
-        Lock lock(*mutex);
-        if(!leg1) {
-            tuple_leg1 = std::shared_ptr<FirstTupleLeg>(new FirstTupleLeg(*event, GetLegIndex(1)));
-            leg1 = std::shared_ptr<FirstLeg>(new FirstLeg(*tuple_leg1, tuple_leg1->iso()));
-        }
-        return *leg1;
-    }
-
-    const SecondLeg& GetSecondLeg()
-    {
-        Lock lock(*mutex);
-        if(!leg2) {
-            tuple_leg2 = std::shared_ptr<SecondTupleLeg>(new SecondTupleLeg(*event, GetLegIndex(2)));
-            leg2 = std::shared_ptr<SecondLeg>(new SecondLeg(*tuple_leg2, tuple_leg2->iso()));
-        }
-        return *leg2;
-    }
-
-    virtual const AnalysisObject& GetLeg(size_t leg_id) override
-    {
-        if(leg_id == 1) return GetFirstLeg();
-        if(leg_id == 2) return GetSecondLeg();
-        throw exception("Invalid leg id = %1%.") % leg_id;
-    }
-
-    const HiggsTTCandidate& GetHiggsTT(bool useSVfit)
-    {
-        Lock lock(*mutex);
-        if(useSVfit) {
-            if(!higgs_tt_sv) {
-                higgs_tt_sv = std::shared_ptr<HiggsTTCandidate>(
-                              new HiggsTTCandidate(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4.at(selected_htt_index)));
-            }
-            return *higgs_tt_sv;
-        }
-        if(!higgs_tt)
-            higgs_tt = std::shared_ptr<HiggsTTCandidate>(new HiggsTTCandidate(GetFirstLeg(), GetSecondLeg()));
-        return *higgs_tt;
-    }
-
-    virtual LorentzVector GetHiggsTTMomentum(bool useSVfit) override
-    {
-        return GetHiggsTT(useSVfit).GetMomentum();
-    }
-
-    virtual std::shared_ptr<EventInfoBase> ApplyShiftBase(UncertaintySource uncertainty_source,
-        UncertaintyScale scale) override
-    {
-        EventInfo<FirstLeg, SecondLeg> event_info = ApplyShift(uncertainty_source, scale);
-        return std::make_shared<EventInfo<FirstLeg, SecondLeg>>(std::move(event_info));
-    }
-
-    EventInfo<FirstLeg, SecondLeg> ApplyShift(UncertaintySource uncertainty_source,
-        UncertaintyScale scale)
-    {
-        EventInfo<FirstLeg, SecondLeg> shifted_event_info(*this);
-        const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
-        const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
-        const JetCollection& jets = shifted_event_info.GetJets();
-        const auto& other_jets_p4 = event->other_jets_p4;
-        auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
-        const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
-        shifted_event_info.SetJets(corrected_jets);
-        shifted_event_info.SetMetMomentum(shifted_met_p4);
-        return shifted_event_info;
-    }
-
-private:
-    std::shared_ptr<FirstTupleLeg> tuple_leg1;
-    std::shared_ptr<FirstLeg> leg1;
-    std::shared_ptr<SecondTupleLeg> tuple_leg2;
-    std::shared_ptr<SecondLeg> leg2;
+    std::shared_ptr<ntuple::TupleLepton> tuple_leg1;
+    std::shared_ptr<LepCandidate> leg1;
+    std::shared_ptr<ntuple::TupleLepton> tuple_leg2;
+    std::shared_ptr<LepCandidate> leg2;
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
+
 };
 
-std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
-                                             Period period, JetOrdering jet_ordering,
-                                             const SummaryInfo* summaryInfo = nullptr);
 } // namespace analysis

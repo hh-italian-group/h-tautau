@@ -495,26 +495,26 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
                                          const std::vector<MuonCandidate>& other_muons)
 {
     for (const auto electron : other_electrons){
-        eventTuple().other_lepton_p4.push_back(static_cast<ntuple::LorentzVectorM>(electron.GetMomentum()));
+        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
         eventTuple().other_lepton_q.push_back(electron.GetCharge());
         eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::e));
         if(isMC) {
-            const auto match = analysis::gen_truth::LeptonGenMatch(static_cast<analysis::LorentzVectorM>(electron.GetMomentum()), *genParticles);
+            const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(electron.GetMomentum()), *genParticles);
             eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.match));
             const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : analysis::LorentzVectorXYZ();
-            eventTuple().other_lepton_gen_p4.push_back(static_cast<ntuple::LorentzVectorM>(matched_p4));
+            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
         }
     }
 
     for (const auto muon : other_muons){
-        eventTuple().other_lepton_p4.push_back(static_cast<ntuple::LorentzVectorM>(muon.GetMomentum()));
+        eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
         eventTuple().other_lepton_q.push_back(muon.GetCharge());
         eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::mu));
         if(isMC) {
-            const auto match = analysis::gen_truth::LeptonGenMatch(static_cast<analysis::LorentzVectorM>(muon.GetMomentum()), *genParticles);
+            const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(muon.GetMomentum()), *genParticles);
             eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.match));
             const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : analysis::LorentzVectorXYZ();
-            eventTuple().other_lepton_gen_p4.push_back(static_cast<ntuple::LorentzVectorM>(matched_p4));
+            eventTuple().other_lepton_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
         }
     }
 }
@@ -525,12 +525,12 @@ void BaseTupleProducer::FillLegGenMatch(const analysis::LorentzVectorXYZ& p4)
     static constexpr int default_int_value = ntuple::DefaultFillValue<Int_t>();
 
     if(isMC) {
-        const auto match = gen_truth::LeptonGenMatch(static_cast<analysis::LorentzVectorM>(p4), *genParticles);
+        const auto match = gen_truth::LeptonGenMatch(analysis::LorentzVectorM(p4), *genParticles);
         eventTuple().lep_gen_match.push_back(static_cast<int>(match.match));
         const auto matched_p4 = match.gen_particle ? match.gen_particle->p4() : LorentzVectorXYZ();
-        eventTuple().lep_gen_p4.push_back(static_cast<ntuple::LorentzVectorM>(matched_p4));
+        eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
         const auto matched_visible_p4 = match.visible_daughters_p4;
-        eventTuple().lep_gen_visible_p4.push_back(static_cast<ntuple::LorentzVectorM>(matched_visible_p4));
+        eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM(matched_visible_p4));
     } else {
         eventTuple().lep_gen_match.push_back(default_int_value);
         eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM());
@@ -761,6 +761,14 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
     }
 }
 
+void BaseTupleProducer::FillHiggsDaughtersIndexes(const analysis::SelectionResultsBase& selection, size_t shift)
+{
+    for(unsigned n = 0; n < selection.higgses_pair_indexes.size(); ++n){
+        const auto higgs_pair = selection.higgses_pair_indexes.at(n);
+        eventTuple().first_daughter_indexes.push_back(higgs_pair.first);
+        eventTuple().second_daughter_indexes.push_back(shift + higgs_pair.second);
+    }
+}
 
 
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection,

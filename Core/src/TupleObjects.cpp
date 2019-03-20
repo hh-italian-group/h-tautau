@@ -28,10 +28,13 @@ TupleObject::RealNumber TupleLepton::dz() const { return event->lep_dz.at(object
 TupleObject::RealNumber TupleLepton::iso() const { return event->lep_iso.at(object_id); }
 analysis::GenLeptonMatch TupleLepton::gen_match() const { return analysis::GenLeptonMatch(event->lep_gen_match.at(object_id)); }
 TupleObject::Integer TupleLepton::decayMode() const { return event->lep_decayMode.at(object_id); }
+analysis::LegType TupleLepton::leg_type() const { return analysis::LegType(event->lep_type.at(object_id)); }
 
-
-bool TupleTau::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
+bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
 {
+    analysis::LegType leg_type = TupleLepton::leg_type();
+    if(leg_type != analysis::LegType::tau)
+        throw analysis::exception("LegType is not a tau.");
     uint16_t discriminator_value = std::numeric_limits<uint16_t>::max();
     #define TAU_ID(name, pattern, has_raw, wp_list) \
         if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) discriminator_value = event->name.at(object_id);
@@ -43,8 +46,11 @@ bool TupleTau::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discrimin
     return discriminator.Passed(wp);
 
 }
-TupleObject::DiscriminatorResult TupleTau::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
+TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {
+    analysis::LegType leg_type = TupleLepton::leg_type();
+    if(leg_type != analysis::LegType::tau)
+        throw analysis::exception("LegType is not a tau.");
     #define TAU_ID(name, pattern, has_raw, wp_list) \
         if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) return event->name##raw.at(object_id);
     TAU_IDS()

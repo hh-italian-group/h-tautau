@@ -81,7 +81,7 @@ struct TauIdDescriptor {
         if(!working_points.empty()) {
             DiscriminatorIdResults id_results;
             for(const auto& wp_entry : working_points) {
-                const bool result = tau ? tau->tauID(wp_entry.second) > 0.5 : default_value;
+                const bool result = tau && tau->tauID(wp_entry.second) > 0.5;
                 id_results.SetResult(wp_entry.first, result);
             }
             tuple.template get<std::vector<DiscriminatorIdResults::BitsContainer>>(prefix + disc_name).push_back(id_results.GetResultBits());

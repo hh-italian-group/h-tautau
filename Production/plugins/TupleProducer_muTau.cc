@@ -8,7 +8,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::MuTau;
 
-    SelectionResults selection(eventId, eventEnergyScale);
+    SelectionResultsBase selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
     analysis::TriggerResults refTriggerResults;
@@ -46,7 +46,8 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
     for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
-        HiggsCandidate selected_higgs = HiggsCandidate(selection.muons.at(daughter_index.first), selection.taus.at(daughter_index.second));
+        analysis::CompositeCandidate<MuonCandidate,TauCandidate> selected_higgs =
+            analysis::CompositeCandidate<MuonCandidate,TauCandidate>(selection.muons.at(daughter_index.first), selection.taus.at(daughter_index.second));
 
         if(applyTriggerMatch){
             analysis::TriggerResults triggerResults(refTriggerResults);
@@ -67,7 +68,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     FillEventTuple(selection);
 
     if(eventEnergyScale == analysis::EventEnergyScale::Central)
-        previous_selection = SelectionResultsPtr(new SelectionResults(selection));
+        previous_selection = SelectionResultsBasePtr(new SelectionResultsBase(selection));
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muTau::CollectSignalMuons()
@@ -137,16 +138,8 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     }
 }
 
-void TupleProducer_muTau::FillHiggsDaughtersIndexes(const SelectionResults& selection)
-{
-    for(unsigned n = 0; n < selection.higgses_pair_indexes.size(); ++n){
-        const auto higgs_pair = selection.higgses_pair_indexes.at(n);
-        eventTuple().first_daughter_indexes.push_back(higgs_pair.first);
-        eventTuple().second_daughter_indexes.push_back(selection.muons.size() + higgs_pair.second);
-    }
-}
 
-void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
+void TupleProducer_muTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
     using EventPart = ntuple::StorageMode::EventPart;
@@ -159,7 +152,7 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
 
     BaseTupleProducer::FillMuon(selection);
     BaseTupleProducer::FillTau(selection);
-    FillHiggsDaughtersIndexes(selection);
+    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,selection.muons.size());
 
     eventTuple.Fill();
 }

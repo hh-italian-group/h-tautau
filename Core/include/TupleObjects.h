@@ -37,30 +37,15 @@ public:
     RealNumber iso() const;
     analysis::GenLeptonMatch gen_match() const;
     Integer decayMode() const;
+    analysis::LegType leg_type() const;
+
+    bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
+    DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
 protected:
     size_t object_id;
 };
 
-class TupleElectron : public TupleLepton {
-public:
-    using TupleLepton::TupleLepton;
-};
-
-class TupleMuon : public TupleLepton {
-public:
-    using TupleLepton::TupleLepton;
-};
-
-class TupleTau : public TupleLepton {
-public:
-    using TupleLepton::TupleLepton;
-
-public:
-    bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
-    DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
-
-};
 
 class TupleJet : public TupleObject {
 public:

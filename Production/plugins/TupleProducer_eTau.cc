@@ -8,7 +8,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::ETau;
 
-    SelectionResults selection(eventId, eventEnergyScale);
+    SelectionResultsBase selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
     analysis::TriggerResults refTriggerResults;
@@ -43,7 +43,8 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
 
     for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
-        HiggsCandidate selected_higgs = HiggsCandidate(selection.electrons.at(daughter_index.first), selection.taus.at(daughter_index.second));
+        analysis::CompositeCandidate<ElectronCandidate,TauCandidate> selected_higgs =
+            analysis::CompositeCandidate<ElectronCandidate,TauCandidate>(selection.electrons.at(daughter_index.first), selection.taus.at(daughter_index.second));
 
         if(applyTriggerMatch){
             analysis::TriggerResults triggerResults(refTriggerResults);
@@ -62,7 +63,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     ApplyBaseSelection(selection);
     FillEventTuple(selection);
     if(eventEnergyScale == analysis::EventEnergyScale::Central)
-        previous_selection = SelectionResultsPtr(new SelectionResults(selection));
+        previous_selection = SelectionResultsBasePtr(new SelectionResultsBase(selection));
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> TupleProducer_eTau::CollectSignalElectrons()
@@ -133,17 +134,7 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
     }
 }
 
-void TupleProducer_eTau::FillHiggsDaughtersIndexes(const SelectionResults& selection)
-{
-    for(unsigned n = 0; n < selection.higgses_pair_indexes.size(); ++n){
-        const auto higgs_pair = selection.higgses_pair_indexes.at(n);
-        eventTuple().first_daughter_indexes.push_back(higgs_pair.first);
-        eventTuple().second_daughter_indexes.push_back(selection.electrons.size() + higgs_pair.second);
-    }
-}
-
-
-void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
+void TupleProducer_eTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
     using EventPart = ntuple::StorageMode::EventPart;
@@ -156,7 +147,7 @@ void TupleProducer_eTau::FillEventTuple(const SelectionResults& selection)
 
     BaseTupleProducer::FillElectron(selection);
     BaseTupleProducer::FillTau(selection);
-    FillHiggsDaughtersIndexes(selection);
+    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,selection.electrons.size());
 
     eventTuple.Fill();
 }

@@ -5,21 +5,19 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 class TupleProducer_muMu: public BaseTupleProducer {
 public:
-    using SelectionResults = analysis::SelectionResults<MuonCandidate, MuonCandidate>;
-    using SelectionResultsPtr = std::shared_ptr<SelectionResults>;
-    using HiggsCandidate = SelectionResults::HiggsCandidate;
+    using SelectionResultsBase = analysis::SelectionResultsBase;
+    using SelectionResultsBasePtr = std::shared_ptr<SelectionResultsBase>;
 
 public:
     TupleProducer_muMu(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, analysis::Channel::MuMu) {}
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
-    void FillEventTuple(const SelectionResults& selection);
+    void FillEventTuple(const SelectionResultsBase& selection);
 
     std::vector<MuonCandidate> CollectSignalMuons();
     void SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const;
-    void FillHiggsDaughtersIndexes(const SelectionResults& selection);
 
 private:
-    SelectionResultsPtr previous_selection;
+    SelectionResultsBasePtr previous_selection;
 };

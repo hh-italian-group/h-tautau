@@ -84,19 +84,19 @@ double LeptonWeights::GetIdIsoWeight(EventInfoBase& eventInfo) const
     const Channel channel = static_cast<Channel>(event.channelId);
     if(channel == Channel::ETau) {
         return electronSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
-            eventInfo.GetLeg(2).gen_match(), eventInfo.GetLeg(2).decayMode(), DiscriminatorWP::Tight,
+            eventInfo.GetLeg(2)->gen_match(), eventInfo.GetLeg(2)->decayMode(), DiscriminatorWP::Tight,
             DiscriminatorWP::Loose, tau_iso_wp);
     }
     else if(channel == Channel::MuTau) {
         return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
-            eventInfo.GetLeg(2).gen_match(), eventInfo.GetLeg(2).decayMode(),  DiscriminatorWP::VLoose,
+            eventInfo.GetLeg(2)->gen_match(), eventInfo.GetLeg(2)->decayMode(),  DiscriminatorWP::VLoose,
             DiscriminatorWP::Tight, tau_iso_wp);
     }
     else if(channel == Channel::TauTau) {
         return tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(1).GetMomentum()),
-            eventInfo.GetLeg(1).gen_match(), eventInfo.GetLeg(1).decayMode(), DiscriminatorWP::VLoose,
+            eventInfo.GetLeg(1)->gen_match(), eventInfo.GetLeg(1)->decayMode(), DiscriminatorWP::VLoose,
             DiscriminatorWP::Loose, tau_iso_wp) * tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
-            eventInfo.GetLeg(2).gen_match(), eventInfo.GetLeg(2).decayMode(),DiscriminatorWP::VLoose,
+            eventInfo.GetLeg(2)->gen_match(), eventInfo.GetLeg(2)->decayMode(),DiscriminatorWP::VLoose,
             DiscriminatorWP::Loose, tau_iso_wp);
     }
     else if(channel == Channel::MuMu)

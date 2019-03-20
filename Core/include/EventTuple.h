@@ -14,25 +14,25 @@ using LorentzVectorM = analysis::LorentzVectorM_Float;
 using MetCovMatrix = analysis::SquareMatrix<2>;
 }
 
-#define LVAR(type, name) VAR(std::vector<type>, name)
+#define LVAR(type, name) VAR(std::vector<type>, lep_##name)
 #define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 #define TAU_ID(name, pattern, has_raw, wp_list) VAR(std::vector<uint16_t>, name) VAR(std::vector<Float_t>, name##raw)
 
 
 
 #define LEG_DATA() \
-    LVAR(LorentzVectorM, lep_p4) /* 4-momentum */ \
-    LVAR(Int_t, lep_q) /* Charge */ \
-    LVAR(Int_t, lep_type) /* lepton type: e, mu or tau */ \
-    LVAR(Float_t,lep_dxy) /* dxy with respect to primary vertex */ \
-    LVAR(Float_t, lep_dz) /* dz with respect to primary vertex */ \
-    LVAR(Float_t, lep_iso) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    LVAR(Int_t, lep_gen_match) /* Generator matching, see Htautau Twiki*/\
-    LVAR(LorentzVectorM, lep_gen_p4) /* 4-momentum of the matched gen particle */ \
-    LVAR(LorentzVectorM, lep_gen_visible_p4) /* 4-momentum of the matched gen particle */ \
-    LVAR(Int_t, lep_decayMode) /* tau decay mode */ \
-    LVAR(Int_t, lep_oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
-    LVAR(Int_t, lep_newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
+    LVAR(LorentzVectorM, p4) /* 4-momentum */ \
+    LVAR(Int_t, q) /* Charge */ \
+    LVAR(Int_t, type) /* lepton type: e, mu or tau */ \
+    LVAR(Float_t,dxy) /* dxy with respect to primary vertex */ \
+    LVAR(Float_t, dz) /* dz with respect to primary vertex */ \
+    LVAR(Float_t, iso) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Int_t, gen_match) /* Generator matching, see Htautau Twiki*/\
+    LVAR(LorentzVectorM, gen_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(LorentzVectorM, gen_visible_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(Int_t, decayMode) /* tau decay mode */ \
+    LVAR(Int_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
+    LVAR(Int_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
