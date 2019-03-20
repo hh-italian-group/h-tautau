@@ -199,11 +199,12 @@ public:
     void SetJets(const JetCollection& new_jets);
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
-                             const bool& applyPu = false, bool passBtag = false,
+                             bool applyPu = false, bool passBtag = false,
                              JetOrdering jet_ordering = JetOrdering::DeepCSV,
-                             const std::set<size_t>& jet_to_exclude_indexes = {}, double low_eta_cut = 0 );
+                             const std::set<size_t>& jet_to_exclude_indexes = {},
+                             double low_eta_cut = 0, bool includeHbbJets = true );
 
-    double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
+    double GetHT(bool includeHbbJets);
     const FatJetCollection& GetFatJets();
     bool HasBjetPair() const;
     bool HasVBFjetPair() const;
@@ -241,7 +242,7 @@ protected:
 
 private:
     template<typename LorentzVector>
-    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, bool jets_pu_id)
+    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, int jets_pu_id)
     {
         if(period !=  analysis::Period::Run2017)
             return true;

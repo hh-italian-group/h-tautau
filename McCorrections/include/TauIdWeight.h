@@ -49,7 +49,7 @@ public:
     PhysicalValue getMuonMissId(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP iso_wp) const;
     PhysicalValue getEleMissId(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP iso_wp) const;
     PhysicalValue getTauIso(DiscriminatorWP iso_wp, GenMatch /*gen_match*/) const;
-    PhysicalValue tauIdForDM(GenMatch gen_match, int decay_mode) const;
+    PhysicalValue getDmDependentTauIso(GenMatch gen_match, int decay_mode) const;
 };
 } // namespace mc_corrections
 } // namespace analysis

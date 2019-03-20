@@ -158,7 +158,7 @@ PhysicalValue TauIdWeight2017::getTauIso(DiscriminatorWP iso_wp, GenMatch gen_ma
         return PhysicalValue(1,0);
 }
 
-PhysicalValue TauIdWeight2017::tauIdForDM(GenMatch gen_match, int decay_mode) const
+PhysicalValue TauIdWeight2017::getDmDependentTauIso(GenMatch gen_match, int decay_mode) const
 {
 
     std::map<int, double> decay_SF_map = {{0, 1.06}, {1,1.01}, {10, 0.90}};
