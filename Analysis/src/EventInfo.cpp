@@ -213,7 +213,8 @@ void EventInfoBase::SetJets(const JetCollection& new_jets)
 
 EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
                                                        bool passBtag, JetOrdering jet_ordering,
-                                                       const std::set<size_t>& jet_to_exclude_indexes, double low_eta_cut)
+                                                       const std::set<size_t>& jet_to_exclude_indexes,
+                                                       double low_eta_cut)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
@@ -242,17 +243,17 @@ double EventInfoBase::GetHT(bool includeHbbJets, bool apply_eta_cut)
 {
     static constexpr double other_jets_min_pt = 20;
     static constexpr double other_jets_max_eta = 4.7;
-    const std::set<size_t> empty_set = {};
+    static const std::set<size_t> empty_set = {};
 
     const double eta_cut = apply_eta_cut ? other_jets_max_eta : 5;
-    const std::set<size_t> jets_to_exclude = includeHbbJets ? empty_set : GetSelectedBjetIndicesSet();
+    const std::set<size_t>& jets_to_exclude = includeHbbJets ? empty_set : GetSelectedBjetIndicesSet();
 
     double ht = 0;
     const auto& jets = SelectJets(other_jets_min_pt,eta_cut,false,false,JetOrdering::DeepCSV,jets_to_exclude);
-        for(size_t n = 0; n < jets.size(); ++n) {
-            const auto& jet = jets.at(n);
-            ht += jet.GetMomentum().pt();
-        }
+    for(size_t n = 0; n < jets.size(); ++n) {
+        const auto& jet = jets.at(n);
+        ht += jet.GetMomentum().pt();
+    }
     return ht;
 }
 
