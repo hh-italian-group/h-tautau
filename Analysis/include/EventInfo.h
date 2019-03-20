@@ -202,9 +202,9 @@ public:
                              bool applyPu = false, bool passBtag = false,
                              JetOrdering jet_ordering = JetOrdering::DeepCSV,
                              const std::set<size_t>& jet_to_exclude_indexes = {},
-                             double low_eta_cut = 0, bool includeHbbJets = true );
+                             double low_eta_cut = 0);
 
-    double GetHT(bool includeHbbJets);
+    double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
     const FatJetCollection& GetFatJets();
     bool HasBjetPair() const;
     bool HasVBFjetPair() const;

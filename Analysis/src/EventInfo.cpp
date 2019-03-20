@@ -213,8 +213,7 @@ void EventInfoBase::SetJets(const JetCollection& new_jets)
 
 EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
                                                        bool passBtag, JetOrdering jet_ordering,
-                                                       const std::set<size_t>& jet_to_exclude_indexes, double low_eta_cut,
-                                                       bool includeHbbJets)
+                                                       const std::set<size_t>& jet_to_exclude_indexes, double low_eta_cut)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
@@ -224,9 +223,9 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
         if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
-        if(!includeHbbJets && jet_to_exclude_indexes.count(n)) continue;
+        if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && (event->jets_pu_id.at(n) & 2) == 0) continue;
-        if(low_eta_cut != 0 && std::abs(jet.GetMomentum().eta()) <= low_eta_cut) continue;
+        if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
         if(passBtag && !bTagger.Pass(*event,n,DiscriminatorWP::Medium)) continue;
 
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
@@ -239,14 +238,17 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     return selected_jets;
 }
 
-double EventInfoBase::GetHT(bool includeHbbJets)
+double EventInfoBase::GetHT(bool includeHbbJets, bool apply_eta_cut)
 {
     static constexpr double other_jets_min_pt = 20;
-    static constexpr double other_jets_max_eta = -4.7;
+    static constexpr double other_jets_max_eta = 4.7;
+    const std::set<size_t> empty_set = {};
+
+    const double eta_cut = apply_eta_cut ? other_jets_max_eta : 5;
+    const std::set<size_t> jets_to_exclude = includeHbbJets ? empty_set : GetSelectedBjetIndicesSet();
 
     double ht = 0;
-    const auto& jets = SelectJets(other_jets_min_pt,5,false,false,JetOrdering::DeepCSV,GetSelectedBjetIndicesSet(),
-                                  other_jets_max_eta, includeHbbJets);
+    const auto& jets = SelectJets(other_jets_min_pt,eta_cut,false,false,JetOrdering::DeepCSV,jets_to_exclude);
         for(size_t n = 0; n < jets.size(); ++n) {
             const auto& jet = jets.at(n);
             ht += jet.GetMomentum().pt();
