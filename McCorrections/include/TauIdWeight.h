@@ -11,43 +11,43 @@ namespace mc_corrections {
 
 class TauIdWeight {
 public:
-    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int decay_mode,
+    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match, int decay_mode,
                               DiscriminatorWP anti_ele_wp, DiscriminatorWP anti_mu_wp,
                               DiscriminatorWP iso_wp) const = 0;
     virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const = 0;
-    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
+    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                             DiscriminatorWP anti_mu_wp) const = 0;
-    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
+    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                            DiscriminatorWP anti_ele_wp) const = 0;
     virtual ~TauIdWeight() {}
 };
 
 class TauIdWeight2016 : public TauIdWeight {
 public:
-    virtual double GetIdIsoSF(const LorentzVectorM_Float& /*p4*/, GenMatch /*gen_match*/, int /*decay_mode*/,
+    virtual double GetIdIsoSF(const LorentzVectorM_Float& /*p4*/, GenLeptonMatch /*gen_match*/, int /*decay_mode*/,
                               DiscriminatorWP /*anti_ele_wp*/, DiscriminatorWP /*anti_mu_wp*/,
                               DiscriminatorWP /*iso_wp*/) const override;
     virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP /*iso_wp*/) const override;
-    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenMatch /*gen_match*/,
+    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenLeptonMatch /*gen_match*/,
                                             DiscriminatorWP /*anti_mu_wp*/) const override;
-    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenMatch /*gen_match*/,
+    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenLeptonMatch /*gen_match*/,
                                            DiscriminatorWP /*anti_ele_wp*/) const override;
 };
 
 class TauIdWeight2017 : public TauIdWeight {
 public:
-    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int /*decay_mode*/,
+    virtual double GetIdIsoSF(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match, int /*decay_mode*/,
                               DiscriminatorWP anti_ele_wp, DiscriminatorWP anti_mu_wp,
                               DiscriminatorWP iso_wp) const override;
     virtual double GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const override;
-    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
+    virtual double GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                             DiscriminatorWP anti_mu_wp) const override;
-    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
+    virtual double GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                            DiscriminatorWP anti_ele_wp) const override;
 
 private:
-    PhysicalValue getMuonMissId(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP iso_wp) const;
-    PhysicalValue getEleMissId(const LorentzVectorM_Float& p4, GenMatch gen_match, DiscriminatorWP iso_wp) const;
+    PhysicalValue getMuonMissId(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match, DiscriminatorWP iso_wp) const;
+    PhysicalValue getEleMissId(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match, DiscriminatorWP iso_wp) const;
     PhysicalValue getTauIso(DiscriminatorWP iso_wp) const;
 };
 } // namespace mc_corrections

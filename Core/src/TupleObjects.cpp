@@ -14,73 +14,46 @@ namespace ntuple {
 
 TupleObject::TupleObject(const ntuple::Event& _event) : event(&_event) {}
 
-TupleLepton::TupleLepton(const ntuple::Event& _event, size_t _leg_id)
-    : TupleObject(_event), leg_id(_leg_id)
+TupleLepton::TupleLepton(const ntuple::Event& _event, size_t _object_id)
+    : TupleObject(_event), object_id(_object_id)
 {
-    if(leg_id < 1 || leg_id > 2)
-        throw analysis::exception("Invalid leg id = %1%.") % leg_id;
+    if(object_id >= event->lep_p4.size())
+        throw analysis::exception("Invalid object id = %1%.") % object_id;
 }
 
-const LorentzVectorM& TupleLepton::p4() const { return leg_id == 1 ? event->p4_1 : event->p4_2; }
-TupleObject::Integer TupleLepton::charge() const { return leg_id == 1 ? event->q_1 : event->q_2; }
-TupleObject::RealNumber TupleLepton::dxy() const { return leg_id == 1 ? event->dxy_1 : event->dxy_2; }
-TupleObject::RealNumber TupleLepton::dz() const { return leg_id == 1 ? event->dz_1 : event->dz_2; }
-TupleObject::RealNumber TupleLepton::iso() const { return leg_id == 1 ? event->iso_1 : event->iso_2; }
-TupleObject::Integer TupleLepton::gen_match() const { return leg_id == 1 ? event->gen_match_1 : event->gen_match_2; }
+const LorentzVectorM& TupleLepton::p4() const { return event->lep_p4.at(object_id); }
+TupleObject::Integer TupleLepton::charge() const { return event->lep_q.at(object_id); }
+TupleObject::RealNumber TupleLepton::dxy() const { return event->lep_dxy.at(object_id); }
+TupleObject::RealNumber TupleLepton::dz() const { return event->lep_dz.at(object_id); }
+TupleObject::RealNumber TupleLepton::iso() const { return event->lep_iso.at(object_id); }
+analysis::GenLeptonMatch TupleLepton::gen_match() const { return analysis::GenLeptonMatch(event->lep_gen_match.at(object_id)); }
+TupleObject::Integer TupleLepton::decayMode() const { return event->lep_decayMode.at(object_id); }
+analysis::LegType TupleLepton::leg_type() const { return analysis::LegType(event->lep_type.at(object_id)); }
 
-TupleElectron::TupleElectron(const ntuple::Event& _event, size_t _leg_id) : TupleLepton(_event, _leg_id) {}
-TupleMuon::TupleMuon(const ntuple::Event& _event, size_t _leg_id) : TupleLepton(_event, _leg_id) {}
-
-TupleTau::TupleTau(const ntuple::Event& _event, size_t _leg_id)
-    : TupleLepton(_event, _leg_id), tauIds(leg_id == 1 ? event->tauId_flags_1 : event->tauId_flags_2)
+bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
 {
+    if(leg_type() != analysis::LegType::tau)
+        throw analysis::exception("LegType is not a tau.");
+    uint16_t discriminator_value = std::numeric_limits<uint16_t>::max();
+    #define TAU_ID(name, pattern, has_raw, wp_list) \
+        if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) discriminator_value = event->name.at(object_id);
+    TAU_IDS()
+    #undef TAU_ID
+    if(discriminator_value == std::numeric_limits<uint16_t>::max())
+        throw analysis::exception("TauId discriminator value not found.");
+    DiscriminatorIdResults discriminator(discriminator_value);
+    return discriminator.Passed(wp);
+
 }
-
-const analysis::TauIdResults& TupleTau::tauIDs() const { return tauIds; }
-
-bool TupleTau::tauID(analysis::TauIdDiscriminator discriminator, analysis::DiscriminatorWP wp) const
+TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {
-    return tauIds.Result(discriminator, wp);
-}
-
-TupleObject::DiscriminatorResult TupleTau::tauIDraw(analysis::TauIdDiscriminator discriminator) const
-{
-    using RawValuePtr = const DiscriminatorResult Event::*;
-    using TauIdDiscriminator = analysis::TauIdDiscriminator;
-    using Key = std::pair<TauIdDiscriminator, size_t>;
-    static const std::map<Key, RawValuePtr> raw_values = {
-        { { TauIdDiscriminator::againstElectronMVA6, 1 }, &Event::tauId_againstElectronMVA6Raw_1 },
-        { { TauIdDiscriminator::againstElectronMVA6, 2 }, &Event::tauId_againstElectronMVA6Raw_2 },
-        { { TauIdDiscriminator::byCombinedIsolationDeltaBetaCorr3Hits, 1 },
-            &Event::tauId_byCombinedIsolationDeltaBetaCorrRaw3Hits_1 },
-        { { TauIdDiscriminator::byCombinedIsolationDeltaBetaCorr3Hits, 2 },
-            &Event::tauId_byCombinedIsolationDeltaBetaCorrRaw3Hits_2 },
-        { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT, 1 },
-            &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw_1 },
-        { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT, 2 },
-            &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw_2 },
-        { { TauIdDiscriminator::byIsolationMVArun2v1DBdR03oldDMwLT, 1 },
-            &Event::tauId_byIsolationMVArun2v1DBdR03oldDMwLTraw_1 },
-        { { TauIdDiscriminator::byIsolationMVArun2v1DBdR03oldDMwLT, 2 },
-            &Event::tauId_byIsolationMVArun2v1DBdR03oldDMwLTraw_2 },
-        { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016, 1 },
-            &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw2016_1 },
-        { { TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016, 2 },
-            &Event::tauId_byIsolationMVArun2v1DBoldDMwLTraw2016_2 },
-        { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, 1 },
-            &Event::tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_1 },
-        { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, 2 },
-            &Event::tauId_byIsolationMVArun2017v2DBoldDMwLTraw2017_2 },
-        { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMdR0p3wLT2017, 1 },
-            &Event::tauId_byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017_1 },
-        { { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMdR0p3wLT2017, 2 },
-            &Event::tauId_byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017_2 }
-    };
-    const Key key(discriminator, leg_id);
-    auto iter = raw_values.find(key);
-    if(iter == raw_values.end())
-        throw analysis::exception("Raw value not found for tau ID discriminator '%1%'.") % discriminator;
-    return event->*(iter->second);
+    if(leg_type() != analysis::LegType::tau)
+        throw analysis::exception("LegType is not a tau.");
+    #define TAU_ID(name, pattern, has_raw, wp_list) \
+        if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) return event->name##raw.at(object_id);
+    TAU_IDS()
+    #undef TAU_ID
+    throw analysis::exception("TauId Raw value not found.");
 }
 
 TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id)

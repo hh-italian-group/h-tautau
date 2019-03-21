@@ -51,6 +51,7 @@ private:
 struct SelectionResultsBase {
     static constexpr size_t NumberOfLegs = 2;
     using TauCandidate = LeptonCandidate<pat::Tau>;
+    using TauCandidateVector = std::vector<TauCandidate>;
     using JetCandidate = Candidate<pat::Jet>;
     using JetCandidateVector = std::vector<JetCandidate>;
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -63,19 +64,23 @@ struct SelectionResultsBase {
     EventEnergyScale energyScale;
 
     bool Zveto, electronVeto, muonVeto;
-    sv_fit::FitResults svfitResult;
+    std::vector<sv_fit::FitResults> svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;
+    TauCandidateVector taus;
+    ElectronCandidateVector electrons;
+    MuonCandidateVector muons;
     ElectronCandidateVector other_electrons;
     MuonCandidateVector other_muons;
     const Vertex* primaryVertex;
-    TriggerResults triggerResults;
+    std::vector<TriggerResults> triggerResults;
+    std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;
 
     SelectionResultsBase(const edm::EventID& _eventId, EventEnergyScale _energyScale) :
         eventId(_eventId), energyScale(_energyScale) {}
 
     virtual ~SelectionResultsBase() {}
-    virtual const LorentzVector& GetHiggsMomentum() const = 0;
+    // virtual const LorentzVector& GetHiggsMomentum() const = 0;
 
     bool HaveSameJets(const SelectionResultsBase& other) const
     {
@@ -110,33 +115,6 @@ struct SelectionResultsBase {
                 return false;
         }
         return true;
-    }
-};
-
-template<typename _FirstLeg, typename _SecondLeg>
-struct SelectionResults : SelectionResultsBase {
-    using FirstLeg = _FirstLeg;
-    using SecondLeg = _SecondLeg;
-    using HiggsCandidate = CompositCandidate<FirstLeg, SecondLeg>;
-    using HiggsCandidatePtr = std::shared_ptr<HiggsCandidate>;
-
-    HiggsCandidatePtr higgs;
-
-    using SelectionResultsBase::SelectionResultsBase;
-
-    void SetHiggsCandidate(const HiggsCandidate& h) { higgs = HiggsCandidatePtr(new HiggsCandidate(h)); }
-    virtual const LorentzVector& GetHiggsMomentum() const override { return higgs->GetMomentum(); }
-
-    bool HaveSameFirstLegOrigin(const SelectionResults<FirstLeg, SecondLeg>& other) const
-    {
-        if(eventId != other.eventId) return false;
-        return &(*higgs->GetFirstDaughter()) == &(*other.higgs->GetFirstDaughter());
-    }
-
-    bool HaveSameSecondLegOrigin(const SelectionResults<FirstLeg, SecondLeg>& other) const
-    {
-        if(eventId != other.eventId) return false;
-        return &(*higgs->GetSecondDaughter()) == &(*other.higgs->GetSecondDaughter());
     }
 };
 

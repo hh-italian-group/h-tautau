@@ -95,11 +95,11 @@ private:
 };
 
 template<typename _FirstDaughter, typename _SecondDaughter>
-class CompositCandidate : public AnalysisObject {
+class CompositeCandidate : public AnalysisObject {
 public:
     using FirstDaughter = _FirstDaughter;
     using SecondDaughter = _SecondDaughter;
-    CompositCandidate(const FirstDaughter& _firstDaughter, const SecondDaughter& _secondDaughter)
+    CompositeCandidate(const FirstDaughter& _firstDaughter, const SecondDaughter& _secondDaughter)
         : AnalysisObject(_firstDaughter.GetMomentum() + _secondDaughter.GetMomentum()),
           firstDaughter(_firstDaughter), secondDaughter(_secondDaughter)
     {
@@ -110,7 +110,7 @@ public:
     }
 
     template<typename FourVector>
-    CompositCandidate(const FirstDaughter& _firstDaughter, const SecondDaughter& _secondDaughter,
+    CompositeCandidate(const FirstDaughter& _firstDaughter, const SecondDaughter& _secondDaughter,
                       const FourVector& _momentum)
         : AnalysisObject(_momentum), firstDaughter(_firstDaughter), secondDaughter(_secondDaughter)
     {

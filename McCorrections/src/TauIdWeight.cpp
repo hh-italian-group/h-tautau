@@ -6,7 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-double TauIdWeight2016::GetIdIsoSF(const LorentzVectorM_Float& /*p4*/, GenMatch /*gen_match*/, int /*decay_mode*/,
+double TauIdWeight2016::GetIdIsoSF(const LorentzVectorM_Float& /*p4*/, GenLeptonMatch /*gen_match*/, int /*decay_mode*/,
                                    DiscriminatorWP /*anti_ele_wp*/, DiscriminatorWP /*anti_mu_wp*/,
                                    DiscriminatorWP /*iso_wp*/) const
 {
@@ -18,24 +18,24 @@ double TauIdWeight2016::GetTauIdEfficiencyUncertainty(DiscriminatorWP /*iso_wp*/
     return 0;
 }
 
-double TauIdWeight2016::GetMuonMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenMatch /*gen_match*/,
+double TauIdWeight2016::GetMuonMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenLeptonMatch /*gen_match*/,
                                                  DiscriminatorWP /*anti_mu_wp*/) const
 {
     return 0;
 }
 
-double TauIdWeight2016::GetEleMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenMatch /*gen_match*/,
+double TauIdWeight2016::GetEleMissIdUncertainty(const LorentzVectorM_Float& /*p4*/, GenLeptonMatch /*gen_match*/,
                                                 DiscriminatorWP /*anti_ele_wp*/) const
 {
     return 0;
 }
 
 
-double TauIdWeight2017::GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_match, int /*decay_mode*/,
+double TauIdWeight2017::GetIdIsoSF(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match, int /*decay_mode*/,
                                    DiscriminatorWP anti_ele_wp, DiscriminatorWP anti_mu_wp,
                                    DiscriminatorWP iso_wp) const
 {
-    auto tauSF = gen_match == GenMatch::Tau ? getTauIso(iso_wp).GetValue() : 1;
+    auto tauSF = gen_match == GenLeptonMatch::Tau ? getTauIso(iso_wp).GetValue() : 1;
     auto muonSF = getMuonMissId(p4, gen_match, anti_mu_wp).GetValue();
     auto eleSF = getEleMissId(p4, gen_match, anti_ele_wp).GetValue();
 
@@ -47,25 +47,25 @@ double TauIdWeight2017::GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) co
     return getTauIso(iso_wp).GetRelativeStatisticalError();
 }
 
-double TauIdWeight2017::GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
+double TauIdWeight2017::GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                                  DiscriminatorWP anti_mu_wp) const
 {
     return getMuonMissId(p4, gen_match, anti_mu_wp).GetRelativeStatisticalError();
 }
 
-double TauIdWeight2017::GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
+double TauIdWeight2017::GetEleMissIdUncertainty(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                                 DiscriminatorWP anti_ele_wp) const
 {
     return getEleMissId(p4, gen_match, anti_ele_wp).GetRelativeStatisticalError();
 }
 
-PhysicalValue TauIdWeight2017::getMuonMissId(const LorentzVectorM_Float& p4, GenMatch gen_match,
+PhysicalValue TauIdWeight2017::getMuonMissId(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                              DiscriminatorWP iso_wp) const
 {
     //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
     //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
 
-    if (!(gen_match == GenMatch::Muon || gen_match == GenMatch::TauMuon))
+    if (!(gen_match == GenLeptonMatch::Muon || gen_match == GenLeptonMatch::TauMuon))
         return PhysicalValue(1,0);
 
     if(!(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Tight))
@@ -89,13 +89,13 @@ PhysicalValue TauIdWeight2017::getMuonMissId(const LorentzVectorM_Float& p4, Gen
     else throw exception("eta out of range");
 }
 
-PhysicalValue TauIdWeight2017::getEleMissId(const LorentzVectorM_Float& p4, GenMatch gen_match,
+PhysicalValue TauIdWeight2017::getEleMissId(const LorentzVectorM_Float& p4, GenLeptonMatch gen_match,
                                             DiscriminatorWP iso_wp) const
 {
     //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
     //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
 
-    if (!(gen_match == GenMatch::Electron || gen_match == GenMatch::TauElectron))
+    if (!(gen_match == GenLeptonMatch::Electron || gen_match == GenLeptonMatch::TauElectron))
         return PhysicalValue(1,0);
 
     //Barrel ( abs(eta) < 1.460)

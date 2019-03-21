@@ -146,14 +146,14 @@ public:
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
                   const std::string& tauTriggerInput, const std::string& tauTriggerInputOld, Period period, DiscriminatorWP _tau_iso_wp);
 
-    double GetIdIsoWeight(const Event& event) const;
-    double GetTriggerWeight(const Event& event) const;
+    double GetIdIsoWeight(EventInfoBase& eventInfo) const;
+    double GetTriggerWeight(EventInfoBase& eventInfo) const;
 
-    virtual double Get(const Event& event) const override;
+    virtual double Get(EventInfoBase& eventInfo) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
 private:
-    double GetTriggerEfficiency(const Event& event, bool isData) const;
+    double GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData) const;
 
 private:
     detail::LeptonScaleFactors electronSF, muonSF;

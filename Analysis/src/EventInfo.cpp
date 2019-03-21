@@ -146,15 +146,52 @@ std::set<size_t> EventInfoBase::GetSelectedBjetIndicesSet() const
     return bjet_indexes;
 }
 
-EventInfoBase::EventInfoBase(const Event& _event, Period _period, JetOrdering _jet_ordering,
-              const SummaryInfo* _summaryInfo) :
-    event(&_event), summaryInfo(_summaryInfo), eventIdentifier(_event.run, _event.lumi, _event.evt),
-    selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)), period(_period),
-    jet_ordering(_jet_ordering)
+const analysis::LepCandidate& EventInfoBase::GetFirstLeg()
+{
+    Lock lock(*mutex);
+    if(!leg1) {
+        tuple_leg1 = std::make_shared<ntuple::TupleLepton>(*event, GetLegIndex(1));
+        leg1 = std::make_shared<analysis::LepCandidate>(*tuple_leg1, tuple_leg1->iso());
+    }
+    return *leg1;
+}
+
+const analysis::LepCandidate& EventInfoBase::GetSecondLeg()
+{
+    Lock lock(*mutex);
+    if(!leg2) {
+        tuple_leg2 = std::make_shared<ntuple::TupleLepton>(*event, GetLegIndex(2));
+        leg2 = std::make_shared<analysis::LepCandidate>(*tuple_leg2, tuple_leg2->iso());
+    }
+    return *leg2;
+}
+
+EventInfoBase EventInfoBase::ApplyShift(UncertaintySource uncertainty_source,
+    UncertaintyScale scale)
+{
+    EventInfoBase shifted_event_info(*this);
+    const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
+    const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
+    const JetCollection& jets = shifted_event_info.GetJets();
+    const auto& other_jets_p4 = event->other_jets_p4;
+    auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
+    const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
+    shifted_event_info.SetJets(corrected_jets);
+    shifted_event_info.SetMetMomentum(shifted_met_p4);
+    return shifted_event_info;
+}
+
+EventInfoBase::EventInfoBase(const Event& _event, size_t _selected_hh_index, Period _period,
+                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo) :
+    event(&_event), summaryInfo(_summaryInfo),selected_htt_index(_selected_hh_index), eventIdentifier(_event.run, _event.lumi, _event.evt),
+     selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)),
+    period(_period), jet_ordering(_jet_ordering)
 {
     mutex = std::make_shared<Mutex>();
     triggerResults.SetAcceptBits(event->trigger_accepts);
-    triggerResults.SetMatchBits(event->trigger_matches);
+    triggerResults.SetMatchBits(event->trigger_matches.at(selected_htt_index));
+    if(summaryInfo)
+        triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(EventInfoBase::GetChannel()));
 }
 
 const EventInfoBase::Event& EventInfoBase::operator*() const { return *event; }
@@ -180,8 +217,8 @@ const kin_fit::FitProducer& EventInfoBase::GetKinFitProducer()
     return kinfitProducer;
 }
 
-const AnalysisObject& EventInfoBase::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
-LorentzVector EventInfoBase::GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
+// const AnalysisObject& EventInfoBase::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
+// LorentzVector EventInfoBase::GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
 
 size_t EventInfoBase::GetNJets() const { return event->jets_p4.size(); }
 size_t EventInfoBase::GetNFatJets() const { return event->fatJets_p4.size(); }
@@ -310,6 +347,13 @@ const MET& EventInfoBase::GetMET()
     return *met;
 }
 
+const size_t EventInfoBase::GetLegIndex(const size_t leg_id)
+{
+    if(leg_id == 1) return event->first_daughter_indexes.at(selected_htt_index);
+    if(leg_id == 2) return event->second_daughter_indexes.at(selected_htt_index);
+    throw exception("Invalid leg id = %1%.") % leg_id;
+}
+
 const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
 {
     Lock lock(*mutex);
@@ -357,8 +401,9 @@ double EventInfoBase::GetMT2()
 {
     Lock lock(*mutex);
     if(!mt2.is_initialized()) {
-        mt2 = Calculate_MT2(event->p4_1, event->p4_2, GetHiggsBB().GetFirstDaughter().GetMomentum(),
-                                           GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
+        mt2 = Calculate_MT2(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
+                            GetHiggsBB().GetFirstDaughter().GetMomentum(),
+                            GetHiggsBB().GetSecondDaughter().GetMomentum(), event->pfMET_p4);
     }
     return *mt2;
 }
@@ -398,24 +443,5 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
-
-std::shared_ptr<EventInfoBase> MakeEventInfo(Channel channel, const EventInfoBase::Event& event,
-                                             Period period, JetOrdering jet_ordering,
-                                             const SummaryInfo* summaryInfo)
-{
-    if(channel == Channel::ETau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<ElectronCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    if(channel == Channel::MuTau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    if(channel == Channel::TauTau)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<TauCandidate, TauCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    if(channel == Channel::MuMu)
-        return std::shared_ptr<EventInfoBase>(new EventInfo<MuonCandidate, MuonCandidate>(
-                event, period, jet_ordering, summaryInfo));
-    throw exception("Unsupported channel %1%.") % channel;
-}
 
 } // namespace analysis

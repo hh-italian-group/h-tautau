@@ -59,7 +59,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Analysis/include/EventLoader.h"
-#include "h-tautau/Core/include/TauIdResults.h"
+#include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -100,13 +100,14 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
-enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm };
+enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm,tau_pog };
 
 ENUM_NAMES(ProductionMode) = {
     { ProductionMode::hh, "hh" },
     { ProductionMode::h_tt, "h_tt" },
     { ProductionMode::h_tt_mssm, "h_tt_mssm" },
     { ProductionMode::h_tt_sm, "h_tt_sm" },
+    { ProductionMode::tau_pog, "tau_pog" },
 };
 
 class BaseTupleProducer : public edm::EDAnalyzer {
@@ -208,20 +209,19 @@ public:
 protected:
     TupleProducerData& GetAnaData() { return anaData; }
 
-    static analysis::TauIdResults CreateTauIdResults(const pat::Tau& tau, analysis::Period period);
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
-    void ApplyBaseSelection(analysis::SelectionResultsBase& selection,
-                            const std::vector<LorentzVector>& signalLeptonMomentums);
+    void ApplyBaseSelection(analysis::SelectionResultsBase& selection);
     void FillEventTuple(const analysis::SelectionResultsBase& selection,
                         const analysis::SelectionResultsBase* reference = nullptr);
-    void FillElectronLeg(size_t leg_id, const ElectronCandidate& electron);
-    void FillMuonLeg(size_t leg_id, const MuonCandidate& muon);
-    void FillTauLeg(size_t leg_id, const TauCandidate& tau, bool fill_tauIds);
+    void FillElectron(const analysis::SelectionResultsBase& selection);
+    void FillMuon(const analysis::SelectionResultsBase& selection);
+    void FillTau(const analysis::SelectionResultsBase& selection);
+    void FillHiggsDaughtersIndexes(const analysis::SelectionResultsBase& selection, size_t shift);
     void FillLheInfo(bool haveReference);
     void FillGenParticleInfo();
     void FillGenJetInfo();
-    void FillLegGenMatch(size_t leg_id, const analysis::LorentzVectorXYZ& p4);
+    void FillLegGenMatch(const analysis::LorentzVectorXYZ& p4);
     void FillMetFilters(analysis::Period period);
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
     void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
@@ -229,38 +229,38 @@ protected:
     std::vector<ElectronCandidate> CollectVetoElectrons(
             const std::vector<const ElectronCandidate*>& signalElectrons = {});
     std::vector<MuonCandidate> CollectVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
-    std::vector<JetCandidate> CollectJets(const std::vector<LorentzVector>& signalLeptonMomentums);
+    std::vector<JetCandidate> CollectJets();
 
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
                             const std::vector<const ElectronCandidate*>& signalElectrons) const;
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
                         const std::vector<const MuonCandidate*>& signalMuons) const;
-    void SelectJet(const JetCandidate& jet, Cutter& cut,
-                   const std::vector<LorentzVector>& signalLeptonMomentums) const;
+    void SelectJet(const JetCandidate& jet, Cutter& cut) const;
 
-    template<typename Candidate1, typename Candidate2,
-             typename ResultCandidate = analysis::CompositCandidate<Candidate1, Candidate2>>
-    std::vector<ResultCandidate> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
+    template<typename Candidate1, typename Candidate2>
+    std::vector<std::pair<size_t,size_t>> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
                                                        const std::vector<Candidate2>& objects2,
                                                        double minDeltaR, const std::string& hist_name,
                                                        int expectedCharge = analysis::AnalysisObject::UnknownCharge)
     {
         const double minDeltaR2 = std::pow(minDeltaR, 2);
-        std::vector<ResultCandidate> result;
-        for(const auto& object1 : objects1) {
-            for(const auto& object2 : objects2) {
+        std::vector<std::pair<size_t,size_t>> higgses_indexes;
+        for(size_t n = 0; n < objects1.size(); ++n) {
+            for(size_t m = 0; m < objects2.size(); ++m) {
+                const auto& object1 = objects1.at(n);
+                const auto& object2 = objects2.at(m);
                 if(ROOT::Math::VectorUtil::DeltaR2(object1.GetMomentum(), object2.GetMomentum()) > minDeltaR2) {
-                    const ResultCandidate candidate(object1, object2);
+                    const analysis::CompositeCandidate<Candidate1, Candidate2> candidate(object1, object2);
                     if (expectedCharge !=analysis::AnalysisObject::UnknownCharge
                             && candidate.GetCharge() != expectedCharge) continue;
-                    result.push_back(candidate);
+                    higgses_indexes.emplace_back(n,m);
                     GetAnaData().Mass(hist_name).Fill(candidate.GetMomentum().M(), 1);
                 }
             }
         }
 
-        GetAnaData().N_objects(hist_name).Fill(result.size(), 1);
-        return result;
+        GetAnaData().N_objects(hist_name).Fill(higgses_indexes.size(), 1);
+        return higgses_indexes;
     }
 
     template<typename Candidate, typename BaseSelectorType, typename Comparitor = std::less<Candidate>>
@@ -311,6 +311,12 @@ protected:
             GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
 
         return selected;
+    }
+
+    template<typename LeptonCandidate>
+    static bool LeptonComparitor(const LeptonCandidate& l1, const LeptonCandidate& l2)
+    {
+        return l1.IsMoreIsolated(l2);
     }
 
     template<typename HiggsCandidate>

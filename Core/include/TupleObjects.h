@@ -7,6 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTypes.h"
 #include "EventTuple.h"
+#include "DiscriminatorIdResults.h"
 #include "TauIdResults.h"
 
 namespace ntuple {
@@ -15,6 +16,7 @@ class TupleObject {
 public:
     using MetType = analysis::MetType;
     using DiscriminatorWP = analysis::DiscriminatorWP;
+    using DiscriminatorIdResults = analysis::DiscriminatorIdResults;
     using DiscriminatorResult = float;
     using Integer = int;
     using RealNumber = float;
@@ -27,38 +29,23 @@ protected:
 
 class TupleLepton : public TupleObject {
 public:
-    TupleLepton(const ntuple::Event& _event, size_t _leg_id);
+    TupleLepton(const ntuple::Event& _event, size_t _object_id);
     const LorentzVectorM& p4() const;
     Integer charge() const;
     RealNumber dxy() const;
     RealNumber dz() const;
     RealNumber iso() const;
-    Integer gen_match() const;
+    analysis::GenLeptonMatch gen_match() const;
+    Integer decayMode() const;
+    analysis::LegType leg_type() const;
 
-protected:
-    size_t leg_id;
-};
-
-class TupleElectron : public TupleLepton {
-public:
-    explicit TupleElectron(const ntuple::Event& _event, size_t _leg_id = 1);
-};
-
-class TupleMuon : public TupleLepton {
-public:
-    explicit TupleMuon(const ntuple::Event& _event, size_t _leg_id = 1);
-};
-
-class TupleTau : public TupleLepton {
-public:
-    TupleTau(const ntuple::Event& _event, size_t _leg_id);
-    const analysis::TauIdResults& tauIDs() const;
-    bool tauID(analysis::TauIdDiscriminator discriminator, analysis::DiscriminatorWP wp) const;
-    DiscriminatorResult tauIDraw(analysis::TauIdDiscriminator discriminator) const;
+    bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
+    DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
 private:
-    analysis::TauIdResults tauIds;
+    size_t object_id;
 };
+
 
 class TupleJet : public TupleObject {
 public:

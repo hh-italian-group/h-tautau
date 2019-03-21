@@ -3,4 +3,5 @@
 <use name="AnalysisTools/Core"/>
 <use name="HTT-utilities/LepEffInterface"/>
 <use name="h-tautau/JetTools"/>
+<use name="h-tautau/Analysis"/>
 <export> <lib name="1"/> </export>
