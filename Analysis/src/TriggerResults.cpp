@@ -23,8 +23,8 @@ void TriggerDescriptorCollection::JetTriggerObjectCollection::SetJetFilterMatchB
     match_bits = match_result ? match_bits | mask : match_bits & ~mask;
 }
 
-TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, const FilterVector& _filters)
-    : type(_type), pt(_pt), filters(_filters) { }
+TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, boost::optional<double> _eta, const FilterVector& _filters)
+    : type(_type), pt(_pt), eta(_eta), filters(_filters) { }
 
 TriggerDescriptorCollection::TriggerDescriptor::TriggerDescriptor(const Pattern _pattern,
                                                                   const std::vector<Leg>& legs_info) :

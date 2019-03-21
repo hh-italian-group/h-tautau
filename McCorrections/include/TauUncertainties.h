@@ -9,16 +9,24 @@ namespace analysis {
 namespace uncertainties {
     namespace tau_2016 {
         constexpr double energyUncertainty = 0.012;
-        constexpr double sf_1prong = 1 - 0.005;
-        constexpr double sf_1prongPi0 = 1 + 0.011;
-        constexpr double sf_3prong = 1 + 0.06;
+        constexpr double sf_1prong = 0.994;
+        constexpr double sf_1prongPi0 = 0.995;
+        constexpr double sf_3prong = 1;
     }
 
     namespace tau_2017 {
         constexpr double energyUncertainty = 0.03;
-        constexpr double sf_1prong = 0.97;
-        constexpr double sf_1prongPi0 = 0.98;
-        constexpr double sf_3prong = 0.99;
+        constexpr double sf_1prong = 1.007;
+        constexpr double sf_1prongPi0 = 0.998;
+        constexpr double sf_3prong = 1.001;
+        constexpr double sf_3prongPi0 = 0.999;
+    }
+
+    namespace tau_2018 {
+        constexpr double energyUncertainty = 0.03;
+        constexpr double sf_1prong = 0.987;
+        constexpr double sf_1prongPi0 = 0.995;
+        constexpr double sf_3prong = 0.988;
     }
 
 } // namespace uncertainties

@@ -79,7 +79,7 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    double pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::pt : cuts::H_tautau_2016::TauTau::tauID::pt;
+    double pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::pt - BaseTupleProducer::pt_shift : cuts::H_tautau_2016::TauTau::tauID::pt - BaseTupleProducer::pt_shift;
     cut(p4.Pt() > pt_cut, "pt", p4.Pt());
     double eta_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::TauTau::tauID::eta : cuts::H_tautau_2016::TauTau::tauID::eta;
     cut(std::abs(p4.Eta()) < eta_cut, "eta", p4.Eta());

@@ -64,10 +64,10 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
-                           EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
+                           EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
                            const std::string& triggerCfg, Channel channel) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
-    l1JetParticles_token(_l1JetParticles_token)
+    l1Tau_token(_l1Tau_token)
 {
     triggerResults_tokens[CMSSW_Process::SIM] = _triggerResultsSIM_token;
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
@@ -123,8 +123,11 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
+            boost::optional<double> eta;
+            if(leg_list.Has("eta"))
+                eta = leg_list.Get<double>("eta");
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
-            legs_vector.emplace_back(type,pt,filters);
+            legs_vector.emplace_back(type,pt,eta,filters);
         }
         triggerDescriptors.Add(entry.first, legs_vector);
     }
@@ -138,7 +141,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         iEvent->getByToken(entry.second, triggerResultsMap[entry.first]);
     iEvent->getByToken(triggerPrescales_token, triggerPrescales);
     iEvent->getByToken(triggerObjects_token, triggerObjects);
-    iEvent->getByToken(l1JetParticles_token, l1JetParticles);
+    iEvent->getByToken(l1Tau_token, l1Taus);
 
     for (auto& desc : pathTriggerObjects){
         for(auto& leg : desc){
@@ -229,8 +232,22 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
         if(candidate_type != leg.type) continue;
         for(const auto& triggerObject : triggerObjectSet) {
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
+            if(leg.eta.is_initialized() && std::abs(candidateMomentum.Eta()) >= leg.eta ) continue;
             if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
-            matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
+            const double deltaR2 = std::pow(0.5, 2);
+            bool found_l1_match = false;
+            const BXVector<l1t::Tau>& l1taus_elements = *l1Taus.product();
+            for (unsigned n = 0; n < l1taus_elements.size(0); ++n){
+                const l1t::Tau& l1tau = l1taus_elements.at(0,n);
+                if(l1tau.et() <= 0) continue;
+                if(l1tau.hwIso() <= 0.5) continue;
+                if(ROOT::Math::VectorUtil::DeltaR2(l1tau.p4(), candidateMomentum) >= deltaR2) continue;
+                if(l1tau.et() > 32){
+                    found_l1_match = true;
+                    break;
+                }
+            }
+            if (found_l1_match) matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
     }
 
