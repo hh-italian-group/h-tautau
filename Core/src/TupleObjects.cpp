@@ -32,8 +32,7 @@ analysis::LegType TupleLepton::leg_type() const { return analysis::LegType(event
 
 bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
 {
-    analysis::LegType leg_type = TupleLepton::leg_type();
-    if(leg_type != analysis::LegType::tau)
+    if(leg_type() != analysis::LegType::tau)
         throw analysis::exception("LegType is not a tau.");
     uint16_t discriminator_value = std::numeric_limits<uint16_t>::max();
     #define TAU_ID(name, pattern, has_raw, wp_list) \
@@ -48,8 +47,7 @@ bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discri
 }
 TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {
-    analysis::LegType leg_type = TupleLepton::leg_type();
-    if(leg_type != analysis::LegType::tau)
+    if(leg_type() != analysis::LegType::tau)
         throw analysis::exception("LegType is not a tau.");
     #define TAU_ID(name, pattern, has_raw, wp_list) \
         if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) return event->name##raw.at(object_id);

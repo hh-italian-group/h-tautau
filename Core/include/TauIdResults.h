@@ -75,7 +75,7 @@ struct TauIdDescriptor {
     {
         const std::string disc_name = ::analysis::ToString(discriminator);
         if(has_raw){
-            float_t value =  tau ? tau->tauID(raw_name) : default_value;
+            float value =  tau ? tau->tauID(raw_name) : default_value;
             tuple.template get<std::vector<float_t>>(prefix + disc_name + raw_suffix).push_back(value);
         }
         if(!working_points.empty()) {

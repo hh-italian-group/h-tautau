@@ -31,8 +31,8 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     LVAR(LorentzVectorM, gen_p4) /* 4-momentum of the matched gen particle */ \
     LVAR(LorentzVectorM, gen_visible_p4) /* 4-momentum of the matched gen particle */ \
     LVAR(Int_t, decayMode) /* tau decay mode */ \
-    LVAR(Int_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
-    LVAR(Int_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
+    LVAR(Bool_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
+    LVAR(Bool_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \

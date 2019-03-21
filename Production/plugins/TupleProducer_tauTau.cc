@@ -111,7 +111,7 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResultsBase& selection)
     eventTuple().storageMode = storageMode.Mode();
 
     BaseTupleProducer::FillTau(selection);
-    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,selection.taus.size());
+    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,0);
 
     eventTuple.Fill();
 }

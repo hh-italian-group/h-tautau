@@ -146,6 +146,41 @@ std::set<size_t> EventInfoBase::GetSelectedBjetIndicesSet() const
     return bjet_indexes;
 }
 
+const analysis::LepCandidate& EventInfoBase::GetFirstLeg()
+{
+    Lock lock(*mutex);
+    if(!leg1) {
+        tuple_leg1 = std::make_shared<ntuple::TupleLepton>(*event, GetLegIndex(1));
+        leg1 = std::make_shared<analysis::LepCandidate>(*tuple_leg1, tuple_leg1->iso());
+    }
+    return *leg1;
+}
+
+const analysis::LepCandidate& EventInfoBase::GetSecondLeg()
+{
+    Lock lock(*mutex);
+    if(!leg2) {
+        tuple_leg2 = std::make_shared<ntuple::TupleLepton>(*event, GetLegIndex(2));
+        leg2 = std::make_shared<analysis::LepCandidate>(*tuple_leg2, tuple_leg2->iso());
+    }
+    return *leg2;
+}
+
+EventInfoBase::EventInfoBase EventInfoBase::ApplyShift(UncertaintySource uncertainty_source,
+    UncertaintyScale scale)
+{
+    EventInfoBase shifted_event_info(*this);
+    const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
+    const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
+    const JetCollection& jets = shifted_event_info.GetJets();
+    const auto& other_jets_p4 = event->other_jets_p4;
+    auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
+    const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
+    shifted_event_info.SetJets(corrected_jets);
+    shifted_event_info.SetMetMomentum(shifted_met_p4);
+    return shifted_event_info;
+}
+
 EventInfoBase::EventInfoBase(const Event& _event, size_t _selected_hh_index, Period _period,
                     JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo) :
     event(&_event), summaryInfo(_summaryInfo),selected_htt_index(_selected_hh_index), eventIdentifier(_event.run, _event.lumi, _event.evt),

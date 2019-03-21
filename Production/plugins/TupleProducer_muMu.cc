@@ -124,7 +124,7 @@ void TupleProducer_muMu::FillEventTuple(const SelectionResultsBase& selection)
     eventTuple().channelId = static_cast<int>(Channel::MuMu);
 
     BaseTupleProducer::FillMuon(selection);
-    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,selection.muons.size());
+    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,0);
 
     eventTuple.Fill();
 }

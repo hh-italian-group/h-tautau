@@ -42,7 +42,7 @@ public:
     bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
     DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
-protected:
+private:
     size_t object_id;
 };
 

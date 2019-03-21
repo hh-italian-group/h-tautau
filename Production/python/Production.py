@@ -188,7 +188,10 @@ if options.saveGenTopInfo:
     process.decaySubset.runMode = cms.string("Run2")
     process.topGenSequence += process.makeGenEvt
 
-if options.anaChannels == 'all':
+
+if options.productionMode == 'hh' and options.anaChannels == 'all':
+    channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
+else if options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau' ]
 else:
     channels = re.split(',', options.anaChannels)
