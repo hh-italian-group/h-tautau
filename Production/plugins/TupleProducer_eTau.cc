@@ -114,9 +114,9 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    double pt_cut = pt - BaseTupleProducer::pt_shift;
+    double pt_cut = pt;
     if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::ETau::tauID::pt;
-    cut(p4.Pt() > pt_cut, "pt", p4.Pt());
+    cut(p4.Pt() > pt_cut - BaseTupleProducer::pt_shift, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     if(productionMode == ProductionMode::hh) {
         const auto dmFinding = tau->tauID("decayModeFinding");

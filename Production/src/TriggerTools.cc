@@ -234,18 +234,13 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
             if(leg.eta.is_initialized() && std::abs(candidateMomentum.Eta()) >= leg.eta ) continue;
             if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
-            const double deltaR2 = std::pow(0.5, 2);
+            const double deltaR2_l1 = std::pow(0.5, 2);
             bool found_l1_match = false;
             const BXVector<l1t::Tau>& l1taus_elements = *l1Taus.product();
-            for (unsigned n = 0; n < l1taus_elements.size(0); ++n){
+            for (unsigned n = 0; n < l1taus_elements.size(0) && !found_l1_match; ++n){
                 const l1t::Tau& l1tau = l1taus_elements.at(0,n);
-                if(l1tau.et() <= 0) continue;
-                if(l1tau.hwIso() <= 0.5) continue;
-                if(ROOT::Math::VectorUtil::DeltaR2(l1tau.p4(), candidateMomentum) >= deltaR2) continue;
-                if(l1tau.et() > 32){
-                    found_l1_match = true;
-                    break;
-                }
+                found_l1_match = l1tau.hwIso() > 0.5 && l1tau.et() > 32 &&
+                                 ROOT::Math::VectorUtil::DeltaR2(l1tau.p4(), candidateMomentum) < deltaR2_l1;
             }
             if (found_l1_match) matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
