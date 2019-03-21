@@ -7,6 +7,8 @@
 #include "h-tautau/Cuts/include/Btag_2016.h"
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
+#include "DataFormats/L1Trigger/interface/Tau.h"
+#include "DataFormats/L1Trigger/interface/BXVector.h"
 
 
 namespace {
@@ -54,8 +56,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "PAT")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
-                 mayConsume<std::vector<l1extra::L1JetParticle>>(
-                                                    iConfig.getParameter<edm::InputTag>("l1JetParticleProduct")),
+                 mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
                  iConfig.getParameter<std::string>("triggerCfg"),
                  _channel)
 {
@@ -165,7 +166,11 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
                                        {10, analysis::uncertainties::tau_2016::sf_3prong} }},
         { analysis::Period::Run2017, { {0, analysis::uncertainties::tau_2017::sf_1prong},
                                        {1, analysis::uncertainties::tau_2017::sf_1prongPi0},
-                                       {10, analysis::uncertainties::tau_2017::sf_3prong} } }
+                                       {10, analysis::uncertainties::tau_2017::sf_3prong},
+                                       {11, analysis::uncertainties::tau_2017::sf_3prongPi0} } }
+        // { analysis::Period::Run2018, { {0, analysis::uncertainties::tau_2018::sf_1prong},
+        //                                {1, analysis::uncertainties::tau_2018::sf_1prongPi0},
+        //                                {10, analysis::uncertainties::tau_2018::sf_3prong} }}
     };
 
     static const std::map<analysis::Period, double> tau_energyUncertainty = {
@@ -552,7 +557,7 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     };
 
     setResult(Filter::PrimaryVertex, "Flag_goodVertices");
-    setResult(Filter::BeamHalo, "Flag_globalTightHalo2016Filter");
+    setResult(Filter::BeamHalo, "Flag_globalSuperTightHalo2016Filter");
     setResult(Filter::HBHE_noise, "Flag_HBHENoiseFilter");
     setResult(Filter::HBHEiso_noise, "Flag_HBHENoiseIsoFilter");
     setResult(Filter::ECAL_TP, "Flag_EcalDeadCellTriggerPrimitiveFilter");
@@ -571,7 +576,7 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     if(period == analysis::Period::Run2017){
         setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
         setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
-        setResult(Filter::ecalBadCalib, "Flag_ecalBadCalibFilter");
+        setResult(Filter::ecalBadCalib, "ecalBadCalibReducedMINIAODFilter");
     }
 
 

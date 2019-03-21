@@ -124,6 +124,8 @@ public:
     using LorentzVectorM = analysis::LorentzVectorM;
     using LorentzVectorE = analysis::LorentzVectorE;
 
+    static constexpr double pt_shift = 2;
+
 private:
     std::string treeName;
     TupleProducerData anaData;

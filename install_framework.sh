@@ -108,6 +108,7 @@ if [ $MODE = "prod17" ] ; then
 #    cd data/RecoEgamma/ElectronIdentification/data
 #    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
+    git cms-addpkg RecoMET/METFilters
     cd $CMSSW_BASE/src
 fi
 
