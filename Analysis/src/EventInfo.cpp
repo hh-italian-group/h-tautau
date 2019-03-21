@@ -166,7 +166,7 @@ const analysis::LepCandidate& EventInfoBase::GetSecondLeg()
     return *leg2;
 }
 
-EventInfoBase::EventInfoBase EventInfoBase::ApplyShift(UncertaintySource uncertainty_source,
+EventInfoBase EventInfoBase::ApplyShift(UncertaintySource uncertainty_source,
     UncertaintyScale scale)
 {
     EventInfoBase shifted_event_info(*this);

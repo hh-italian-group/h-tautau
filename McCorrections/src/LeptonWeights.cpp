@@ -136,7 +136,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
             const double ele_cross_eff = electronSF.GetTriggerEffCross(eventInfo.GetLeg(1).GetMomentum(), isData);
             const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(eventInfo.GetLeg(2).GetMomentum()),
                                                                    eventInfo.GetLeg(2)->gen_match(),
-                                                                   eventInfo.GetLeg(2)->decay_mode(), tau_iso_wp, isData);
+                                                                   eventInfo.GetLeg(2)->decayMode(), tau_iso_wp, isData);
             return std::min(ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff, 1.);
         }
         else
@@ -148,7 +148,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
                 const double muon_cross_eff = muonSF.GetTriggerEffCross(eventInfo.GetLeg(1).GetMomentum(), isData);
                 const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(eventInfo.GetLeg(2).GetMomentum()),
                                                                         eventInfo.GetLeg(2)->gen_match(),
-                                                                        eventInfo.GetLeg(2)->decay_mode(), tau_iso_wp, isData );
+                                                                        eventInfo.GetLeg(2)->decayMode(), tau_iso_wp, isData );
                 return std::min(muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff, 1.);
         }
         else
@@ -160,9 +160,9 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
 
     else if(channel == Channel::TauTau){
         double tauSF_1 = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(eventInfo.GetLeg(1).GetMomentum()), eventInfo.GetLeg(1)->gen_match(),
-                                                         eventInfo.GetLeg(1)->decay_mode(), tau_iso_wp, isData);
+                                                         eventInfo.GetLeg(1)->decayMode(), tau_iso_wp, isData);
         double tauSF_2 = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(eventInfo.GetLeg(2).GetMomentum()), eventInfo.GetLeg(2)->gen_match(),
-                                                         eventInfo.GetLeg(2)->decay_mode(), tau_iso_wp, isData);
+                                                         eventInfo.GetLeg(2)->decayMode(), tau_iso_wp, isData);
         return  tauSF_1 * tauSF_2;
     }
 

@@ -191,7 +191,7 @@ if options.saveGenTopInfo:
 
 if options.productionMode == 'hh' and options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
-else if options.anaChannels == 'all':
+elif options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau' ]
 else:
     channels = re.split(',', options.anaChannels)
