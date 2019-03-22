@@ -134,19 +134,23 @@ double LeptonWeights::GetTriggerEfficiency(const Event& event, bool isData) cons
             const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_2),
                                                                    static_cast<GenMatch>(event.gen_match_2),
                                                                    event.decayMode_2, tau_iso_wp, isData);
-            return std::min(ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff, 1.);
+            bool passSingle = event.p4_1.pt() > 26;
+            bool passCross = event.p4_2.pt() > 32;
+            return std::min(passSingle * ele_single_eff * (1 - passCross * tau_eff) + passCross * ele_cross_eff * tau_eff, 1.);
         }
         else
             return electronSF.GetTriggerEff(event.p4_1, isData);
     }
     else if(channel == Channel::MuTau) {
         if(muonSF.HasCrossTriggers() && std::abs(event.p4_2.eta()) < 2.1){
-                const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
-                const double muon_cross_eff = muonSF.GetTriggerEffCross(event.p4_1, isData);
-                const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_2),
-                                                                       static_cast<GenMatch>(event.gen_match_2),
-                                                                       event.decayMode_2, tau_iso_wp, isData );
-                return std::min(muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff, 1.);
+            const double muon_single_eff = muonSF.GetTriggerEff(event.p4_1, isData);
+            const double muon_cross_eff = muonSF.GetTriggerEffCross(event.p4_1, isData);
+            const double tau_eff = tauTriggerWeight->GetEfficiency(channel, LorentzVectorM(event.p4_2),
+                                                                   static_cast<GenMatch>(event.gen_match_2),
+                                                                   event.decayMode_2, tau_iso_wp, isData );
+            bool passSingle = event.p4_1.pt() > 35;
+            bool passCross = event.p4_2.pt() > 35;
+            return std::min(passSingle * muon_single_eff * (1 - passCross * tau_eff) + passCross* muon_cross_eff * tau_eff, 1.);
         }
         else
             return muonSF.GetTriggerEff(event.p4_1, isData);

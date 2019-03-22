@@ -13,7 +13,7 @@ double TauIdWeight2016::GetIdIsoSF(const LorentzVectorM_Float& /*p4*/, GenMatch 
     return 1;
 }
 
-double TauIdWeight2016::GetTauIdEfficiencyUncertainty(DiscriminatorWP /*iso_wp*/) const
+double TauIdWeight2016::GetTauIdEfficiencyUncertainty(DiscriminatorWP /*iso_wp*/, GenMatch /*gen_match*/) const
 {
     return 0;
 }
@@ -35,16 +35,16 @@ double TauIdWeight2017::GetIdIsoSF(const LorentzVectorM_Float& p4, GenMatch gen_
                                    DiscriminatorWP anti_ele_wp, DiscriminatorWP anti_mu_wp,
                                    DiscriminatorWP iso_wp) const
 {
-    auto tauSF = gen_match == GenMatch::Tau ? getTauIso(iso_wp).GetValue() : 1;
+    auto tauSF = getTauIso(iso_wp, gen_match).GetValue();
     auto muonSF = getMuonMissId(p4, gen_match, anti_mu_wp).GetValue();
     auto eleSF = getEleMissId(p4, gen_match, anti_ele_wp).GetValue();
 
     return tauSF * muonSF * eleSF;
 }
 
-double TauIdWeight2017::GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp) const
+double TauIdWeight2017::GetTauIdEfficiencyUncertainty(DiscriminatorWP iso_wp, GenMatch gen_match) const
 {
-    return getTauIso(iso_wp).GetRelativeStatisticalError();
+    return getTauIso(iso_wp, gen_match).GetRelativeStatisticalError();
 }
 
 double TauIdWeight2017::GetMuonMissIdUncertainty(const LorentzVectorM_Float& p4, GenMatch gen_match,
@@ -138,20 +138,35 @@ PhysicalValue TauIdWeight2017::getEleMissId(const LorentzVectorM_Float& p4, GenM
 }
 
 //Isolation sum with deltaR=0.5
-PhysicalValue TauIdWeight2017::getTauIso(DiscriminatorWP iso_wp) const
+PhysicalValue TauIdWeight2017::getTauIso(DiscriminatorWP iso_wp, GenMatch gen_match) const
 {
     //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV
     //https://indico.cern.ch/event/738043/contributions/3048471/attachments/1674773/2691664/TauId_26062018.pdf
 
-    if(iso_wp == DiscriminatorWP::VLoose)
-        return  PhysicalValue(0.88,0.03);
-    else if(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)
-        return  PhysicalValue(0.89,0.03);
-    else if(iso_wp == DiscriminatorWP::VTight)
-        return  PhysicalValue(0.86,0.03);
-    else if(iso_wp == DiscriminatorWP::VVTight)
-        return  PhysicalValue(0.84,0.03);
-    else throw exception("WP %1% is not supported.") % iso_wp;
+    if(gen_match == GenMatch::Tau){
+        if(iso_wp == DiscriminatorWP::VLoose)
+            return  PhysicalValue(0.88,0.03);
+        else if(iso_wp == DiscriminatorWP::Loose || iso_wp == DiscriminatorWP::Medium || iso_wp == DiscriminatorWP::Tight)
+            return  PhysicalValue(0.89,0.03);
+        else if(iso_wp == DiscriminatorWP::VTight)
+            return  PhysicalValue(0.86,0.03);
+        else if(iso_wp == DiscriminatorWP::VVTight)
+            return  PhysicalValue(0.84,0.03);
+        else throw exception("WP %1% is not supported.") % iso_wp;
+    }
+    else
+        return PhysicalValue(1,0);
+}
+
+PhysicalValue TauIdWeight2017::getDmDependentTauIso(GenMatch gen_match, int decay_mode) const
+{
+
+    std::map<int, double> decay_SF_map = {{0, 1.06}, {1,1.01}, {10, 0.90}};
+
+    if (gen_match == GenMatch::Tau)
+        return PhysicalValue(decay_SF_map[decay_mode],0);
+    else
+        return PhysicalValue(1,0);
 }
 
 } // namespace mc_corrections
