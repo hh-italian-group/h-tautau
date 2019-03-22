@@ -118,7 +118,6 @@ namespace jet_ordering {
         }
         else
             jets_ordered = jet_info_vector;
-
         std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
         return jets_ordered;
     }

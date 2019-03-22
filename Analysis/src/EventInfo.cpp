@@ -78,6 +78,7 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
             if((event.jets_pu_id.at(n) & 2) == 0) continue;
             // if(useBTag && (event.jets_pu_id.at(n) & 2) == 0) continue;
 
+
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
         }
@@ -128,7 +129,6 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         if (bjets_ordered.size() >= 2)
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
     }
-
     return selected_signal_jets;
 }
 
@@ -232,7 +232,6 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
 
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
     }
-
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
     for(size_t h = 0; h < jets_ordered.size(); ++h){
         const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
