@@ -126,7 +126,7 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger
             boost::optional<double> eta;
             if(leg_list.Has("eta"))
                 eta = leg_list.Get<double>("eta");
-            bool applyL1match;
+            bool applyL1match = false;
             if(leg_list.Has("applyL1match"))
                 applyL1match = leg_list.Get<bool>("applyL1match");
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
@@ -247,7 +247,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
                                      ROOT::Math::VectorUtil::DeltaR2(l1tau.p4(), candidateMomentum) < deltaR2_l1;
                 }
             }
-            if (found_l1_match) matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
+            if (!leg.applyL1match || found_l1_match) matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
     }
 
