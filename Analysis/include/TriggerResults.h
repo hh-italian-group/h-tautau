@@ -50,6 +50,7 @@ public:
         LegType type;
         double pt;
         boost::optional<double> eta;
+        boost::optional<bool> applyL1match;
         FilterVector filters;
         std::vector<unsigned> jet_filter_indices;
         Leg(const LegType _type, double _pt, boost::optional<double> _eta, const FilterVector& _filters);
