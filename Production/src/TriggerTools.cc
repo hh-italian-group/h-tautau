@@ -126,8 +126,11 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger
             boost::optional<double> eta;
             if(leg_list.Has("eta"))
                 eta = leg_list.Get<double>("eta");
+            bool applyL1match = false;
+            if(leg_list.Has("applyL1match"))
+                applyL1match = leg_list.Get<bool>("applyL1match");
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
-            legs_vector.emplace_back(type,pt,eta,filters);
+            legs_vector.emplace_back(type,pt,eta,applyL1match,filters);
         }
         triggerDescriptors.Add(entry.first, legs_vector);
     }
@@ -236,13 +239,15 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
             if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
             const double deltaR2_l1 = std::pow(0.5, 2);
             bool found_l1_match = false;
-            const BXVector<l1t::Tau>& l1taus_elements = *l1Taus.product();
-            for (unsigned n = 0; n < l1taus_elements.size(0) && !found_l1_match; ++n){
-                const l1t::Tau& l1tau = l1taus_elements.at(0,n);
-                found_l1_match = l1tau.hwIso() > 0.5 && l1tau.et() > 32 &&
-                                 ROOT::Math::VectorUtil::DeltaR2(l1tau.p4(), candidateMomentum) < deltaR2_l1;
+            if(leg.applyL1match){
+                const BXVector<l1t::Tau>& l1taus_elements = *l1Taus.product();
+                for (unsigned n = 0; n < l1taus_elements.size(0) && !found_l1_match; ++n){
+                    const l1t::Tau& l1tau = l1taus_elements.at(0,n);
+                    found_l1_match = l1tau.hwIso() > 0.5 && l1tau.et() > 32 && leg.type == analysis::LegType::tau &&
+                                     ROOT::Math::VectorUtil::DeltaR2(l1tau.p4(), candidateMomentum) < deltaR2_l1;
+                }
             }
-            if (found_l1_match) matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
+            if (!leg.applyL1match || found_l1_match) matched_legId_triggerObjectSet_vector.at(n).insert(triggerObject);
         }
     }
 
