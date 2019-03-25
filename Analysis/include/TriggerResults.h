@@ -50,10 +50,11 @@ public:
         LegType type;
         double pt;
         boost::optional<double> eta;
-        boost::optional<bool> applyL1match;
+        bool applyL1match = false;
         FilterVector filters;
         std::vector<unsigned> jet_filter_indices;
-        Leg(const LegType _type, double _pt, boost::optional<double> _eta, const FilterVector& _filters);
+        Leg(const LegType _type, double _pt, boost::optional<double> _eta, bool _applyL1match,
+            const FilterVector& _filters);
     };
 
     struct TriggerDescriptor {
