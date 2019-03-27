@@ -250,7 +250,7 @@ private:
         const double abs_eta = std::abs(jet_p4.eta());
         return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
                     abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto && (jets_pu_id & 2) == 0);
+                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto && (jets_pu_id & (1 << 2)) == 0);
     }
 
 private:
