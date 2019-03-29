@@ -797,6 +797,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     // HTT candidate
     for(size_t n = 0; n < selection.svfitResult.size(); ++n){
+        eventTuple().SVfit_Higges_indexes.push_back(n);
         eventTuple().SVfit_is_valid.push_back(selection.svfitResult.at(n).has_valid_momentum);
         eventTuple().SVfit_p4.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum));
         eventTuple().SVfit_p4_error.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum_error));

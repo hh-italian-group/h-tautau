@@ -4,7 +4,7 @@
 
 declare -A INSTALL_MODES
 INSTALL_MODES=( ["prod16"]="CMSSW_8_0_30 slc6_amd64_gcc530" \
-                ["prod17"]="CMSSW_10_2_11 slc6_amd64_gcc700" \
+                ["prod17"]="CMSSW_10_2_11 slc7_amd64_gcc700" \
                 ["ana"]="CMSSW_10_2_11 slc6_amd64_gcc7000" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=8

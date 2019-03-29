@@ -122,6 +122,7 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(std::vector<ULong64_t>, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
+    VAR(std::vector<size_t>, SVfit_Higges_indexes) /* SVfit using integration method */ \
     VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit using integration method */ \
     VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit using integration method */ \
     VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit using integration method */ \

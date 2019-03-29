@@ -56,6 +56,23 @@ TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscrim
     throw analysis::exception("TauId Raw value not found.");
 }
 
+int TupleObject::CompareIsolations(const TupleLepton& other, analysis::TauIdDiscriminator disc) const
+{
+    if(leg_type() != other.leg_type())
+        throw analysis::exception("Isolation of legs with different types are not comparable");
+    if(leg_type() == analysis::LegType::e || leg_type() == analysis::LegType::mu) {
+        if(iso() == other.iso()) return 0;
+        return iso() < other.iso() ? 1 : -1;
+    }
+    if(leg_type() == analysis::LegType::tau) {
+        const auto iso1 = GetRawValue(disc);
+        const auto iso2 = other.GetRawValue(disc);
+        if(iso1 == iso2) return 0;
+        return iso1 > iso2 ? 1 : -1;
+    }
+    throw analysis::exception("Isolation comparison for the leg type '%1%' is not supported.") % leg_type();
+}
+
 TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id)
     : TupleObject(_event), jet_id(_jet_id)
 {
