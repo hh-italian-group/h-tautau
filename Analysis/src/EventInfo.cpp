@@ -391,6 +391,22 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
     return *kinfit_results;
 }
 
+const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
+{
+    Lock lock(*mutex);
+    if(!svfit_results){
+        throw exception("Can't retrieve SVFit results.");
+    }
+    else {
+        svfit_results->has_valid_momentum = event->SVfit_is_valid.at(selected_htt_index);
+        svfit_results->momentum = event->SVfit_p4.at(selected_htt_index);
+        svfit_results->momentum_error = event->SVfit_p4_error.at(selected_htt_index);
+        svfit_results->transverseMass = event->SVfit_mt.at(selected_htt_index);
+        svfit_results->transverseMass_error = event->SVfit_mt_error.at(selected_htt_index);
+    }
+    return *svfit_results;
+}
+
 LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
 {
     Lock lock(*mutex);

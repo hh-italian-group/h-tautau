@@ -15,6 +15,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
 
+#include "SVfitAnaInterface.h"
 #include "KinFitInterface.h"
 #include "MT2.h"
 #include "TriggerResults.h"
@@ -194,6 +195,7 @@ public:
     }
 
     const kin_fit::FitResults& GetKinFitResults();
+    const sv_fit_ana::FitResults& GetSVFitResults();
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET);
     double GetMT2();
@@ -299,6 +301,7 @@ private:
     std::shared_ptr<ntuple::TupleMet> tuple_met;
     std::shared_ptr<MET> met;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
+    std::shared_ptr<sv_fit_ana::FitResults> svfit_results;
     boost::optional<double> mt2;
     double mva_score;
     std::shared_ptr<ntuple::TupleLepton> tuple_leg1;

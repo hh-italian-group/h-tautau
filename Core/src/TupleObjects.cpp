@@ -56,7 +56,7 @@ TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscrim
     throw analysis::exception("TauId Raw value not found.");
 }
 
-int TupleObject::CompareIsolations(const TupleLepton& other, analysis::TauIdDiscriminator disc) const
+int TupleLepton::CompareIsolations(const TupleLepton& other, analysis::TauIdDiscriminator disc) const
 {
     if(leg_type() != other.leg_type())
         throw analysis::exception("Isolation of legs with different types are not comparable");
