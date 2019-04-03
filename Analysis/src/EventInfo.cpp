@@ -75,8 +75,8 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
-            if((event.jets_pu_id.at(n) & 2) == 0) continue;
-//            if(useBTag && (event.jets_pu_id.at(n) & 2) == 0) continue;
+            if((event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+//            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -262,7 +262,7 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
         const JetCandidate& jet = all_jets.at(n);
         if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
-        if(applyPu && (event->jets_pu_id.at(n) & 2) == 0) continue;
+        if(applyPu && (event->jets_pu_id.at(n) & (1 << 2)) == 0) continue;
         if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
         if(passBtag && !bTagger.Pass(*event,n,DiscriminatorWP::Medium)) continue;
 
@@ -286,7 +286,7 @@ double EventInfoBase::GetHT(bool includeHbbJets, bool apply_eta_cut)
     const std::set<size_t>& jets_to_exclude = includeHbbJets ? empty_set : GetSelectedBjetIndicesSet();
 
     double ht = 0;
-    const auto& jets = SelectJets(other_jets_min_pt,eta_cut,false,false,JetOrdering::DeepCSV,jets_to_exclude);
+    const auto& jets = SelectJets(other_jets_min_pt,eta_cut,true,false,JetOrdering::DeepCSV,jets_to_exclude);
     for(size_t n = 0; n < jets.size(); ++n) {
         const auto& jet = jets.at(n);
         ht += jet.GetMomentum().pt();
