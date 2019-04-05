@@ -90,7 +90,7 @@ void ConvertGenEventTypeCountMap(ProdSummary& s, const GenEventTypeCountMap& gen
 std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirectory* directory,
                                                  bool readMode, TreeState treeState);
 void CheckProdSummaryConsistency(const ProdSummary& s);
-bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os = nullptr);
+bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2);
 void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSummary);
 ProdSummary MergeSummaryTuple(SummaryTuple& tuple);
 std::shared_ptr<ExpressTuple> CreateExpressTuple(const std::string& name, TDirectory* directory,

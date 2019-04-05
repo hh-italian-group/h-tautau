@@ -27,6 +27,7 @@ TupleObject::RealNumber TupleLepton::dxy() const { return event->lep_dxy.at(obje
 TupleObject::RealNumber TupleLepton::dz() const { return event->lep_dz.at(object_id); }
 TupleObject::RealNumber TupleLepton::iso() const { return event->lep_iso.at(object_id); }
 analysis::GenLeptonMatch TupleLepton::gen_match() const { return analysis::GenLeptonMatch(event->lep_gen_match.at(object_id)); }
+const LorentzVectorM& TupleLepton::gen_p4() const { return event->lep_gen_p4.at(object_id); }
 TupleObject::Integer TupleLepton::decayMode() const { return event->lep_decayMode.at(object_id); }
 analysis::LegType TupleLepton::leg_type() const { return analysis::LegType(event->lep_type.at(object_id)); }
 

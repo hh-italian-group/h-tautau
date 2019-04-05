@@ -36,6 +36,7 @@ public:
     RealNumber dz() const;
     RealNumber iso() const;
     analysis::GenLeptonMatch gen_match() const;
+    const LorentzVectorM& gen_p4() const;
     Integer decayMode() const;
     analysis::LegType leg_type() const;
 

@@ -12,6 +12,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
+#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
 
@@ -138,8 +139,14 @@ public:
     Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
 
     EventInfoBase(const Event& _event, size_t _selected_htt_index, Period _period,
-                JetOrdering _jet_ordering,
-                  const SummaryInfo* _summaryInfo = nullptr);
+              JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo = nullptr);
+    EventInfoBase(const Event& _event, TauIdDiscriminator _discr, Period _period,
+              JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo = nullptr);
+    EventInfoBase(const Event& _event);
+    EventInfoBase(const Event& _event, TauIdDiscriminator _discr);
+    EventInfoBase(const Event& _event, TauIdDiscriminator _discr, Period _period,
+            JetOrdering _jet_ordering);
+
 
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
     virtual ~EventInfoBase(){} //destructor
@@ -182,7 +189,8 @@ public:
     const JetCandidate& GetBJet(const size_t index);
     const HiggsBBCandidate& GetHiggsBB();
     const MET& GetMET();
-    const size_t GetLegIndex(const size_t leg_id);
+    size_t GetLegIndex(const size_t leg_id);
+    boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin);
 
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
@@ -205,7 +213,7 @@ public:
 
     const LepCandidate& GetFirstLeg();
     const LepCandidate& GetSecondLeg();
-    EventInfoBase ApplyShift(UncertaintySource uncertainty_source, UncertaintyScale scale);
+    std::shared_ptr<EventInfoBase> ApplyShift(UncertaintySource uncertainty_source, UncertaintyScale scale);
 
     const LepCandidate& GetLeg(size_t leg_id)
     {
@@ -233,36 +241,8 @@ public:
         return GetHiggsTT(useSVfit).GetMomentum();
     }
 
-    static size_t GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr)
-    {
-        std::vector<ntuple::TupleLepton> lepton_candidates;
-        for(size_t n = 0; n < event.lep_p4.size(); ++n)
-            lepton_candidates.emplace_back(event, n);
 
-        std::vector<size_t> higgs_candidates(event.first_daughter_indexes.size());
-        std::iota(higgs_candidates.begin(), higgs_candidates.end(), 0);
 
-        const auto Comparitor = [&](size_t h1, size_t h2) -> bool
-        {
-            if(h1 == h2) return false;
-            for(size_t leg_id = 0; leg_id < 2; ++leg_id) {
-                const size_t h1_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h1) : event.second_daughter_indexes.at(h1);
-                const size_t h2_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h2) : event.second_daughter_indexes.at(h2);
-                if(h1_leg_id != h2_leg_id) {
-                    const auto& h1_leg = lepton_candidates.at(h1_leg_id);
-                    const auto& h2_leg = lepton_candidates.at(h2_leg_id);
-                    const int iso_cmp = h1_leg.CompareIsolations(h2_leg, discr);
-                    if(iso_cmp != 0) return iso_cmp == 1;
-                    if(h1_leg.p4().pt() != h2_leg.p4().pt())
-                        return h1_leg.p4().pt() > h2_leg.p4().pt();
-                }
-            }
-
-            throw analysis::exception("not found a good criteria for best tau pair");
-        };
-
-        return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
-    }
 
 
 
@@ -311,5 +291,15 @@ private:
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
 
 };
+
+///not needed right??
+EventInfoBase CreateEventInfo(const ntuple::Event& _event, size_t _selected_hh_index, Period _period,
+                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo); //to be removed
+
+EventInfoBase CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period,
+                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo);
+EventInfoBase CreateEventInfo(const ntuple::Event& _event);
+EventInfoBase CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr);
+EventInfoBase CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period, JetOrdering _jet_ordering);
 
 } // namespace analysis
