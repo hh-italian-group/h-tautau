@@ -50,8 +50,9 @@ public:
             ntuple::EventTuple eventTuple_mc(args.tree_name(), inputFile_mc.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_mc) {
                 if (event.eventEnergyScale != 0 ) continue;
-                analysis::EventInfoBase eventInfo = CreateEventInfo(event);
-                anaData.npv("mc").Fill(event.npv, pu_weight.Get(eventInfo));
+                boost::optional<analysis::EventInfoBase> eventInfo = CreateEventInfo(event);
+                if(!eventInfo.is_initialized()) continue;
+                anaData.npv("mc").Fill(event.npv, pu_weight.Get(*eventInfo));
                 anaData.npv("mc_noweights").Fill(event.npv);
             }
         }

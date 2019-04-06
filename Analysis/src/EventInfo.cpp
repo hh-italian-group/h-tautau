@@ -528,13 +528,13 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
 ///not needed right??
-EventInfoBase CreateEventInfo(const ntuple::Event& event, size_t selected_hh_index, Period period,
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, size_t selected_hh_index, Period period,
                     JetOrdering jet_ordering, const SummaryInfo* summaryInfo)
 {
     return EventInfoBase(event,selected_hh_index,period,jet_ordering,summaryInfo);
 } //to be removed
 
-EventInfoBase CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr, Period period,
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr, Period period,
                     JetOrdering jet_ordering, const SummaryInfo* summaryInfo)
 {
     EventInfoBase eventInfo(event);
@@ -542,7 +542,7 @@ EventInfoBase CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator dis
     return EventInfoBase(event,selected_higgs_index,period,jet_ordering,summaryInfo);
 }
 
-EventInfoBase CreateEventInfo(const ntuple::Event& event)
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event)
 {
     EventInfoBase eventInfo(event);
     size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,0.5);
@@ -550,7 +550,7 @@ EventInfoBase CreateEventInfo(const ntuple::Event& event)
 }
 
 
-EventInfoBase CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr)
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr)
 {
     EventInfoBase eventInfo(event);
     size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,discr,0.5);
@@ -558,7 +558,7 @@ EventInfoBase CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator dis
 }
 
 
-EventInfoBase CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr, Period period, JetOrdering jet_ordering)
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr, Period period, JetOrdering jet_ordering)
 {
     EventInfoBase eventInfo(event);
     size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,discr,0.5);

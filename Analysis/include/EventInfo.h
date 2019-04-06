@@ -293,13 +293,13 @@ private:
 };
 
 ///not needed right??
-EventInfoBase CreateEventInfo(const ntuple::Event& _event, size_t _selected_hh_index, Period _period,
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, size_t _selected_hh_index, Period _period,
                     JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo); //to be removed
 
-EventInfoBase CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period,
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period,
                     JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo);
-EventInfoBase CreateEventInfo(const ntuple::Event& _event);
-EventInfoBase CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr);
-EventInfoBase CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period, JetOrdering _jet_ordering);
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event);
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr);
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period, JetOrdering _jet_ordering);
 
 } // namespace analysis

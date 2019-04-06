@@ -58,24 +58,25 @@ public:
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
 
-            analysis::EventInfoBase event = CreateEventInfo(originalTuple->data(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering, summaryInfo.get());
-            if(event.GetEnergyScale() != EventEnergyScale::Central) continue;
-            if(!event.GetTriggerResults().AnyAcceptAndMatch()) continue;
-            if(event->extraelec_veto || event->extramuon_veto) continue;
+            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering, summaryInfo.get());
+            if(!event.is_initialized()) continue;
+            if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
+            if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;
+            if((*event)->extraelec_veto || (*event)->extramuon_veto) continue;
 
             if(!genMatchInfo.count(channel))
                 throw exception("Gen Match numbers not found for this channel.");
             std::pair<Float_t,Float_t> genMatchNumbers = genMatchInfo.at(channel);
-            if(event.GetLeg(1)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.first) && event.GetLeg(2)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.second))
-                anaData.mass_bothGood().Fill((event.GetLeg(1)->p4() + event.GetLeg(2)->p4()).mass());
-            if(event.GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) && event.GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
-                anaData.mass_bothBad().Fill((event.GetLeg(1)->p4() + event.GetLeg(2)->p4()).mass());
-            if(event.GetLeg(1)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.first) && event.GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
-                anaData.mass_1stGood_2ndBad().Fill((event.GetLeg(1)->p4() + event.GetLeg(2)->p4()).mass());
-            if(event.GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) && event.GetLeg(2)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.second))
-                anaData.mass_1stBad_2ndGood().Fill((event.GetLeg(1)->p4() + event.GetLeg(2)->p4()).mass());
-            if(event.GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) || event.GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
-                anaData.mass_allBad().Fill((event.GetLeg(1)->p4() + event.GetLeg(2)->p4()).mass());
+            if(event->GetLeg(1)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.second))
+                anaData.mass_bothGood().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
+            if(event->GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
+                anaData.mass_bothBad().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
+            if(event->GetLeg(1)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
+                anaData.mass_1stGood_2ndBad().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
+            if(event->GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.second))
+                anaData.mass_1stBad_2ndGood().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
+            if(event->GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) || event->GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
+                anaData.mass_allBad().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
 
         }
 
