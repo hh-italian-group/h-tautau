@@ -37,8 +37,10 @@ public:
         auto eventTuple = ntuple::CreateEventTuple("tauTau",inputFile.get(),true,ntuple::TreeState::Full);
 
         for(const ntuple::Event& event : *eventTuple) {
-            GenMatch gen_match = static_cast<GenMatch>(event.gen_match_2);
-            std::cout << "TauID weight: " << tauId_weight->GetIdIsoSF(event.p4_2, gen_match, event.decayMode_2, DiscriminatorWP::Loose,DiscriminatorWP::Loose,DiscriminatorWP::Medium) << std::endl;
+            boost::optional<analysis::EventInfoBase> eventInfo = CreateEventInfo(event);
+            if(!eventInfo.is_initialized()) continue;
+            GenLeptonMatch gen_match = eventInfo->GetLeg(2)->gen_match();
+            std::cout << "TauID weight: " << tauId_weight->GetIdIsoSF(eventInfo->GetLeg(2)->p4(), gen_match, eventInfo->GetLeg(2)->decayMode(), DiscriminatorWP::Loose,DiscriminatorWP::Loose,DiscriminatorWP::Medium) << std::endl;
         }
 
     }

@@ -29,23 +29,10 @@ public:
         return casted_provider;
     }
 
-    template<typename Event>
-    double GetWeight(const Event& event, WeightType weightType) const
-    {
-        double weight = GetProvider(weightType)->Get(event);
-        if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
-            throw exception("%1% weights is nan or infinity for event %2%.") % weightType % EventIdentifier(event);
-		return weight;
-    }
-
-    template<typename Event>
-    double GetTotalWeight(const Event& event, const WeightingMode& weightingMode) const
-    {
-        double weight = 1.;
-        for(WeightType weightType : weightingMode)
-            weight *= GetWeight(event, weightType);
-        return weight;
-    }
+    double GetWeight(EventInfoBase& event, WeightType weightType) const;
+    double GetWeight(const ntuple::ExpressEvent& event, WeightType weightType) const;
+    double GetTotalWeight(EventInfoBase& event, const WeightingMode& weightingMode) const;
+    double GetTotalWeight(const ntuple::ExpressEvent& event, const WeightingMode& weightingMode) const;
 
 protected:
     static std::string FullName(const std::string& fileName, const std::string& path);

@@ -12,12 +12,17 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
+#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
 
+#include "SVfitAnaInterface.h"
 #include "KinFitInterface.h"
 #include "MT2.h"
 #include "TriggerResults.h"
+
+#include <numeric>
+
 
 namespace analysis {
 
@@ -80,7 +85,6 @@ namespace jet_ordering {
         }
         else
             jets_ordered = jet_info_vector;
-
         std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
         return jets_ordered;
     }
@@ -134,9 +138,10 @@ public:
 
     Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
 
-    EventInfoBase(const Event& _event, size_t _selected_htt_index, Period _period,
-                JetOrdering _jet_ordering,
-                  const SummaryInfo* _summaryInfo = nullptr);
+    EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
+                  size_t _selected_htt_index, const SelectedSignalJets& _selected_signal_jets,
+                  Period _period, JetOrdering _jet_ordering);
+
 
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
     virtual ~EventInfoBase(){} //destructor
@@ -152,6 +157,7 @@ public:
     const TriggerResults& GetTriggerResults() const;
     const SummaryInfo& GetSummaryInfo() const;
     static const kin_fit::FitProducer& GetKinFitProducer();
+    static const sv_fit_ana::FitProducer& GetSVFitProducer();
 
     // virtual const Candidate& GetLeg(size_t /*leg_id*/);
     // virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/);
@@ -166,8 +172,10 @@ public:
     void SetJets(const JetCollection& new_jets);
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
+                             bool applyPu = false, bool passBtag = false,
                              JetOrdering jet_ordering = JetOrdering::DeepCSV,
-                             const std::set<size_t>& jet_to_exclude_indexes = {});
+                             const std::set<size_t>& jet_to_exclude_indexes = {},
+                             double low_eta_cut = 0);
 
     double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
     const FatJetCollection& GetFatJets();
@@ -177,7 +185,9 @@ public:
     const JetCandidate& GetBJet(const size_t index);
     const HiggsBBCandidate& GetHiggsBB();
     const MET& GetMET();
-    const size_t GetLegIndex(const size_t leg_id);
+    size_t GetLegIndex(const size_t leg_id);
+    static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
+    static boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin);
 
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
@@ -190,6 +200,7 @@ public:
     }
 
     const kin_fit::FitResults& GetKinFitResults();
+    const sv_fit_ana::FitResults& GetSVFitResults();
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET);
     double GetMT2();
@@ -199,7 +210,7 @@ public:
 
     const LepCandidate& GetFirstLeg();
     const LepCandidate& GetSecondLeg();
-    EventInfoBase ApplyShift(UncertaintySource uncertainty_source, UncertaintyScale scale);
+    std::shared_ptr<EventInfoBase> ApplyShift(UncertaintySource uncertainty_source, UncertaintyScale scale);
 
     const LepCandidate& GetLeg(size_t leg_id)
     {
@@ -229,6 +240,9 @@ public:
 
 
 
+
+
+
 protected:
     const Event* event;
     const SummaryInfo* summaryInfo;
@@ -238,7 +252,7 @@ protected:
 
 private:
     template<typename LorentzVector>
-    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period)
+    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, int jets_pu_id)
     {
         if(period !=  analysis::Period::Run2017)
             return true;
@@ -246,7 +260,7 @@ private:
         const double abs_eta = std::abs(jet_p4.eta());
         return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
                     abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto);
+                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto && (jets_pu_id & (1 << 2)) == 0);
     }
 
 private:
@@ -264,6 +278,7 @@ private:
     std::shared_ptr<ntuple::TupleMet> tuple_met;
     std::shared_ptr<MET> met;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
+    std::shared_ptr<sv_fit_ana::FitResults> svfit_results;
     boost::optional<double> mt2;
     double mva_score;
     std::shared_ptr<ntuple::TupleLepton> tuple_leg1;
@@ -273,5 +288,10 @@ private:
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
 
 };
+
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const SummaryInfo* summaryInfo = nullptr,
+                                               TauIdDiscriminator discr = TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
+                                               Period period = analysis::Period::Run2017,
+                                               JetOrdering jet_ordering = JetOrdering::DeepCSV);
 
 } // namespace analysis

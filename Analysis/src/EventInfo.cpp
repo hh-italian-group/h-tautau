@@ -74,7 +74,9 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
+            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
+            if((event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+//            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -126,7 +128,6 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         if (bjets_ordered.size() >= 2)
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
     }
-
     return selected_signal_jets;
 }
 
@@ -166,26 +167,26 @@ const analysis::LepCandidate& EventInfoBase::GetSecondLeg()
     return *leg2;
 }
 
-EventInfoBase EventInfoBase::ApplyShift(UncertaintySource uncertainty_source,
+std::shared_ptr<EventInfoBase> EventInfoBase::ApplyShift(UncertaintySource uncertainty_source,
     UncertaintyScale scale)
 {
-    EventInfoBase shifted_event_info(*this);
-    const SummaryInfo& summaryInfo = shifted_event_info.GetSummaryInfo();
+    std::shared_ptr<EventInfoBase> shifted_event_info = std::make_shared<EventInfoBase>(*this);
+    const SummaryInfo& summaryInfo = shifted_event_info->GetSummaryInfo();
     const jec::JECUncertaintiesWrapper& jecUncertainties = summaryInfo.GetJecUncertainties();
-    const JetCollection& jets = shifted_event_info.GetJets();
+    const JetCollection& jets = shifted_event_info->GetJets();
     const auto& other_jets_p4 = event->other_jets_p4;
-    auto shifted_met_p4(shifted_event_info.GetMET().GetMomentum());
+    auto shifted_met_p4(shifted_event_info->GetMET().GetMomentum());
     const JetCollection& corrected_jets = jecUncertainties.ApplyShift(jets,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
-    shifted_event_info.SetJets(corrected_jets);
-    shifted_event_info.SetMetMomentum(shifted_met_p4);
+    shifted_event_info->SetJets(corrected_jets);
+    shifted_event_info->SetMetMomentum(shifted_met_p4);
     return shifted_event_info;
 }
 
-EventInfoBase::EventInfoBase(const Event& _event, size_t _selected_hh_index, Period _period,
-                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo) :
-    event(&_event), summaryInfo(_summaryInfo),selected_htt_index(_selected_hh_index), eventIdentifier(_event.run, _event.lumi, _event.evt),
-     selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)),
-    period(_period), jet_ordering(_jet_ordering)
+EventInfoBase::EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
+                             size_t _selected_htt_index, const SelectedSignalJets& _selected_signal_jets,
+                             Period _period, JetOrdering _jet_ordering) :
+event(&_event), summaryInfo(_summaryInfo), selected_htt_index(_selected_htt_index), eventIdentifier(_event.run, _event.lumi, _event.evt),
+ selected_signal_jets(_selected_signal_jets), period(_period), jet_ordering(_jet_ordering)
 {
     mutex = std::make_shared<Mutex>();
     triggerResults.SetAcceptBits(event->trigger_accepts);
@@ -193,6 +194,7 @@ EventInfoBase::EventInfoBase(const Event& _event, size_t _selected_hh_index, Per
     if(summaryInfo)
         triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(EventInfoBase::GetChannel()));
 }
+
 
 const EventInfoBase::Event& EventInfoBase::operator*() const { return *event; }
 const EventInfoBase::Event* EventInfoBase::operator->() const { return event; }
@@ -215,6 +217,12 @@ const kin_fit::FitProducer& EventInfoBase::GetKinFitProducer()
 {
     static kin_fit::FitProducer kinfitProducer;
     return kinfitProducer;
+}
+
+const sv_fit_ana::FitProducer& EventInfoBase::GetSVFitProducer()
+{
+    static sv_fit_ana::FitProducer svfitProducer;
+    return svfitProducer;
 }
 
 // const AnalysisObject& EventInfoBase::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
@@ -247,8 +255,10 @@ void EventInfoBase::SetJets(const JetCollection& new_jets)
     jets = std::make_shared<JetCollection>(new_jets);
 }
 
-EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, JetOrdering jet_ordering,
-                                                       const std::set<size_t>& jet_to_exclude_indexes)
+EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
+                                                       bool passBtag, JetOrdering jet_ordering,
+                                                       const std::set<size_t>& jet_to_exclude_indexes,
+                                                       double low_eta_cut)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
@@ -257,11 +267,14 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
-        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
+        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
+        if(applyPu && (event->jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+        if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
+        if(passBtag && !bTagger.Pass(*event,n,DiscriminatorWP::Medium)) continue;
+
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
     }
-
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
     for(size_t h = 0; h < jets_ordered.size(); ++h){
         const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
@@ -270,20 +283,19 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     return selected_jets;
 }
 
-double EventInfoBase::GetHT(bool includeHbbJets, bool apply_pt_eta_cut)
+double EventInfoBase::GetHT(bool includeHbbJets, bool apply_eta_cut)
 {
     static constexpr double other_jets_min_pt = 20;
     static constexpr double other_jets_max_eta = 4.7;
+    static const std::set<size_t> empty_set = {};
+
+    const double eta_cut = apply_eta_cut ? other_jets_max_eta : 5;
+    const std::set<size_t>& jets_to_exclude = includeHbbJets ? empty_set : GetSelectedBjetIndicesSet();
 
     double ht = 0;
-    const auto& jets = GetJets();
+    const auto& jets = SelectJets(other_jets_min_pt,eta_cut,true,false,JetOrdering::DeepCSV,jets_to_exclude);
     for(size_t n = 0; n < jets.size(); ++n) {
         const auto& jet = jets.at(n);
-
-        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
-        if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
-        if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
-            || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
         ht += jet.GetMomentum().pt();
     }
     return ht;
@@ -347,11 +359,61 @@ const MET& EventInfoBase::GetMET()
     return *met;
 }
 
-const size_t EventInfoBase::GetLegIndex(const size_t leg_id)
+size_t EventInfoBase::GetLegIndex(size_t leg_id)
 {
     if(leg_id == 1) return event->first_daughter_indexes.at(selected_htt_index);
     if(leg_id == 2) return event->second_daughter_indexes.at(selected_htt_index);
     throw exception("Invalid leg id = %1%.") % leg_id;
+}
+
+bool EventInfoBase::PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel)
+{
+    if(lepton.leg_type() == LegType::e || lepton.leg_type() == LegType::mu) return true;
+    double pt_cut = channel == Channel::TauTau ? cuts::H_tautau_2016::TauTau::tauID::pt : cuts::H_tautau_2016::MuTau::tauID::pt;
+    if(lepton.leg_type() == LegType::tau && lepton.p4().pt() > pt_cut) return true;
+    return false;
+}
+
+boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin)
+{
+    std::vector<ntuple::TupleLepton> lepton_candidates;
+    for(size_t n = 0; n < event.lep_p4.size(); ++n)
+        lepton_candidates.emplace_back(event, n);
+
+    std::vector<size_t> higgs_candidates;
+
+    const double minDeltaR2 = std::pow(DeltaRmin, 2);
+    for(size_t n = 0; n < event.first_daughter_indexes.size(); ++n){
+        const auto& first_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
+        const auto& second_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
+        if(ROOT::Math::VectorUtil::DeltaR2(first_leg.p4(), second_leg.p4()) <= minDeltaR2) continue;
+        const Channel channel = static_cast<Channel>(event.channelId);
+        if(!PassDefaultLegSelection(first_leg,channel)) continue;
+        if(!PassDefaultLegSelection(second_leg,channel)) continue;
+        higgs_candidates.push_back(n);
+    }
+
+    const auto Comparitor = [&](size_t h1, size_t h2) -> bool
+    {
+        if(h1 == h2) return false;
+        for(size_t leg_id = 0; leg_id < 2; ++leg_id) {
+            const size_t h1_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h1) : event.second_daughter_indexes.at(h1);
+            const size_t h2_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h2) : event.second_daughter_indexes.at(h2);
+            if(h1_leg_id != h2_leg_id) {
+                const auto& h1_leg = lepton_candidates.at(h1_leg_id);
+                const auto& h2_leg = lepton_candidates.at(h2_leg_id);
+                const int iso_cmp = h1_leg.CompareIsolations(h2_leg, discr);
+                if(iso_cmp != 0) return iso_cmp == 1;
+                if(h1_leg.p4().pt() != h2_leg.p4().pt())
+                    return h1_leg.p4().pt() > h2_leg.p4().pt();
+            }
+        }
+
+        throw analysis::exception("not found a good criteria for best tau pair");
+    };
+
+    if(!higgs_candidates.empty()) return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
+    return boost::optional<size_t>();
 }
 
 const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
@@ -384,6 +446,32 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
         }
     }
     return *kinfit_results;
+}
+
+const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
+{
+    Lock lock(*mutex);
+    if(!svfit_results){
+        const auto iter = std::find(event->SVfit_Higges_indexes.begin(), event->SVfit_Higges_indexes.end(), selected_htt_index);
+        svfit_results = std::make_shared<sv_fit_ana::FitResults>();
+        if(iter == event->SVfit_Higges_indexes.end()){
+            const auto& svfitProducer = GetSVFitProducer();
+            const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),GetMET());
+            svfit_results->has_valid_momentum = result.has_valid_momentum;
+            svfit_results->momentum = result.momentum;
+            svfit_results->momentum_error = result.momentum_error;
+            svfit_results->transverseMass = result.transverseMass;
+            svfit_results->transverseMass_error = result.transverseMass_error;
+        }
+        else {
+            svfit_results->has_valid_momentum = event->SVfit_is_valid.at(selected_htt_index);
+            svfit_results->momentum = event->SVfit_p4.at(selected_htt_index);
+            svfit_results->momentum_error = event->SVfit_p4_error.at(selected_htt_index);
+            svfit_results->transverseMass = event->SVfit_mt.at(selected_htt_index);
+            svfit_results->transverseMass_error = event->SVfit_mt_error.at(selected_htt_index);
+        }
+    }
+    return *svfit_results;
 }
 
 LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
@@ -442,6 +530,18 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 }
 
 double EventInfoBase::GetMvaScore() const { return mva_score; }
+
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const SummaryInfo* summaryInfo,
+                                               TauIdDiscriminator discr,
+                                               Period period,
+                                               JetOrdering jet_ordering)
+{
+    EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering);
+    boost::optional<size_t> selected_higgs_index = EventInfoBase::GetHiggsCandidateIndex(event,discr,cuts::H_tautau_2016::DeltaR_betweenSignalObjects);
+    if(selected_higgs_index.is_initialized()) return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
+    return boost::optional<EventInfoBase>();
+}
+
 
 
 } // namespace analysis

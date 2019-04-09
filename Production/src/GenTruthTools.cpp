@@ -54,7 +54,7 @@ LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle, std::v
 LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenParticleCollection& genParticles)
 {
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
-    static constexpr double dR2_threshold = std::pow(0.2, 2);
+    static double dR2_threshold = std::pow(0.2, 2);
 
     static const std::map<int, double> pt_thresholds = {
         { electronPdgId, 8 }, { muonPdgId, 8 }, { tauPdgId, 15 }

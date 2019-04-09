@@ -95,6 +95,40 @@ EventWeights::ProviderPtr EventWeights::GetProvider(WeightType weightType) const
     return providers.at(weightType);
 }
 
+double EventWeights::GetWeight(EventInfoBase& event, WeightType weightType) const
+{
+    double weight = GetProvider(weightType)->Get(event);
+    if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
+        throw exception("%1% weights is nan or infinity for event %2%.") % weightType % EventIdentifier(*event);
+    return weight;
+}
+
+
+double EventWeights::GetTotalWeight(EventInfoBase& event, const WeightingMode& weightingMode) const
+{
+    double weight = 1.;
+    for(WeightType weightType : weightingMode)
+        weight *= GetWeight(event, weightType);
+    return weight;
+}
+
+double EventWeights::GetWeight(const ntuple::ExpressEvent& event, WeightType weightType) const
+{
+    double weight = GetProvider(weightType)->Get(event);
+    if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
+        throw exception("%1% weights is nan or infinity for event %2%.") % weightType % EventIdentifier(event);
+    return weight;
+}
+
+
+double EventWeights::GetTotalWeight(const ntuple::ExpressEvent& event, const WeightingMode& weightingMode) const
+{
+    double weight = 1.;
+    for(WeightType weightType : weightingMode)
+        weight *= GetWeight(event, weightType);
+    return weight;
+}
+
 std::string EventWeights::FullName(const std::string& fileName, const std::string& path)
 {
     const std::string name = path + "/" + fileName;
