@@ -138,14 +138,9 @@ public:
 
     Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
 
-    EventInfoBase(const Event& _event, size_t _selected_htt_index, Period _period,
-              JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo = nullptr);
-    EventInfoBase(const Event& _event, TauIdDiscriminator _discr, Period _period,
-              JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo = nullptr);
-    EventInfoBase(const Event& _event);
-    EventInfoBase(const Event& _event, TauIdDiscriminator _discr);
-    EventInfoBase(const Event& _event, TauIdDiscriminator _discr, Period _period,
-            JetOrdering _jet_ordering);
+    EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
+                  size_t _selected_htt_index, SelectedSignalJets _selected_signal_jets,
+                  Period _period, JetOrdering _jet_ordering);
 
 
     EventInfoBase(const EventInfoBase& ) = default; //copy constructor
@@ -162,6 +157,7 @@ public:
     const TriggerResults& GetTriggerResults() const;
     const SummaryInfo& GetSummaryInfo() const;
     static const kin_fit::FitProducer& GetKinFitProducer();
+    static const sv_fit_ana::FitProducer& GetSVFitProducer();
 
     // virtual const Candidate& GetLeg(size_t /*leg_id*/);
     // virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/);
@@ -190,7 +186,8 @@ public:
     const HiggsBBCandidate& GetHiggsBB();
     const MET& GetMET();
     size_t GetLegIndex(const size_t leg_id);
-    boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin);
+    static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
+    static boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin);
 
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
@@ -292,14 +289,9 @@ private:
 
 };
 
-///not needed right??
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, size_t _selected_hh_index, Period _period,
-                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo); //to be removed
-
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period,
-                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo);
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event);
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr);
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& _event, TauIdDiscriminator _discr, Period _period, JetOrdering _jet_ordering);
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const SummaryInfo* summaryInfo = nullptr,
+                                               TauIdDiscriminator discr = TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
+                                               Period period = analysis::Period::Run2017,
+                                               JetOrdering jet_ordering = JetOrdering::DeepCSV);
 
 } // namespace analysis

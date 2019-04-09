@@ -36,10 +36,10 @@ public:
 
     void Run()
     {
-        static const std::map<Channel, std::pair<Float_t,Float_t>> genMatchInfo = {
-            { Channel::ETau, { 3,5 } },
-            { Channel::MuTau, { 4,5 } },
-            { Channel::TauTau, { 5,5 } }
+        static const std::map<Channel, std::pair<GenLeptonMatch,GenLeptonMatch>> genMatchInfo = {
+            { Channel::ETau, { GenLeptonMatch::TauElectron,GenLeptonMatch::Tau } },
+            { Channel::MuTau, { GenLeptonMatch::TauMuon,GenLeptonMatch::Tau } },
+            { Channel::TauTau, { GenLeptonMatch::Tau,GenLeptonMatch::Tau } }
         };
 
         std::cout << boost::format("Processing input file '%1%' into output file '%2%'.\n")
@@ -58,7 +58,7 @@ public:
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
 
-            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering, summaryInfo.get());
+            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), summaryInfo.get(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering);
             if(!event.is_initialized()) continue;
             if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;
@@ -66,16 +66,16 @@ public:
 
             if(!genMatchInfo.count(channel))
                 throw exception("Gen Match numbers not found for this channel.");
-            std::pair<Float_t,Float_t> genMatchNumbers = genMatchInfo.at(channel);
-            if(event->GetLeg(1)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.second))
+            std::pair<GenLeptonMatch,GenLeptonMatch> genMatchNumbers = genMatchInfo.at(channel);
+            if(event->GetLeg(1)->gen_match() == genMatchNumbers.first && event->GetLeg(2)->gen_match() == genMatchNumbers.second)
                 anaData.mass_bothGood().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
-            if(event->GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
+            if(event->GetLeg(1)->gen_match() != genMatchNumbers.first && event->GetLeg(2)->gen_match() != genMatchNumbers.second)
                 anaData.mass_bothBad().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
-            if(event->GetLeg(1)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
+            if(event->GetLeg(1)->gen_match() == genMatchNumbers.first && event->GetLeg(2)->gen_match() != genMatchNumbers.second)
                 anaData.mass_1stGood_2ndBad().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
-            if(event->GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) && event->GetLeg(2)->gen_match() == static_cast<GenLeptonMatch>(genMatchNumbers.second))
+            if(event->GetLeg(1)->gen_match() != genMatchNumbers.first && event->GetLeg(2)->gen_match() == genMatchNumbers.second)
                 anaData.mass_1stBad_2ndGood().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
-            if(event->GetLeg(1)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.first) || event->GetLeg(2)->gen_match() != static_cast<GenLeptonMatch>(genMatchNumbers.second))
+            if(event->GetLeg(1)->gen_match() != genMatchNumbers.first || event->GetLeg(2)->gen_match() != genMatchNumbers.second)
                 anaData.mass_allBad().Fill((event->GetLeg(1)->p4() + event->GetLeg(2)->p4()).mass());
 
         }

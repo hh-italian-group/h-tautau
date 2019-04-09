@@ -182,11 +182,11 @@ std::shared_ptr<EventInfoBase> EventInfoBase::ApplyShift(UncertaintySource uncer
     return shifted_event_info;
 }
 
-EventInfoBase::EventInfoBase(const Event& _event, size_t _selected_hh_index, Period _period,
-                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo) :
-event(&_event), summaryInfo(_summaryInfo), selected_htt_index(_selected_hh_index), eventIdentifier(_event.run, _event.lumi, _event.evt),
- selected_signal_jets(SelectSignalJets(_event,_period,_jet_ordering)),
-period(_period), jet_ordering(_jet_ordering)
+EventInfoBase::EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
+                             size_t _selected_htt_index, SelectedSignalJets _selected_signal_jets,
+                             Period _period, JetOrdering _jet_ordering) :
+event(&_event), summaryInfo(_summaryInfo), selected_htt_index(_selected_htt_index), eventIdentifier(_event.run, _event.lumi, _event.evt),
+ selected_signal_jets(_selected_signal_jets), period(_period), jet_ordering(_jet_ordering)
 {
     mutex = std::make_shared<Mutex>();
     triggerResults.SetAcceptBits(event->trigger_accepts);
@@ -194,19 +194,6 @@ period(_period), jet_ordering(_jet_ordering)
     if(summaryInfo)
         triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(EventInfoBase::GetChannel()));
 }
-
-EventInfoBase::EventInfoBase(const Event& _event, TauIdDiscriminator _discr, Period _period,
-                    JetOrdering _jet_ordering, const SummaryInfo* _summaryInfo) :
-                    EventInfoBase(_event,*GetHiggsCandidateIndex(_event,_discr,0.5),_period,_jet_ordering,_summaryInfo) {}
-
-EventInfoBase::EventInfoBase(const Event& _event) :
-EventInfoBase(_event,*GetHiggsCandidateIndex(_event,TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,0.5),analysis::Period::Run2017,JetOrdering::DeepCSV) {}
-
-EventInfoBase::EventInfoBase(const Event& _event, TauIdDiscriminator _discr) :
-EventInfoBase(_event,*GetHiggsCandidateIndex(_event,_discr,0.5),analysis::Period::Run2017,JetOrdering::DeepCSV) {}
-
-EventInfoBase::EventInfoBase(const Event& _event, TauIdDiscriminator _discr, Period _period, JetOrdering _jet_ordering) :
-EventInfoBase(_event,*GetHiggsCandidateIndex(_event,_discr,0.5),_period,_jet_ordering) {}
 
 
 const EventInfoBase::Event& EventInfoBase::operator*() const { return *event; }
@@ -230,6 +217,12 @@ const kin_fit::FitProducer& EventInfoBase::GetKinFitProducer()
 {
     static kin_fit::FitProducer kinfitProducer;
     return kinfitProducer;
+}
+
+const sv_fit_ana::FitProducer& EventInfoBase::GetSVFitProducer()
+{
+    static sv_fit_ana::FitProducer svfitProducer;
+    return svfitProducer;
 }
 
 // const AnalysisObject& EventInfoBase::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
@@ -366,14 +359,14 @@ const MET& EventInfoBase::GetMET()
     return *met;
 }
 
-size_t EventInfoBase::GetLegIndex(const size_t leg_id)
+size_t EventInfoBase::GetLegIndex(size_t leg_id)
 {
     if(leg_id == 1) return event->first_daughter_indexes.at(selected_htt_index);
     if(leg_id == 2) return event->second_daughter_indexes.at(selected_htt_index);
     throw exception("Invalid leg id = %1%.") % leg_id;
 }
 
-bool PassedLegSelection(const ntuple::TupleLepton& lepton, const Channel& channel)
+bool EventInfoBase::PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel)
 {
     if(lepton.leg_type() == LegType::e || lepton.leg_type() == LegType::mu) return true;
     double pt_cut = channel == Channel::TauTau ? cuts::H_tautau_2016::TauTau::tauID::pt : cuts::H_tautau_2016::MuTau::tauID::pt;
@@ -395,8 +388,8 @@ boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Even
         const auto& second_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
         if(ROOT::Math::VectorUtil::DeltaR2(first_leg.p4(), second_leg.p4()) <= minDeltaR2) continue;
         const Channel channel = static_cast<Channel>(event.channelId);
-        if(!PassedLegSelection(first_leg,channel)) continue;
-        if(!PassedLegSelection(second_leg,channel)) continue;
+        if(!PassDefaultLegSelection(first_leg,channel)) continue;
+        if(!PassDefaultLegSelection(second_leg,channel)) continue;
         higgs_candidates.push_back(n);
     }
 
@@ -419,7 +412,8 @@ boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Even
         throw analysis::exception("not found a good criteria for best tau pair");
     };
 
-    return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
+    if(!higgs_candidates.empty()) return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
+    return boost::optional<size_t>();
 }
 
 const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
@@ -458,14 +452,24 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
 {
     Lock lock(*mutex);
     if(!svfit_results){
-        throw exception("Can't retrieve SVFit results.");
-    }
-    else {
-        svfit_results->has_valid_momentum = event->SVfit_is_valid.at(selected_htt_index);
-        svfit_results->momentum = event->SVfit_p4.at(selected_htt_index);
-        svfit_results->momentum_error = event->SVfit_p4_error.at(selected_htt_index);
-        svfit_results->transverseMass = event->SVfit_mt.at(selected_htt_index);
-        svfit_results->transverseMass_error = event->SVfit_mt_error.at(selected_htt_index);
+        const auto iter = std::find(event->SVfit_Higges_indexes.begin(), event->SVfit_Higges_indexes.end(), selected_htt_index);
+        svfit_results = std::make_shared<sv_fit_ana::FitResults>();
+        if(iter == event->SVfit_Higges_indexes.end()){
+            const auto& svfitProducer = GetSVFitProducer();
+            const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),GetMET());
+            svfit_results->has_valid_momentum = result.has_valid_momentum;
+            svfit_results->momentum = result.momentum;
+            svfit_results->momentum_error = result.momentum_error;
+            svfit_results->transverseMass = result.transverseMass;
+            svfit_results->transverseMass_error = result.transverseMass_error;
+        }
+        else {
+            svfit_results->has_valid_momentum = event->SVfit_is_valid.at(selected_htt_index);
+            svfit_results->momentum = event->SVfit_p4.at(selected_htt_index);
+            svfit_results->momentum_error = event->SVfit_p4_error.at(selected_htt_index);
+            svfit_results->transverseMass = event->SVfit_mt.at(selected_htt_index);
+            svfit_results->transverseMass_error = event->SVfit_mt_error.at(selected_htt_index);
+        }
     }
     return *svfit_results;
 }
@@ -527,42 +531,16 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
-///not needed right??
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, size_t selected_hh_index, Period period,
-                    JetOrdering jet_ordering, const SummaryInfo* summaryInfo)
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const SummaryInfo* summaryInfo,
+                                               TauIdDiscriminator discr,
+                                               Period period,
+                                               JetOrdering jet_ordering)
 {
-    return EventInfoBase(event,selected_hh_index,period,jet_ordering,summaryInfo);
-} //to be removed
-
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr, Period period,
-                    JetOrdering jet_ordering, const SummaryInfo* summaryInfo)
-{
-    EventInfoBase eventInfo(event);
-    size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,discr,0.5);
-    return EventInfoBase(event,selected_higgs_index,period,jet_ordering,summaryInfo);
-}
-
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event)
-{
-    EventInfoBase eventInfo(event);
-    size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,0.5);
-    return EventInfoBase(event,selected_higgs_index,analysis::Period::Run2017,JetOrdering::DeepCSV);
-}
-
-
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr)
-{
-    EventInfoBase eventInfo(event);
-    size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,discr,0.5);
-    return EventInfoBase(event,selected_higgs_index,analysis::Period::Run2017,JetOrdering::DeepCSV);
-}
-
-
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, TauIdDiscriminator discr, Period period, JetOrdering jet_ordering)
-{
-    EventInfoBase eventInfo(event);
-    size_t selected_higgs_index = *eventInfo.GetHiggsCandidateIndex(event,discr,0.5);
-    return EventInfoBase(event,selected_higgs_index,period,jet_ordering);
+    EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering);
+    boost::optional<size_t> selected_higgs_index = EventInfoBase::GetHiggsCandidateIndex(event,discr,cuts::H_tautau_2016::DeltaR_betweenSignalObjects);
+    boost::optional<EventInfoBase> eventInfo = EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
+    if(eventInfo.is_initialized()) return eventInfo;
+    return boost::optional<EventInfoBase>();
 }
 
 

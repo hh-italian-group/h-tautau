@@ -10,6 +10,32 @@ namespace analysis {
 
 namespace sv_fit_ana {
 
+inline classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const ntuple::TupleLepton& lepton)
+{
+    if(lepton.leg_type() == analysis::LegType::e){
+        const auto& momentum = lepton.p4();
+        // applying fix for electron mass
+        static const double minVisMass = classic_svFit::electronMass, maxVisMass = minVisMass;
+        double preciseVisMass = momentum.mass();
+        if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
+        if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
+        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay,
+                                                momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass);
+    }
+    if(lepton.leg_type() == analysis::LegType::mu){
+        const auto& momentum = lepton.p4();
+        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay,
+                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M());
+    }
+    if(lepton.leg_type() == analysis::LegType::tau){
+        const auto& momentum = lepton.p4();
+        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay,
+                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M(),
+                                                  lepton.decayMode());
+    }
+    throw exception("Leg Type not supported for SVFitAnaInterface.");
+}
+
 FitResults FitProducer::RunAlgorithm(const std::vector<classic_svFit::MeasuredTauLepton>& measured_leptons,
                                      const LorentzVector& met_momentum, const SquareMatrix<2>& met_cov) const
 {
@@ -30,6 +56,18 @@ FitResults FitProducer::RunAlgorithm(const std::vector<classic_svFit::MeasuredTa
         result.has_valid_momentum = true;
     }
     return result;
+}
+
+FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_daughter,
+                            const LeptonCandidate<ntuple::TupleLepton>& second_daughter,
+                            const MissingET<ntuple::TupleMet>& met) const
+{
+    std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
+        CreateMeasuredLepton(*first_daughter),
+        CreateMeasuredLepton(*second_daughter)
+    };
+
+    return RunAlgorithm(measured_leptons, met.GetMomentum(), met.GetCovMatrix());
 }
 
 } // namespace sv_fit
