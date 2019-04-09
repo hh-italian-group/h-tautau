@@ -139,7 +139,7 @@ public:
     Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
 
     EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
-                  size_t _selected_htt_index, SelectedSignalJets _selected_signal_jets,
+                  size_t _selected_htt_index, const SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
 

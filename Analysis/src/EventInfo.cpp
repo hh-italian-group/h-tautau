@@ -183,7 +183,7 @@ std::shared_ptr<EventInfoBase> EventInfoBase::ApplyShift(UncertaintySource uncer
 }
 
 EventInfoBase::EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
-                             size_t _selected_htt_index, SelectedSignalJets _selected_signal_jets,
+                             size_t _selected_htt_index, const SelectedSignalJets& _selected_signal_jets,
                              Period _period, JetOrdering _jet_ordering) :
 event(&_event), summaryInfo(_summaryInfo), selected_htt_index(_selected_htt_index), eventIdentifier(_event.run, _event.lumi, _event.evt),
  selected_signal_jets(_selected_signal_jets), period(_period), jet_ordering(_jet_ordering)
@@ -538,8 +538,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const
 {
     EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering);
     boost::optional<size_t> selected_higgs_index = EventInfoBase::GetHiggsCandidateIndex(event,discr,cuts::H_tautau_2016::DeltaR_betweenSignalObjects);
-    boost::optional<EventInfoBase> eventInfo = EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
-    if(eventInfo.is_initialized()) return eventInfo;
+    if(selected_higgs_index.is_initialized()) return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
     return boost::optional<EventInfoBase>();
 }
 
