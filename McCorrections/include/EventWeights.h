@@ -16,7 +16,7 @@ public:
     using ProviderPtr = std::shared_ptr<IWeightProvider>;
     using ProviderMap = std::map<WeightType, ProviderPtr>;
 
-    EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, const WeightingMode& mode = {});
+    EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, bool applyTauId, const WeightingMode& mode = {});
     ProviderPtr GetProvider(WeightType weightType) const;
 
     template<typename Provider>
