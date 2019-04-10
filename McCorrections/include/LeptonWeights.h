@@ -144,7 +144,8 @@ public:
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                   const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                  const std::string& tauTriggerInput, const std::string& tauTriggerInputOld, Period period, DiscriminatorWP _tau_iso_wp);
+                  const std::string& tauTriggerInput, const std::string& tauTriggerInputOld, Period period, DiscriminatorWP _tau_iso_wp,
+                  bool _applyTauId);
 
     double GetIdIsoWeight(EventInfoBase& eventInfo) const;
     double GetTriggerWeight(EventInfoBase& eventInfo) const;
@@ -160,6 +161,7 @@ private:
     std::shared_ptr<TauIdWeight> tauIdWeight;
     std::shared_ptr<TauTriggerWeight> tauTriggerWeight;
     DiscriminatorWP tau_iso_wp;
+    bool applyTauId;
 };
 
 } // namespace mc_corrections

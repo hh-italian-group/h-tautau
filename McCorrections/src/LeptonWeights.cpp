@@ -61,10 +61,10 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
                              const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                              const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
                              const std::string& tauTriggerInput, const std::string& tauTriggerInputOld, Period period,
-                             DiscriminatorWP _tau_iso_wp) :
+                             DiscriminatorWP _tau_iso_wp, bool _applyTauId) :
     electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
     muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
-    tau_iso_wp(_tau_iso_wp)
+    tau_iso_wp(_tau_iso_wp), applyTauId(_applyTauId)
 {
     if(period == Period::Run2016){
         tauTriggerWeight =  std::make_shared<TauTriggerWeight2016>(tauTriggerInput);
@@ -83,21 +83,24 @@ double LeptonWeights::GetIdIsoWeight(EventInfoBase& eventInfo) const
     const ntuple::Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
     if(channel == Channel::ETau) {
-        return electronSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
+        double tau_weight = applyTauId ? tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
             eventInfo.GetLeg(2)->gen_match(), eventInfo.GetLeg(2)->decayMode(), DiscriminatorWP::Tight,
-            DiscriminatorWP::Loose, tau_iso_wp);
+            DiscriminatorWP::Loose, tau_iso_wp) : 1;
+        return electronSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tau_weight;
     }
     else if(channel == Channel::MuTau) {
-        return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
+        double tau_weight = applyTauId ? tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
             eventInfo.GetLeg(2)->gen_match(), eventInfo.GetLeg(2)->decayMode(),  DiscriminatorWP::VLoose,
-            DiscriminatorWP::Tight, tau_iso_wp);
+            DiscriminatorWP::Tight, tau_iso_wp) : 1;
+        return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tau_weight;
     }
     else if(channel == Channel::TauTau) {
-        return tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(1).GetMomentum()),
+        double tau_weight = applyTauId ? tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(1).GetMomentum()),
             eventInfo.GetLeg(1)->gen_match(), eventInfo.GetLeg(1)->decayMode(), DiscriminatorWP::VLoose,
             DiscriminatorWP::Loose, tau_iso_wp) * tauIdWeight->GetIdIsoSF(LorentzVectorM_Float(eventInfo.GetLeg(2).GetMomentum()),
             eventInfo.GetLeg(2)->gen_match(), eventInfo.GetLeg(2)->decayMode(),DiscriminatorWP::VLoose,
-            DiscriminatorWP::Loose, tau_iso_wp);
+            DiscriminatorWP::Loose, tau_iso_wp) : 1;
+        return tau_weight;
     }
     else if(channel == Channel::MuMu)
         return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * muonSF.GetIdIsoSF(eventInfo.GetLeg(2).GetMomentum());
