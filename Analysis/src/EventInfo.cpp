@@ -381,11 +381,10 @@ boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Even
         lepton_candidates.emplace_back(event, n);
 
     std::vector<size_t> higgs_candidates;
-
     const double minDeltaR2 = std::pow(DeltaRmin, 2);
     for(size_t n = 0; n < event.first_daughter_indexes.size(); ++n){
         const auto& first_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
-        const auto& second_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
+        const auto& second_leg = lepton_candidates.at(event.second_daughter_indexes.at(n));
         if(ROOT::Math::VectorUtil::DeltaR2(first_leg.p4(), second_leg.p4()) <= minDeltaR2) continue;
         const Channel channel = static_cast<Channel>(event.channelId);
         if(!PassDefaultLegSelection(first_leg,channel)) continue;
