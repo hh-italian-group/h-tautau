@@ -224,7 +224,7 @@ public:
         Lock lock(*mutex);
         if(useSVfit) {
             if(!higgs_tt_sv) {
-                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4.at(selected_htt_index));
+                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(), GetSVFitResults().momentum);
             }
             return *higgs_tt_sv;
         }

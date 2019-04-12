@@ -465,11 +465,12 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
             svfit_results->transverseMass_error = result.transverseMass_error;
         }
         else {
-            svfit_results->has_valid_momentum = event->SVfit_is_valid.at(selected_htt_index);
-            svfit_results->momentum = event->SVfit_p4.at(selected_htt_index);
-            svfit_results->momentum_error = event->SVfit_p4_error.at(selected_htt_index);
-            svfit_results->transverseMass = event->SVfit_mt.at(selected_htt_index);
-            svfit_results->transverseMass_error = event->SVfit_mt_error.at(selected_htt_index);
+            const size_t index = static_cast<size_t>(std::distance(event->SVfit_Higges_indexes.begin(), iter));
+            svfit_results->has_valid_momentum = event->SVfit_is_valid.at(index);
+            svfit_results->momentum = event->SVfit_p4.at(index);
+            svfit_results->momentum_error = event->SVfit_p4_error.at(index);
+            svfit_results->transverseMass = event->SVfit_mt.at(index);
+            svfit_results->transverseMass_error = event->SVfit_mt_error.at(index);
         }
     }
     return *svfit_results;
