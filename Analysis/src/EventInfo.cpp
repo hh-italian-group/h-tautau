@@ -394,11 +394,13 @@ boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Even
 
     const auto Comparitor = [&](size_t h1, size_t h2) -> bool
     {
+        bool are_identical = true;
         if(h1 == h2) return false;
         for(size_t leg_id = 0; leg_id < 2; ++leg_id) {
             const size_t h1_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h1) : event.second_daughter_indexes.at(h1);
             const size_t h2_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h2) : event.second_daughter_indexes.at(h2);
             if(h1_leg_id != h2_leg_id) {
+                are_identical = false;
                 const auto& h1_leg = lepton_candidates.at(h1_leg_id);
                 const auto& h2_leg = lepton_candidates.at(h2_leg_id);
                 const int iso_cmp = h1_leg.CompareIsolations(h2_leg, discr);
@@ -407,8 +409,8 @@ boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Even
                     return h1_leg.p4().pt() > h2_leg.p4().pt();
             }
         }
-
-        throw analysis::exception("not found a good criteria for best tau pair");
+        if(are_identical) return false;
+        throw analysis::exception("not found a good criteria for best tau pair for %1%") % EventIdentifier(event);
     };
 
     if(!higgs_candidates.empty()) return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
