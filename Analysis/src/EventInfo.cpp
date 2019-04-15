@@ -368,10 +368,22 @@ size_t EventInfoBase::GetLegIndex(size_t leg_id)
 
 bool EventInfoBase::PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel)
 {
+    //againstElectron first, againstMuon second
+    static const std::map<Channel,std::pair<DiscriminatorWP,DiscriminatorWP>> againstDiscriminators =
+        { {Channel::ETau,{DiscriminatorWP::Tight,DiscriminatorWP::Loose}} ,
+          {Channel::MuTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Tight}},
+          {Channel::TauTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Loose}}
+      };
+
     if(lepton.leg_type() == LegType::e || lepton.leg_type() == LegType::mu) return true;
+    if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
+
     double pt_cut = channel == Channel::TauTau ? cuts::H_tautau_2016::TauTau::tauID::pt : cuts::H_tautau_2016::MuTau::tauID::pt;
-    if(lepton.leg_type() == LegType::tau && lepton.p4().pt() > pt_cut) return true;
-    return false;
+    if(!(lepton.p4().pt() > pt_cut)) return false;
+    if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
+    if(!lepton.Passed(TauIdDiscriminator::againstElectronMVA6,againstDiscriminators.at(channel).first)) return false;
+    if(!lepton.Passed(TauIdDiscriminator::againstMuon3,againstDiscriminators.at(channel).second)) return false;
+    return true;
 }
 
 boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin)
@@ -399,6 +411,7 @@ boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Even
         for(size_t leg_id = 0; leg_id < 2; ++leg_id) {
             const size_t h1_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h1) : event.second_daughter_indexes.at(h1);
             const size_t h2_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h2) : event.second_daughter_indexes.at(h2);
+
             if(h1_leg_id != h2_leg_id) {
                 are_identical = false;
                 const auto& h1_leg = lepton_candidates.at(h1_leg_id);
