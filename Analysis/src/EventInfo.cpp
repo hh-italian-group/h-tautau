@@ -61,7 +61,8 @@ bool EventInfoBase::SelectedSignalJets::isSelectedVBFjet(size_t n) const
 
 EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& event,
                                                                   const analysis::Period& period,
-                                                                  JetOrdering jet_ordering)
+                                                                  JetOrdering jet_ordering,
+                                                                  size_t selected_higgs_index)
 {
     BTagger bTagger(period, jet_ordering);
     const double bjet_pt_cut = bTagger.PtCut();
@@ -72,6 +73,12 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
     const auto CreateJetInfo = [&](bool useBTag) -> auto {
         std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+            const size_t first_leg_id = event.first_daughter_indexes.at(selected_higgs_index);
+            const auto& first_leg = event.lep_p4.at(first_leg_id);
+            if(ROOT::Math::VectorUtil::DeltaR2(first_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            const size_t second_leg_id = event.second_daughter_indexes.at(selected_higgs_index);
+            const auto& second_leg = event.lep_p4.at(second_leg_id);
+            if(ROOT::Math::VectorUtil::DeltaR2(second_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
@@ -267,6 +274,8 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
+        if(ROOT::Math::VectorUtil::DeltaR2(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+        if(ROOT::Math::VectorUtil::DeltaR2(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && (event->jets_pu_id.at(n) & (1 << 2)) == 0) continue;
@@ -375,11 +384,16 @@ bool EventInfoBase::PassDefaultLegSelection(const ntuple::TupleLepton& lepton, C
           {Channel::TauTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Loose}}
       };
 
-    if(lepton.leg_type() == LegType::e || lepton.leg_type() == LegType::mu) return true;
-    if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
+    static const std::map<Channel,double> pt_map =
+        { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
+          {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::pt},
+          {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::pt}
+      };
 
-    double pt_cut = channel == Channel::TauTau ? cuts::H_tautau_2016::TauTau::tauID::pt : cuts::H_tautau_2016::MuTau::tauID::pt;
-    if(!(lepton.p4().pt() > pt_cut)) return false;
+    if(lepton.leg_type() == LegType::e) return true;
+    if(lepton.leg_type() == LegType::mu) return lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04;
+    if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
+    if(!(lepton.p4().pt() > pt_map.at(channel))) return false;
     if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
     if(!lepton.Passed(TauIdDiscriminator::againstElectronMVA6,againstDiscriminators.at(channel).first)) return false;
     if(!lepton.Passed(TauIdDiscriminator::againstMuon3,againstDiscriminators.at(channel).second)) return false;
@@ -551,10 +565,11 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const
                                                Period period,
                                                JetOrdering jet_ordering)
 {
-    EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering);
     boost::optional<size_t> selected_higgs_index = EventInfoBase::GetHiggsCandidateIndex(event,discr,cuts::H_tautau_2016::DeltaR_betweenSignalObjects);
-    if(selected_higgs_index.is_initialized()) return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
-    return boost::optional<EventInfoBase>();
+    if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
+    EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering,*selected_higgs_index);
+    return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
+
 }
 
 
