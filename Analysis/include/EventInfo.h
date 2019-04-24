@@ -132,7 +132,8 @@ public:
 
     static SelectedSignalJets SelectSignalJets(const Event& event,
                                                const analysis::Period& period,
-                                               JetOrdering jet_ordering);
+                                               JetOrdering jet_ordering,
+                                               size_t selected_higgs_index);
     std::array<size_t,2> GetSelectedBjetIndices() const;
     std::set<size_t> GetSelectedBjetIndicesSet() const;
 
@@ -224,7 +225,8 @@ public:
         Lock lock(*mutex);
         if(useSVfit) {
             if(!higgs_tt_sv) {
-                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(), event->SVfit_p4.at(selected_htt_index));
+                if(!GetSVFitResults().has_valid_momentum) throw exception("SVFit not converged");
+                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(), GetSVFitResults().momentum);
             }
             return *higgs_tt_sv;
         }
