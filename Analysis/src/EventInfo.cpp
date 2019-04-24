@@ -75,10 +75,10 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             const size_t first_leg_id = event.first_daughter_indexes.at(selected_higgs_index);
             const auto& first_leg = event.lep_p4.at(first_leg_id);
-            if(ROOT::Math::VectorUtil::DeltaR2(first_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            if(ROOT::Math::VectorUtil::DeltaR(first_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             const size_t second_leg_id = event.second_daughter_indexes.at(selected_higgs_index);
             const auto& second_leg = event.lep_p4.at(second_leg_id);
-            if(ROOT::Math::VectorUtil::DeltaR2(second_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            if(ROOT::Math::VectorUtil::DeltaR(second_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
@@ -274,8 +274,8 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
-        if(ROOT::Math::VectorUtil::DeltaR2(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
-        if(ROOT::Math::VectorUtil::DeltaR2(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+        if(ROOT::Math::VectorUtil::DeltaR(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+        if(ROOT::Math::VectorUtil::DeltaR(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && (event->jets_pu_id.at(n) & (1 << 2)) == 0) continue;
