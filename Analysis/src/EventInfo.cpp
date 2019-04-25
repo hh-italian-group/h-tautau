@@ -391,12 +391,18 @@ bool EventInfoBase::PassDefaultLegSelection(const ntuple::TupleLepton& lepton, C
       };
 
     if(lepton.leg_type() == LegType::e) return true;
-    if(lepton.leg_type() == LegType::mu) return lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04;
+    if(lepton.leg_type() == LegType::mu) {
+        if(!(lepton.p4().pt() > cuts::H_tautau_2017::MuTau::muonID::pt)) return false;
+        if(!(lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
+        return true;
+    }
     if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
     if(!(lepton.p4().pt() > pt_map.at(channel))) return false;
-    if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
+    //if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
+    if(!(lepton.PassedOldDecayMode())) return false;
     if(!lepton.Passed(TauIdDiscriminator::againstElectronMVA6,againstDiscriminators.at(channel).first)) return false;
     if(!lepton.Passed(TauIdDiscriminator::againstMuon3,againstDiscriminators.at(channel).second)) return false;
+    if(!lepton.Passed(TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,DiscriminatorWP::VVLoose)) return false;
     return true;
 }
 

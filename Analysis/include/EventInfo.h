@@ -13,6 +13,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
+#include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
 

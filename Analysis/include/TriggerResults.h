@@ -117,7 +117,14 @@ public:
                            [&](const Pattern& pattern) { return AcceptAndMatch(pattern); });
     }
 
-    bool AnyAccpet() const;
+    template<typename PatternCollection>
+    bool AnyAccept(const PatternCollection& patterns) const
+    {
+        return std::any_of(patterns.begin(), patterns.end(),
+                           [&](const Pattern& pattern) { return Accept(pattern); });
+    }
+
+    bool AnyAccept() const;
     bool AnyMatch() const;
     bool AnyAcceptAndMatch() const;
 

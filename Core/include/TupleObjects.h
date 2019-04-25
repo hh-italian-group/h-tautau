@@ -41,6 +41,7 @@ public:
     analysis::LegType leg_type() const;
 
     bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
+    bool PassedOldDecayMode() const;
     DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
     int CompareIsolations(const TupleLepton& other, analysis::TauIdDiscriminator disc) const;
