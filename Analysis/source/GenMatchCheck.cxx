@@ -4,12 +4,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Run/include/program_main.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "AnalysisTools/Core/include/AnalyzerData.h"
+#include "h-tautau/Analysis/include/SignalObjectSelector.h"
 
 struct Arguments {
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, tree_name);
     REQ_ARG(std::string, output_file);
     REQ_ARG(analysis::Period, period);
+    REQ_ARG(analysis::SignalMode, mode);
 };
 
 namespace analysis {
@@ -32,7 +34,7 @@ public:
     using EventTuple = ntuple::EventTuple;
 
     GenMatchCheck(const Arguments& _args) : args(_args), output(root_ext::CreateRootFile(args.output_file())),
-        anaData(output) { }
+        anaData(output), signalObjectSelector(args.mode()) { }
 
     void Run()
     {
@@ -58,7 +60,7 @@ public:
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
 
-            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), summaryInfo.get(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering);
+            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering);
             if(!event.is_initialized()) continue;
             if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;
@@ -86,6 +88,7 @@ private:
     Arguments args;
     std::shared_ptr<TFile> output;
     GenMatchCheckData anaData;
+    SignalObjectSelector signalObjectSelector;
 };
 
 } // namespace analysis

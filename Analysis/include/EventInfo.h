@@ -21,6 +21,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "KinFitInterface.h"
 #include "MT2.h"
 #include "TriggerResults.h"
+#include "SignalObjectSelector.h"
 
 #include <numeric>
 
@@ -106,6 +107,7 @@ private:
     ProdSummary summary;
     std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
+
 };
 
 class EventInfoBase {
@@ -189,7 +191,6 @@ public:
     const MET& GetMET();
     size_t GetLegIndex(const size_t leg_id);
     static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
-    static boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin);
 
     template<typename LorentzVector>
     void SetMetMomentum(const LorentzVector& new_met_p4)
@@ -292,7 +293,9 @@ private:
 
 };
 
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const SummaryInfo* summaryInfo = nullptr,
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
+                                               const SignalObjectSelector& signalObjectSelector,
+                                               const SummaryInfo* summaryInfo = nullptr,
                                                TauIdDiscriminator discr = TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
                                                Period period = analysis::Period::Run2017,
                                                JetOrdering jet_ordering = JetOrdering::DeepCSV);
