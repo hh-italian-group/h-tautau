@@ -14,7 +14,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     analysis::TriggerResults refTriggerResults;
     if(applyTriggerMatch) {
         triggerTools.SetTriggerAcceptBits(refTriggerResults);
-        cut(refTriggerResults.AnyAccpet(), "trigger");
+        cut(refTriggerResults.AnyAccept(), "trigger");
     }
 
     // Signal-like leptons selection

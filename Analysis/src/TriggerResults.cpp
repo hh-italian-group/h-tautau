@@ -150,7 +150,7 @@ bool TriggerResults::Accept(const Pattern& pattern) const { return Accept(GetInd
 bool TriggerResults::Match(const Pattern& pattern) const { return Match(GetIndex(pattern)); }
 bool TriggerResults::AcceptAndMatch(const Pattern& pattern) const { return AcceptAndMatch(GetIndex(pattern)); }
 
-bool TriggerResults::AnyAccpet() const { return accept_bits.any(); }
+bool TriggerResults::AnyAccept() const { return accept_bits.any(); }
 bool TriggerResults::AnyMatch() const { return match_bits.any(); }
 bool TriggerResults::AnyAcceptAndMatch() const { return (accept_bits & match_bits).any(); }
 

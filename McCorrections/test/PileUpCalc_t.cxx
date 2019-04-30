@@ -8,6 +8,7 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 #include "AnalysisTools/Core/include/NumericPrimitives.h"
 #include "h-tautau/McCorrections/include/PileUpWeight.h"
 #include "AnalysisTools/Core/include/AnalyzerData.h"
+#include "h-tautau/Analysis/include/SignalObjectSelector.h"
 #include <iostream>
 
 
@@ -19,6 +20,7 @@ struct Arguments {
     run::Argument<std::vector<std::string>> input_data_files{"input_data_files", "input data files"};
     run::Argument<std::string> tree_name{"tree_name", "Tree on which we work"};
     run::Argument<std::string> output_file{"output_file", "Output root file"};
+    run::Argument<analysis::SignalMode> mode{"mode", "Signal mode"};
 };
 
 namespace analysis {
@@ -35,7 +37,7 @@ public:
 
     PileUpCalc_t(const Arguments& _args) :
         args(_args), pu_weight(args.input_weight_file(), args.weight_hist_name(), 60, 0),
-        output(root_ext::CreateRootFile(args.output_file())), anaData(output)
+        output(root_ext::CreateRootFile(args.output_file())), anaData(output), signalObjectSelector(args.mode())
     {
     }
 
@@ -50,7 +52,7 @@ public:
             ntuple::EventTuple eventTuple_mc(args.tree_name(), inputFile_mc.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_mc) {
                 if (event.eventEnergyScale != 0 ) continue;
-                boost::optional<analysis::EventInfoBase> eventInfo = CreateEventInfo(event);
+                boost::optional<analysis::EventInfoBase> eventInfo = CreateEventInfo(event,signalObjectSelector);
                 if(!eventInfo.is_initialized()) continue;
                 anaData.npv("mc").Fill(event.npv, pu_weight.Get(*eventInfo));
                 anaData.npv("mc_noweights").Fill(event.npv);
@@ -88,6 +90,7 @@ private:
     PileUpWeight pu_weight;
     std::shared_ptr<TFile> output;
     PileUpCalcData anaData;
+    SignalObjectSelector signalObjectSelector;
 
     static const std::set<std::string>& GetEnabledBranches()
     {

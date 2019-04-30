@@ -5,8 +5,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-SummaryInfo::SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source)
-    : summary(_summary)
+SummaryInfo::SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source) :
+                         summary(_summary)
 {
     for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
         const int channel_id = summary.triggers_channel.at(n);
@@ -375,75 +375,6 @@ size_t EventInfoBase::GetLegIndex(size_t leg_id)
     throw exception("Invalid leg id = %1%.") % leg_id;
 }
 
-bool EventInfoBase::PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel)
-{
-    //againstElectron first, againstMuon second
-    static const std::map<Channel,std::pair<DiscriminatorWP,DiscriminatorWP>> againstDiscriminators =
-        { {Channel::ETau,{DiscriminatorWP::Tight,DiscriminatorWP::Loose}} ,
-          {Channel::MuTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Tight}},
-          {Channel::TauTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Loose}}
-      };
-
-    static const std::map<Channel,double> pt_map =
-        { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
-          {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::pt},
-          {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::pt}
-      };
-
-    if(lepton.leg_type() == LegType::e) return true;
-    if(lepton.leg_type() == LegType::mu) return lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04;
-    if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
-    if(!(lepton.p4().pt() > pt_map.at(channel))) return false;
-    if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
-    if(!lepton.Passed(TauIdDiscriminator::againstElectronMVA6,againstDiscriminators.at(channel).first)) return false;
-    if(!lepton.Passed(TauIdDiscriminator::againstMuon3,againstDiscriminators.at(channel).second)) return false;
-    return true;
-}
-
-boost::optional<size_t> EventInfoBase::GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr, double DeltaRmin)
-{
-    std::vector<ntuple::TupleLepton> lepton_candidates;
-    for(size_t n = 0; n < event.lep_p4.size(); ++n)
-        lepton_candidates.emplace_back(event, n);
-
-    std::vector<size_t> higgs_candidates;
-    const double minDeltaR2 = std::pow(DeltaRmin, 2);
-    for(size_t n = 0; n < event.first_daughter_indexes.size(); ++n){
-        const auto& first_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
-        const auto& second_leg = lepton_candidates.at(event.second_daughter_indexes.at(n));
-        if(ROOT::Math::VectorUtil::DeltaR2(first_leg.p4(), second_leg.p4()) <= minDeltaR2) continue;
-        const Channel channel = static_cast<Channel>(event.channelId);
-        if(!PassDefaultLegSelection(first_leg,channel)) continue;
-        if(!PassDefaultLegSelection(second_leg,channel)) continue;
-        higgs_candidates.push_back(n);
-    }
-
-    const auto Comparitor = [&](size_t h1, size_t h2) -> bool
-    {
-        bool are_identical = true;
-        if(h1 == h2) return false;
-        for(size_t leg_id = 0; leg_id < 2; ++leg_id) {
-            const size_t h1_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h1) : event.second_daughter_indexes.at(h1);
-            const size_t h2_leg_id = leg_id == 0 ? event.first_daughter_indexes.at(h2) : event.second_daughter_indexes.at(h2);
-
-            if(h1_leg_id != h2_leg_id) {
-                are_identical = false;
-                const auto& h1_leg = lepton_candidates.at(h1_leg_id);
-                const auto& h2_leg = lepton_candidates.at(h2_leg_id);
-                const int iso_cmp = h1_leg.CompareIsolations(h2_leg, discr);
-                if(iso_cmp != 0) return iso_cmp == 1;
-                if(h1_leg.p4().pt() != h2_leg.p4().pt())
-                    return h1_leg.p4().pt() > h2_leg.p4().pt();
-            }
-        }
-        if(are_identical) return false;
-        throw analysis::exception("not found a good criteria for best tau pair for %1%") % EventIdentifier(event);
-    };
-
-    if(!higgs_candidates.empty()) return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
-    return boost::optional<size_t>();
-}
-
 const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
 {
     Lock lock(*mutex);
@@ -560,12 +491,14 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event, const SummaryInfo* summaryInfo,
+boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
+                                               const SignalObjectSelector& signalObjectSelector,
+                                               const SummaryInfo* summaryInfo,
                                                TauIdDiscriminator discr,
                                                Period period,
                                                JetOrdering jet_ordering)
 {
-    boost::optional<size_t> selected_higgs_index = EventInfoBase::GetHiggsCandidateIndex(event,discr,cuts::H_tautau_2016::DeltaR_betweenSignalObjects);
+    boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event,discr);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
     EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering,*selected_higgs_index);
     return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
