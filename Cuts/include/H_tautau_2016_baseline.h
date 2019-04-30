@@ -10,6 +10,8 @@ namespace H_tautau_2016 {
 
 constexpr double DeltaR_betweenSignalObjects = 0.5; // >
 constexpr double DeltaR_triggerMatch = 0.5; // <
+constexpr double mt = 50; // <
+
 
 namespace MuTau {
     namespace muonID {
@@ -167,7 +169,7 @@ namespace muonVeto {
 
 namespace jetID {
     constexpr double pt = 20; // >
-    constexpr double pt_safety = 5; // 
+    constexpr double pt_safety = 5; //
     constexpr double eta = 4.7; // <
     constexpr bool pfLooseID = true; // =
     constexpr double deltaR_signalObjects = 0.5; // >

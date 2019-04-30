@@ -12,13 +12,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class SignalMode { HTT, HTT_sync, HH, Skimmer };
+enum class SignalMode { HTT, HTT_sync, HH, Skimmer, TauPOG_Skimmer };
 
 ENUM_NAMES(SignalMode) = {
     { SignalMode::HTT, "HTT" },
     { SignalMode::HTT_sync, "HTT_sync" },
     { SignalMode::HH, "HH" },
-    { SignalMode::Skimmer, "Skimmer" }
+    { SignalMode::Skimmer, "Skimmer" },
+    { SignalMode::TauPOG_Skimmer, "TauPOG_Skimmer" }
 };
 
 class SignalObjectSelector {

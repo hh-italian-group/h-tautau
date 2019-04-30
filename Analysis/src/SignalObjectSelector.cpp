@@ -10,12 +10,14 @@ SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
 {
     if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
         DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
-    if(mode == SignalMode::HH)
+    else if(mode == SignalMode::HH)
         DR2_leptons = std::pow(cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects, 2);
-    if(mode == SignalMode::Skimmer){
+    else if(mode == SignalMode::Skimmer || mode == SignalMode::TauPOG_Skimmer){
         double DR = std::min(cuts::H_tautau_2016::DeltaR_betweenSignalObjects,cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects);
         DR2_leptons = std::pow(DR, 2);
     }
+    else
+        throw analysis::exception("Signal Mode for SignalObjectSelector constructor not supported");
 }
 
 bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const
@@ -26,6 +28,8 @@ bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton
         return PassHH_LeptonSelection(lepton,channel);
     if(mode == SignalMode::Skimmer)
         return PassSkimmer_LeptonSelection(lepton);
+    if(mode == SignalMode::TauPOG_Skimmer)
+        return PassTauPOG_Skimmer_LeptonSelection();
     throw analysis::exception("Signal Mode for SignalObjectSelector class not supported");
 }
 
