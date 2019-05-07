@@ -109,6 +109,7 @@ if [ $MODE = "prod17" ] ; then
 #    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
     git cms-addpkg RecoMET/METFilters
+    git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X
     cd $CMSSW_BASE/src
 fi
 
