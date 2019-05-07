@@ -124,12 +124,11 @@ if period == 'Run2017':
     )
     process.jecSequence = cms.Sequence(process.patJetCorrFactors * process.updatedPatJets * process.selectedUpdatedPatJets)
 
-from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-runMetCorAndUncFromMiniAOD(process, isData = isData)
 
-MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
-### MET filters for 2016
+
+
+### MET filters for 2016 and MET recipe for 2016
 if period == 'Run2016':
     process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
     process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
@@ -139,6 +138,12 @@ if period == 'Run2016':
     process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
     process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
+    from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+    runMetCorAndUncFromMiniAOD(process, isData = isData)
+
+    MetInputTag = cms.InputTag('slimmedMETs', '', processName)
+
+### MET filters for 2017 and MET recipe for 2017
 if period == 'Run2017':
     process.load('RecoMET.METFilters.ecalBadCalibFilter_cfi')
 
@@ -162,6 +167,18 @@ if period == 'Run2017':
         taggingMode = cms.bool(True),
         debug = cms.bool(False)
         )
+
+    from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+
+    runMetCorAndUncFromMiniAOD (
+            process,
+            isData = isData, # false for MC
+            fixEE2017 = True,
+            fixEE2017Params = {'userawPt': True, 'ptThreshold':50.0, 'minEtaThreshold':2.65, 'maxEtaThreshold': 3.139} ,
+            postfix = "ModifiedMET"
+    )
+
+    MetInputTag = cms.InputTag('slimmedMETsModifiedMET', '', processName)
 
 
 
@@ -329,7 +346,8 @@ if period == 'Run2017':
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
-        process.fullPatMetSequence *
+        #process.fullPatMetSequence *
+        process.fullPatMetSequenceModifiedMET *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *
         process.tupleProductionSequence
