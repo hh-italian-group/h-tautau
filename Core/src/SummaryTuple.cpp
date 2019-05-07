@@ -91,20 +91,8 @@ void CheckProdSummaryConsistency(const ProdSummary& s)
         throw analysis::exception("Inconsistent genEventType info in prod summary.");
 }
 
-bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2, std::ostream* os)
+bool CheckProdSummaryCompatibility(const ProdSummary& s1, const ProdSummary& s2)
 {
-    if(s1.tauId_names.size() != s2.tauId_names.size()) {
-        if(os) *os << "Number of tau id are not compatible: " << s1.tauId_names.size() << "!="
-                   << s2.tauId_names.size() << "." << std::endl;
-        return false;
-    }
-    for(size_t n = 0; n < s1.tauId_names.size(); ++n) {
-        if(s1.tauId_names.at(n) != s2.tauId_names.at(n)) {
-            if(os) *os << "Tau id is not compatible: '" << s1.tauId_names.at(n) << "' != '"
-                       << s2.tauId_names.at(n) << "'." << std::endl;
-            return false;
-        }
-    }
     if(s1.triggers_channel.size() != s2.triggers_channel.size())
         return false;
     for(size_t n = 0; n < s1.triggers_channel.size(); ++n) {
@@ -121,7 +109,7 @@ void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSummary)
     CheckProdSummaryConsistency(otherSummary);
     auto genCountMap = ExtractGenEventCountMap(summary);
     auto genEventTypeCountMap = ExtractGenEventTypeCountMap(summary);
-    if(!CheckProdSummaryCompatibility(summary, otherSummary, &std::cerr))
+    if(!CheckProdSummaryCompatibility(summary, otherSummary))
         throw analysis::exception("Can't merge two incompatible prod summaries.");
 
     summary.exeTime += otherSummary.exeTime;
@@ -156,7 +144,7 @@ ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
         const ProdSummary entry = tuple.data();
         CheckProdSummaryConsistency(entry);
 //        try {
-            if(!CheckProdSummaryCompatibility(summary, entry, &std::cerr))
+            if(!CheckProdSummaryCompatibility(summary, entry))
                 throw analysis::exception("Incompatible prod summaries inside one summary tuple."
                                           " Entry id = %1% out of %2%.") % n % n_entries;
 //        } catch(analysis::exception& e) {

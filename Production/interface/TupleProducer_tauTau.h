@@ -13,20 +13,19 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 class TupleProducer_tauTau: public BaseTupleProducer {
 public:
-    using SelectionResults = analysis::SelectionResults<TauCandidate, TauCandidate>;
-    using SelectionResultsPtr = std::shared_ptr<SelectionResults>;
-    using HiggsCandidate = SelectionResults::HiggsCandidate;
+    using SelectionResultsBase = analysis::SelectionResultsBase;
+    using SelectionResultsBasePtr = std::shared_ptr<SelectionResultsBase>;
 
 public:
     TupleProducer_tauTau(const edm::ParameterSet& iConfig) : BaseTupleProducer(iConfig, analysis::Channel::TauTau) {}
 
 private:
     virtual void ProcessEvent(Cutter& cut) override;
-    void FillEventTuple(const SelectionResults& selection);
+    void FillEventTuple(const SelectionResultsBase& selection);
 
     std::vector<TauCandidate> CollectSignalTaus();
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
 private:
-    SelectionResultsPtr previous_selection;
+    SelectionResultsBasePtr previous_selection;
 };

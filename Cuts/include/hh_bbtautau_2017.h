@@ -17,6 +17,7 @@ namespace MuTau {
         constexpr bool isTightMuon = true; // = Should be ok, since the HIP problem is solved.
 
         // pfRelIso should be applied at the tuple production level.
+        constexpr double pfRelIso04 = 0.15; // <
     }
 
     namespace tauID {

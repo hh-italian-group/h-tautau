@@ -101,16 +101,18 @@ ENUM_NAMES(UncertaintySource) = {
 
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
 
-enum class DiscriminatorWP { VVLoose, VLoose, Loose, Medium, Tight, VTight, VVTight };
+enum class DiscriminatorWP { VVVLoose = 0, VVLoose = 1, VLoose = 2, Loose = 3, Medium = 4, Tight = 5,
+                             VTight = 6, VVTight = 7, VVVTight = 8 };
 ENUM_NAMES(DiscriminatorWP) = {
-    { DiscriminatorWP::VVLoose, "VVLoose" }, { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" },
-    { DiscriminatorWP::Medium, "Medium" }, { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" },
-    { DiscriminatorWP::VVTight, "VVTight" }
+    { DiscriminatorWP::VVVLoose, "VVVLoose" }, { DiscriminatorWP::VVLoose, "VVLoose" },
+    { DiscriminatorWP::VLoose, "VLoose" }, { DiscriminatorWP::Loose, "Loose" }, { DiscriminatorWP::Medium, "Medium" },
+    { DiscriminatorWP::Tight, "Tight" }, { DiscriminatorWP::VTight, "VTight" }, { DiscriminatorWP::VVTight, "VVTight" },
+    { DiscriminatorWP::VVVTight, "VVVTight" }
 };
 const EnumNameMap<DiscriminatorWP> __DiscriminatorWP_short_names("ShortWPNames", {
-    { DiscriminatorWP::VVLoose, "VVL" }, { DiscriminatorWP::VLoose, "VL" }, { DiscriminatorWP::Loose, "L" },
-    { DiscriminatorWP::Medium, "M" }, { DiscriminatorWP::Tight, "T" }, { DiscriminatorWP::VTight, "VT" },
-    { DiscriminatorWP::VVTight, "VVT" }
+    { DiscriminatorWP::VVVLoose, "VVVL" }, { DiscriminatorWP::VVLoose, "VVL" }, { DiscriminatorWP::VLoose, "VL" },
+    { DiscriminatorWP::Loose, "L" }, { DiscriminatorWP::Medium, "M" }, { DiscriminatorWP::Tight, "T" },
+    { DiscriminatorWP::VTight, "VT" }, { DiscriminatorWP::VVTight, "VVT" }, { DiscriminatorWP::VVVTight, "VVVT" }
 });
 
 enum class MetType { PF, MVA, PUPPI };
@@ -126,14 +128,14 @@ ENUM_NAMES(Period) = {
     { Period::Run2018, "Run2018" },
 };
 
-enum class GenMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };
-ENUM_NAMES(GenMatch) = {
-    { GenMatch::Electron, "gen_electron" },
-    { GenMatch::Muon, "gen_muon" },
-    { GenMatch::TauElectron, "gen_electron_from_tau" },
-    { GenMatch::TauMuon, "gen_muon_from_tau" },
-    { GenMatch::Tau, "gen_tau" },
-    { GenMatch::NoMatch, "no_gen_match" }
+enum class GenLeptonMatch { Electron = 1, Muon = 2, TauElectron = 3,  TauMuon = 4, Tau = 5, NoMatch = 6 };
+ENUM_NAMES(GenLeptonMatch) = {
+    { GenLeptonMatch::Electron, "gen_electron" },
+    { GenLeptonMatch::Muon, "gen_muon" },
+    { GenLeptonMatch::TauElectron, "gen_electron_from_tau" },
+    { GenLeptonMatch::TauMuon, "gen_muon_from_tau" },
+    { GenLeptonMatch::Tau, "gen_tau" },
+    { GenLeptonMatch::NoMatch, "no_gen_match" }
 };
 
 enum class GenEventType { Other = 0, TTbar_Hadronic = 1, TTbar_SemiLeptonic = 2, TTbar_Leptonic = 3 };

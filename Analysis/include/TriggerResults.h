@@ -49,9 +49,12 @@ public:
     struct Leg {
         LegType type;
         double pt;
+        boost::optional<double> eta;
+        bool applyL1match;
         FilterVector filters;
         std::vector<unsigned> jet_filter_indices;
-        Leg(const LegType _type, double _pt, const FilterVector& _filters);
+        Leg(const LegType _type, double _pt, boost::optional<double> _eta, bool _applyL1match,
+            const FilterVector& _filters);
     };
 
     struct TriggerDescriptor {
@@ -114,7 +117,14 @@ public:
                            [&](const Pattern& pattern) { return AcceptAndMatch(pattern); });
     }
 
-    bool AnyAccpet() const;
+    template<typename PatternCollection>
+    bool AnyAccept(const PatternCollection& patterns) const
+    {
+        return std::any_of(patterns.begin(), patterns.end(),
+                           [&](const Pattern& pattern) { return Accept(pattern); });
+    }
+
+    bool AnyAccept() const;
     bool AnyMatch() const;
     bool AnyAcceptAndMatch() const;
 

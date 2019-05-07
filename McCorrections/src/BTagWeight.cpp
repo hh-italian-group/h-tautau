@@ -9,9 +9,10 @@ namespace mc_corrections {
 
 namespace detail {
 
-JetInfo::JetInfo(const ntuple::Event& event, size_t jetIndex) :
+JetInfo::JetInfo(EventInfoBase& eventInfo, size_t jetIndex) :
     eff(0.), SF(0.)
 {
+    const ntuple::Event& event = *eventInfo;
     pt  = event.jets_p4.at(jetIndex).pt();
     eta = event.jets_p4.at(jetIndex).eta();
     hadronFlavour = event.jets_hadronFlavour.at(jetIndex);
@@ -94,9 +95,9 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
             ReaderInfoPtr(new ReaderInfo(reader_light, BTagEntry::FLAV_UDSG, bTagEffFile, wp));
 }
 
-double BTagWeight::Get(const ntuple::Event& event) const
+double BTagWeight::Get(EventInfoBase& eventInfo) const
 {
-    return GetEx(event, UncertaintyScale::Central);
+    return GetEx(eventInfo, UncertaintyScale::Central);
 }
 
 double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -104,13 +105,14 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-double BTagWeight::GetEx(const ntuple::Event& event, UncertaintyScale unc) const
+double BTagWeight::GetEx(EventInfoBase& eventInfo, UncertaintyScale unc) const
 {
     const std::string unc_name = GetUncertantyName(unc);
 
     JetInfoVector jetInfos;
+    const ntuple::Event& event = *eventInfo;
     for (size_t jetIndex = 0; jetIndex < event.jets_p4.size(); ++jetIndex) {
-        JetInfo jetInfo(event, jetIndex);
+        JetInfo jetInfo(eventInfo, jetIndex);
         if(std::abs(jetInfo.eta) >= bTagger.EtaCut()) continue;
         GetReader(jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
         jetInfo.bTagOutcome = bTagger.Pass(event, jetIndex);

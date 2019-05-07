@@ -5,6 +5,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "DiscriminatorIdResults.h"
+#include "TauIdResults.h"
 
 namespace ntuple {
 using LorentzVectorE = analysis::LorentzVectorE_Float;
@@ -13,35 +15,25 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 using Point3D = analysis::Point3D_Float;
 }
 
-#define LVAR(type, name, n) VAR(type, name##_##n)
+#define LVAR(type, name) VAR(std::vector<type>, lep_##name)
 #define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
-#define RAW_ID(name, n) VAR(Float_t, tauId_##name##_##n)
+#define TAU_ID(name, pattern, has_raw, wp_list) VAR(std::vector<uint16_t>, name) VAR(std::vector<Float_t>, name##raw)
 
-#define RAW_TAU_IDS(n) \
-    RAW_ID(againstElectronMVA6Raw, n) /* */ \
-    RAW_ID(againstElectronMVA6category, n) /* */ \
-    RAW_ID(againstElectronMVA6RawNew, n) /* */ \
-    RAW_ID(againstElectronMVA6categoryNew, n) /* */ \
-    RAW_ID(byCombinedIsolationDeltaBetaCorrRaw3Hits, n) /* */ \
-    RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw, n) /* */ \
-    RAW_ID(byIsolationMVArun2v1DBdR03oldDMwLTraw, n) /* */ \
-    RAW_ID(byIsolationMVArun2v1DBoldDMwLTraw2016, n) /* */ \
-    RAW_ID(byIsolationMVArun2017v2DBoldDMwLTraw2017, n) /* */ \
-    RAW_ID(byIsolationMVArun2017v2DBoldDMdR0p3wLTraw2017, n) /* */ \
-    /**/
 
-#define LEG_DATA(n) \
-    LVAR(LorentzVectorM, p4, n) /* 4-momentum */ \
-    LVAR(Int_t, q, n) /* Charge */ \
-    LVAR(Float_t, dxy, n) /* dxy with respect to primary vertex */ \
-    LVAR(Float_t, dz, n) /* dz with respect to primary vertex */ \
-    LVAR(Float_t, iso, n) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    LVAR(Bool_t, es_shift_applied, n) /* ES shift is applied to the central value */\
-    LVAR(Int_t, gen_match, n) /* Generator matching, see Htautau Twiki*/\
-    LVAR(LorentzVectorM, gen_p4, n) /* 4-momentum of the matched gen particle */ \
-    LVAR(Int_t, decayMode, n) /* tau decay mode */ \
-    LVAR(ULong64_t, tauId_flags, n) /* boolean tau id variables */ \
-    RAW_TAU_IDS(n) /* raw values of tau ID discriminators */ \
+
+#define LEG_DATA() \
+    LVAR(LorentzVectorM, p4) /* 4-momentum */ \
+    LVAR(Int_t, q) /* Charge */ \
+    LVAR(Int_t, type) /* lepton type: e, mu or tau */ \
+    LVAR(Float_t,dxy) /* dxy with respect to primary vertex */ \
+    LVAR(Float_t, dz) /* dz with respect to primary vertex */ \
+    LVAR(Float_t, iso) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    LVAR(Int_t, gen_match) /* Generator matching, see Htautau Twiki*/\
+    LVAR(LorentzVectorM, gen_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(LorentzVectorM, gen_visible_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(Int_t, decayMode) /* tau decay mode */ \
+    LVAR(Bool_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
+    LVAR(Bool_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
@@ -129,16 +121,17 @@ using Point3D = analysis::Point3D_Float;
     VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     /* Trigger results */ \
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
-    VAR(ULong64_t, trigger_matches) /* Leg matching results for the selected triggers */ \
+    VAR(std::vector<ULong64_t>, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SV Fit variables */ \
-    VAR(Bool_t, SVfit_is_valid) /* SVfit using integration method */ \
-    VAR(LorentzVectorM, SVfit_p4) /* SVfit using integration method */ \
-    VAR(LorentzVectorM, SVfit_p4_error) /* SVfit using integration method */ \
-    VAR(Float_t, SVfit_mt) /* SVfit using integration method */ \
-    VAR(Float_t, SVfit_mt_error) /* SVfit using integration method */ \
+    VAR(std::vector<size_t>, SVfit_Higges_indexes) /* SVfit using integration method */ \
+    VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit using integration method */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit using integration method */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit using integration method */ \
+    VAR(std::vector<Float_t>, SVfit_mt) /* SVfit using integration method */ \
+    VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit using integration method */ \
     /* Signal leptons */ \
-    LEG_DATA(1) /* muon for muTau, electron for eTau, electron for eMu, Leading (in pT) Tau for tauTau */ \
-    LEG_DATA(2) /* hadronic Tau for muTau and eTau, Muon for eMu, Trailing (in pT) Tau for tauTau */ \
+    LEG_DATA() /* muon, electron or tau */ \
+    TAU_IDS() /* raw values of tau ID discriminators */ \
     /* Met related variables */ \
     MET_DATA(pfMET) \
     VAR(UInt_t, metFilters) \
@@ -182,10 +175,12 @@ using Point3D = analysis::Point3D_Float;
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
     /* Vetos */\
-    VAR(Bool_t, trigger_match) /* True if event passes trigger match. */ \
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
     OTHER_LEPTON_DATA(other_lepton) \
+    /* Higgs info */ \
+    VAR(std::vector<size_t>, first_daughter_indexes) /* Vector of pair of daughters of Higgses */ \
+    VAR(std::vector<size_t>, second_daughter_indexes) /* Vector of pair of daughters of Higgses */ \
     /* Skimmer Variables */\
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
@@ -209,7 +204,7 @@ INITIALIZE_TREE(ntuple, EventTuple, EVENT_DATA)
 #undef JVAR
 #undef MET_DATA
 #undef MVAR
-#undef RAW_ID
+#undef TAU_ID
 
 namespace ntuple {
 template<typename T>

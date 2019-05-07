@@ -12,8 +12,11 @@ namespace mc_corrections {
 class GenEventWeight : public IWeightProvider {
 public:
     using Event = ntuple::Event;
-    
-    virtual double Get(const Event& event) const override { return event.genEventWeight; }
+
+    virtual double Get(EventInfoBase& eventInfo) const override
+    {
+        return eventInfo->genEventWeight;
+    }
     virtual double Get(const ntuple::ExpressEvent& event) const override { return event.genEventWeight; }
 };
 } // namespace mc_corrections

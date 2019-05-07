@@ -16,7 +16,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-EventWeights::EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, const WeightingMode& mode)
+EventWeights::EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, bool applyTauId, const WeightingMode& mode)
 {
     if(period == Period::Run2016) {
         if(mode.empty() || mode.count(WeightType::PileUp))
@@ -29,7 +29,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         "",
                         FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
                         FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"), "",
-                        FullName("2016/Tau/fitresults_tt_moriond2017.json"), "",period, DiscriminatorWP::Medium);
+                        FullName("2016/Tau/fitresults_tt_moriond2017.json"), "",period, DiscriminatorWP::Medium,applyTauId);
         if(mode.empty() || mode.count(WeightType::BTag))
             providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                         FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
@@ -70,7 +70,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
                         FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
                         FullName("2017/Tau/tauTariggerEfficiencies.root"),
-                        period, DiscriminatorWP::Medium);
+                        period, DiscriminatorWP::Medium,applyTauId);
                         // POG SFs
                         // FullName("2017/Electron/EleIdSFPOG.root"),
                         // FullName("2017/Electron/EleIsoSFPOG.root"),
@@ -93,6 +93,40 @@ EventWeights::ProviderPtr EventWeights::GetProvider(WeightType weightType) const
     if(!providers.count(weightType))
         throw exception("Weight provider not found for %1% weight.") % weightType;
     return providers.at(weightType);
+}
+
+double EventWeights::GetWeight(EventInfoBase& event, WeightType weightType) const
+{
+    double weight = GetProvider(weightType)->Get(event);
+    if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
+        throw exception("%1% weights is nan or infinity for event %2%.") % weightType % EventIdentifier(*event);
+    return weight;
+}
+
+
+double EventWeights::GetTotalWeight(EventInfoBase& event, const WeightingMode& weightingMode) const
+{
+    double weight = 1.;
+    for(WeightType weightType : weightingMode)
+        weight *= GetWeight(event, weightType);
+    return weight;
+}
+
+double EventWeights::GetWeight(const ntuple::ExpressEvent& event, WeightType weightType) const
+{
+    double weight = GetProvider(weightType)->Get(event);
+    if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
+        throw exception("%1% weights is nan or infinity for event %2%.") % weightType % EventIdentifier(event);
+    return weight;
+}
+
+
+double EventWeights::GetTotalWeight(const ntuple::ExpressEvent& event, const WeightingMode& weightingMode) const
+{
+    double weight = 1.;
+    for(WeightType weightType : weightingMode)
+        weight *= GetWeight(event, weightType);
+    return weight;
 }
 
 std::string EventWeights::FullName(const std::string& fileName, const std::string& path)

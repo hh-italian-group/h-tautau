@@ -23,8 +23,9 @@ void TriggerDescriptorCollection::JetTriggerObjectCollection::SetJetFilterMatchB
     match_bits = match_result ? match_bits | mask : match_bits & ~mask;
 }
 
-TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, const FilterVector& _filters)
-    : type(_type), pt(_pt), filters(_filters) { }
+TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, boost::optional<double> _eta, bool _applyL1match,
+    const FilterVector& _filters)
+    : type(_type), pt(_pt), eta(_eta), applyL1match(_applyL1match), filters(_filters) { }
 
 TriggerDescriptorCollection::TriggerDescriptor::TriggerDescriptor(const Pattern _pattern,
                                                                   const std::vector<Leg>& legs_info) :
@@ -149,7 +150,7 @@ bool TriggerResults::Accept(const Pattern& pattern) const { return Accept(GetInd
 bool TriggerResults::Match(const Pattern& pattern) const { return Match(GetIndex(pattern)); }
 bool TriggerResults::AcceptAndMatch(const Pattern& pattern) const { return AcceptAndMatch(GetIndex(pattern)); }
 
-bool TriggerResults::AnyAccpet() const { return accept_bits.any(); }
+bool TriggerResults::AnyAccept() const { return accept_bits.any(); }
 bool TriggerResults::AnyMatch() const { return match_bits.any(); }
 bool TriggerResults::AnyAcceptAndMatch() const { return (accept_bits & match_bits).any(); }
 

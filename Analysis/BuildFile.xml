@@ -1,6 +1,8 @@
 <use name="boost"/>
 <use name="root"/>
 <use name="HHKinFit2/HHKinFit2"/>
+<use name="TauAnalysis/ClassicSVfit"/>
+<use name="TauAnalysis/SVfitTF"/>
 <use name="AnalysisTools/Core"/>
 <use name="h-tautau/Core"/>
 <use name="h-tautau/JetTools"/>

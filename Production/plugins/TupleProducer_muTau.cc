@@ -8,52 +8,67 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::MuTau;
 
-    SelectionResults selection(eventId, eventEnergyScale);
+    SelectionResultsBase selection(eventId, eventEnergyScale);
     cut(primaryVertex.isNonnull(), "vertex");
 
+    analysis::TriggerResults refTriggerResults;
     if(applyTriggerMatch) {
-        triggerTools.SetTriggerAcceptBits(selection.triggerResults);
-        if(applyTriggerCut){
-            cut(selection.triggerResults.AnyAccpet(), "trigger");
-        }
+        triggerTools.SetTriggerAcceptBits(refTriggerResults);
+        cut(refTriggerResults.AnyAccept(), "trigger");
     }
 
     // Signal-like leptons selection
-    const auto selectedMuons = CollectSignalMuons();
-    cut(selectedMuons.size(), "muons");
-    const auto selectedTaus = CollectSignalTaus();
-    cut(selectedTaus.size(), "taus");
+    auto muons = CollectSignalMuons();
+    cut(muons.size(), "muons");
 
-    const double DeltaR_betweenSignalObjects = productionMode == ProductionMode::hh
+    std::sort(muons.begin(),muons.end(),&LeptonComparitor<MuonCandidate>);
+    selection.muons.push_back(muons.at(0));
+    selection.other_muons = CollectVetoMuons({&muons.at(0)});
+    selection.muonVeto = selection.other_muons.size();
+    cut(!selection.muonVeto, "no_extra_muon");
+
+    selection.other_electrons = CollectVetoElectrons();
+    selection.electronVeto = selection.other_electrons.size();
+    cut(!selection.electronVeto, "no_extra_ele");
+
+    selection.taus = CollectSignalTaus();
+    cut(selection.taus.size(), "taus");
+
+
+
+    const double DeltaR_betweenSignalObjects = (productionMode == ProductionMode::hh ||
+            productionMode == ProductionMode::tau_pog)
             ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
             : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
-    auto higgses = FindCompatibleObjects(selectedMuons, selectedTaus, DeltaR_betweenSignalObjects, "H_mu_tau");
-    cut(higgses.size(), "mu_tau_pair");
 
-    std::sort(higgses.begin(), higgses.end(), &HiggsComparitor<HiggsCandidate>);
-    auto selected_higgs = higgses.front();
+    auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.taus, DeltaR_betweenSignalObjects, "H_mu_tau");
+    cut(higgses_indexes.size(), "mu_tau_pair");
 
-    if(applyTriggerMatch){
-        triggerTools.SetTriggerMatchBits(selection.triggerResults, selected_higgs,
-                                      cuts::H_tautau_2016::DeltaR_triggerMatch);
-        cut(selection.triggerResults.AnyAcceptAndMatch(), "trigger_match");
+    for(size_t n = 0; n < higgses_indexes.size(); ++n){
+        auto daughter_index = higgses_indexes.at(n);
+        analysis::CompositeCandidate<MuonCandidate,TauCandidate> selected_higgs =
+            analysis::CompositeCandidate<MuonCandidate,TauCandidate>(selection.muons.at(daughter_index.first), selection.taus.at(daughter_index.second));
+
+        if(applyTriggerMatch){
+            analysis::TriggerResults triggerResults(refTriggerResults);
+            triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
+                                          cuts::H_tautau_2016::DeltaR_triggerMatch);
+            selection.triggerResults.push_back(triggerResults);
+        }
+
+        selection.higgses_pair_indexes.push_back(daughter_index);
+
+        if(runSVfit)
+            selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
+
     }
 
-    selection.SetHiggsCandidate(selected_higgs);
+    ApplyBaseSelection(selection);
 
-    //Third-Lepton Veto
-    selection.other_electrons = CollectVetoElectrons();
-    selection.other_muons = CollectVetoMuons({ &selection.higgs->GetFirstDaughter() });
-    selection.electronVeto = selection.other_electrons.size();
-    selection.muonVeto = selection.other_muons.size();
-
-    ApplyBaseSelection(selection, selection.higgs->GetDaughterMomentums());
-    if(runSVfit)
-        selection.svfitResult = svfitProducer->Fit(*selection.higgs, *met);
     FillEventTuple(selection);
 
     if(eventEnergyScale == analysis::EventEnergyScale::Central)
-        previous_selection = SelectionResultsPtr(new SelectionResults(selection));
+        previous_selection = SelectionResultsBasePtr(new SelectionResultsBase(selection));
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muTau::CollectSignalMuons()
@@ -77,7 +92,7 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
     cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
     double pt_cut = pt;
-    if(productionMode == ProductionMode::hh) {
+    if(productionMode == ProductionMode::hh || productionMode == ProductionMode::tau_pog) {
         pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::MuTau::muonID::pt : cuts::hh_bbtautau_2016::MuTau::muonID::pt;
     }
     else if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::muonID::pt;
@@ -105,10 +120,12 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     const LorentzVector& p4 = tau.GetMomentum();
     double pt_cut = pt;
     if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::tauID::pt;
-    cut(p4.Pt() > pt_cut, "pt", p4.Pt());
+    cut(p4.Pt() > pt_cut - BaseTupleProducer::pt_shift , "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
-    const auto dmFinding = tau->tauID("decayModeFinding");
-    cut(dmFinding > decayModeFinding, "decayMode", dmFinding);
+    if(productionMode == ProductionMode::hh){
+        const auto dmFinding = tau->tauID("decayModeFinding");
+        cut(dmFinding > decayModeFinding, "decayMode", dmFinding);
+    }
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
@@ -121,7 +138,8 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     }
 }
 
-void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
+
+void TupleProducer_muTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
     using EventPart = ntuple::StorageMode::EventPart;
@@ -130,12 +148,11 @@ void TupleProducer_muTau::FillEventTuple(const SelectionResults& selection)
     eventTuple().channelId = static_cast<int>(Channel::MuTau);
 
     ntuple::StorageMode storageMode(eventTuple().storageMode);
-    const bool store_tauIds = !previous_selection || !selection.HaveSameSecondLegOrigin(*previous_selection);
-    storageMode.SetPresence(EventPart::SecondTauIds, store_tauIds);
     eventTuple().storageMode = storageMode.Mode();
 
-    FillMuonLeg(1, selection.higgs->GetFirstDaughter());
-    FillTauLeg(2, selection.higgs->GetSecondDaughter(), store_tauIds);
+    BaseTupleProducer::FillMuon(selection);
+    BaseTupleProducer::FillTau(selection);
+    BaseTupleProducer::FillHiggsDaughtersIndexes(selection,selection.muons.size());
 
     eventTuple.Fill();
 }

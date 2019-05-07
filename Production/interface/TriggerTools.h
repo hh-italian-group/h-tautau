@@ -19,6 +19,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/TriggerFileDescriptor.h"
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
 #include "AnalysisTools/Core/include/PropertyConfigReader.h"
+#include "DataFormats/L1Trigger/interface/Tau.h"
+#include "DataFormats/L1Trigger/interface/BXVector.h"
 
 namespace analysis {
 
@@ -61,7 +63,7 @@ public:
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
-                 EDGetTokenT<std::vector<l1extra::L1JetParticle>>&& _l1JetParticles_token,
+                 EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
                  const std::string& triggerCfg, Channel channel);
 
     static trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
@@ -122,7 +124,7 @@ private:
     std::map<CMSSW_Process, EDGetTokenT<edm::TriggerResults>> triggerResults_tokens;
     EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_token;
     EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_token;
-    EDGetTokenT<std::vector<l1extra::L1JetParticle>> l1JetParticles_token;
+    EDGetTokenT<BXVector<l1t::Tau>> l1Tau_token;
 
     const edm::Event* iEvent;
     analysis::TriggerDescriptorCollection triggerDescriptors;
@@ -130,7 +132,7 @@ private:
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
-    edm::Handle<std::vector<l1extra::L1JetParticle>> l1JetParticles;
+    edm::Handle<BXVector<l1t::Tau>> l1Taus;
 
     std::vector<VectorTriggerObjectSet> pathTriggerObjects;
     analysis::TriggerDescriptorCollection::JetTriggerObjectCollection jetTriggerObjects;

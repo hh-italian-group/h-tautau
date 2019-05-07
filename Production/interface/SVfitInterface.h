@@ -73,7 +73,7 @@ public:
     }
 
     template<typename FirstLeg, typename SecondLeg, typename MetObject>
-    FitResults Fit(const CompositCandidate<FirstLeg, SecondLeg>& higgs, const MissingET<MetObject>& met) const
+    FitResults Fit(const CompositeCandidate<FirstLeg, SecondLeg>& higgs, const MissingET<MetObject>& met) const
     {
         std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
             detail::CreateMeasuredLepton(higgs.GetFirstDaughter()),

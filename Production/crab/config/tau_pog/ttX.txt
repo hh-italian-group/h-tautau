@@ -1,0 +1,5 @@
+Automatic
+globalTag=102X_mc2017_realistic_v6 sampleType=Fall17MC applyTriggerMatch=True energyScales=Central productionMode=tau_pog runSVfit=False runKinFit=False saveGenTopInfo=True saveGenBosonInfo=True saveGenJetInfo=True
+
+ttH_M125				        1000	/ttH_M125_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+ttHToTauTau_M125			    1000	/ttHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM

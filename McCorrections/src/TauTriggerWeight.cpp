@@ -72,19 +72,19 @@ TauTriggerWeight2016::TauTriggerWeight2016(const std::string& tauId_input)
     }
 }
 
-double TauTriggerWeight2016::GetEfficiency(Channel channel, const LorentzVectorM& p4, GenMatch gen_match,
+double TauTriggerWeight2016::GetEfficiency(Channel channel, const LorentzVectorM& p4, GenLeptonMatch gen_match,
                                            int decay_mode, DiscriminatorWP iso_wp, bool isData) const
 {
-    const bool is_genuine = gen_match == GenMatch::Tau;
+    const bool is_genuine = gen_match == GenLeptonMatch::Tau;
     if(channel == Channel::TauTau)
         return EvaluateEfficiency(p4.pt(), isData, is_genuine, decay_mode, iso_wp);
     else
         throw exception ("channel %1% not supported") % channel;
 }
 
-double TauTriggerWeight2016::EvaluateSF(double pt, GenMatch gen_match, int decay_mode, DiscriminatorWP iso_wp) const
+double TauTriggerWeight2016::EvaluateSF(double pt, GenLeptonMatch gen_match, int decay_mode, DiscriminatorWP iso_wp) const
 {
-    const bool is_genuine = gen_match == GenMatch::Tau;
+    const bool is_genuine = gen_match == GenLeptonMatch::Tau;
     const double eff_data = EvaluateEfficiency(pt, true, is_genuine, decay_mode, iso_wp);
     const double eff_mc = EvaluateEfficiency(pt, false, is_genuine, decay_mode, iso_wp);
     return eff_data / eff_mc;
@@ -108,7 +108,7 @@ TauTriggerWeight2017::TauTriggerWeight2017(const std::string& tauTriggerInput, c
 {
 }
 
-double TauTriggerWeight2017::GetEfficiency(Channel channel, const LorentzVectorM& p4, GenMatch /*gen_match*/,
+double TauTriggerWeight2017::GetEfficiency(Channel channel, const LorentzVectorM& p4, GenLeptonMatch /*gen_match*/,
                                            int /*decay_mode*/, DiscriminatorWP /*iso_wp*/, bool isData) const
 {
     if(channel == Channel::ETau){
