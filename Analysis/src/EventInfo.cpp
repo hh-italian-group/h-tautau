@@ -74,7 +74,9 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         for(size_t n = 0; n < event.jets_p4.size(); ++n) {
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period)) continue;
+            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
+            if((event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+//            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
             jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
@@ -126,7 +128,6 @@ EventInfoBase::SelectedSignalJets EventInfoBase::SelectSignalJets(const Event& e
         if (bjets_ordered.size() >= 2)
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
     }
-
     return selected_signal_jets;
 }
 
@@ -210,8 +211,10 @@ void EventInfoBase::SetJets(const JetCollection& new_jets)
     jets = std::make_shared<JetCollection>(new_jets);
 }
 
-EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, JetOrdering jet_ordering,
-                                                       const std::set<size_t>& jet_to_exclude_indexes)
+EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
+                                                       bool passBtag, JetOrdering jet_ordering,
+                                                       const std::set<size_t>& jet_to_exclude_indexes,
+                                                       double low_eta_cut)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
@@ -220,11 +223,14 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
     for(size_t n = 0; n < all_jets.size(); ++n) {
         const JetCandidate& jet = all_jets.at(n);
-        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
+        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
+        if(applyPu && (event->jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+        if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
+        if(passBtag && !bTagger.Pass(*event,n,DiscriminatorWP::Medium)) continue;
+
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(*event,n));
     }
-
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
     for(size_t h = 0; h < jets_ordered.size(); ++h){
         const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
@@ -233,20 +239,19 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
     return selected_jets;
 }
 
-double EventInfoBase::GetHT(bool includeHbbJets, bool apply_pt_eta_cut)
+double EventInfoBase::GetHT(bool includeHbbJets, bool apply_eta_cut)
 {
     static constexpr double other_jets_min_pt = 20;
     static constexpr double other_jets_max_eta = 4.7;
+    static const std::set<size_t> empty_set = {};
+
+    const double eta_cut = apply_eta_cut ? other_jets_max_eta : 5;
+    const std::set<size_t>& jets_to_exclude = includeHbbJets ? empty_set : GetSelectedBjetIndicesSet();
 
     double ht = 0;
-    const auto& jets = GetJets();
+    const auto& jets = SelectJets(other_jets_min_pt,eta_cut,true,false,JetOrdering::DeepCSV,jets_to_exclude);
     for(size_t n = 0; n < jets.size(); ++n) {
         const auto& jet = jets.at(n);
-
-        if(!PassEcalNoiceVetoJets(jet.GetMomentum(), period)) continue;
-        if(!includeHbbJets && selected_signal_jets.isSelectedBjet(n)) continue;
-        if(apply_pt_eta_cut && (jet.GetMomentum().pt() <= other_jets_min_pt
-            || std::abs(jet.GetMomentum().eta()) >= other_jets_max_eta)) continue;
         ht += jet.GetMomentum().pt();
     }
     return ht;
