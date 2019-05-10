@@ -105,6 +105,11 @@ private:
                     genEventType = analysis::GenEventType::TTbar_Leptonic;
                 (*expressTuple)().genEventType = static_cast<int>(genEventType);
                 ++genEventTypeCountMap[genEventType];
+
+                auto top = topGenEvent->top();
+                (*expressTuple)().gen_top_pt = top ? top->pt() : ntuple::DefaultFillValue<Float_t>();
+                auto top_bar = topGenEvent->topBar();
+                (*expressTuple)().gen_topBar_pt = top_bar ? top_bar->pt() : ntuple::DefaultFillValue<Float_t>();
             }
         }
 
