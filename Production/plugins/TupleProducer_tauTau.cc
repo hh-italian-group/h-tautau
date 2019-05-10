@@ -39,10 +39,6 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
         analysis::CompositeCandidate<TauCandidate,TauCandidate> selected_higgs = analysis::CompositeCandidate<TauCandidate,TauCandidate>(selection.taus.at(daughter_index.first), selection.taus.at(daughter_index.second));
-        if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt()){
-            selected_higgs = analysis::CompositeCandidate<TauCandidate,TauCandidate>(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
-            daughter_index = std::make_pair(daughter_index.second,daughter_index.first);
-        }
 
         if(applyTriggerMatch){
             analysis::TriggerResults triggerResults(refTriggerResults);
