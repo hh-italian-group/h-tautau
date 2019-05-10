@@ -88,6 +88,8 @@ private:
         (*expressTuple)().lumi = event.id().luminosityBlock();
         (*expressTuple)().evt = event.id().event();
         (*expressTuple)().genEventWeight = genEvent->weight();
+        (*expressTuple)().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
+        (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
 
         if(saveGenTopInfo) {
