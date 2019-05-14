@@ -33,7 +33,7 @@ private:
     bool PassHTT_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel, bool is_sync) const;
     bool PassHH_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
     bool PassSkimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
-    bool PassTauPOG_Skimmer_LeptonSelection() const;
+    bool PassTauPOG_Skimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
 
 
 private:
