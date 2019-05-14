@@ -29,7 +29,7 @@ bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton
     if(mode == SignalMode::Skimmer)
         return PassSkimmer_LeptonSelection(lepton);
     if(mode == SignalMode::TauPOG_Skimmer)
-        return PassTauPOG_Skimmer_LeptonSelection();
+        return PassTauPOG_Skimmer_LeptonSelection(lepton);
     throw analysis::exception("Signal Mode for SignalObjectSelector class not supported");
 }
 
@@ -94,8 +94,9 @@ bool SignalObjectSelector::PassHTT_LeptonSelection(const ntuple::TupleLepton& le
 
     if(lepton.leg_type() == LegType::e) return true;
     if(lepton.leg_type() == LegType::mu) {
-        if(!(lepton.p4().pt() > cuts::H_tautau_2017::MuTau::muonID::pt)) return false;
-        if(!is_sync && !(lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
+        if(!(lepton.p4().pt() > cuts::H_tautau_2017::MuTau::muonID::pt)) return false; //to be back
+	//if(!(lepton.p4().pt() > 30)) return false; //compatible with tau ID SF 
+        //if(!is_sync && !(lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
         return true;
     }
     if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
@@ -148,8 +149,14 @@ bool SignalObjectSelector::PassSkimmer_LeptonSelection(const ntuple::TupleLepton
     return true;
 }
 
-bool SignalObjectSelector::PassTauPOG_Skimmer_LeptonSelection() const
+bool SignalObjectSelector::PassTauPOG_Skimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const
 {
+    if(lepton.leg_type() == LegType::e) return true;
+    if(lepton.leg_type() == LegType::mu) {
+        if(!(lepton.p4().pt() > cuts::hh_bbtautau_2017::MuTau::muonID::pt)) return false;
+        return true;
+    }
+    if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
     return true;
 }
 
