@@ -494,11 +494,10 @@ double EventInfoBase::GetMvaScore() const { return mva_score; }
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo,
-                                               TauIdDiscriminator discr,
                                                Period period,
                                                JetOrdering jet_ordering)
 {
-    boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event,discr);
+    boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
     EventInfoBase::SelectedSignalJets selected_signal_jets  = EventInfoBase::SelectSignalJets(event,period,jet_ordering,*selected_higgs_index);
     return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
