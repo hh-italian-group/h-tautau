@@ -159,8 +159,8 @@ bool SignalObjectSelector::PassTauPOG_LeptonSelection(const ntuple::TupleLepton&
     }
     if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
     if(!(lepton.p4().pt() > pt_map.at(channel))) return false;
-    //if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
-    if(!(lepton.PassedOldDecayMode())) return false;
+    if((mode == SignalMode::TauPOG_deepTauVsJet || mode == SignalMode::TauPOG_deepTauVsJet_full) && (lepton.decayMode() == 5 || lepton.decayMode() == 6)) return false;
+    if((mode == SignalMode::TauPOG_default || mode == SignalMode::TauPOG_dpfTau) && !(lepton.PassedOldDecayMode())) return false;
     TauIdDiscriminator eleDiscriminator = mode == SignalMode::TauPOG_deepTauVsJet_full ? TauIdDiscriminator::byDeepTau2017v1VSe : 												 TauIdDiscriminator::againstElectronMVA6;
     TauIdDiscriminator muonDiscriminator = mode == SignalMode::TauPOG_deepTauVsJet_full ? TauIdDiscriminator::byDeepTau2017v1VSmu : 												  TauIdDiscriminator::againstMuon3;
     DiscriminatorWP eleWP = mode == SignalMode::TauPOG_deepTauVsJet_full ? deepTauDiscriminators.at(channel).first : 										   againstDiscriminators.at(channel).first;
