@@ -21,7 +21,6 @@ struct Arguments {
     run::Argument<std::string> tree_name{"tree_name", "Tree on which we work"};
     run::Argument<std::string> output_file{"output_file", "Output root file"};
     run::Argument<analysis::SignalMode> mode{"mode", "Signal mode"};
-    run::Argument<bool> useDeepTau{"useDeepTau", "Use deep tau discriminator for ele and muon"};
 };
 
 namespace analysis {
@@ -38,7 +37,7 @@ public:
 
     PileUpCalc_t(const Arguments& _args) :
         args(_args), pu_weight(args.input_weight_file(), args.weight_hist_name(), 60, 0),
-        output(root_ext::CreateRootFile(args.output_file())), anaData(output), signalObjectSelector(args.mode(),args.useDeepTau())
+        output(root_ext::CreateRootFile(args.output_file())), anaData(output), signalObjectSelector(args.mode())
     {
     }
 

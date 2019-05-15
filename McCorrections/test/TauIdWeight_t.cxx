@@ -17,7 +17,6 @@ struct Arguments {
     run::Argument<std::string> iso_type{"iso_type", "iso type"};
     run::Argument<analysis::Period> period{"period","period",analysis::Period::Run2017};
     run::Argument<analysis::SignalMode> mode{"mode", "Signal mode"};
-    run::Argument<bool> useDeepTau{"useDeepTau", "Use Deep Tau discriminator for ele and muon"};
 };
 
 namespace analysis {
@@ -26,7 +25,7 @@ class TauIdWeight_t {
 public:
     using TauIdWeight = analysis::mc_corrections::TauIdWeight;
 
-    TauIdWeight_t(const Arguments& _args) : args(_args), signalObjectSelector(args.mode(),args.useDeepTau())
+    TauIdWeight_t(const Arguments& _args) : args(_args), signalObjectSelector(args.mode())
     {
         if(args.period()==Period::Run2017) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2017>();
         else if(args.period()==Period::Run2016) tauId_weight=std::make_shared<mc_corrections::TauIdWeight2016>();

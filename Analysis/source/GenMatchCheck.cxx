@@ -12,7 +12,6 @@ struct Arguments {
     REQ_ARG(std::string, output_file);
     REQ_ARG(analysis::Period, period);
     REQ_ARG(analysis::SignalMode, mode);
-    REQ_ARG(bool, useDeepTau);
 };
 
 namespace analysis {
@@ -35,7 +34,7 @@ public:
     using EventTuple = ntuple::EventTuple;
 
     GenMatchCheck(const Arguments& _args) : args(_args), output(root_ext::CreateRootFile(args.output_file())),
-        anaData(output), signalObjectSelector(args.mode(),args.useDeepTau()) { }
+        anaData(output), signalObjectSelector(args.mode()) { }
 
     void Run()
     {
@@ -61,7 +60,7 @@ public:
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
 
-            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering);
+            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),args.period(), jet_ordering);
             if(!event.is_initialized()) continue;
             if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;

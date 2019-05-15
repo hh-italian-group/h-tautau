@@ -12,12 +12,15 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class SignalMode { HTT, HTT_sync, TauPOG, HH, Skimmer, TauPOG_Skimmer };
+enum class SignalMode { HTT, HTT_sync, TauPOG_default, TauPOG_deepTauVsJet, TauPOG_deepTauVsJet_full, TauPOG_dpfTau, HH, Skimmer, TauPOG_Skimmer };
 
 ENUM_NAMES(SignalMode) = {
     { SignalMode::HTT, "HTT" },
     { SignalMode::HTT_sync, "HTT_sync" },
-    { SignalMode::TauPOG, "TauPOG" },
+    { SignalMode::TauPOG_default, "TauPOG_default" },
+    { SignalMode::TauPOG_deepTauVsJet, "TauPOG_deepTauVsJet" },
+    { SignalMode::TauPOG_deepTauVsJet_full, "TauPOG_deepTauVsJet_full" },
+    { SignalMode::TauPOG_dpfTau, "TauPOG_dpfTau" },
     { SignalMode::HH, "HH" },
     { SignalMode::Skimmer, "Skimmer" },
     { SignalMode::TauPOG_Skimmer, "TauPOG_Skimmer" }
@@ -25,10 +28,10 @@ ENUM_NAMES(SignalMode) = {
 
 class SignalObjectSelector {
 public:
-    SignalObjectSelector(SignalMode _mode, bool _useDeepTau);
+    SignalObjectSelector(SignalMode _mode);
 
     bool PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr) const;
+    boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event) const;
 
 private:
     bool PassHTT_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel, bool is_sync) const;
@@ -40,8 +43,8 @@ private:
 
 private:
     SignalMode mode;
-    bool useDeepTau;
     double DR2_leptons;
+    TauIdDiscriminator discriminator;
 };
 
 } // namespace analysis
