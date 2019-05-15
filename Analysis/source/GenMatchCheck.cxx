@@ -12,6 +12,7 @@ struct Arguments {
     REQ_ARG(std::string, output_file);
     REQ_ARG(analysis::Period, period);
     REQ_ARG(analysis::SignalMode, mode);
+    REQ_ARG(bool, useDeepTau);
 };
 
 namespace analysis {
@@ -34,7 +35,7 @@ public:
     using EventTuple = ntuple::EventTuple;
 
     GenMatchCheck(const Arguments& _args) : args(_args), output(root_ext::CreateRootFile(args.output_file())),
-        anaData(output), signalObjectSelector(args.mode()) { }
+        anaData(output), signalObjectSelector(args.mode(),args.useDeepTau()) { }
 
     void Run()
     {

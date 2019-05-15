@@ -6,9 +6,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
+SignalObjectSelector::SignalObjectSelector(SignalMode _mode, bool _useDeepTau) : mode(_mode), useDeepTau(_useDeepTau)
 {
-    if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
+    if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync || mode == SignalMode::TauPOG)
         DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
     else if(mode == SignalMode::HH)
         DR2_leptons = std::pow(cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects, 2);
@@ -24,6 +24,8 @@ bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton
 {
     if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
         return PassHTT_LeptonSelection(lepton,channel,mode == SignalMode::HTT_sync);
+    if(mode == SignalMode::TauPOG)
+	return PassTauPOG_LeptonSelection(lepton,channel);
     if(mode == SignalMode::HH)
         return PassHH_LeptonSelection(lepton,channel);
     if(mode == SignalMode::Skimmer)
@@ -106,6 +108,47 @@ bool SignalObjectSelector::PassHTT_LeptonSelection(const ntuple::TupleLepton& le
     if(!is_sync && !lepton.Passed(TauIdDiscriminator::againstElectronMVA6,againstDiscriminators.at(channel).first)) return false;
     if(!is_sync && !lepton.Passed(TauIdDiscriminator::againstMuon3,againstDiscriminators.at(channel).second)) return false;
     if(!lepton.Passed(TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,DiscriminatorWP::VVLoose)) return false;
+    return true;
+}
+
+bool SignalObjectSelector::PassTauPOG_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const
+{
+    //againstElectron first, againstMuon second
+    static const std::map<Channel,std::pair<DiscriminatorWP,DiscriminatorWP>> againstDiscriminators =
+        { {Channel::ETau,{DiscriminatorWP::Tight,DiscriminatorWP::Loose}} ,
+          {Channel::MuTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Tight}},
+          {Channel::TauTau,{DiscriminatorWP::VLoose,DiscriminatorWP::Loose}}
+      };
+
+    // WP for deepTau vs E (first) and deepTau vs Mu (second)
+    static const std::map<Channel,std::pair<DiscriminatorWP,DiscriminatorWP>> deepTauDiscriminators =
+        { {Channel::ETau,{DiscriminatorWP::VVVLoose,DiscriminatorWP::VVVLoose}} ,
+          {Channel::MuTau,{DiscriminatorWP::VVVLoose,DiscriminatorWP::VVVLoose}},
+          {Channel::TauTau,{DiscriminatorWP::VVVLoose,DiscriminatorWP::VVVLoose}}
+      };
+
+    static const std::map<Channel,double> pt_map =
+        { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
+          {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::pt},
+          {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::pt}
+      };
+
+    if(lepton.leg_type() == LegType::e) return true;
+    if(lepton.leg_type() == LegType::mu) {
+        if(!(lepton.p4().pt() > cuts::H_tautau_2017::MuTau::muonID::pt)) return false; //to be back
+        //if(!(lepton.iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
+        return true;
+    }
+    if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
+    if(!(lepton.p4().pt() > pt_map.at(channel))) return false;
+    //if(lepton.decayMode() == 5 || lepton.decayMode() == 6 || lepton.decayMode() == 11) return false;
+    if(!(lepton.PassedOldDecayMode())) return false;
+    TauIdDiscriminator eleDiscriminator = useDeepTau ? TauIdDiscriminator::byDeepTau2017v1VSe : TauIdDiscriminator::againstElectronMVA6;
+    TauIdDiscriminator muonDiscriminator = useDeepTau ? TauIdDiscriminator::byDeepTau2017v1VSmu : TauIdDiscriminator::againstMuon3;
+    DiscriminatorWP eleWP = useDeepTau ? deepTauDiscriminators.at(channel).first : againstDiscriminators.at(channel).first;
+    DiscriminatorWP muonWP = useDeepTau ? deepTauDiscriminators.at(channel).second : againstDiscriminators.at(channel).second;
+    if(!lepton.Passed(eleDiscriminator,eleWP)) return false;
+    if(!lepton.Passed(muonDiscriminator,muonWP)) return false;
     return true;
 }
 

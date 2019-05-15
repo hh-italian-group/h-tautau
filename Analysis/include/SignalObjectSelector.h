@@ -12,11 +12,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class SignalMode { HTT, HTT_sync, HH, Skimmer, TauPOG_Skimmer };
+enum class SignalMode { HTT, HTT_sync, TauPOG, HH, Skimmer, TauPOG_Skimmer };
 
 ENUM_NAMES(SignalMode) = {
     { SignalMode::HTT, "HTT" },
     { SignalMode::HTT_sync, "HTT_sync" },
+    { SignalMode::TauPOG, "TauPOG" },
     { SignalMode::HH, "HH" },
     { SignalMode::Skimmer, "Skimmer" },
     { SignalMode::TauPOG_Skimmer, "TauPOG_Skimmer" }
@@ -24,13 +25,14 @@ ENUM_NAMES(SignalMode) = {
 
 class SignalObjectSelector {
 public:
-    SignalObjectSelector(SignalMode _mode);
+    SignalObjectSelector(SignalMode _mode, bool _useDeepTau);
 
     bool PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
     boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event, TauIdDiscriminator discr) const;
 
 private:
     bool PassHTT_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel, bool is_sync) const;
+    bool PassTauPOG_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
     bool PassHH_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
     bool PassSkimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
     bool PassTauPOG_Skimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
@@ -38,6 +40,7 @@ private:
 
 private:
     SignalMode mode;
+    bool useDeepTau;
     double DR2_leptons;
 };
 
