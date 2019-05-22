@@ -8,7 +8,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::MuMu;
 
-    SelectionResultsBase selection(eventId, eventEnergyScale);
+    SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
 
     analysis::TriggerResults refTriggerResults;
@@ -81,9 +81,6 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     ApplyBaseSelection(selection);
 
     FillEventTuple(selection);
-
-    if(eventEnergyScale == analysis::EventEnergyScale::Central)
-        previous_selection = SelectionResultsBasePtr(new SelectionResultsBase(selection));
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muMu::CollectSignalMuons()
@@ -112,8 +109,8 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
 void TupleProducer_muMu::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
-  
-    BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
+
+    BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::MuMu);
 
     BaseTupleProducer::FillMuon(selection);

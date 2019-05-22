@@ -29,6 +29,4 @@ private:
     void SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
-private:
-    SelectionResultsBasePtr previous_selection;
 };

@@ -65,11 +65,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
-    const std::vector<std::string> energyScaleStrings = iConfig.getParameter<std::vector<std::string>>("energyScales");
-    for(const auto& scaleString : energyScaleStrings) {
-        const auto es = analysis::Parse<analysis::EventEnergyScale>(scaleString);
-        eventEnergyScales.push_back(es);
-    }
 
     if(period == analysis::Period::Run2016){
         badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
@@ -94,20 +89,16 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 {
     InitializeAODCollections(iEvent, iSetup);
     primaryVertex = vertices->ptrAt(0);
-    for(auto energyScale : eventEnergyScales) {
 
-        std::ostringstream ss_energyScales;
-        ss_energyScales << "events_" << energyScale;
-        const std::string energyScales = ss_energyScales.str();
-        InitializeCandidateCollections(energyScale);
-        try {
-            Cutter cut(&GetAnaData().Selection(energyScales));
-            cut(true,"events");
-            ProcessEvent(cut);
-        } catch(cuts::cut_failed&){}
+    InitializeCandidateCollections();
+    try {
+        Cutter cut(&GetAnaData().Selection());
+        cut(true,"events");
+        ProcessEvent(cut);
+    } catch(cuts::cut_failed&){}
 
-        GetAnaData().Selection(energyScales).fill_selection();
-    }
+    GetAnaData().Selection().fill_selection();
+
 }
 
 void BaseTupleProducer::endJob()
@@ -147,12 +138,9 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
 }
 
-void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScale energyScale)
+void BaseTupleProducer::InitializeCandidateCollections()
 {
-    using analysis::EventEnergyScale;
     using METUncertainty = pat::MET::METUncertainty;
-
-    eventEnergyScale = energyScale;
 
     electrons.clear();
     for(size_t n = 0; n < pat_electrons->size(); ++n) {
@@ -781,15 +769,14 @@ void BaseTupleProducer::FillHiggsDaughtersIndexes(const analysis::SelectionResul
 }
 
 
-void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection,
-                                       const analysis::SelectionResultsBase* reference)
+void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
     using namespace analysis;
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
-    eventTuple().eventEnergyScale = static_cast<int>(eventEnergyScale);
+    eventTuple().eventEnergyScale = static_cast<int>(EventEnergyScale::Central);
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
@@ -844,14 +831,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_triggerFilterMatch.push_back(triggerTools.GetJetMatchBits(p4,
                                                        cuts::H_tautau_2016::DeltaR_triggerMatch));
     }
-    if(eventEnergyScale == EventEnergyScale::Central){
-        for(const auto jet_cand : jets){
-            const auto pat_jet = &(*jet_cand);
-            if(selected_jets.count(pat_jet)) continue;
-            const LorentzVector& other_p4 = jet_cand.GetMomentum();
-            eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
-        }
+
+    for(const auto jet_cand : jets){
+        const auto pat_jet = &(*jet_cand);
+        if(selected_jets.count(pat_jet)) continue;
+        const LorentzVector& other_p4 = jet_cand.GetMomentum();
+        eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
     }
+
 
 
 

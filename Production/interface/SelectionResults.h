@@ -61,7 +61,6 @@ struct SelectionResultsBase {
     using Vertex = reco::Vertex;
 
     edm::EventID eventId;
-    EventEnergyScale energyScale;
 
     bool Zveto, electronVeto, muonVeto;
     std::vector<sv_fit::FitResults> svfitResult;
@@ -76,20 +75,15 @@ struct SelectionResultsBase {
     std::vector<TriggerResults> triggerResults;
     std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;
 
-    SelectionResultsBase(const edm::EventID& _eventId, EventEnergyScale _energyScale) :
-        eventId(_eventId), energyScale(_energyScale) {}
+    SelectionResultsBase(const edm::EventID& _eventId) : eventId(_eventId) {}
 
     virtual ~SelectionResultsBase() {}
     // virtual const LorentzVector& GetHiggsMomentum() const = 0;
 
     bool HaveSameJets(const SelectionResultsBase& other) const
     {
-        static const std::set<EventEnergyScale> jetEnergyScales =
-            { EventEnergyScale::JetUp, EventEnergyScale::JetDown };
 
         if(eventId != other.eventId) return false;
-        if(energyScale != other.energyScale
-            && (jetEnergyScales.count(energyScale) || jetEnergyScales.count(other.energyScale))) return false;
         if(jets.size() != other.jets.size()) return false;
 
         for(size_t n = 0; n < jets.size(); ++n) {

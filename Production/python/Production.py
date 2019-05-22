@@ -21,8 +21,6 @@ options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarPar
                         "Prefix to add to input file names.")
 options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Analysis channels to run.")
-options.register('energyScales', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                        "Event energy scales to run.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Event tuple file.")
 options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -249,11 +247,6 @@ if options.anaChannels == 'all':
 else:
     channels = re.split(',', options.anaChannels)
 
-if options.energyScales == 'all':
-    energyScales = [ 'Central', 'TauUp', 'TauDown', 'JetUp', 'JetDown' ]
-else:
-    energyScales = re.split(',', options.energyScales)
-
 ### Tuple production sequence
 
 if period == 'Run2016':
@@ -314,7 +307,6 @@ for channel in channels:
         storeLHEinfo            = cms.bool(options.storeLHEinfo),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
-        energyScales            = cms.vstring(energyScales),
         period                  = cms.string(period),
         triggerCfg              = cms.string(triggerCfg),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),

@@ -168,11 +168,8 @@ private:
     std::shared_ptr<JetCorrectionUncertainty> jecUnc;
     JME::JetResolution resolution;
 
-    std::vector<analysis::EventEnergyScale> eventEnergyScales;
-
 protected:
     edm::EventID eventId;
-    analysis::EventEnergyScale eventEnergyScale;
     std::vector<ElectronCandidate> electrons;
     std::vector<MuonCandidate> muons;
     std::vector<TauCandidate> taus;
@@ -185,7 +182,7 @@ protected:
 
 private:
     void InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup);
-    void InitializeCandidateCollections(analysis::EventEnergyScale eventEnergyScale);
+    void InitializeCandidateCollections();
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
     virtual void endJob() override;
     virtual void ProcessEvent(Cutter& cut) = 0;
@@ -202,8 +199,7 @@ protected:
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection);
-    void FillEventTuple(const analysis::SelectionResultsBase& selection,
-                        const analysis::SelectionResultsBase* reference = nullptr);
+    void FillEventTuple(const analysis::SelectionResultsBase& selection);
     void FillElectron(const analysis::SelectionResultsBase& selection);
     void FillMuon(const analysis::SelectionResultsBase& selection);
     void FillTau(const analysis::SelectionResultsBase& selection);
@@ -260,17 +256,16 @@ protected:
     {
         static constexpr double weight = 1;
         std::ostringstream ss_suffix;
-        ss_suffix << selection_label << "_" <<  eventEnergyScale;
+        ss_suffix << selection_label;
         const std::string suffix = ss_suffix.str();
         auto& objectSelector = GetAnaData().Selection(suffix);
-        objectSelector.SetSave(eventEnergyScale == analysis::EventEnergyScale::Central);
+        objectSelector.SetSave(true);
 
-        if(!anaDataBeforeCut.count(suffix) && eventEnergyScale == analysis::EventEnergyScale::Central)
+        if(!anaDataBeforeCut.count(suffix) )
               anaDataBeforeCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                          treeName + "_before_cut/" + suffix);
 
-        auto entry = eventEnergyScale == analysis::EventEnergyScale::Central
-                   ? &anaDataBeforeCut.at(suffix)->h : nullptr;
+        auto entry = &anaDataBeforeCut.at(suffix)->h;
         SelectionManager selectionManager(entry, weight, selection_label);
 
         const auto selector = [&](size_t id) -> Candidate {
@@ -284,12 +279,11 @@ protected:
         const auto selected = objectSelector.template collect_objects<Candidate>(1, all_candidates.size(), selector,
                                                                                  comparitor);
 
-        if(!anaDataAfterCut.count(suffix) && eventEnergyScale == analysis::EventEnergyScale::Central)
+        if(!anaDataAfterCut.count(suffix))
             anaDataAfterCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                        treeName + "_after_cut/" + suffix);
 
-        auto entry_afterCut = eventEnergyScale == analysis::EventEnergyScale::Central
-                            ? &anaDataAfterCut.at(suffix)->h : nullptr;
+        auto entry_afterCut = &anaDataAfterCut.at(suffix)->h;
         SelectionManager selectionManager_afterCut(entry_afterCut, weight, selection_label);
 
         for(const auto& candidate : selected) {
@@ -297,8 +291,7 @@ protected:
             base_selector(candidate, cut);
         }
 
-        if(eventEnergyScale == analysis::EventEnergyScale::Central)
-            GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
+        GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
 
         return selected;
     }

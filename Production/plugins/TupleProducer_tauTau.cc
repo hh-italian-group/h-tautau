@@ -8,7 +8,7 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::TauTau;
 
-    SelectionResultsBase selection(eventId, eventEnergyScale);
+    SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
 
     analysis::TriggerResults refTriggerResults;
@@ -54,9 +54,6 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     ApplyBaseSelection(selection);
 
     FillEventTuple(selection);
-
-    if(eventEnergyScale == analysis::EventEnergyScale::Central)
-        previous_selection = SelectionResultsBasePtr(new SelectionResultsBase(selection));
 }
 
 std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tauTau::CollectSignalTaus()
@@ -85,7 +82,7 @@ void TupleProducer_tauTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
 
-    BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
+    BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::TauTau);
 
     BaseTupleProducer::FillTau(selection);
