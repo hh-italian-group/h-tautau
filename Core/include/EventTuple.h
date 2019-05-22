@@ -34,6 +34,10 @@ using Point3D = analysis::Point3D_Float;
     LVAR(Int_t, decayMode) /* tau decay mode */ \
     LVAR(Bool_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
     LVAR(Bool_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
+    LVAR(Bool_t, elePassConversionVeto) /* ele passed conversionVeto requirement */ \
+    LVAR(uint16_t, eleId_iso) /* ele passed Id with isolation requirement */ \
+    LVAR(uint16_t, eleId_noIso) /* ele passed Id without isolation requirement */ \
+    LVAR(uint16_t, muonId) /* muon passed Id requirement */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
@@ -42,6 +46,11 @@ using Point3D = analysis::Point3D_Float;
     OTHERVAR(Int_t, type, col) /* Type */ \
     OTHERVAR(Int_t, gen_match, col) /* Generator matching, see Htautau Twiki*/ \
     OTHERVAR(LorentzVectorM, gen_p4, col) /* 4-momentum of the matched gen particle */ \
+    OTHERVAR(Float_t, iso, col) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    OTHERVAR(Bool_t, elePassConversionVeto, col) /* ele passed conversionVeto requirement */ \
+    OTHERVAR(uint16_t, eleId_iso, col) /* ele passed Id with isolation requirement */ \
+    OTHERVAR(uint16_t, eleId_NoIso, col) /* ele passed Id without isolation requirement */ \
+    OTHERVAR(uint16_t, muonId, col) /* muon passed Id requirement */ \
     /**/
 
 #define JVAR(type, name, col) VAR(std::vector<type>, col##_##name)
@@ -94,7 +103,6 @@ using Point3D = analysis::Point3D_Float;
     VAR(Int_t, eventEnergyScale) /* event type category */ \
     VAR(Int_t, genEventType) /* gen event type */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
-    VAR(UInt_t, storageMode) /* for non-central ES, description of the relation with central ES event */ \
 	/* Event Weights Variables */ \
     VAR(Double_t, weight_pu) \
     VAR(Double_t, weight_lepton_trig) \

@@ -58,7 +58,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
-#include "h-tautau/Analysis/include/EventLoader.h"
 #include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
 //SVFit
@@ -100,16 +99,6 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
-enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm,tau_pog };
-
-ENUM_NAMES(ProductionMode) = {
-    { ProductionMode::hh, "hh" },
-    { ProductionMode::h_tt, "h_tt" },
-    { ProductionMode::h_tt_mssm, "h_tt_mssm" },
-    { ProductionMode::h_tt_sm, "h_tt_sm" },
-    { ProductionMode::tau_pog, "tau_pog" },
-};
-
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -124,7 +113,7 @@ public:
     using LorentzVectorM = analysis::LorentzVectorM;
     using LorentzVectorE = analysis::LorentzVectorE;
 
-    static constexpr double pt_shift = 2;
+    static constexpr double pt_shift = 5;
 
 private:
     std::string treeName;
@@ -148,9 +137,8 @@ private:
     edm::EDGetTokenT<double> m_rho_token;
 
 protected:
-    const ProductionMode productionMode;
     const analysis::Period period;
-    const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
+    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo;
     std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
@@ -220,7 +208,7 @@ protected:
     void FillMuon(const analysis::SelectionResultsBase& selection);
     void FillTau(const analysis::SelectionResultsBase& selection);
     void FillHiggsDaughtersIndexes(const analysis::SelectionResultsBase& selection, size_t shift);
-    void FillLheInfo(bool haveReference);
+    void FillLheInfo();
     void FillGenParticleInfo();
     void FillGenJetInfo();
     void FillLegGenMatch(const analysis::LorentzVectorXYZ& p4);

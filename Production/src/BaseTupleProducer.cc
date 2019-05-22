@@ -9,6 +9,7 @@
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "DataFormats/L1Trigger/interface/Tau.h"
 #include "DataFormats/L1Trigger/interface/BXVector.h"
+#include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
 
 namespace {
@@ -35,12 +36,11 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     topGenEvent_token(mayConsume<TtGenEvent>(iConfig.getParameter<edm::InputTag>("topGenEvent"))),
     genParticles_token(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
     genJets_token(mayConsume<edm::View<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
-    productionMode(analysis::EnumNameMap<ProductionMode>::GetDefault().Parse(
-                       iConfig.getParameter<std::string>("productionMode"))),
     period(analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(
                        iConfig.getParameter<std::string>("period"))),
     isMC(iConfig.getParameter<bool>("isMC")),
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
+    applyTriggerMatchCut(iConfig.getParameter<bool>("applyTriggerMatchCut")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
     runKinFit(iConfig.getParameter<bool>("runKinFit")),
     applyTriggerCut(iConfig.getParameter<bool>("applyTriggerCut")),
@@ -152,35 +152,6 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     using analysis::EventEnergyScale;
     using METUncertainty = pat::MET::METUncertainty;
 
-    static const std::map<EventEnergyScale, int> tauEnergyScales = {
-        { EventEnergyScale::TauUp, +1 }, { EventEnergyScale::TauDown, -1 }
-    };
-    static const std::map<EventEnergyScale, int> jetEnergyScales = {
-        { EventEnergyScale::JetUp, +1 }, { EventEnergyScale::JetDown, -1 }
-    };
-    static const std::map<EventEnergyScale, METUncertainty> metUncertantyMap = {
-        { EventEnergyScale::JetUp, METUncertainty::JetEnUp },
-        { EventEnergyScale::JetDown, METUncertainty::JetEnDown }
-    };
-
-    static const std::map<analysis::Period, std::map<int, double>> tau_correction_factor = {
-        { analysis::Period::Run2016, { {0, analysis::uncertainties::tau_2016::sf_1prong},
-                                       {1, analysis::uncertainties::tau_2016::sf_1prongPi0},
-                                       {10, analysis::uncertainties::tau_2016::sf_3prong} }},
-        { analysis::Period::Run2017, { {0, analysis::uncertainties::tau_2017::sf_1prong},
-                                       {1, analysis::uncertainties::tau_2017::sf_1prongPi0},
-                                       {10, analysis::uncertainties::tau_2017::sf_3prong},
-                                       {11, analysis::uncertainties::tau_2017::sf_3prongPi0} } }
-        // { analysis::Period::Run2018, { {0, analysis::uncertainties::tau_2018::sf_1prong},
-        //                                {1, analysis::uncertainties::tau_2018::sf_1prongPi0},
-        //                                {10, analysis::uncertainties::tau_2018::sf_3prong} }}
-    };
-
-    static const std::map<analysis::Period, double> tau_energyUncertainty = {
-        { analysis::Period::Run2016, analysis::uncertainties::tau_2016::energyUncertainty},
-        { analysis::Period::Run2017, analysis::uncertainties::tau_2017::energyUncertainty}
-    };
-
     eventEnergyScale = energyScale;
 
     electrons.clear();
@@ -195,61 +166,16 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
 
 
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
-    double shifted_met_px = 0;
-    double shifted_met_py = 0;
-    bool met_shift_applied = false;
 
     taus.clear();
     for(const auto& tau : *pat_taus) {
         TauCandidate tauCandidate(tau, Isolation(tau));
-        if(isMC) {
-            bool tau_es_set = false;
-            if(tau.genJet() != nullptr && tau.genJet()->p4().pt() > 15
-                    && ROOT::Math::VectorUtil::DeltaR(tau.genJet()->p4(), tau.p4()) < 0.2) {
-                double corr_factor = 1;
-                double sf = 1;
-                double tau_es_var = 1;
-                bool tau_es_sf_set = false;
-                if(tau_correction_factor.at(period).count(tau.decayMode())){
-                    corr_factor = tau_correction_factor.at(period).at(tau.decayMode());
-                    sf = corr_factor;
-                    tau_es_set = true;
-                    if(tauEnergyScales.count(energyScale)) {
-                        const int sign = tauEnergyScales.at(energyScale);
-                        tau_es_var = sign * tau_energyUncertainty.at(period);
-                        sf = corr_factor + tau_es_var;
-                        tau_es_sf_set = true;
-                    }
-                }
-
-                if(tau_es_sf_set){
-                    const auto shiftedMomentum_met = tau.p4() * tau_es_var;
-                    shifted_met_px -= shiftedMomentum_met.px();
-                    shifted_met_py -= shiftedMomentum_met.py();
-                    met_shift_applied = true;
-                }
-                if(tau_es_set){
-                    const auto shiftedMomentum = tau.p4() * sf;
-                    tauCandidate.SetMomentum(shiftedMomentum);
-                }
-            }
-        }
-
         taus.push_back(tauCandidate);
     }
 
     jets.clear();
     for(const auto& jet : *pat_jets) {
         JetCandidate jetCandidate(jet);
-        if(jetEnergyScales.count(energyScale)) {
-            jecUnc->setJetEta(jet.eta());
-            jecUnc->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
-            const double unc = jecUnc->getUncertainty(true);
-            const int sign = jetEnergyScales.at(energyScale);
-            const double sf = (1.0 + (sign * unc));
-            const auto shiftedMomentum = jet.p4() * sf;
-            jetCandidate.SetMomentum(shiftedMomentum);
-        }
         jets.push_back(jetCandidate);
     }
 
@@ -257,19 +183,6 @@ void BaseTupleProducer::InitializeCandidateCollections(analysis::EventEnergyScal
     for(const auto& jet : * pat_fatJets)
         fatJets.push_back(JetCandidate(jet));
 
-
-    if(met_shift_applied){
-        shifted_met_px += met->GetMomentum().px();
-        shifted_met_py += met->GetMomentum().py();
-        analysis::LorentzVectorXYZ shifted_met;
-        double E = std::hypot(shifted_met_px,shifted_met_py);
-        shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
-        met->SetMomentum(shifted_met);
-    }
-    else if(metUncertantyMap.count(energyScale)) {
-        const auto shiftedMomentum = (*met)->shiftedP4(metUncertantyMap.at(energyScale));
-        met->SetMomentum(shiftedMomentum);
-    }
 }
 
 const double BaseTupleProducer::Isolation(const pat::Electron& electron)
@@ -351,9 +264,9 @@ bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period 
     return true;
 }
 
-void BaseTupleProducer::FillLheInfo(bool haveReference)
+void BaseTupleProducer::FillLheInfo()
 {
-    if(haveReference || !lheEventProduct.isValid()) {
+    if(!lheEventProduct.isValid()) {
         eventTuple().lhe_n_partons = ntuple::DefaultFillValue<UInt_t>();
         eventTuple().lhe_n_c_partons = ntuple::DefaultFillValue<UInt_t>();
         eventTuple().lhe_n_b_partons = ntuple::DefaultFillValue<UInt_t>();
@@ -555,6 +468,19 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
         eventTuple().other_lepton_q.push_back(electron.GetCharge());
         eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::e));
+        eventTuple().other_lepton_iso.push_back(electron.GetIsolation());
+        eventTuple().other_lepton_elePassConversionVeto.push_back(electron->passConversionVeto());
+        analysis::DiscriminatorIdResults eleId_iso;
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") == 1);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") == 1);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") == 1);
+        eventTuple().other_lepton_eleId_iso.push_back(eleId_iso.GetResultBits());
+        analysis::DiscriminatorIdResults eleId_noIso;
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") == 1);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") == 1);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") == 1);
+        eventTuple().other_lepton_eleId_iso.push_back(eleId_noIso.GetResultBits());
+        eventTuple().other_lepton_muonId.push_back(0);
         if(isMC) {
             const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(electron.GetMomentum()), *genParticles);
             eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.match));
@@ -567,6 +493,15 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eventTuple().other_lepton_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
         eventTuple().other_lepton_q.push_back(muon.GetCharge());
         eventTuple().other_lepton_type.push_back(static_cast<int>(analysis::LegType::mu));
+        eventTuple().other_lepton_iso.push_back(muon.GetIsolation());
+        eventTuple().other_lepton_elePassConversionVeto.push_back(false);
+        eventTuple().other_lepton_eleId_iso.push_back(0);
+        eventTuple().other_lepton_eleId_iso.push_back(0);
+        analysis::DiscriminatorIdResults muonId;
+        muonId.SetResult(analysis::DiscriminatorWP::Loose,muon->isLooseMuon());
+        muonId.SetResult(analysis::DiscriminatorWP::Medium,muon->isMediumMuon());
+        muonId.SetResult(analysis::DiscriminatorWP::Tight,muon->isTightMuon(*primaryVertex));
+        eventTuple().other_lepton_muonId.push_back(muonId.GetResultBits());
         if(isMC) {
             const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(muon.GetMomentum()), *genParticles);
             eventTuple().other_lepton_gen_match.push_back(static_cast<int>(match.match));
@@ -691,13 +626,8 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     cut(electron_dxy < dxy, "dxy", electron_dxy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const bool isMedium  = (*medium_id_decisions)[electron.getPtr()];
-    cut(isMedium, "electronMVAMediumID");
-    if(productionMode != ProductionMode::hh) {
-        cut(electron->passConversionVeto(), "conversionVeto");
-    }
-    if(period != analysis::Period::Run2017)
-        cut(electron.GetIsolation() < pfRelIso04, "iso", electron.GetIsolation());
+    float passID = electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose");
+    cut(passID == 1, "electronId");
     for(size_t n = 0; n < signalElectrons.size(); ++n) {
         std::ostringstream ss_name;
         ss_name << "isNotSignal_" << n + 1;
@@ -720,10 +650,7 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
     cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
-
-    bool passMuonId =  muon->isMediumMuon();
-    if( productionMode == ProductionMode::hh || productionMode == ProductionMode::tau_pog)
-        passMuonId = muon->isLooseMuon();
+    bool passMuonId = muon->isLooseMuon();
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;
@@ -754,6 +681,7 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut) const
 void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selection)
 {
     static const float default_value = ntuple::DefaultFillValue<float>();
+    static const float default_value_int = ntuple::DefaultFillValue<int>();
     for(const ElectronCandidate& electron : selection.electrons){
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(electron.GetMomentum()));
         eventTuple().lep_q.push_back(electron.GetCharge());
@@ -761,9 +689,21 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
         eventTuple().lep_dxy.push_back(electron->gsfTrack()->dxy(primaryVertex->position()));
         eventTuple().lep_dz.push_back(electron->gsfTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(electron.GetIsolation());
-        eventTuple().lep_decayMode.push_back(-1);
-        eventTuple().lep_oldDecayModeFinding.push_back(-1);
-        eventTuple().lep_newDecayModeFinding.push_back(-1);
+        eventTuple().lep_decayMode.push_back(default_value_int);
+        eventTuple().lep_oldDecayModeFinding.push_back(false);
+        eventTuple().lep_newDecayModeFinding.push_back(false);
+        eventTuple().lep_elePassConversionVeto.push_back(electron->passConversionVeto());
+        analysis::DiscriminatorIdResults eleId_iso;
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") == 1);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") == 1);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") == 1);
+        eventTuple().lep_eleId_iso.push_back(eleId_iso.GetResultBits());
+        analysis::DiscriminatorIdResults eleId_noIso;
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") == 1);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") == 1);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") == 1);
+        eventTuple().lep_eleId_iso.push_back(eleId_noIso.GetResultBits());
+        eventTuple().lep_muonId.push_back(0);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
             desc.FillTuple<ntuple::EventTuple,pat::Tau>(eventTuple, nullptr, default_value);
@@ -776,6 +716,7 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
 void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection)
 {
     static const float default_value = ntuple::DefaultFillValue<float>();
+    static const float default_value_int = ntuple::DefaultFillValue<int>();
     for(const MuonCandidate& muon : selection.muons){
         eventTuple().lep_p4.push_back(ntuple::LorentzVectorM(muon.GetMomentum()));
         eventTuple().lep_q.push_back(muon.GetCharge());
@@ -783,9 +724,17 @@ void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection
         eventTuple().lep_dxy.push_back(muon->muonBestTrack()->dxy(primaryVertex->position()));
         eventTuple().lep_dz.push_back(muon->muonBestTrack()->dz(primaryVertex->position()));
         eventTuple().lep_iso.push_back(muon.GetIsolation());
-        eventTuple().lep_decayMode.push_back(-1);
-        eventTuple().lep_oldDecayModeFinding.push_back(-1);
-        eventTuple().lep_newDecayModeFinding.push_back(-1);
+        eventTuple().lep_decayMode.push_back(default_value_int);
+        eventTuple().lep_oldDecayModeFinding.push_back(false);
+        eventTuple().lep_newDecayModeFinding.push_back(false);
+        eventTuple().lep_elePassConversionVeto.push_back(false);
+        eventTuple().lep_eleId_iso.push_back(0);
+        eventTuple().lep_eleId_iso.push_back(0);
+        analysis::DiscriminatorIdResults muonId;
+        muonId.SetResult(analysis::DiscriminatorWP::Loose,muon->isLooseMuon());
+        muonId.SetResult(analysis::DiscriminatorWP::Medium,muon->isMediumMuon());
+        muonId.SetResult(analysis::DiscriminatorWP::Tight,muon->isTightMuon(*primaryVertex));
+        eventTuple().lep_muonId.push_back(muonId.GetResultBits());
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
             desc.FillTuple<ntuple::EventTuple,pat::Tau>(eventTuple, nullptr, default_value);
@@ -810,6 +759,10 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
         eventTuple().lep_oldDecayModeFinding.push_back(oldDM);
         bool newDM = tau->tauID("decayModeFindingNewDMs") > 0.5f;
         eventTuple().lep_newDecayModeFinding.push_back(newDM);
+        eventTuple().lep_elePassConversionVeto.push_back(false);
+        eventTuple().lep_eleId_iso.push_back(0);
+        eventTuple().lep_eleId_iso.push_back(0);
+        eventTuple().lep_muonId.push_back(0);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
             desc.FillTuple(eventTuple, &*tau, default_value); //or tau->getPtr()
@@ -832,9 +785,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
                                        const analysis::SelectionResultsBase* reference)
 {
     using namespace analysis;
-    using EventPart = ntuple::StorageMode::EventPart;
-
-    ntuple::StorageMode storageMode;
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
@@ -864,80 +814,75 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     FillMetFilters(period);
 
     std::set<const pat::Jet*> selected_jets;
-    if(!reference || !selection.HaveSameJets(*reference)) {
-        for(const JetCandidate& jet : selection.jets) {
-            const auto selected_jet = &(*jet);
-            selected_jets.insert(selected_jet);
-            const LorentzVector& p4 = jet.GetMomentum();
-            eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
-            eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
-            eventTuple().jets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
-            eventTuple().jets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
-            eventTuple().jets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
-            eventTuple().jets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
-            eventTuple().jets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
-            eventTuple().jets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
-            eventTuple().jets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
-            eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
-            eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
-            eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-            eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
-            eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
-            // Jet resolution
-            JME::JetParameters parameters;
-            parameters.setJetPt(jet.GetMomentum().pt());
-            parameters.setJetEta(jet.GetMomentum().eta());
-            parameters.setRho(*rho);
-            float jet_resolution = resolution.getResolution(parameters);
-            eventTuple().jets_resolution.push_back(jet_resolution); // percentage
 
-            eventTuple().jets_triggerFilterMatch.push_back(triggerTools.GetJetMatchBits(p4,
-                                                           cuts::H_tautau_2016::DeltaR_triggerMatch));
-        }
-        if(eventEnergyScale == EventEnergyScale::Central){
-            for(const auto jet_cand : jets){
-                const auto pat_jet = &(*jet_cand);
-                if(selected_jets.count(pat_jet)) continue;
-                const LorentzVector& other_p4 = jet_cand.GetMomentum();
-                eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
-            }
-        }
-    } else
-        storageMode.SetPresence(EventPart::Jets, false);
+    for(const JetCandidate& jet : selection.jets) {
+        const auto selected_jet = &(*jet);
+        selected_jets.insert(selected_jet);
+        const LorentzVector& p4 = jet.GetMomentum();
+        eventTuple().jets_p4.push_back(ntuple::LorentzVectorE(p4));
+        eventTuple().jets_csv.push_back(jet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+        eventTuple().jets_deepCsv_BvsAll.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:BvsAll")); //sum of b and bb
+        eventTuple().jets_deepCsv_CvsB.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsB"));
+        eventTuple().jets_deepCsv_CvsL.push_back(jet->bDiscriminator("pfDeepCSVDiscriminatorsJetTags:CvsL"));
+        eventTuple().jets_deepFlavour_b.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probb"));
+        eventTuple().jets_deepFlavour_bb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probbb"));
+        eventTuple().jets_deepFlavour_lepb.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:problepb"));
+        eventTuple().jets_deepFlavour_c.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probc"));
+        eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
+        eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
+        eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
+        eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
+        eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
+        // Jet resolution
+        JME::JetParameters parameters;
+        parameters.setJetPt(jet.GetMomentum().pt());
+        parameters.setJetEta(jet.GetMomentum().eta());
+        parameters.setRho(*rho);
+        float jet_resolution = resolution.getResolution(parameters);
+        eventTuple().jets_resolution.push_back(jet_resolution); // percentage
 
-    const bool haveReference = reference && selection.eventId == reference->eventId;
-    storageMode.SetPresence(EventPart::FatJets, !haveReference);
-    storageMode.SetPresence(EventPart::GenInfo, !haveReference);
-
-    if(!haveReference) {
-        for(const JetCandidate& jet : fatJets) {
-            eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(jet.GetMomentum()));
-
-            std::string subjets_collection;
-            if(period == Period::Run2016) {
-                subjets_collection = "SoftDrop";
-                eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
-                eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
-                eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
-                eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
-            } else if(period == Period::Run2017) {
-                subjets_collection = "SoftDropPuppi";
-                eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
-                eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
-                eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
-                eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
-                eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
-            }
-
-            if(!jet->hasSubjets(subjets_collection)) continue;
-            const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
-            const auto& sub_jets = jet->subjets(subjets_collection);
-            for(const auto& sub_jet : sub_jets) {
-                eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
-                eventTuple().subJets_parentIndex.push_back(parentIndex);
-            }
+        eventTuple().jets_triggerFilterMatch.push_back(triggerTools.GetJetMatchBits(p4,
+                                                       cuts::H_tautau_2016::DeltaR_triggerMatch));
+    }
+    if(eventEnergyScale == EventEnergyScale::Central){
+        for(const auto jet_cand : jets){
+            const auto pat_jet = &(*jet_cand);
+            if(selected_jets.count(pat_jet)) continue;
+            const LorentzVector& other_p4 = jet_cand.GetMomentum();
+            eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
         }
     }
+
+
+
+    for(const JetCandidate& jet : fatJets) {
+        eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(jet.GetMomentum()));
+
+        std::string subjets_collection;
+        if(period == Period::Run2016) {
+            subjets_collection = "SoftDrop";
+            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
+            eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
+            eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
+            eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
+        } else if(period == Period::Run2017) {
+            subjets_collection = "SoftDropPuppi";
+            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
+            eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
+            eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
+            eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
+            eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
+        }
+
+        if(!jet->hasSubjets(subjets_collection)) continue;
+        const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
+        const auto& sub_jets = jet->subjets(subjets_collection);
+        for(const auto& sub_jet : sub_jets) {
+            eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
+            eventTuple().subJets_parentIndex.push_back(parentIndex);
+        }
+    }
+
 
     for(const auto& result : selection.kinfitResults) {
         eventTuple().kinFit_jetPairId.push_back(result.first);
@@ -946,18 +891,15 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().kinFit_convergence.push_back(result.second.convergence);
     }
 
-    FillLheInfo(haveReference);
-    if(isMC && !haveReference) {
+    FillLheInfo();
+    if(isMC) {
         FillGenParticleInfo();
         FillGenJetInfo();
     }
 
     eventTuple().extraelec_veto = selection.electronVeto;
     eventTuple().extramuon_veto = selection.muonVeto;
-    if(!haveReference || !selection.HaveSameOtherLeptons(*reference))
-        FillOtherLeptons(selection.other_electrons,selection.other_muons);
-    else
-        storageMode.SetPresence(EventPart::OtherLeptons, false);
+    FillOtherLeptons(selection.other_electrons,selection.other_muons);
 
     // eventTuple().trigger_match = !applyTriggerMatch || selection.triggerResults.AnyAcceptAndMatch();
     eventTuple().trigger_accepts = selection.triggerResults.at(0).GetAcceptBits();
@@ -965,6 +907,4 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().trigger_matches.push_back(selection.triggerResults.at(n).GetMatchBits());
     }
 
-
-    eventTuple().storageMode = storageMode.Mode();
 }

@@ -236,7 +236,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
         for(const auto& triggerObject : triggerObjectSet) {
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
             if(leg.eta.is_initialized() && std::abs(candidateMomentum.Eta()) >= leg.eta ) continue;
-            if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
+            //if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
             const double deltaR2_l1 = std::pow(0.5, 2);
             bool found_l1_match = false;
             if(leg.applyL1match){

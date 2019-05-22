@@ -14,7 +14,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     analysis::TriggerResults refTriggerResults;
     if(applyTriggerMatch) {
         triggerTools.SetTriggerAcceptBits(refTriggerResults);
-        cut(refTriggerResults.AnyAccept(), "trigger");
+        if(applyTriggerMatchCut) cut(refTriggerResults.AnyAccept(), "trigger");
     }
 
     // Signal-like leptons selection
@@ -36,10 +36,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
 
 
-    const double DeltaR_betweenSignalObjects = (productionMode == ProductionMode::hh ||
-            productionMode == ProductionMode::tau_pog)
-            ? cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects
-            : cuts::H_tautau_2016::DeltaR_betweenSignalObjects;
+    const double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
 
     auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.taus, DeltaR_betweenSignalObjects, "H_mu_tau");
     cut(higgses_indexes.size(), "mu_tau_pair");
@@ -91,25 +88,14 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    double pt_cut = pt;
-    if(productionMode == ProductionMode::hh || productionMode == ProductionMode::tau_pog) {
-        pt_cut = period == analysis::Period::Run2017 ? cuts::hh_bbtautau_2017::MuTau::muonID::pt : cuts::hh_bbtautau_2016::MuTau::muonID::pt;
-    }
-    else if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::muonID::pt;
-    else if (productionMode == ProductionMode::h_tt_sm) pt_cut = cuts::H_tautau_2016_sm::MuTau::muonID::pt;
+    double pt_cut = cuts::hh_bbtautau_2017::MuTau::muonID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
-    const double eta_cut  = productionMode == ProductionMode::h_tt_sm ? cuts::H_tautau_2016_sm::MuTau::muonID::eta : eta;
-    cut(std::abs(p4.eta()) < eta_cut, "eta", p4.eta());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
     cut(muon_dxy < dxy, "dxy", muon_dxy);
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
-    if(productionMode == ProductionMode::hh){
-        cut(muon->isTightMuon(*primaryVertex), "muonID");
-        cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
-    }
-    else cut(muon->isMediumMuon(), "muonID");
-
+    cut(muon->isMediumMuon(), "muonID");
 }
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
@@ -118,37 +104,20 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    double pt_cut = pt;
-    if (productionMode == ProductionMode::h_tt_mssm) pt_cut = cuts::H_tautau_2016_mssm::MuTau::tauID::pt;
-    cut(p4.Pt() > pt_cut - BaseTupleProducer::pt_shift , "pt", p4.Pt());
+    cut(p4.Pt() > pt - BaseTupleProducer::pt_shift , "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
-    if(productionMode == ProductionMode::hh){
-        const auto dmFinding = tau->tauID("decayModeFinding");
-        cut(dmFinding > decayModeFinding, "decayMode", dmFinding);
-    }
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
-    if(productionMode == ProductionMode::hh) {
-        cut(tau->tauID("againstElectronVLooseMVA6") > againstElectronVLooseMVA6, "againstElectron");
-        cut(tau->tauID("againstMuonTight3") > againstMuonTight3, "againstMuon");
-        if(period == analysis::Period::Run2017) {
-            cut(tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5, "VVLooseIso");
-        }
-    }
 }
 
 
 void TupleProducer_muTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
-    using EventPart = ntuple::StorageMode::EventPart;
 
     BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
     eventTuple().channelId = static_cast<int>(Channel::MuTau);
-
-    ntuple::StorageMode storageMode(eventTuple().storageMode);
-    eventTuple().storageMode = storageMode.Mode();
 
     BaseTupleProducer::FillMuon(selection);
     BaseTupleProducer::FillTau(selection);
