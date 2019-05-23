@@ -109,8 +109,25 @@ if period == 'Run2016':
             'pfDeepCSVJetTags:probb',
             'pfDeepCSVJetTags:probc',
             'pfDeepCSVJetTags:probbb',
-        ]
+            'pfDeepFlavourJetTags:probb',
+            'pfDeepFlavourJetTags:probbb',
+            'pfDeepFlavourJetTags:problepb',
+            'pfDeepFlavourJetTags:probc',
+            'pfDeepFlavourJetTags:probuds',
+            'pfDeepFlavourJetTags:probg'
+        ],
+        postfix='NewDFTraining'
     )
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       process.pfDeepCSVTagInfosNewDFTraining *
+                                       process.pfDeepFlavourTagInfosNewDFTraining *
+                                       process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
 
 if period == 'Run2017':
     updateJetCollection(
@@ -119,8 +136,26 @@ if period == 'Run2017':
         pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
         svSource = cms.InputTag('slimmedSecondaryVertices'),
         jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+        btagDiscriminators = [
+          'pfDeepFlavourJetTags:probb',
+          'pfDeepFlavourJetTags:probbb',
+          'pfDeepFlavourJetTags:problepb',
+          'pfDeepFlavourJetTags:probc',
+          'pfDeepFlavourJetTags:probuds',
+          'pfDeepFlavourJetTags:probg'
+           ],
+        postfix='NewDFTraining'
     )
-    process.jecSequence = cms.Sequence(process.patJetCorrFactors * process.updatedPatJets * process.selectedUpdatedPatJets)
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       process.pfDeepCSVTagInfosNewDFTraining *
+                                       process.pfDeepFlavourTagInfosNewDFTraining *
+                                       process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
 
 
 
@@ -192,8 +227,7 @@ if period == 'Run2017':
     updatedTauName = "slimmedTausNewID"
     tauIdEmbedder = tauIdConfig.TauIDEmbedder(
         process, cms, debug = True, updatedTauName = updatedTauName,
-        toKeep = [ "2017v2", "dR0p32017v2", "newDM2017v2", "2016v1", "newDM2016v1",
-                   "deepTau2017v1", "DPFTau_2016_v0", "againstEle2018", ]
+        toKeep = [ "2017v2", "2016v1", "deepTau2017v2",  "againstEle2018", ]
     )
     tauIdEmbedder.runTauID()
     tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
@@ -222,15 +256,11 @@ else:
 ### Tuple production sequence
 
 if period == 'Run2016':
-    eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp80')
-    eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Spring16-GeneralPurpose-V1-wp90')
-#    tauSrc_InputTag                  = cms.InputTag('slimmedTaus')
+    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
     objects_InputTag                 = cms.InputTag('selectedPatTrigger')
 
 if period == 'Run2017':
-    eleTightIdMap_InputTag           = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp80')
-    eleMediumIdMap_InputTag          = cms.InputTag('egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wp90')
-#    tauSrc_InputTag                  = cms.InputTag('NewTauIDsEmbedded')
+    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
     objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
@@ -253,12 +283,10 @@ for channel in channels:
 
     setattr(process, producerName, cms.EDAnalyzer(producerClassName,
         electronSrc             = cms.InputTag('slimmedElectrons'),
-        eleTightIdMap           = eleTightIdMap_InputTag,
-        eleMediumIdMap          = eleMediumIdMap_InputTag,
         tauSrc                  = tauSrc_InputTag,
         muonSrc                 = cms.InputTag('slimmedMuons'),
         vtxSrc                  = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        jetSrc                  = cms.InputTag('selectedUpdatedPatJets'),
+        jetSrc                  = jetSrc_InputTag,
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
@@ -297,7 +325,8 @@ for channel in channels:
 if period == 'Run2016':
     process.p = cms.Path(
         process.egmGsfElectronIDSequence *
-        process.electronMVAValueMapProducer *
+        process.egammaPostRecoSeq *
+        process.jecSequence *
         process.fullPatMetSequence *
         process.BadPFMuonFilter *
         process.BadChargedCandidateFilter *
@@ -310,11 +339,11 @@ if period == 'Run2016':
 if period == 'Run2017':
     process.p = cms.Path(
         process.egmGsfElectronIDSequence *
-        process.electronMVAValueMapProducer *
+        process.egammaPostRecoSeq *
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
-        #process.fullPatMetSequence *
+        #process.fullPatMetSequence +
         process.fullPatMetSequenceModifiedMET *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *

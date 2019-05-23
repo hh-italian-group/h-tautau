@@ -108,6 +108,10 @@ if [ $MODE = "prod17" ] ; then
     # Go back to the src/
     run_cmd git cms-addpkg RecoMET/METFilters
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
+    #Add DeepTau code from Tau POG repository (note "-u" option preventing checkout of unnecessary stuff)
+    run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2
+    #Add 2017v2 training file
+    wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2_alone/DeepTauId/deepTau_2017v2p6_e6.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
     #cd $CMSSW_BASE/src
 fi
 
