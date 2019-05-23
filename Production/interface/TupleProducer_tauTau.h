@@ -26,6 +26,4 @@ private:
     std::vector<TauCandidate> CollectSignalTaus();
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
-private:
-    SelectionResultsBasePtr previous_selection;
 };

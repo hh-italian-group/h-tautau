@@ -8,13 +8,13 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 {
     using namespace cuts::H_tautau_2016::MuMu;
 
-    SelectionResultsBase selection(eventId, eventEnergyScale);
+    SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
 
     analysis::TriggerResults refTriggerResults;
     if(applyTriggerMatch) {
         triggerTools.SetTriggerAcceptBits(refTriggerResults);
-        cut(refTriggerResults.AnyAccept(), "trigger");
+        if(applyTriggerMatchCut) cut(refTriggerResults.AnyAccept(), "trigger");
     }
 
     // Signal-like leptons selection
@@ -25,10 +25,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     selection.electronVeto = selection.other_electrons.size();
     cut(!selection.electronVeto, "no_extra_ele");
 
-    const double DeltaR_betweenSignalObjects = (productionMode == ProductionMode::hh ||
-        productionMode == ProductionMode::tau_pog)
-            ? cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects
-            : cuts::H_tautau_2016::MuMu::DeltaR_betweenSignalObjects;
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects;
     auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.muons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses_indexes.size(), "mu_mu_pair");
 
@@ -84,9 +81,6 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     ApplyBaseSelection(selection);
 
     FillEventTuple(selection);
-
-    if(eventEnergyScale == analysis::EventEnergyScale::Central)
-        previous_selection = SelectionResultsBasePtr(new SelectionResultsBase(selection));
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muMu::CollectSignalMuons()
@@ -108,19 +102,15 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
     cut(muon_dxy < dxy, "dxy", muon_dxy);
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
-
     bool passMuonId = muon->isMediumMuon();
-    if(productionMode == ProductionMode::hh)
-        passMuonId = muon->isTightMuon(*primaryVertex);
     cut(passMuonId, "muonID");
 }
 
 void TupleProducer_muMu::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
-    using EventPart = ntuple::StorageMode::EventPart;
 
-    BaseTupleProducer::FillEventTuple(selection, previous_selection.get());
+    BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::MuMu);
 
     BaseTupleProducer::FillMuon(selection);

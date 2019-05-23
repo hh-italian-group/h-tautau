@@ -3,11 +3,11 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
-INSTALL_MODES=( ["prod16"]="CMSSW_8_0_30 slc6_amd64_gcc530" \
-                ["prod17"]="CMSSW_10_2_11 slc7_amd64_gcc700" \
-                ["ana"]="CMSSW_10_2_11 slc6_amd64_gcc7000" \
+INSTALL_MODES=( ["prod16"]="CMSSW_10_2_14 _amd64_gcc700" \
+                ["prod17"]="CMSSW_10_2_14 _amd64_gcc700" \
+                ["ana"]="CMSSW_10_2_14 _amd64_gcc700" \
                 ["ana_osx"]="bbtautau None")
-DEFAULT_N_JOBS=8
+DEFAULT_N_JOBS=4
 
 function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
 
@@ -47,7 +47,7 @@ if [ "x$RELEASE" = "x" ] ; then
     MODE_DESC=( ${INSTALL_MODES[$MODE]} )
     RELEASE=${MODE_DESC[0]}
     if [ "$MODE" != "ana_osx" ] ; then
-        export SCRAM_ARCH=${MODE_DESC[1]}
+        export SCRAM_ARCH="slc$(cat /etc/redhat-release | sed -E 's/[^67]*([67])\..*/\1/')${MODE_DESC[1]}"
     fi
 fi
 if [ -e $RELEASE ] ; then
@@ -55,28 +55,26 @@ if [ -e $RELEASE ] ; then
     exit 1
 fi
 
-if [ "$MODE" != "ana_osx" ] ; then
-    scramv1 project CMSSW $RELEASE
+function run_cmd {
+    "$@"
     RESULT=$?
     if [ $RESULT -ne 0 ] ; then
-        echo "ERROR: unable to create working area for CMSSW release '$RELEASE'."
-        exit 2
+        echo "Error while rinning '$@'"
+        exit 1
     fi
+}
 
+if [ "$MODE" != "ana_osx" ] ; then
+    run_cmd scramv1 project CMSSW $RELEASE
     cd $RELEASE/src
-    eval `scramv1 runtime -sh`
-    RESULT=$?
-    if [ $RESULT -ne 0 ] ; then
-        echo "ERROR: unable to setup the environment for CMSSW release '$RELEASE'."
-        exit 2
-    fi
+    run_cmd eval `scramv1 runtime -sh`
 else
     mkdir -p "$RELEASE"
     cd "$RELEASE"
 fi
 
 if [ $MODE = "prod16" ] ; then
-    git cms-init
+    run_cmd git cms-init
 
     # MET filters
     #git cms-merge-topic -u cms-met:CMSSW_8_0_X-METFilterUpdate #outdated
@@ -84,14 +82,14 @@ if [ $MODE = "prod16" ] ; then
 
     # MET corrections
     #git cms-merge-topic cms-met:METRecipe_8020
-    git cms-merge-topic cms-met:METRecipe_8020_for80Xintegration
+    run_cmd git cms-merge-topic cms-met:METRecipe_8020_for80Xintegration
 
     # Tau ID
-    git cms-merge-topic -u cms-tau-pog:CMSSW_8_0_X_tau-pog_tauIDOnMiniAOD-legacy-backport-81Xv2
+    run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_8_0_X_tau-pog_tauIDOnMiniAOD-legacy-backport-81Xv2
 fi
 
 if [ $MODE = "prod17" ] ; then
-    git cms-init
+    run_cmd git cms-init
 
     # Electron MVA identification
 #git cms-merge-topic guitargeek:ElectronID_MVA2017_940pre3
@@ -108,9 +106,9 @@ if [ $MODE = "prod17" ] ; then
 #    cd data/RecoEgamma/ElectronIdentification/data
 #    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
-    git cms-addpkg RecoMET/METFilters
-    git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X
-    cd $CMSSW_BASE/src
+    run_cmd git cms-addpkg RecoMET/METFilters
+    run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
+    #cd $CMSSW_BASE/src
 fi
 
 # old SVfit packages
@@ -120,30 +118,30 @@ fi
 #cd ../..
 
 # new SVfit packages
-git clone git@github.com:hh-italian-group/ClassicSVfit.git TauAnalysis/ClassicSVfit
+run_cmd git clone git@github.com:hh-italian-group/ClassicSVfit.git TauAnalysis/ClassicSVfit
 cd TauAnalysis/ClassicSVfit
-git checkout hh-italian
+run_cmd git checkout hh-italian
 cd ../..
-git clone git@github.com:hh-italian-group/SVfitTF.git TauAnalysis/SVfitTF
+run_cmd git clone git@github.com:hh-italian-group/SVfitTF.git TauAnalysis/SVfitTF
 
 
 # HHKinFit2 packages
-git clone git@github.com:hh-italian-group/HHKinFit2.git HHKinFit2/HHKinFit2
+run_cmd git clone git@github.com:hh-italian-group/HHKinFit2.git HHKinFit2/HHKinFit2
 
 # LeptonEfficiencies packages
-git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-utilities
-git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
+run_cmd git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-utilities
+run_cmd git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
 # Recoil Corrections
 if [ $MODE = "prod16" -o $MODE = "prod17" ] ; then
-    git clone https://github.com/CMS-HTT/RecoilCorrections.git  HTT-utilities/RecoilCorrections
+    run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
 fi
 
 # Install analysis packages
 declare -A ANA_PACKAGES
 ANA_PACKAGES=( ["AnalysisTools"]="prod16:master prod17:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod16:prod_v4 prod17:ana_v4 ana:ana_v4 ana_osx:ana_v4" \
-               ["hh-bbtautau"]="prod16:ana_v4 prod17:ana_v4 ana:ana_v4 ana_osx:ana_v4" )
+               ["h-tautau"]="prod16:prod_v4 prod17:prod_v5 ana:ana_v4 ana_osx:ana_v4" \
+               ["hh-bbtautau"]="prod16:ana_v4 prod17:ana_v5 ana:ana_v4 ana_osx:ana_v4" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do
@@ -156,10 +154,10 @@ for pkg in "${!ANA_PACKAGES[@]}" ; do
         fi
     done
 
-    git clone git@github.com:hh-italian-group/${pkg}.git
+    run_cmd git clone git@github.com:hh-italian-group/${pkg}.git
     cd "$pkg"
     if [ "$branch" != "master" ] ; then
-        git checkout -b $branch origin/$branch
+        run_cmd git checkout -b $branch origin/$branch
     fi
     git ls-remote git@github.com:$GITHUB_USER/${pkg}.git &> /dev/null
     RESULT=$?
@@ -177,8 +175,10 @@ else
 fi
 
 # Prepare analysis working area
-./AnalysisTools/Run/install.sh "$BUILD_PATH" "${!ANA_PACKAGES[@]}"
+run_cmd ./AnalysisTools/Run/install.sh "$BUILD_PATH" "${!ANA_PACKAGES[@]}"
 
 if ! [[ $MODE =~ ana.* ]] ; then
-    scram b -j$N_JOBS
+    run_cmd scram b -j$N_JOBS
 fi
+
+echo "Framework has been successfully installed."

@@ -18,6 +18,4 @@ private:
     std::vector<MuonCandidate> CollectSignalMuons();
     void SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const;
 
-private:
-    SelectionResultsBasePtr previous_selection;
 };

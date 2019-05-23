@@ -58,7 +58,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
-#include "h-tautau/Analysis/include/EventLoader.h"
 #include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
 //SVFit
@@ -100,16 +99,6 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
-enum class ProductionMode { hh, h_tt, h_tt_mssm,h_tt_sm,tau_pog };
-
-ENUM_NAMES(ProductionMode) = {
-    { ProductionMode::hh, "hh" },
-    { ProductionMode::h_tt, "h_tt" },
-    { ProductionMode::h_tt_mssm, "h_tt_mssm" },
-    { ProductionMode::h_tt_sm, "h_tt_sm" },
-    { ProductionMode::tau_pog, "tau_pog" },
-};
-
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -124,7 +113,7 @@ public:
     using LorentzVectorM = analysis::LorentzVectorM;
     using LorentzVectorE = analysis::LorentzVectorE;
 
-    static constexpr double pt_shift = 2;
+    static constexpr double pt_shift = 5;
 
 private:
     std::string treeName;
@@ -148,9 +137,8 @@ private:
     edm::EDGetTokenT<double> m_rho_token;
 
 protected:
-    const ProductionMode productionMode;
     const analysis::Period period;
-    const bool isMC, applyTriggerMatch, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
+    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo;
     std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
@@ -180,11 +168,8 @@ private:
     std::shared_ptr<JetCorrectionUncertainty> jecUnc;
     JME::JetResolution resolution;
 
-    std::vector<analysis::EventEnergyScale> eventEnergyScales;
-
 protected:
     edm::EventID eventId;
-    analysis::EventEnergyScale eventEnergyScale;
     std::vector<ElectronCandidate> electrons;
     std::vector<MuonCandidate> muons;
     std::vector<TauCandidate> taus;
@@ -197,7 +182,7 @@ protected:
 
 private:
     void InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup);
-    void InitializeCandidateCollections(analysis::EventEnergyScale eventEnergyScale);
+    void InitializeCandidateCollections();
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
     virtual void endJob() override;
     virtual void ProcessEvent(Cutter& cut) = 0;
@@ -214,13 +199,12 @@ protected:
     static bool PassPFTightId(const pat::Jet& pat_jet, analysis::Period period);
 
     void ApplyBaseSelection(analysis::SelectionResultsBase& selection);
-    void FillEventTuple(const analysis::SelectionResultsBase& selection,
-                        const analysis::SelectionResultsBase* reference = nullptr);
+    void FillEventTuple(const analysis::SelectionResultsBase& selection);
     void FillElectron(const analysis::SelectionResultsBase& selection);
     void FillMuon(const analysis::SelectionResultsBase& selection);
     void FillTau(const analysis::SelectionResultsBase& selection);
     void FillHiggsDaughtersIndexes(const analysis::SelectionResultsBase& selection, size_t shift);
-    void FillLheInfo(bool haveReference);
+    void FillLheInfo();
     void FillGenParticleInfo();
     void FillGenJetInfo();
     void FillLegGenMatch(const analysis::LorentzVectorXYZ& p4);
@@ -271,18 +255,15 @@ protected:
                                               Comparitor comparitor = Comparitor())
     {
         static constexpr double weight = 1;
-        std::ostringstream ss_suffix;
-        ss_suffix << selection_label << "_" <<  eventEnergyScale;
-        const std::string suffix = ss_suffix.str();
+        const std::string suffix = selection_label;
         auto& objectSelector = GetAnaData().Selection(suffix);
-        objectSelector.SetSave(eventEnergyScale == analysis::EventEnergyScale::Central);
+        objectSelector.SetSave(true);
 
-        if(!anaDataBeforeCut.count(suffix) && eventEnergyScale == analysis::EventEnergyScale::Central)
+        if(!anaDataBeforeCut.count(suffix) )
               anaDataBeforeCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                          treeName + "_before_cut/" + suffix);
 
-        auto entry = eventEnergyScale == analysis::EventEnergyScale::Central
-                   ? &anaDataBeforeCut.at(suffix)->h : nullptr;
+        auto entry = &anaDataBeforeCut.at(suffix)->h;
         SelectionManager selectionManager(entry, weight, selection_label);
 
         const auto selector = [&](size_t id) -> Candidate {
@@ -296,12 +277,11 @@ protected:
         const auto selected = objectSelector.template collect_objects<Candidate>(1, all_candidates.size(), selector,
                                                                                  comparitor);
 
-        if(!anaDataAfterCut.count(suffix) && eventEnergyScale == analysis::EventEnergyScale::Central)
+        if(!anaDataAfterCut.count(suffix))
             anaDataAfterCut[suffix] = std::make_shared<SelectionData>(&edm::Service<TFileService>()->file(),
                                                                        treeName + "_after_cut/" + suffix);
 
-        auto entry_afterCut = eventEnergyScale == analysis::EventEnergyScale::Central
-                            ? &anaDataAfterCut.at(suffix)->h : nullptr;
+        auto entry_afterCut = &anaDataAfterCut.at(suffix)->h;
         SelectionManager selectionManager_afterCut(entry_afterCut, weight, selection_label);
 
         for(const auto& candidate : selected) {
@@ -309,8 +289,7 @@ protected:
             base_selector(candidate, cut);
         }
 
-        if(eventEnergyScale == analysis::EventEnergyScale::Central)
-            GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
+        GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
 
         return selected;
     }

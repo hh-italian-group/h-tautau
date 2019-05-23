@@ -13,16 +13,14 @@ options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing
                         "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger matching for signal objects. Default: True")
+options.register('applyTriggerMatchCut', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Apply trigger matching Cut not for signal samples. Default: True")
 options.register('fileList', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "List of root files to process.")
 options.register('fileNamePrefix', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Prefix to add to input file names.")
 options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Analysis channels to run.")
-options.register('energyScales', 'all', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                        "Event energy scales to run.")
-options.register('productionMode', 'hh', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                        "Selections that should be used for the production.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Event tuple file.")
 options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -180,33 +178,11 @@ if period == 'Run2017':
 
     MetInputTag = cms.InputTag('slimmedMETsModifiedMET', '', processName)
 
+# Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
+from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
+ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco'} #add 2018 'Run2018': '2018-Prompt'
+setupEgammaPostRecoSeq(process, runVID=True, runEnergyCorrections=False, era=ele_era[period])
 
-
-## Load module for Electron MVA ID
-## It will append a value maps the miniAOD, that it's accesible throught a well Handle
-## Example code here:
-##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
-process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
-##-------------
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-# turn on VID producer, indicate data format  to be
-# DataFormat.AOD or DataFormat.MiniAOD, as appropriate
-switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
-#switchOnVIDElectronIdProducer(process, DataFormat.AOD)
-
-# define which IDs we want to produce
-
-if period == 'Run2016':
-    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_GeneralPurpose_V1_cff' ]
-
-
-if period == 'Run2017':
-    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
-                   'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
-
-#add them to the VID producer
-for idmod in id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 if period == 'Run2016':
     tauSrc_InputTag = cms.InputTag('slimmedTaus')
@@ -238,17 +214,10 @@ if options.saveGenTopInfo:
     process.topGenSequence += process.makeGenEvt
 
 
-if options.productionMode == 'hh' and options.anaChannels == 'all':
+if options.anaChannels == 'all':
     channels = [ 'eTau', 'muTau', 'tauTau', 'muMu' ]
-elif options.anaChannels == 'all':
-    channels = [ 'eTau', 'muTau', 'tauTau' ]
 else:
     channels = re.split(',', options.anaChannels)
-
-if options.energyScales == 'all':
-    energyScales = [ 'Central', 'TauUp', 'TauDown', 'JetUp', 'JetDown' ]
-else:
-    energyScales = re.split(',', options.energyScales)
 
 ### Tuple production sequence
 
@@ -303,14 +272,13 @@ for channel in channels:
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
+        applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),
         runKinFit               = cms.bool(options.runKinFit),
         applyTriggerCut         = cms.bool(options.applyTriggerCut),
         storeLHEinfo            = cms.bool(options.storeLHEinfo),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
-        energyScales            = cms.vstring(energyScales),
-        productionMode          = cms.string(options.productionMode),
         period                  = cms.string(period),
         triggerCfg              = cms.string(triggerCfg),
         saveGenTopInfo          = cms.bool(options.saveGenTopInfo),

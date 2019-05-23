@@ -29,6 +29,4 @@ private:
     void SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const;
     void SelectSignalTau(const TauCandidate& tau, Cutter& cut) const;
 
-private:
-    SelectionResultsBasePtr previous_selection;
 };
