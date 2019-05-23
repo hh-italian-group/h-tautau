@@ -459,14 +459,14 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eventTuple().other_lepton_iso.push_back(electron.GetIsolation());
         eventTuple().other_lepton_elePassConversionVeto.push_back(electron->passConversionVeto());
         analysis::DiscriminatorIdResults eleId_iso;
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") == 1);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") == 1);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") == 1);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") > 0.5);
         eventTuple().other_lepton_eleId_iso.push_back(eleId_iso.GetResultBits());
         analysis::DiscriminatorIdResults eleId_noIso;
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") == 1);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") == 1);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") == 1);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") > 0.5);
         eventTuple().other_lepton_eleId_iso.push_back(eleId_noIso.GetResultBits());
         eventTuple().other_lepton_muonId.push_back(0);
         if(isMC) {
@@ -614,8 +614,8 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     cut(electron_dxy < dxy, "dxy", electron_dxy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    float passID = electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose");
-    cut(passID == 1, "electronId");
+    const float passID = electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose");
+    cut(passID > 0.5, "electronId");
     for(size_t n = 0; n < signalElectrons.size(); ++n) {
         std::ostringstream ss_name;
         ss_name << "isNotSignal_" << n + 1;
@@ -682,14 +682,14 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
         eventTuple().lep_newDecayModeFinding.push_back(false);
         eventTuple().lep_elePassConversionVeto.push_back(electron->passConversionVeto());
         analysis::DiscriminatorIdResults eleId_iso;
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") == 1);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") == 1);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") == 1);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") > 0.5);
         eventTuple().lep_eleId_iso.push_back(eleId_iso.GetResultBits());
         analysis::DiscriminatorIdResults eleId_noIso;
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") == 1);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") == 1);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") == 1);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") > 0.5);
         eventTuple().lep_eleId_iso.push_back(eleId_noIso.GetResultBits());
         eventTuple().lep_muonId.push_back(0);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {

@@ -48,9 +48,6 @@ if [ "x$RELEASE" = "x" ] ; then
     RELEASE=${MODE_DESC[0]}
     if [ "$MODE" != "ana_osx" ] ; then
         export SCRAM_ARCH="slc$(cat /etc/redhat-release | sed -E 's/[^67]*([67])\..*/\1/')${MODE_DESC[1]}"
-        #export SCRAM_ARCH=${MODE_DESC[1]}
-        #echo $SCRAM_ARCH
-        #exit
     fi
 fi
 if [ -e $RELEASE ] ; then
@@ -110,7 +107,7 @@ if [ $MODE = "prod17" ] ; then
 #    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
     run_cmd git cms-addpkg RecoMET/METFilters
-    git cms-merge-topic cms-egamma:EgammaPostRecoTools
+    run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
     #cd $CMSSW_BASE/src
 fi
 

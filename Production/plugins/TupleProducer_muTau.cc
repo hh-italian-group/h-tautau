@@ -36,7 +36,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
 
 
-    const double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
 
     auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.taus, DeltaR_betweenSignalObjects, "H_mu_tau");
     cut(higgses_indexes.size(), "mu_tau_pair");
@@ -86,7 +86,7 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    double pt_cut = cuts::hh_bbtautau_2017::MuTau::muonID::pt;
+    static constexpr double pt_cut = cuts::hh_bbtautau_2017::MuTau::muonID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));

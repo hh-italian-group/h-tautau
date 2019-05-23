@@ -255,9 +255,7 @@ protected:
                                               Comparitor comparitor = Comparitor())
     {
         static constexpr double weight = 1;
-        std::ostringstream ss_suffix;
-        ss_suffix << selection_label;
-        const std::string suffix = ss_suffix.str();
+        const std::string suffix = selection_label;
         auto& objectSelector = GetAnaData().Selection(suffix);
         objectSelector.SetSave(true);
 

@@ -34,7 +34,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");
 
-    const double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
     auto higgses_indexes = FindCompatibleObjects(selection.electrons, selection.taus, DeltaR_betweenSignalObjects, "H_e_tau");
     cut(higgses_indexes.size(), "ele_tau_pair");
 
@@ -82,15 +82,15 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
-    double pt_cut = cuts::hh_bbtautau_2017::ETau::electronID::pt;
+    static constexpr double pt_cut = cuts::hh_bbtautau_2017::ETau::electronID::pt;
     cut(p4.pt() > pt_cut, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double electron_xy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
     cut(electron_xy < dxy, "dxy", electron_xy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    float passID = electron->electronID("mvaEleID-Fall17-noIso-V1-wp90");
-    cut(passID == 1, "electronId");
+    const float passID = electron->electronID("mvaEleID-Fall17-noIso-V1-wp90");
+    cut(passID > 0.5, "electronId");
 }
 
 void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
@@ -99,8 +99,7 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = tau.GetMomentum();
-    double pt_cut = pt;
-    cut(p4.Pt() > pt_cut - BaseTupleProducer::pt_shift, "pt", p4.Pt());
+    cut(p4.Pt() > pt - BaseTupleProducer::pt_shift, "pt", p4.Pt());
     cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());

@@ -178,34 +178,6 @@ if period == 'Run2017':
 
     MetInputTag = cms.InputTag('slimmedMETsModifiedMET', '', processName)
 
-
-
-## Load module for Electron MVA ID
-## It will append a value maps the miniAOD, that it's accesible throught a well Handle
-## Example code here:
-##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
-#process.load('RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi')
-##-------------
-#from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-# turn on VID producer, indicate data format  to be
-# DataFormat.AOD or DataFormat.MiniAOD, as appropriate
-#switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD) ##also compute a maps with the electrons that pass an MVA cut
-#switchOnVIDElectronIdProducer(process, DataFormat.AOD)
-
-# define which IDs we want to produce
-
-#if period == 'Run2016':
-#    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring16_GeneralPurpose_V1_cff' ]
-
-
-#if period == 'Run2017':
-#    id_modules = [ 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
-#                   'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff' ]
-
-#add them to the VID producer
-#for idmod in id_modules:
-#    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-
 # Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco'} #add 2018 'Run2018': '2018-Prompt'
