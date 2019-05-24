@@ -120,7 +120,6 @@ private:
     TupleProducerData anaData;
     std::map<std::string, std::shared_ptr<SelectionData>> anaDataBeforeCut, anaDataAfterCut;
     edm::EDGetToken electronsMiniAOD_token;
-    edm::EDGetTokenT<edm::ValueMap<bool>> eleTightIdMap_token, eleMediumIdMap_token;
     edm::EDGetToken tausMiniAOD_token;
     edm::EDGetToken muonsMiniAOD_token;
     edm::EDGetToken vtxMiniAOD_token;

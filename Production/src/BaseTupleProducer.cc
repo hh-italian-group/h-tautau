@@ -22,8 +22,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     treeName(ToString(_channel)),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
     electronsMiniAOD_token(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
-    eleTightIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
-    eleMediumIdMap_token(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
     tausMiniAOD_token(mayConsume<std::vector<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
     muonsMiniAOD_token(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
     vtxMiniAOD_token(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
@@ -113,8 +111,6 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     triggerTools.Initialize(iEvent);
 
     iEvent.getByToken(electronsMiniAOD_token, pat_electrons);
-    iEvent.getByToken(eleTightIdMap_token, tight_id_decisions);
-    iEvent.getByToken(eleMediumIdMap_token, medium_id_decisions);
     iEvent.getByToken(tausMiniAOD_token, pat_taus);
     iEvent.getByToken(muonsMiniAOD_token, pat_muons);
     iEvent.getByToken(vtxMiniAOD_token, vertices);

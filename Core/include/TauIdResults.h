@@ -19,21 +19,14 @@ namespace analysis {
            "Loose Medium Tight") \
     TAU_ID(byIsolationMVArun2v1DBoldDMwLT2016, "by{wp}IsolationMVArun2v1DBoldDMwLT{raw}2016", true, \
            "VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byIsolationMVArun2v1DBnewDMwLT2016, "by{wp}IsolationMVArun2v1DBnewDMwLT{raw}2016", true, \
-           "VLoose Loose Medium Tight VTight VVTight") \
     TAU_ID(byIsolationMVArun2017v2DBoldDMwLT2017, "by{wp}IsolationMVArun2017v2DBoldDMwLT{raw}2017", true, \
            "VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byIsolationMVArun2017v2DBoldDMdR0p3wLT2017, "by{wp}IsolationMVArun2017v2DBoldDMdR0p3wLT{raw}2017", true, \
-           "VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byIsolationMVArun2017v2DBnewDMwLT2017, "by{wp}IsolationMVArun2017v2DBnewDMwLT{raw}2017", true, \
-           "VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byDeepTau2017v1VSe, "by{wp}DeepTau2017v1VSe{raw}", true, \
+    TAU_ID(byDeepTau2017v2VSe, "by{wp}DeepTau2017v2VSe{raw}", true, \
            "VVVLoose VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byDeepTau2017v1VSmu, "by{wp}DeepTau2017v1VSmu{raw}", true, \
+    TAU_ID(byDeepTau2017v2VSmu, "by{wp}DeepTau2017v2VSmu{raw}", true, \
+           "VLoose Loose Medium Tight") \
+    TAU_ID(byDeepTau2017v2VSjet, "by{wp}DeepTau2017v2VSjet{raw}", true, \
            "VVVLoose VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byDeepTau2017v1VSjet, "by{wp}DeepTau2017v1VSjet{raw}", true, \
-           "VVVLoose VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byDpfTau2016v0VSall, "by{wp}DpfTau2016v0VSall{raw}", true, "Tight") \
     /**/
 
 
