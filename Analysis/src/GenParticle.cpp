@@ -77,7 +77,7 @@ std::vector<const GenParticle*> GenEvent::GetTypesParticles(std::vector<std::str
         for (const GenParticle* particle : code_iter->second){
            if(!particle->genStatusFlags.isLastCopy()) continue;
            if(!particle->genStatusFlags.isPrompt()) continue;
-           // if(!areParented(particle,possible_mother)) continue;
+            if(!areParented(particle,possible_mother)) continue;
             //to check for shared particles in the daughters of the possible mother
 //               if(!areParented(particle,possible_mother->daughters.at(0)))continue;
 //               if(!areParented(particle,possible_mother->daughters.at(1)))continue;
@@ -210,4 +210,7 @@ LorentzVectorM_Float GenEvent::GetFinalStateMomentum(const GenParticle& particle
     }
     return p4;
 }
+std::map<int, std::string> GenEvent::particle_names;
+std::map<int, std::string> GenEvent::particle_types;
+
 } //analysis
