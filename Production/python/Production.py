@@ -97,65 +97,48 @@ if options.eventList != '':
 ## and add btag discriminator to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
-if period == 'Run2016':
-    updateJetCollection(
-        process,
-        jetSource = cms.InputTag('slimmedJets'),
-        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        svSource = cms.InputTag('slimmedSecondaryVertices'),
-        jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
-        btagDiscriminators = [
-            'pfDeepCSVJetTags:probudsg',
-            'pfDeepCSVJetTags:probb',
-            'pfDeepCSVJetTags:probc',
-            'pfDeepCSVJetTags:probbb',
-            'pfDeepFlavourJetTags:probb',
-            'pfDeepFlavourJetTags:probbb',
-            'pfDeepFlavourJetTags:problepb',
-            'pfDeepFlavourJetTags:probc',
-            'pfDeepFlavourJetTags:probuds',
-            'pfDeepFlavourJetTags:probg'
-        ],
-        postfix='NewDFTraining'
-    )
-    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
-                                       process.updatedPatJetsNewDFTraining *
-                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
-                                       process.pfImpactParameterTagInfosNewDFTraining *
-                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
-                                       process.pfDeepCSVTagInfosNewDFTraining *
-                                       process.pfDeepFlavourTagInfosNewDFTraining *
-                                       process.pfDeepFlavourJetTagsNewDFTraining *
-                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
-                                       process.selectedUpdatedPatJetsNewDFTraining)
-
 if period == 'Run2017':
-    updateJetCollection(
-        process,
-        jetSource = cms.InputTag('slimmedJets'),
-        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        svSource = cms.InputTag('slimmedSecondaryVertices'),
-        jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
-        btagDiscriminators = [
-          'pfDeepFlavourJetTags:probb',
-          'pfDeepFlavourJetTags:probbb',
-          'pfDeepFlavourJetTags:problepb',
-          'pfDeepFlavourJetTags:probc',
-          'pfDeepFlavourJetTags:probuds',
-          'pfDeepFlavourJetTags:probg'
-           ],
-        postfix='NewDFTraining'
-    )
-    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
-                                       process.updatedPatJetsNewDFTraining *
-                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
-                                       process.pfImpactParameterTagInfosNewDFTraining *
-                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
-                                       process.pfDeepCSVTagInfosNewDFTraining *
-                                       process.pfDeepFlavourTagInfosNewDFTraining *
-                                       process.pfDeepFlavourJetTagsNewDFTraining *
-                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
-                                       process.selectedUpdatedPatJetsNewDFTraining)
+    btagVector = [
+      'pfDeepFlavourJetTags:probb',
+      'pfDeepFlavourJetTags:probbb',
+      'pfDeepFlavourJetTags:problepb',
+      'pfDeepFlavourJetTags:probc',
+      'pfDeepFlavourJetTags:probuds',
+      'pfDeepFlavourJetTags:probg'
+       ]
+if period == 'Run2016':
+    btagVector = [
+        'pfDeepCSVJetTags:probudsg',
+        'pfDeepCSVJetTags:probb',
+        'pfDeepCSVJetTags:probc',
+        'pfDeepCSVJetTags:probbb',
+        'pfDeepFlavourJetTags:probb',
+        'pfDeepFlavourJetTags:probbb',
+        'pfDeepFlavourJetTags:problepb',
+        'pfDeepFlavourJetTags:probc',
+        'pfDeepFlavourJetTags:probuds',
+        'pfDeepFlavourJetTags:probg'
+    ]
+
+updateJetCollection(
+    process,
+    jetSource = cms.InputTag('slimmedJets'),
+    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+    svSource = cms.InputTag('slimmedSecondaryVertices'),
+    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    btagDiscriminators = btagVector,
+    postfix='NewDFTraining'
+)
+process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                   process.updatedPatJetsNewDFTraining *
+                                   process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                   process.pfImpactParameterTagInfosNewDFTraining *
+                                   process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                   process.pfDeepCSVTagInfosNewDFTraining *
+                                   process.pfDeepFlavourTagInfosNewDFTraining *
+                                   process.pfDeepFlavourJetTagsNewDFTraining *
+                                   process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                   process.selectedUpdatedPatJetsNewDFTraining)
 
 
 
