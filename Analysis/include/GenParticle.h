@@ -73,14 +73,4 @@ private:
     static std::map<int, std::string> particle_names;
     static std::map<int, std::string> particle_types;
 };
-
-// std::map<int, std::string> GenEvent::particle_names;
-// std::map<int, std::string> GenEvent::particle_types;
-
-
-// void FindFinalStateDaughters(const GenParticle& particle, std::set<const GenParticle*>& daughters,
-//                              const std::set<int>& pdg_to_exclude);
-// LorentzVectorM_Float GetFinalStateMomentum(const GenParticle& particle, std::vector<const GenParticle*>& visible_daughters,
-//                                    bool excludeInvisible, bool excludeLightLeptons);
-
 } //analysis
