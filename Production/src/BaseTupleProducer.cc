@@ -16,6 +16,27 @@ namespace {
 bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 }
 
+TupleStore::TupleStore() : tuple_counter(0) {}
+
+std::shared_ptr<ntuple::EventTuple> TupleStore::GetTuple()
+{
+  if(tuple_counter == 0){
+    eventTuple_ptr = ntuple::CreateEventTuple("Events",&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full);
+    ++tuple_counter;
+  }
+  return eventTuple_ptr;
+}
+
+void TupleStore::ReleaseEventTuple()
+{
+  --tuple_counter;
+  if(tuple_counter == 0){
+    eventTuple_ptr->Write();
+    delete eventTuple_ptr;
+  }
+}
+
+
 const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel) :
@@ -26,6 +47,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     muonsMiniAOD_token(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
     vtxMiniAOD_token(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
     pfMETAOD_token(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
+    genMETAOD_token(mayConsume<edm::View<reco::GenMET> >(iConfig.getParameter<edm::InputTag>("genMetSrc"))),
     jetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
     fatJetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("fatJetSrc"))),
     PUInfo_token(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
@@ -49,7 +71,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
-    eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
+    //eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
+    eventTuple(*TupleStore::GetTuple()),
     eventTuple(*eventTuple_ptr),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
@@ -101,7 +124,8 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
 void BaseTupleProducer::endJob()
 {
-    eventTuple.Write();
+    //eventTuple.Write();
+    TupleStore::ReleaseEventTuple();
 }
 
 void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -119,6 +143,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(PUInfo_token, PUInfo);
     if(isMC) {
+        iEvent.getByToken(genMETAOD_token, genMET);
         iEvent.getByToken(genWeights_token, genEvt);
         iEvent.getByToken(genParticles_token, genParticles);
         iEvent.getByToken(lheEventProduct_token, lheEventProduct);
@@ -137,7 +162,6 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
 void BaseTupleProducer::InitializeCandidateCollections()
 {
     using METUncertainty = pat::MET::METUncertainty;
-
     electrons.clear();
     for(size_t n = 0; n < pat_electrons->size(); ++n) {
         const edm::Ptr<pat::Electron> ele_ptr(pat_electrons, n);
@@ -330,19 +354,48 @@ void BaseTupleProducer::FillGenParticleInfo()
 {
     using analysis::GenEventType;
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
+    static const std::set<int> leptons = { 11, 13, 15 };
     static const std::set<int> bosons = { 23, 24, 25, 35 };
 
     std::vector<const reco::GenParticle*> particles_to_store;
+    std::map<int,std::vector<const reco::GenParticle*>> particles_to_store_backup;
 
     std::map<int, size_t> particle_counts;
     for(const auto& particle : *genParticles) {
         const auto& flag = particle.statusFlags();
-        if(!flag.isPrompt() || !flag.isLastCopy()) continue;
+        if(!flag.isPrompt() || !flag.isLastCopy() || !flag.fromHardProcess()) continue;
         const int abs_pdg = std::abs(particle.pdgId());
         ++particle_counts[abs_pdg];
-        if(saveGenBosonInfo && bosons.count(abs_pdg))
-            particles_to_store.push_back(&particle);
+        if(saveGenBosonInfo && bosons.count(abs_pdg)){
+          particles_to_store.push_back(&particle);
+        }
+        if(leptons.count(abs_pdg)){
+          particles_to_store_backup[abs_pdg].push_back(&particle);
+        }
+
     }
+
+    if(particles_to_store.empty()){
+      if(particles_to_store_backup[tauPdgId].size() > 0) {
+        if(particles_to_store_backup[tauPdgId].size() != 2)
+          throw analysis::exception("More than 2 prompt taus for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+        particles_to_store = particles_to_store_backup.at(tauPdgId);
+      }
+      else if(particles_to_store_backup[muonPdgId].size() > 0) {
+        if(particles_to_store_backup[muonPdgId].size() != 2)
+          throw analysis::exception("More than 2 prompt muons for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+        particles_to_store = particles_to_store_backup.at(muonPdgId);
+      }
+      else if(particles_to_store_backup[electronPdgId].size() > 0) {
+        if(particles_to_store_backup[electronPdgId].size() != 2)
+          throw analysis::exception("More than 2 prompt electrons for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+        particles_to_store = particles_to_store_backup.at(electronPdgId);
+      }
+
+    }
+
+    if(particles_to_store.empty())
+      throw analysis::exception("Particles to store is empty for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
 
     eventTuple().genParticles_nPromptElectrons = particle_counts[electronPdgId];
     eventTuple().genParticles_nPromptMuons = particle_counts[muonPdgId];
@@ -794,6 +847,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
+    ntuple::LorentzVectorM genMet_momentum(genMET->at(0).pt(),0,genMET->at(0).eta(),0);
+    eventTuple().genMET_p4 = genMet_momentum;
     FillMetFilters(period);
 
     std::set<const pat::Jet*> selected_jets;

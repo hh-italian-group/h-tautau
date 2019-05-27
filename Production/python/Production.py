@@ -273,6 +273,7 @@ for channel in channels:
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
+        genMetSrc               = cms.InputTag('genMetTrue'),
         prescales               = cms.InputTag('patTrigger'),
         objects                 = objects_InputTag,
         lheEventProducts        = cms.InputTag('externalLHEProducer'),

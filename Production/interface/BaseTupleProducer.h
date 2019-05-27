@@ -99,6 +99,21 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
+class TupleStore {
+public:
+  TupleStore();
+
+protected:
+  static std::shared_ptr<ntuple::EventTuple> GetTuple();
+  static void ReleaseEventTuple();
+
+private:
+  int tuple_counter;
+  std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+
+};
+
+
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -124,6 +139,7 @@ private:
     edm::EDGetToken muonsMiniAOD_token;
     edm::EDGetToken vtxMiniAOD_token;
     edm::EDGetToken pfMETAOD_token;
+    edm::EDGetToken genMETAOD_token;
     edm::EDGetToken jetsMiniAOD_token;
     edm::EDGetToken fatJetsMiniAOD_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_token;
@@ -159,6 +175,7 @@ private:
     edm::Handle<std::vector<pat::Jet> > pat_fatJets;
     edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
     edm::Handle<LHEEventProduct> lheEventProduct;
+    edm::Handle<edm::View<reco::GenMET>> genMET;
     edm::Handle<GenEventInfoProduct> genEvt;
     edm::Handle<TtGenEvent> topGenEvent;
     edm::Handle<double> rho;

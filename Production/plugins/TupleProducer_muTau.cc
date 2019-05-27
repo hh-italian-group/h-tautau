@@ -25,16 +25,12 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     selection.muons.push_back(muons.at(0));
     selection.other_muons = CollectVetoMuons({&muons.at(0)});
     selection.muonVeto = selection.other_muons.size();
-    cut(!selection.muonVeto, "no_extra_muon");
 
     selection.other_electrons = CollectVetoElectrons();
     selection.electronVeto = selection.other_electrons.size();
-    cut(!selection.electronVeto, "no_extra_ele");
 
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");
-
-
 
     static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
 

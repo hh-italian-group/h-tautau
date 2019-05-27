@@ -182,6 +182,7 @@ using Point3D = analysis::Point3D_Float;
     VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
+    VAR(LorentzVectorM, genMET_p4) \
     /* Vetos */\
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \

@@ -23,9 +23,6 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.electronVeto = selection.other_electrons.size();
     selection.muonVeto = selection.other_muons.size();
 
-    cut(!selection.electronVeto, "no_extra_ele");
-    cut(!selection.muonVeto, "no_extra_muon");
-
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 1, "taus");
 
