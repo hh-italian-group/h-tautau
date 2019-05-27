@@ -107,8 +107,10 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 void TupleProducer_eTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
 
-    std::lock<ntuple::EventTuple::Mutex> lock(eventTuple.GetMutex());
+    Lock lock(eventTuple.GetMutex());
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::ETau);

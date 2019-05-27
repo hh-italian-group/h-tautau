@@ -101,15 +101,13 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 
 class TupleStore {
 public:
-  TupleStore();
 
-protected:
-  static std::shared_ptr<ntuple::EventTuple> GetTuple();
+  static ntuple::EventTuple& GetTuple();
   static void ReleaseEventTuple();
 
 private:
-  int tuple_counter;
-  std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+  static int tuple_counter;
+  static std::unique_ptr<ntuple::EventTuple> eventTuple_ptr;
 
 };
 
@@ -156,7 +154,7 @@ protected:
     const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo;
-    std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+    //std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;

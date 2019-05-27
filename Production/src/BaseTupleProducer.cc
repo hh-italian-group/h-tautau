@@ -16,23 +16,28 @@ namespace {
 bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
 }
 
-TupleStore::TupleStore() : tuple_counter(0) {}
+int TupleStore::tuple_counter = 0;
 
-std::shared_ptr<ntuple::EventTuple> TupleStore::GetTuple()
+std::unique_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
+
+ntuple::EventTuple& TupleStore::GetTuple()
 {
+  ROOT::CompressionSettings(ROOT::kLZ4, 5);
   if(tuple_counter == 0){
-    eventTuple_ptr = ntuple::CreateEventTuple("Events",&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full);
-    ++tuple_counter;
+    eventTuple_ptr = std::make_unique<ntuple::EventTuple>("events",&edm::Service<TFileService>()->file(),false);
   }
-  return eventTuple_ptr;
+  ++tuple_counter;
+  return *eventTuple_ptr;
 }
 
 void TupleStore::ReleaseEventTuple()
 {
+  if(tuple_counter==0)
+    throw analysis::exception("Tuple Counter equal zero.");
   --tuple_counter;
   if(tuple_counter == 0){
     eventTuple_ptr->Write();
-    delete eventTuple_ptr;
+    eventTuple_ptr.reset();
   }
 }
 
@@ -72,8 +77,8 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
     //eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
-    eventTuple(*TupleStore::GetTuple()),
-    eventTuple(*eventTuple_ptr),
+    eventTuple(TupleStore::GetTuple()),
+    //eventTuple(*eventTuple_ptr),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
