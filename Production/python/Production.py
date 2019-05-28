@@ -210,7 +210,8 @@ if period == 'Run2017':
     updatedTauName = "slimmedTausNewID"
     tauIdEmbedder = tauIdConfig.TauIDEmbedder(
         process, cms, debug = True, updatedTauName = updatedTauName,
-        toKeep = [ "2017v2", "2016v1", "deepTau2017v2",  "againstEle2018", ]
+        #toKeep = [ "2017v2", "2016v1", "deepTau2017v2",  "againstEle2018", ]
+        toKeep = [ "2017v2", "2016v1", "againstEle2018", ]
     )
     tauIdEmbedder.runTauID()
     tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
