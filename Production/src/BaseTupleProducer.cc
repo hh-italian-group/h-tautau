@@ -76,6 +76,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
+    isEmbedded(iConfig.getParameter<bool>("isEmbedded")),
     //eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
     eventTuple(TupleStore::GetTuple()),
     //eventTuple(*eventTuple_ptr),
@@ -83,6 +84,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "PAT")),
+                 mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIMembedding")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
@@ -565,10 +567,14 @@ void BaseTupleProducer::FillLegGenMatch(const analysis::LorentzVectorXYZ& p4)
         eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
         const auto matched_visible_p4 = match.visible_daughters_p4;
         eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM(matched_visible_p4));
+        eventTuple().lep_gen_chargedParticles.push_back(match.n_chargedParticles);
+        eventTuple().lep_gen_neutralParticles.push_back(match.n_neutralParticles);
     } else {
         eventTuple().lep_gen_match.push_back(default_int_value);
         eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM());
         eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM());
+        eventTuple().lep_gen_chargedParticles.push_back(default_int_value);
+        eventTuple().lep_gen_neutralParticles.push_back(default_int_value);
     }
 }
 

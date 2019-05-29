@@ -5,18 +5,41 @@ import sys
 from sets import Set
 import FWCore.ParameterSet.Config as cms
 
-mcSampleTypes = Set([ 'Summer16MC', 'Fall17MC' ])
-dataSampleTypes = Set([ 'Run2016' , 'Run2017' ])
+mcSampleTypes = Set([ 'MC_16', 'MC_17', 'MC_18', 'Emb_16', 'Emb_17', 'Emb_18' ])
+dataSampleTypes = Set([ 'Run2016' , 'Run2017', 'Run2018' ])
 
-periodDict = { 'Summer16MC' : 'Run2016',
+periodDict = { 'MC_16' : 'Run2016',
                'Run2016' : 'Run2016',
-               'Fall17MC' : 'Run2017',
-               'Run2017' : 'Run2017'
+               'Emb_16' : 'Run2016',
+               'MC_17' : 'Run2017',
+               'Run2017' : 'Run2017',
+               'Emb_17' : 'Run2017',
+               'MC_18' : 'Run2018',
+               'Run2018' : 'Run2018',
+               'Emb_18' : 'Run2018'
+             }
+
+globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v6',
+                 'Run2016' : '102X_dataRun2_nanoAOD_2016_v1',
+                 'Emb_16' : '102X_dataRun2_nanoAOD_2016_v1',
+                 'MC_17' : '102X_mc2017_realistic_v6',
+                 'Run2017' : '102X_dataRun2_v8',
+                 'Emb_17' : '102X_dataRun2_v8',
+                 'MC_18' : '102X_upgrade2018_realistic_v18',
+                 'Run2018' : '102X_dataRun2_Prompt_v13', #to be divided because different for different runs
+                 'Emb_18' : '102X_dataRun2_Prompt_v13'
                }
 
 hltPaths = {
+    'MC_16'   : 'h-tautau/Production/data/triggers_2016.cfg',
     'Run2016'   : 'h-tautau/Production/data/triggers_2016.cfg',
-    'Run2017'   : 'h-tautau/Production/data/triggers_2017.cfg'
+    'Emb_16' : 'h-tautau/Production/data/triggers_2016_emb.cfg',
+    'MC_17'   : 'h-tautau/Production/data/triggers_2017.cfg',
+    'Run2017'   : 'h-tautau/Production/data/triggers_2017.cfg',
+    'Emb_17' : 'h-tautau/Production/data/triggers_2017_emb.cfg',
+    'MC_18'   : 'h-tautau/Production/data/triggers_2018.cfg',
+    'Run2018'   : 'h-tautau/Production/data/triggers_2018.cfg',
+    'Emb_18' : 'h-tautau/Production/data/triggers_2018_emb.cfg'
 }
 
 def IsData(sampleType):
@@ -32,11 +55,14 @@ def GetPeriod(sampleType):
         sys.exit(1)
     return periodDict[sampleType]
 
-def GetTriggerCfg(period):
-    if period not in hltPaths :
-        print "ERROR: no HLT paths found for period '{}' .".format(period)
+def GetGlobalTag(sampleType):
+    if sampleType not in globalTagMap:
+        print "ERROR: unknown sample type = '{}'".format(sampleType)
         sys.exit(1)
-    return hltPaths[period]
+    return globalTagMap[sampleType]
 
-
-
+def GetTriggerCfg(sampleType):
+    if sampleType not in hltPaths :
+        print "ERROR: no HLT paths found for period '{}' .".format(sampleType)
+        sys.exit(1)
+    return hltPaths[sampleType]

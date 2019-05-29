@@ -31,6 +31,8 @@ using Point3D = analysis::Point3D_Float;
     LVAR(Int_t, gen_match) /* Generator matching, see Htautau Twiki*/\
     LVAR(LorentzVectorM, gen_p4) /* 4-momentum of the matched gen particle */ \
     LVAR(LorentzVectorM, gen_visible_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(Int_t, gen_chargedParticles) /* tau decay mode */ \
+    LVAR(Int_t, gen_neutralParticles) /* tau decay mode */ \
     LVAR(Int_t, decayMode) /* tau decay mode */ \
     LVAR(Bool_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
     LVAR(Bool_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \

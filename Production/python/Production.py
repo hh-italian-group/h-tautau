@@ -7,8 +7,6 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 options = VarParsing('analysis')
-options.register('globalTag', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                        "Global Tag to use.")
 options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -47,6 +45,8 @@ options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarP
                         "Save generator-level information for jets.")
 options.register('saveGenParticleInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Save generator-level information for particles.")
+options.register('isEmbedded', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Is DY embedded sample.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Dump full config into stdout.")
 options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
@@ -57,7 +57,7 @@ options.parseArguments()
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
-triggerCfg = sampleConfig.GetTriggerCfg(period)
+triggerCfg = sampleConfig.GetTriggerCfg(options.sampleType)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -74,7 +74,7 @@ process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 
-process.GlobalTag.globaltag = options.globalTag
+process.GlobalTag.globaltag = sampleConfig.GetGlobalTag(options.sampleType)
 #from Configuration.AlCa.GlobalTag import GlobalTag
 #process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag, '')
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
@@ -97,35 +97,35 @@ if options.eventList != '':
 ## and add btag discriminator to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
-if period == 'Run2017':
-    btagVector = [
-      'pfDeepFlavourJetTags:probb',
-      'pfDeepFlavourJetTags:probbb',
-      'pfDeepFlavourJetTags:problepb',
-      'pfDeepFlavourJetTags:probc',
-      'pfDeepFlavourJetTags:probuds',
-      'pfDeepFlavourJetTags:probg'
-       ]
+btagVector = [
+  'pfDeepFlavourJetTags:probb',
+  'pfDeepFlavourJetTags:probbb',
+  'pfDeepFlavourJetTags:problepb',
+  'pfDeepFlavourJetTags:probc',
+  'pfDeepFlavourJetTags:probuds',
+  'pfDeepFlavourJetTags:probg'
+   ]
+
 if period == 'Run2016':
-    btagVector = [
+    btagVector2016 = [
         'pfDeepCSVJetTags:probudsg',
         'pfDeepCSVJetTags:probb',
         'pfDeepCSVJetTags:probc',
-        'pfDeepCSVJetTags:probbb',
-        'pfDeepFlavourJetTags:probb',
-        'pfDeepFlavourJetTags:probbb',
-        'pfDeepFlavourJetTags:problepb',
-        'pfDeepFlavourJetTags:probc',
-        'pfDeepFlavourJetTags:probuds',
-        'pfDeepFlavourJetTags:probg'
+        'pfDeepCSVJetTags:probbb'
     ]
+    btagVector.append(btagVector2016)
+
+jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute']
+
+if(not options.isEmbedded):
+    jec_levels.append('L2L3Residual')
 
 updateJetCollection(
     process,
     jetSource = cms.InputTag('slimmedJets'),
     pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
     svSource = cms.InputTag('slimmedSecondaryVertices'),
-    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    jetCorrections = ('AK4PFchs', cms.vstring(jec_levels), 'None'),
     btagDiscriminators = btagVector,
     postfix='NewDFTraining'
 )
@@ -201,24 +201,14 @@ from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco'} #add 2018 'Run2018': '2018-Prompt'
 setupEgammaPostRecoSeq(process, runVID=True, runEnergyCorrections=False, era=ele_era[period])
 
-
-if period == 'Run2016':
-    tauSrc_InputTag = cms.InputTag('slimmedTaus')
-
-if period == 'Run2017':
-    import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
-    updatedTauName = "slimmedTausNewID"
-    tauIdEmbedder = tauIdConfig.TauIDEmbedder(
-        process, cms, debug = True, updatedTauName = updatedTauName,
-        #toKeep = [ "2017v2", "2016v1", "deepTau2017v2",  "againstEle2018", ]
-        toKeep = [ "2017v2", "2016v1", "againstEle2018", ]
-    )
-    tauIdEmbedder.runTauID()
-    tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
-
-if period == 'Run2016':
-    tauAntiEle = importlib.import_module('h-tautau.Production.runTauAgainstElectron')
-    tauAntiEle.rerunAgainstElectron(process, process.NewTauIDsEmbedded)
+import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
+updatedTauName = "slimmedTausNewID"
+tauIdEmbedder = tauIdConfig.TauIDEmbedder(
+    process, cms, debug = True, updatedTauName = updatedTauName,
+    toKeep = [ "2017v2", "deepTau2017v2",  "againstEle2018", "2016v1"]
+)
+tauIdEmbedder.runTauID()
+tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
 
 
 ### Top gen level info
@@ -298,6 +288,7 @@ for channel in channels:
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
         saveGenParticleInfo     = cms.bool(options.saveGenParticleInfo),
+        isEmbedded              = cms.bool(options.isEmbedded),
         rho                     = cms.InputTag('fixedGridRhoAll'),
     ))
 
@@ -317,7 +308,6 @@ if period == 'Run2016':
         process.BadChargedCandidateFilter *
         process.topGenSequence *
         process.rerunMvaIsolationSequence *
-        process.rerunDiscriminationAgainstElectronMVA6 *
         process.tupleProductionSequence
     )
 
