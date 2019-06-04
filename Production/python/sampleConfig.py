@@ -6,7 +6,7 @@ from sets import Set
 import FWCore.ParameterSet.Config as cms
 
 mcSampleTypes = Set([ 'MC_16', 'MC_17', 'MC_18', 'Emb_16', 'Emb_17', 'Emb_18' ])
-dataSampleTypes = Set([ 'Run2016' , 'Run2017', 'Run2018' ])
+dataSampleTypes = Set([ 'Run2016' , 'Run2017', 'Run2018ABC', 'Run2018D' ])
 
 periodDict = { 'MC_16' : 'Run2016',
                'Run2016' : 'Run2016',
@@ -15,7 +15,8 @@ periodDict = { 'MC_16' : 'Run2016',
                'Run2017' : 'Run2017',
                'Emb_17' : 'Run2017',
                'MC_18' : 'Run2018',
-               'Run2018' : 'Run2018',
+               'Run2018ABC' : 'Run2018',
+               'Run2018D' : 'Run2018',
                'Emb_18' : 'Run2018'
              }
 
@@ -26,7 +27,8 @@ globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v6',
                  'Run2017' : '102X_dataRun2_v8',
                  'Emb_17' : '102X_dataRun2_v8',
                  'MC_18' : '102X_upgrade2018_realistic_v18',
-                 'Run2018' : '102X_dataRun2_Prompt_v13', #to be divided because different for different runs
+                 'Run2018ABC' : '102X_dataRun2_Sep2018ABC_v2',
+                 'Run2018D' : '102X_dataRun2_Prompt_v13',
                  'Emb_18' : '102X_dataRun2_Prompt_v13'
                }
 
@@ -38,7 +40,8 @@ hltPaths = {
     'Run2017'   : 'h-tautau/Production/data/triggers_2017.cfg',
     'Emb_17' : 'h-tautau/Production/data/triggers_2017_emb.cfg',
     'MC_18'   : 'h-tautau/Production/data/triggers_2018.cfg',
-    'Run2018'   : 'h-tautau/Production/data/triggers_2018.cfg',
+    'Run2018ABC'   : 'h-tautau/Production/data/triggers_2018.cfg',
+    'Run2018D'   : 'h-tautau/Production/data/triggers_2018.cfg',
     'Emb_18' : 'h-tautau/Production/data/triggers_2018_emb.cfg'
 }
 

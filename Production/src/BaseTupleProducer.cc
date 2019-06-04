@@ -276,6 +276,31 @@ bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period 
                          patJet.neutralMultiplicity() <= 10)) return false;
 
     }
+
+    if(period == analysis::Period::Run2018)
+    {
+        if(abs_eta <= 2.6 && (
+                         patJet.neutralHadronEnergyFraction() >= 0.9 ||
+                         patJet.neutralEmEnergyFraction() >= 0.9 ||
+                         patJet.nConstituents() <= 1 ||
+                         patJet.chargedHadronEnergyFraction() <= 0 ||
+                         patJet.chargedMultiplicity() <= 0)) return false;
+        if(abs_eta > 2.6 && abs_eta <= 2.7 && (
+                         patJet.neutralHadronEnergyFraction() >= 0.9 ||
+                         patJet.neutralEmEnergyFraction() >= 0.99 ||
+                         patJet.chargedMultiplicity() <= 0)) return false;
+
+        if(abs_eta > 2.7 && abs_eta <= 3.0 && (
+                                           patJet.neutralEmEnergyFraction() <= 0.02 ||
+                                           patJet.neutralEmEnergyFraction() >= 0.99 ||
+                                           patJet.neutralMultiplicity() <= 2)) return false;
+
+        if(abs_eta > 3.0 && (
+                         patJet.neutralEmEnergyFraction() >= 0.9 ||
+                         patJet.neutralHadronEnergyFraction() <= 0.2 ||
+                         patJet.neutralMultiplicity() <= 10)) return false;
+
+    }
     return true;
 }
 
@@ -608,9 +633,9 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
         filters.SetResult(Filter::badChargedHadron,*badChCandidate);
     }
 
-    if(period == analysis::Period::Run2017){
+    if(period == analysis::Period::Run2017 || period == analysis::Period::Run2018){
         setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
-        setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
+        //setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
         setResult(Filter::ecalBadCalib, "ecalBadCalibReducedMINIAODFilter");
     }
 

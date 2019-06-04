@@ -107,6 +107,7 @@ if [ $MODE = "prod17" ] ; then
 #    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
     run_cmd git cms-addpkg RecoMET/METFilters
+    #run_cmd git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X 
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
     #Add DeepTau code from Tau POG repository (note "-u" option preventing checkout of unnecessary stuff)
     run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2

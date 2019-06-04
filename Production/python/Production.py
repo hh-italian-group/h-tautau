@@ -116,10 +116,7 @@ if period == 'Run2016':
     btagVector.append(btagVector2016)
 
 if period == 'Run2017':
-    jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute']
-
-    if(not options.isEmbedded):
-        jec_levels.append('L2L3Residual')
+    jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']
 
     updateJetCollection(
         process,
@@ -158,7 +155,7 @@ if period == 'Run2016':
     MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
 ### MET filters for 2017 and MET recipe for 2017
-if period == 'Run2017':
+if period == 'Run2017' or period == 'Run2018':
     process.load('RecoMET.METFilters.ecalBadCalibFilter_cfi')
 
     baddetEcallist = cms.vuint32(
@@ -182,11 +179,12 @@ if period == 'Run2017':
         debug = cms.bool(False)
         )
 
+if period == 'Run2017':
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
 
     runMetCorAndUncFromMiniAOD (
             process,
-            isData = isData, # false for MC
+            isData = isData or options.isEmbedded, # false for MC
             fixEE2017 = True,
             fixEE2017Params = {'userawPt': True, 'ptThreshold':50.0, 'minEtaThreshold':2.65, 'maxEtaThreshold': 3.139} ,
             postfix = "ModifiedMET"
@@ -329,7 +327,6 @@ if period == 'Run2018':
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
-        process.fullPatMetSequenceModifiedMET *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *
         process.tupleProductionSequence
