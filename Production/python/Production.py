@@ -115,33 +115,31 @@ if period == 'Run2016':
     ]
     btagVector.append(btagVector2016)
 
-jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute']
+if period == 'Run2017':
+    jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute']
 
-if(not options.isEmbedded):
-    jec_levels.append('L2L3Residual')
+    if(not options.isEmbedded):
+        jec_levels.append('L2L3Residual')
 
-updateJetCollection(
-    process,
-    jetSource = cms.InputTag('slimmedJets'),
-    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-    svSource = cms.InputTag('slimmedSecondaryVertices'),
-    jetCorrections = ('AK4PFchs', cms.vstring(jec_levels), 'None'),
-    btagDiscriminators = btagVector,
-    postfix='NewDFTraining'
-)
-process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
-                                   process.updatedPatJetsNewDFTraining *
-                                   process.patJetCorrFactorsTransientCorrectedNewDFTraining *
-                                   process.pfImpactParameterTagInfosNewDFTraining *
-                                   process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
-                                   process.pfDeepCSVTagInfosNewDFTraining *
-                                   process.pfDeepFlavourTagInfosNewDFTraining *
-                                   process.pfDeepFlavourJetTagsNewDFTraining *
-                                   process.updatedPatJetsTransientCorrectedNewDFTraining *
-                                   process.selectedUpdatedPatJetsNewDFTraining)
-
-
-
+    updateJetCollection(
+        process,
+        jetSource = cms.InputTag('slimmedJets'),
+        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+        svSource = cms.InputTag('slimmedSecondaryVertices'),
+        jetCorrections = ('AK4PFchs', cms.vstring(jec_levels), 'None'),
+        btagDiscriminators = btagVector,
+        postfix='NewDFTraining'
+    )
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       process.pfDeepCSVTagInfosNewDFTraining *
+                                       process.pfDeepFlavourTagInfosNewDFTraining *
+                                       process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
 
 
 ### MET filters for 2016 and MET recipe for 2016
@@ -198,7 +196,7 @@ if period == 'Run2017':
 
 # Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco'} #add 2018 'Run2018': '2018-Prompt'
+ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco', 'Run2018': '2018-Prompt'}
 setupEgammaPostRecoSeq(process, runVID=True, runEnergyCorrections=False, era=ele_era[period])
 
 import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
@@ -318,7 +316,19 @@ if period == 'Run2017':
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
-        #process.fullPatMetSequence +
+        process.fullPatMetSequenceModifiedMET *
+        process.ecalBadCalibReducedMINIAODFilter *
+        process.topGenSequence *
+        process.tupleProductionSequence
+    )
+
+if period == 'Run2018':
+    process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.egammaPostRecoSeq *
+        process.jecSequence *
+        process.rerunMvaIsolationSequence *
+        getattr(process, updatedTauName) *
         process.fullPatMetSequenceModifiedMET *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *
