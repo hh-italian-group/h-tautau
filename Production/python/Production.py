@@ -97,17 +97,27 @@ if options.eventList != '':
 ## and add btag discriminator to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
-btagVector = [
-  'pfDeepFlavourJetTags:probb',
-  'pfDeepFlavourJetTags:probbb',
-  'pfDeepFlavourJetTags:problepb',
-  'pfDeepFlavourJetTags:probc',
-  'pfDeepFlavourJetTags:probuds',
-  'pfDeepFlavourJetTags:probg'
-   ]
+btagVector = []
+
+if period == 'Run2017':
+    btagVector2017 = [
+      'pfDeepFlavourJetTags:probb',
+      'pfDeepFlavourJetTags:probbb',
+      'pfDeepFlavourJetTags:problepb',
+      'pfDeepFlavourJetTags:probc',
+      'pfDeepFlavourJetTags:probuds',
+      'pfDeepFlavourJetTags:probg'
+    ]
+    btagVector.append(btagVector2017)
 
 if period == 'Run2016':
     btagVector2016 = [
+        'pfDeepFlavourJetTags:probb',
+        'pfDeepFlavourJetTags:probbb',
+        'pfDeepFlavourJetTags:problepb',
+        'pfDeepFlavourJetTags:probc',
+        'pfDeepFlavourJetTags:probuds',
+        'pfDeepFlavourJetTags:probg',
         'pfDeepCSVJetTags:probudsg',
         'pfDeepCSVJetTags:probb',
         'pfDeepCSVJetTags:probc',
@@ -115,18 +125,19 @@ if period == 'Run2016':
     ]
     btagVector.append(btagVector2016)
 
-if period == 'Run2017':
-    jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']
 
-    updateJetCollection(
-        process,
-        jetSource = cms.InputTag('slimmedJets'),
-        pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-        svSource = cms.InputTag('slimmedSecondaryVertices'),
-        jetCorrections = ('AK4PFchs', cms.vstring(jec_levels), 'None'),
-        btagDiscriminators = btagVector,
-        postfix='NewDFTraining'
-    )
+jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']
+
+updateJetCollection(
+    process,
+    jetSource = cms.InputTag('slimmedJets'),
+    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+    svSource = cms.InputTag('slimmedSecondaryVertices'),
+    jetCorrections = ('AK4PFchs', cms.vstring(jec_levels), 'None'),
+    btagDiscriminators = btagVector,
+    postfix='NewDFTraining'
+)
+if period == 'Run2016' or period == 'Run2017':
     process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
                                        process.updatedPatJetsNewDFTraining *
                                        process.patJetCorrFactorsTransientCorrectedNewDFTraining *
@@ -135,6 +146,15 @@ if period == 'Run2017':
                                        process.pfDeepCSVTagInfosNewDFTraining *
                                        process.pfDeepFlavourTagInfosNewDFTraining *
                                        process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
+
+if period == 'Run2018':
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
                                        process.updatedPatJetsTransientCorrectedNewDFTraining *
                                        process.selectedUpdatedPatJetsNewDFTraining)
 
@@ -192,6 +212,9 @@ if period == 'Run2017':
 
     MetInputTag = cms.InputTag('slimmedMETsModifiedMET', '', processName)
 
+if period == 'Run2018':
+    MetInputTag = cms.InputTag('slimmedMETs', '', processName)
+
 # Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco', 'Run2018': '2018-Prompt'}
@@ -233,6 +256,10 @@ if period == 'Run2017':
     jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
     objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
+if period == 'Run2018':
+    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
+    objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     isMC            = cms.bool(not isData),
     saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
@@ -269,7 +296,7 @@ for channel in channels:
         genParticles            = cms.InputTag('prunedGenParticles'),
         genJets                 = cms.InputTag('slimmedGenJets'),
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
-        isMC                    = cms.bool(not isData),
+        isMC                    = cms.bool(not isData and not options.isEmbedded),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),

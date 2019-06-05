@@ -89,7 +89,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
                  iConfig.getParameter<std::string>("triggerCfg"),
-                 _channel)
+                 _channel, isEmbedded)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
@@ -162,7 +162,6 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
 
     iSetup.get<JetCorrectionsRecord>().get("AK4PFchs", jetCorParColl);
     jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
-
     resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
 }
 
@@ -883,8 +882,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
-    ntuple::LorentzVectorM genMet_momentum(genMET->at(0).pt(),0,genMET->at(0).eta(),0);
-    eventTuple().genMET_p4 = genMet_momentum;
+    if(isMC){
+      ntuple::LorentzVectorM genMet_momentum(genMET->at(0).pt(),0,genMET->at(0).eta(),0);
+      eventTuple().genMET_p4 = genMet_momentum;
+    }
+
     FillMetFilters(period);
 
     std::set<const pat::Jet*> selected_jets;

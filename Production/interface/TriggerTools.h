@@ -62,11 +62,11 @@ public:
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
-                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIMemb_token,
+                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIMembedding_token,
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
-                 const std::string& triggerCfg, Channel channel);
+                 const std::string& triggerCfg, Channel channel, bool _isEmbedded);
 
     static trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
                                                                     trigger_tools::SetupDescriptor& setup);
@@ -127,6 +127,7 @@ private:
     EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_token;
     EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_token;
     EDGetTokenT<BXVector<l1t::Tau>> l1Tau_token;
+    bool isEmbedded;
 
     const edm::Event* iEvent;
     analysis::TriggerDescriptorCollection triggerDescriptors;
