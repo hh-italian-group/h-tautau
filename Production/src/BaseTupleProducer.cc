@@ -178,7 +178,6 @@ void BaseTupleProducer::InitializeCandidateCollections()
     for(const auto& muon : *pat_muons)
         muons.push_back(MuonCandidate(muon, Isolation(muon)));
 
-
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
 
     taus.clear();
@@ -196,7 +195,6 @@ void BaseTupleProducer::InitializeCandidateCollections()
     fatJets.clear();
     for(const auto& jet : * pat_fatJets)
         fatJets.push_back(JetCandidate(jet));
-
 }
 
 const double BaseTupleProducer::Isolation(const pat::Electron& electron)
@@ -221,7 +219,8 @@ const double BaseTupleProducer::Isolation(const pat::Tau& tau)
 {
     static const std::map<analysis::Period, analysis::TauIdDiscriminator> discriminators = {
         { analysis::Period::Run2016, analysis::TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016 },
-        { analysis::Period::Run2017, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 }
+        { analysis::Period::Run2017, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 },
+        { analysis::Period::Run2018, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 } //to be fixed for 2018
     };
     const auto& desc = analysis::tau_id::GetTauIdDescriptors().at(discriminators.at(period));
     return tau.tauID(desc.ToStringRaw());

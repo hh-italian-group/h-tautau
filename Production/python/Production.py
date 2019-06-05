@@ -96,19 +96,19 @@ if options.eventList != '':
 
 ## and add btag discriminator to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
-
-btagVector = []
+#https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTools#Jet_Tools
+btagVector = ['None']
 
 if period == 'Run2017':
     btagVector2017 = [
-      'pfDeepFlavourJetTags:probb',
-      'pfDeepFlavourJetTags:probbb',
-      'pfDeepFlavourJetTags:problepb',
-      'pfDeepFlavourJetTags:probc',
-      'pfDeepFlavourJetTags:probuds',
-      'pfDeepFlavourJetTags:probg'
+        'pfDeepFlavourJetTags:probb',
+        'pfDeepFlavourJetTags:probbb',
+        'pfDeepFlavourJetTags:problepb',
+        'pfDeepFlavourJetTags:probc',
+        'pfDeepFlavourJetTags:probuds',
+        'pfDeepFlavourJetTags:probg'
     ]
-    btagVector.append(btagVector2017)
+    btagVector.extend(btagVector2017)
 
 if period == 'Run2016':
     btagVector2016 = [
@@ -123,7 +123,7 @@ if period == 'Run2016':
         'pfDeepCSVJetTags:probc',
         'pfDeepCSVJetTags:probbb'
     ]
-    btagVector.append(btagVector2016)
+    btagVector.extend(btagVector2016)
 
 
 jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']
@@ -152,10 +152,10 @@ if period == 'Run2016' or period == 'Run2017':
 if period == 'Run2018':
     process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
                                        process.updatedPatJetsNewDFTraining *
-                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
-                                       process.pfImpactParameterTagInfosNewDFTraining *
-                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
-                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       #process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       #process.pfImpactParameterTagInfosNewDFTraining *
+                                       #process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       #process.updatedPatJetsTransientCorrectedNewDFTraining *
                                        process.selectedUpdatedPatJetsNewDFTraining)
 
 
@@ -213,7 +213,7 @@ if period == 'Run2017':
     MetInputTag = cms.InputTag('slimmedMETsModifiedMET', '', processName)
 
 if period == 'Run2018':
-    MetInputTag = cms.InputTag('slimmedMETs', '', processName)
+    MetInputTag = cms.InputTag('slimmedMETs')
 
 # Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
@@ -260,8 +260,9 @@ if period == 'Run2018':
     jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
     objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
+
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData),
+    isMC            = cms.bool(not isData and not options.isEmbedded),
     saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
     lheEventProduct = cms.InputTag('externalLHEProducer'),
     genEvent        = cms.InputTag('generator'),
