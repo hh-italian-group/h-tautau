@@ -1,4 +1,4 @@
-/*! Definiton of analysis::FlatEventInfo class.
+/*! Definiton of GenParticle class.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "h-tautau/Analysis/include/GenParticle.h"
@@ -15,8 +15,8 @@ GenParticle::GenParticle(const ntuple::Event& events, size_t n)
     status = events.genParticles_status.at(n);
     genStatusFlags = GenStatusFlags(events.genParticles_statusFlags.at(n));
     momentum = events.genParticles_p4.at(n);
+    vertex = events.genParticles_vertex.at(n);
 }
-
 
 GenEvent::GenEvent(const ntuple::Event& event)
 {
@@ -45,61 +45,45 @@ GenEvent::GenEvent(const ntuple::Event& event)
     }
 }
 
-GenParticleSet GenEvent::GetParticles(int particle_pgd) const
+GenParticleSet GenEvent::GetParticles(int particle_pgd, bool requireIsLastCopy) const
 {
     GenParticleSet results;
     const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(particle_pgd);
 
     if (code_iter != particleCodeMap.end()){
         for (const GenParticle* particle : code_iter->second){
-            if(!particle->genStatusFlags.isLastCopy()) continue;
+            if(requireIsLastCopy && !particle->genStatusFlags.isLastCopy()) continue;
             results.insert(particle);
         }
     }
     return results;
 }
 
-std::vector<const GenParticle*> GenEvent::GetTypesParticles(std::vector<std::string> type_names, const GenParticle* possible_mother ) const
+void GenEvent::GetTypesParticles(const std::set<particles::ParticleCode::ParticleType>& type_names, const GenParticle* mother, GenParticleSet& result) const
 {
-    std::vector<int> selected_particles_type_pgd;
-    for(auto pdg_type : particle_types){
-        for(size_t type_index = 0; type_index < type_names.size(); ++type_index){
-            if(pdg_type.second ==  type_names.at(type_index))
-                selected_particles_type_pgd.push_back(pdg_type.first);
-        }
+    if(mother->genStatusFlags.isPrompt() && mother->genStatusFlags.isLastCopy() && particle_types.count(mother->pdg)
+        && type_names.count(particle_types.at(mother->pdg))) {
+//        if(shared && areParented(mother,mother->daughters.at(0)) && areParented(mother,mother->daughters.at(1)) )
+        result.insert(mother);
+    } else {
+        for(const GenParticle* daughter : mother->daughters)
+            GetTypesParticles(type_names, daughter, result);
     }
-    std::vector<const GenParticle*> results;
-    results.clear();
-    for (const auto& code : selected_particles_type_pgd){
-        const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(code);
-        if (code_iter == particleCodeMap.end())
-            continue;
-        for (const GenParticle* particle : code_iter->second){
-           if(!particle->genStatusFlags.isLastCopy()) continue;
-           if(!particle->genStatusFlags.isPrompt()) continue;
-            if(!areParented(particle,possible_mother)) continue;
-            //to check for shared particles in the daughters of the possible mother
-//               if(!areParented(particle,possible_mother->daughters.at(0)))continue;
-//               if(!areParented(particle,possible_mother->daughters.at(1)))continue;
-           results.push_back(particle);
-        }
-    }
-    return results;
 }
 
-bool GenEvent::areParented(const GenParticle* daughter, const GenParticle* possible_mother) const
+bool GenEvent::areParented(const GenParticle* daughter, const GenParticle* mother) const
 {
     for (size_t i = 0; i < daughter->mothers.size(); i++) {
-        const GenParticle* mother = daughter->mothers.at(i);
-        if(mother == possible_mother)
+        const GenParticle* mother_ = daughter->mothers.at(i);
+        if(mother_ == mother)
             return true;
-        if(areParented(mother,possible_mother))
+        if(areParented(mother_,mother))
             return true;
     }
     return false;
 }
 
-std::string& GenEvent::GetParticleName(int pdgId)
+std::string& GenEvent::GetParticleName(int pdgId) const
 {
     auto iter = particle_names.find(pdgId);
     if(iter == particle_names.end()) throw exception("Name not found for particle with pdgId = %1%") % pdgId;
@@ -110,6 +94,7 @@ void GenEvent::intializeNames(const std::string& fileName)
 {
     particle_names.clear();
     particle_types.clear();
+    particle_charge.clear();
     std::ifstream f(fileName.c_str());
     if(!f.is_open() )
         throw analysis::exception("Unable to read the configuration file ");
@@ -117,7 +102,7 @@ void GenEvent::intializeNames(const std::string& fileName)
     while(f.good()) {
         std::string line;
         std::getline(f, line);
-        if(!line.length() || line[0] == '#')
+        if(line.empty() || line[0] == '#')
             continue;
         auto pdg_name_type = SplitValueList(line, false, ",");
         if(pdg_name_type.size() < 2)
@@ -129,11 +114,29 @@ void GenEvent::intializeNames(const std::string& fileName)
             throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
         particle_names[pdgId] = name;
 
-        if(pdg_name_type.size() == 3){
-            const std::string& type = pdg_name_type.at(2);
-            if(particle_types.count(pdgId))
+        if(pdg_name_type.size() > 2){
+
+            const std::string& type_str = pdg_name_type.at(2);
+
+            std::map<std::string, particles::ParticleCode::ParticleType> ParticleTypeMap;
+            if(type_str == "baryon")
+                ParticleTypeMap[type_str] = particles::ParticleCode::ParticleType::baryon;
+            else if(type_str == "meson")
+                ParticleTypeMap[type_str] = particles::ParticleCode::ParticleType::meson;
+
+            if(ParticleTypeMap.count(type_str)){
+                if(particle_types.count(pdgId))
+                    throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
+                particle_types[pdgId] = ParticleTypeMap.at(type_str);
+            }
+        }
+
+        if(pdg_name_type.size() == 4){
+            const int& charge = Parse<int>(pdg_name_type.at(3));
+            if(particle_charge.count(pdgId))
                 throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
-            particle_types[pdgId] = type;
+            particle_charge[pdgId] = charge;
+
         }
     }
 }
@@ -143,22 +146,28 @@ void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) c
     const int pdgParticle = particle->pdg;
     const auto particleName = GetParticleName(pdgParticle);
     const int particleStatus = particle->status;
-    const LorentzVectorM_Float genParticle_momentum = particle->momentum;
+    const LorentzVectorM genParticle_momentum = particle->momentum;
     const std::bitset<15> genStatusFlags_ = particle->genStatusFlags.flags ;
     // for (unsigned n = 0; n < iteration; ++n)
     //     std::cout << "  ";
-    auto mother_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
+    auto mothers_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
     std::cout << particleName                              << " <" << pdgParticle
               << "> pt=" << genParticle_momentum.Pt()      << " eta=" << genParticle_momentum.Eta()
               << " phi=" << genParticle_momentum.Phi()     << " E=" << genParticle_momentum.E()
               << " m=" << genParticle_momentum.M()         << " index=" << particle->index
-              << " mother_index=" << mother_index          << " status=" << particleStatus
-              << " statusFlags=" << genStatusFlags_        << std::endl;
+              << " mother_index=" << mothers_index;
+    if(particle->mothers.size() > 0){
+        for(size_t index_mother = 1; index_mother < particle->mothers.size(); ++index_mother)
+            std::cout  << "," << particle->mothers.at(index_mother)->index;
+    }
+
+    std::cout << " vertex=" << particle->vertex << " status=" << particleStatus
+              << " statusFlags=" << genStatusFlags_ << std::endl;
 
     for(unsigned n = 0; n < particle->daughters.size(); ++n) {
         const GenParticle* daughter = particle->daughters.at(n);
         std::cout << pre << "+-> ";
-        const char pre_first = particle->daughters.at(n) == particle->daughters.at(particle->daughters.size() -1) ? ' ' : '|';
+        const char pre_first = n == particle->daughters.size() -1 ? ' ' : '|';
         const std::string pre_d = pre + pre_first + "   ";
         PrintChain(daughter, pre_d);
     }
@@ -185,7 +194,7 @@ void GenEvent::FindFinalStateDaughters(const GenParticle& particle, std::set<con
 }
 
 
-LorentzVectorM_Float GenEvent::GetFinalStateMomentum(const GenParticle& particle, std::vector<const GenParticle*>& visible_daughters,
+LorentzVectorM GenEvent::GetFinalStateMomentum(const GenParticle& particle, std::vector<const GenParticle*>& visible_daughters,
                                    bool excludeInvisible, bool excludeLightLeptons)
 {
     using pair = std::pair<bool, bool>;
@@ -202,7 +211,7 @@ LorentzVectorM_Float GenEvent::GetFinalStateMomentum(const GenParticle& particle
     visible_daughters.clear();
     visible_daughters.insert(visible_daughters.begin(), daughters_set.begin(), daughters_set.end());
 
-    LorentzVectorM_Float p4;
+    LorentzVectorM p4;
     for(auto daughter : visible_daughters) {
         if(excludeLightLeptons && particles::light_leptons.count(std::abs(daughter->pdg))
             && daughter->genStatusFlags.isDirectTauDecayProduct()) continue;
@@ -210,7 +219,14 @@ LorentzVectorM_Float GenEvent::GetFinalStateMomentum(const GenParticle& particle
     }
     return p4;
 }
+
+std::map<int, std::string> GenEvent::particleNames() {return particle_names; }
+
+std::map<int, int> GenEvent::particleCharge() {return particle_charge; }
+
+
 std::map<int, std::string> GenEvent::particle_names;
-std::map<int, std::string> GenEvent::particle_types;
+std::map<int, particles::ParticleCode::ParticleType> GenEvent::particle_types;
+std::map<int,int> GenEvent::particle_charge;
 
 } //analysis
