@@ -5,7 +5,7 @@ import sys
 from sets import Set
 import FWCore.ParameterSet.Config as cms
 
-mcSampleTypes = Set([ 'MC_16', 'MC_17', 'MC_18', 'Emb_16', 'Emb_17', 'Emb_18' ])
+mcSampleTypes = Set([ 'MC_16', 'MC_17', 'MC_18', 'Emb_16', 'Emb_17', 'Emb_18ABC', 'Emb_18D' ])
 dataSampleTypes = Set([ 'Run2016' , 'Run2017', 'Run2018ABC', 'Run2018D' ])
 
 periodDict = { 'MC_16' : 'Run2016',
@@ -17,7 +17,8 @@ periodDict = { 'MC_16' : 'Run2016',
                'MC_18' : 'Run2018',
                'Run2018ABC' : 'Run2018',
                'Run2018D' : 'Run2018',
-               'Emb_18' : 'Run2018'
+               'Emb_18ABC' : 'Run2018',
+               'Emb_18D' : 'Run2018'
              }
 
 globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v6',
@@ -29,7 +30,8 @@ globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v6',
                  'MC_18' : '102X_upgrade2018_realistic_v18',
                  'Run2018ABC' : '102X_dataRun2_Sep2018ABC_v2',
                  'Run2018D' : '102X_dataRun2_Prompt_v13',
-                 'Emb_18' : '102X_dataRun2_Prompt_v13'
+                 'Emb_18ABC' : '102X_dataRun2_Sep2018ABC_v2',
+                 'Emb_18D' : '102X_dataRun2_Prompt_v13'
                }
 
 hltPaths = {
@@ -42,7 +44,8 @@ hltPaths = {
     'MC_18'   : 'h-tautau/Production/data/triggers_2018.cfg',
     'Run2018ABC'   : 'h-tautau/Production/data/triggers_2018.cfg',
     'Run2018D'   : 'h-tautau/Production/data/triggers_2018.cfg',
-    'Emb_18' : 'h-tautau/Production/data/triggers_2018_emb.cfg'
+    'Emb_18ABC' : 'h-tautau/Production/data/triggers_2018_emb.cfg',
+    'Emb_18D' : 'h-tautau/Production/data/triggers_2018_emb.cfg'
 }
 
 def IsData(sampleType):
