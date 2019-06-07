@@ -137,7 +137,20 @@ updateJetCollection(
     btagDiscriminators = btagVector,
     postfix='NewDFTraining'
 )
-if period == 'Run2016' or period == 'Run2017':
+if period == 'Run2016':
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       process.pfDeepCSVTagInfosNewDFTraining *
+                                       process.pfDeepCSVJetTagsNewDFTraining *
+                                       process.pfDeepFlavourTagInfosNewDFTraining *
+                                       process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
+
+if period == 'Run2017':
     process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
                                        process.updatedPatJetsNewDFTraining *
                                        process.patJetCorrFactorsTransientCorrectedNewDFTraining *
@@ -248,17 +261,9 @@ else:
 
 ### Tuple production sequence
 
-if period == 'Run2016':
-    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
-    objects_InputTag                 = cms.InputTag('selectedPatTrigger')
 
-if period == 'Run2017':
-    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
-    objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
-
-if period == 'Run2018':
-    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
-    objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
+objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
@@ -327,11 +332,12 @@ if period == 'Run2016':
         process.egmGsfElectronIDSequence *
         process.egammaPostRecoSeq *
         process.jecSequence *
+        process.rerunMvaIsolationSequence *
+        getattr(process, updatedTauName) *
         process.fullPatMetSequence *
         process.BadPFMuonFilter *
         process.BadChargedCandidateFilter *
         process.topGenSequence *
-        process.rerunMvaIsolationSequence *
         process.tupleProductionSequence
     )
 

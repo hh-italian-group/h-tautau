@@ -117,8 +117,9 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 {
     InitializeAODCollections(iEvent, iSetup);
     primaryVertex = vertices->ptrAt(0);
-
+    std::cout << "Initialized AOD collection" << std::endl;
     InitializeCandidateCollections();
+    std::cout << "Initialized Candidate collection" << std::endl;
     try {
         Cutter cut(&GetAnaData().Selection());
         cut(true,"events");
