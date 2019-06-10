@@ -330,4 +330,21 @@ bool TriggerTools::GetAnyTriggerResult(const std::string& name) const
     throw analysis::exception("Unable to find trigger '%1%'") % name;
 }
 
+TriggerTools::BitsContainer TriggerTools::GetJetMatchBitsImpl(const LorentzVector& reco_jet_p4,
+                                                              double deltaR_Limit) const
+{
+    auto trig_objs = jetTriggerObjects;
+    const auto& jet_filters = triggerDescriptors.GetJetFilters();
+    const double deltaR2 = std::pow(deltaR_Limit, 2);
+    for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
+        for(size_t jet_index = 0; jet_index < trig_objs.momentums.size(); ++jet_index) {
+            const bool match = trig_objs.GetJetFilterMatchBit(filter_index, jet_index)
+                && ROOT::Math::VectorUtil::DeltaR2(trig_objs.momentums.at(jet_index), reco_jet_p4) < deltaR2;
+            trig_objs.SetJetFilterMatchBit(filter_index, jet_index, match);
+        }
+    }
+    return trig_objs.match_bits;
+}
+
+
 } // namespace analysis

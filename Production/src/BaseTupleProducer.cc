@@ -11,13 +11,6 @@
 #include "DataFormats/L1Trigger/interface/BXVector.h"
 #include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
-
-namespace {
-bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
-}
-
-const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
-
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel) :
     treeName(ToString(_channel)),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
@@ -815,6 +808,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
         eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
+        eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
         eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
         // Jet resolution
         JME::JetParameters parameters;
@@ -824,8 +818,12 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         float jet_resolution = resolution.getResolution(parameters);
         eventTuple().jets_resolution.push_back(jet_resolution); // percentage
 
-        eventTuple().jets_triggerFilterMatch.push_back(triggerTools.GetJetMatchBits(p4,
-                                                       cuts::H_tautau_2016::DeltaR_triggerMatch));
+        const auto raw_match_bits = triggerTools.GetJetMatchBits(p4, cuts::H_tautau_2016::DeltaR_triggerMatch);
+        const auto match_bits = TriggerDescriptorCollection::ConvertToRootRepresentation(raw_match_bits);
+        for(size_t n = 0; n < match_bits.size(); ++n) {
+            const std::string br_name = "jets_triggerFilterMatch" + std::to_string(n);
+            eventTuple.get<std::vector<uint64_t>>(br_name).push_back(match_bits.at(n));
+        }
     }
 
     for(const auto jet_cand : jets){

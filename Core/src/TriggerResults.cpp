@@ -1,7 +1,7 @@
 /*! Definition of class to represent trigger results.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
-#include "h-tautau/Analysis/include/TriggerResults.h"
+#include "h-tautau/Core/include/TriggerResults.h"
 #include <boost/regex.hpp>
 #include "AnalysisTools/Core/include/TextIO.h"
 
@@ -12,7 +12,7 @@ TriggerDescriptorCollection::JetTriggerObjectCollection::JetTriggerObjectCollect
 bool TriggerDescriptorCollection::JetTriggerObjectCollection::GetJetFilterMatchBit(size_t filter_index,
                                                                                    size_t jet_index) const
 {
-    return ( match_bits >> (filter_index * MaxNumberOfTriggerJets + jet_index) ) & 1;
+    return ((match_bits >> (filter_index * MaxNumberOfTriggerJets + jet_index)) & BitsContainer(1)) != BitsContainer(0);
 }
 
 void TriggerDescriptorCollection::JetTriggerObjectCollection::SetJetFilterMatchBit(size_t filter_index,
@@ -71,7 +71,7 @@ void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<
 {
     if(desc_indices.count(pattern))
         throw exception("Duplicated trigger pattern '%1%'.") % pattern;
-    if(descriptors.size() == MaxNumberOfTriggers)
+    if(descriptors.size() == TriggerResults::MaxNumberOfTriggers)
         throw exception("Maximal number of triggers is exceeded.");
     desc_indices[pattern] = descriptors.size();
     descriptors.emplace_back(pattern, legs);
@@ -119,11 +119,36 @@ size_t TriggerDescriptorCollection::GetIndex(const Pattern& pattern) const
     return desc_indices.at(pattern);
 }
 
-TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::GetJetFilterMatchBits(
-    BitsContainer match_bits, unsigned filter_index) const
+TriggerDescriptorCollection::FilterBitsContainer TriggerDescriptorCollection::GetJetFilterMatchBits(
+    BitsContainer match_bits, unsigned filter_index)
 {
-    static constexpr BitsContainer mask((1 << MaxNumberOfTriggerJets) - 1);
-    return ( match_bits >> (filter_index * MaxNumberOfTriggerJets) ) & mask;
+    static constexpr FilterBitsContainer mask((FilterBitsContainer(1) << MaxNumberOfTriggerJets) - 1);
+    const auto filter_bits = (match_bits >> (filter_index * MaxNumberOfTriggerJets)).convert_to<FilterBitsContainer>();
+    return filter_bits & mask;
+}
+
+TriggerDescriptorCollection::RootBitsContainer TriggerDescriptorCollection::ConvertToRootRepresentation(
+    BitsContainer match_bits)
+{
+    TriggerDescriptorCollection::RootBitsContainer result;
+    if(match_bits.backend().size() != result.size())
+        throw exception("TriggerDescriptorCollection: inconsistent definition of containers");
+    for(size_t n = 0; n < result.size(); ++n) {
+        result[n] = *(match_bits.backend().limbs() + n);
+    }
+    return result;
+}
+
+TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::ConvertFromRootRepresentation(
+    const RootBitsContainer& match_bits)
+{
+    TriggerDescriptorCollection::BitsContainer result;
+        if(result.backend().size() != match_bits.size())
+        throw exception("TriggerDescriptorCollection: inconsistent definition of containers");
+    for(size_t n = 0; n < match_bits.size(); ++n) {
+        *(result.backend().limbs() + n) = match_bits[n];
+    }
+    return result;
 }
 
 const std::vector<std::string>& TriggerDescriptorCollection::GetJetFilters() const { return jet_filters; }
@@ -154,7 +179,7 @@ bool TriggerResults::AnyAccept() const { return accept_bits.any(); }
 bool TriggerResults::AnyMatch() const { return match_bits.any(); }
 bool TriggerResults::AnyAcceptAndMatch() const { return (accept_bits & match_bits).any(); }
 
-bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::MatchEx(size_t index, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!Match(index)) return false;
 
@@ -167,9 +192,9 @@ bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& rec
     if(n_legs == 1) {
         bool match_found = false;
         for(size_t reco_jet_index = 0; !match_found && reco_jet_index < reco_jet_matches.size(); ++reco_jet_index) {
-            BitsContainer match_bits = std::numeric_limits<BitsContainer>::max();
+            FilterBitsContainer match_bits = std::numeric_limits<FilterBitsContainer>::max();
             for(unsigned filter_index : desc.jet_legs.at(0).jet_filter_indices) {
-                match_bits &= GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
+                match_bits &= TriggerDescriptorCollection::GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
             }
             match_found = match_bits != 0;
         }
@@ -179,14 +204,14 @@ bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& rec
     if(n_legs == 2 && reco_jet_matches.size() == 2) {
         bool match_found = false;
         for(size_t flip = 0; !match_found && flip < n_legs; ++flip) {
-            std::vector<BitsContainer> match_bits(n_legs, std::numeric_limits<BitsContainer>::max());
+            std::vector<FilterBitsContainer> match_bits(n_legs, std::numeric_limits<FilterBitsContainer>::max());
             for(size_t n = 0; n < n_legs; ++n) {
                 const size_t reco_jet_index = (n + flip) % 2;
                 for(unsigned filter_index : desc.jet_legs.at(n).jet_filter_indices) {
-                    match_bits.at(n) &= GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
+                    match_bits.at(n) &= TriggerDescriptorCollection::GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
                 }
             }
-            const Bits cmb(match_bits.at(0) | match_bits.at(1));
+            const std::bitset<TriggerDescriptorCollection::MaxNumberOfJetFilters> cmb(match_bits.at(0) | match_bits.at(1));
             match_found = match_bits.at(0) != 0 && match_bits.at(1) != 0 && cmb.count() >= n_legs;
         }
         return match_found;
@@ -195,23 +220,23 @@ bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& rec
     throw exception("Unsupported number of jet trigger legs.");
 }
 
-bool TriggerResults::AcceptAndMatchEx(size_t index, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AcceptAndMatchEx(size_t index, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AcceptAndMatch(index)) return false;
     return MatchEx(index, reco_jet_matches);
 }
 
-bool TriggerResults::MatchEx(const Pattern& pattern, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::MatchEx(const Pattern& pattern, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     return MatchEx(GetIndex(pattern), reco_jet_matches);
 }
 
-bool TriggerResults::AcceptAndMatchEx(const Pattern& pattern, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AcceptAndMatchEx(const Pattern& pattern, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     return AcceptAndMatchEx(GetIndex(pattern), reco_jet_matches);
 }
 
-bool TriggerResults::AnyMatchEx(const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AnyMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AnyMatch()) return false;
     for(size_t n = 0; n < GetTriggerDescriptors().size(); ++n) {
@@ -220,7 +245,7 @@ bool TriggerResults::AnyMatchEx(const std::vector<BitsContainer>& reco_jet_match
     return false;
 }
 
-bool TriggerResults::AnyAcceptAndMatchEx(const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AnyAcceptAndMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AnyAcceptAndMatch()) return false;
     for(size_t n = 0; n < GetTriggerDescriptors().size(); ++n) {
@@ -244,12 +269,5 @@ const TriggerDescriptorCollection& TriggerResults::GetTriggerDescriptors() const
 }
 
 size_t TriggerResults::GetIndex(const Pattern& pattern) const { return GetTriggerDescriptors().GetIndex(pattern); }
-
-TriggerResults::BitsContainer TriggerResults::GetJetFilterMatchBits(BitsContainer match_bits,
-                                                                    unsigned filter_index) const
-{
-    static constexpr BitsContainer mask((1 << MaxNumberOfTriggerJets) - 1);
-    return ( match_bits >> (filter_index * MaxNumberOfTriggerJets) ) & mask;
-}
 
 } // namespace nutple

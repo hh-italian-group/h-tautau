@@ -11,17 +11,18 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
 
-#include "AnalysisTools/Core/include/Tools.h"
-#include "h-tautau/Core/include/SummaryTuple.h"
-#include "h-tautau/Core/include/EventTuple.h"
-#include "h-tautau/Analysis/include/TriggerResults.h"
-#include "h-tautau/Production/interface/GenTruthTools.h"
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "AnalysisTools/Core/include/Tools.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
+#include "h-tautau/Core/include/EventTuple.h"
+#include "h-tautau/Core/include/SummaryTuple.h"
+#include "h-tautau/Core/include/TauIdResults.h"
+#include "h-tautau/Core/include/TriggerResults.h"
+#include "h-tautau/Production/interface/GenTruthTools.h"
 #include "h-tautau/Production/interface/TriggerFileDescriptor.h"
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
 #include "h-tautau/Production/interface/TriggerTools.h"
-#include "h-tautau/Core/include/TauIdResults.h"
+
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:

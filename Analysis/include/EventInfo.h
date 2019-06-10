@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/Candidate.h"
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Core/include/SummaryTuple.h"
+#include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
@@ -20,7 +21,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SVfitAnaInterface.h"
 #include "KinFitInterface.h"
 #include "MT2.h"
-#include "TriggerResults.h"
+
 #include "SignalObjectSelector.h"
 
 #include <numeric>
