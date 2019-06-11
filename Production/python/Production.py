@@ -267,7 +267,7 @@ objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData and not options.isEmbedded),
+    isMC            = cms.bool(not isData or options.isEmbedded),
     saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
     lheEventProduct = cms.InputTag('externalLHEProducer'),
     genEvent        = cms.InputTag('generator'),
@@ -302,7 +302,7 @@ for channel in channels:
         genParticles            = cms.InputTag('prunedGenParticles'),
         genJets                 = cms.InputTag('slimmedGenJets'),
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
-        isMC                    = cms.bool(not isData and not options.isEmbedded),
+        isMC                    = cms.bool(not isData or options.isEmbedded),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),

@@ -117,9 +117,7 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 {
     InitializeAODCollections(iEvent, iSetup);
     primaryVertex = vertices->ptrAt(0);
-    std::cout << "Initialized AOD collection" << std::endl;
     InitializeCandidateCollections();
-    std::cout << "Initialized Candidate collection" << std::endl;
     try {
         Cutter cut(&GetAnaData().Selection());
         cut(true,"events");
@@ -151,7 +149,8 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(PUInfo_token, PUInfo);
     if(isMC) {
-        iEvent.getByToken(genMETAOD_token, genMET);
+        if(!isEmbedded)
+          iEvent.getByToken(genMETAOD_token, genMET);
         iEvent.getByToken(genWeights_token, genEvt);
         iEvent.getByToken(genParticles_token, genParticles);
         iEvent.getByToken(lheEventProduct_token, lheEventProduct);
@@ -882,7 +881,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
-    if(isMC){
+    if(isMC & !isEmbedded){
       ntuple::LorentzVectorM genMet_momentum(genMET->at(0).pt(),0,genMET->at(0).eta(),0);
       eventTuple().genMET_p4 = genMet_momentum;
     }
