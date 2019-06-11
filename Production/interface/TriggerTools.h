@@ -7,20 +7,20 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Framework/interface/EDConsumerBase.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/L1Trigger/interface/Tau.h"
+#include "DataFormats/L1Trigger/interface/BXVector.h"
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
-#include "AnalysisTools/Core/include/AnalysisMath.h"
-#include "AnalysisTools/Core/include/EnumNameMap.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
-#include "h-tautau/Analysis/include/TriggerResults.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "AnalysisTools/Core/include/EnumNameMap.h"
+#include "AnalysisTools/Core/include/PropertyConfigReader.h"
+#include "h-tautau/Core/include/TriggerResults.h"
+#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Production/interface/TriggerFileDescriptor.h"
 #include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
-#include "AnalysisTools/Core/include/PropertyConfigReader.h"
-#include "DataFormats/L1Trigger/interface/Tau.h"
-#include "DataFormats/L1Trigger/interface/BXVector.h"
 
 namespace analysis {
 
@@ -109,18 +109,11 @@ public:
     template<typename LVector>
     BitsContainer GetJetMatchBits(const LVector& reco_jet_p4, double deltaR_Limit) const
     {
-        auto trig_objs = jetTriggerObjects;
-        const auto& jet_filters = triggerDescriptors.GetJetFilters();
-        const double deltaR2 = std::pow(deltaR_Limit, 2);
-        for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
-            for(size_t jet_index = 0; jet_index < trig_objs.momentums.size(); ++jet_index) {
-                const bool match = trig_objs.GetJetFilterMatchBit(filter_index, jet_index)
-                    && ROOT::Math::VectorUtil::DeltaR2(trig_objs.momentums.at(jet_index), reco_jet_p4) < deltaR2;
-                trig_objs.SetJetFilterMatchBit(filter_index, jet_index, match);
-            }
-        }
-        return trig_objs.match_bits;
+        return GetJetMatchBitsImpl(LorentzVector(reco_jet_p4), deltaR_Limit);
     }
+
+private:
+    BitsContainer GetJetMatchBitsImpl(const LorentzVector& reco_jet_p4, double deltaR_Limit) const;
 
 private:
     std::map<CMSSW_Process, EDGetTokenT<edm::TriggerResults>> triggerResults_tokens;

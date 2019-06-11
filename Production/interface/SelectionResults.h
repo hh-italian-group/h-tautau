@@ -9,8 +9,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/CutTools.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "h-tautau/Core/include/Candidate.h"
+#include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Analysis/include/KinFitInterface.h"
-#include "h-tautau/Analysis/include/TriggerResults.h"
 #include "SVfitInterface.h"
 #include "h-tautau/Production/interface/BaseTupleProducer.h"
 

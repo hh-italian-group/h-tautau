@@ -5,10 +5,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include <bitset>
 #include <vector>
+#include <cstdint>
+#include <array>
 #include <boost/regex.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include "AnalysisTools/Core/include/AnalysisMath.h"
-#include "h-tautau/Core/include/AnalysisTypes.h"
+#include "AnalysisTypes.h"
 
 namespace analysis {
 
@@ -16,12 +19,19 @@ class TriggerDescriptorCollection {
 public:
     using Pattern = std::string;
     using Filter = std::string;
-    using BitsContainer = unsigned long long;
-    static constexpr size_t MaxNumberOfTriggers = std::numeric_limits<BitsContainer>::digits;
-    using Bits = std::bitset<MaxNumberOfTriggers>;
-    static constexpr size_t MaxNumberOfJetFilters = 4;
+    using BitsContainer = boost::multiprecision::uint256_t;
+    using FilterBitsContainer = uint16_t;
+    static constexpr size_t MaxNumberOfJetFilters = std::numeric_limits<FilterBitsContainer>::digits;
     static constexpr size_t MaxNumberOfTriggerJets = std::numeric_limits<BitsContainer>::digits
                                                    / MaxNumberOfJetFilters;
+    using RootBitsContainerUnit = uint64_t;
+    static constexpr size_t NumberOfRootBitsContainerUnits = std::numeric_limits<BitsContainer>::digits
+                                                           / std::numeric_limits<RootBitsContainerUnit>::digits;                                                           
+    using RootBitsContainer = std::array<RootBitsContainerUnit, NumberOfRootBitsContainerUnits>;
+
+    static_assert(std::numeric_limits<RootBitsContainerUnit>::digits
+                  == std::numeric_limits<boost::multiprecision::limb_type>::digits,
+                  "TriggerDescriptorCollection: inconsistent definition of containers");
 
     using PatternContainer = std::vector<Pattern>;
     using FilterVector = std::vector<Filter>;
@@ -67,13 +77,17 @@ public:
         bool RequiresJetMatching() const;
     };
 
+    static FilterBitsContainer GetJetFilterMatchBits(BitsContainer match_bits, unsigned filter_index);
+    static RootBitsContainer ConvertToRootRepresentation(BitsContainer match_bits);
+    static BitsContainer ConvertFromRootRepresentation(const RootBitsContainer& match_bits);
+
     size_t size() const;
     const TriggerDescriptor& at(size_t index) const;
     const TriggerDescriptor& at(const Pattern& pattern) const;
     void Add(const Pattern& pattern, const std::vector<Leg>& legs);
     bool FindPatternMatch(const std::string& path_name, size_t& index);
     size_t GetIndex(const Pattern& pattern) const;
-    BitsContainer GetJetFilterMatchBits(BitsContainer match_bits, unsigned filter_index) const;
+    
     const std::vector<std::string>& GetJetFilters() const;
 
 private:
@@ -85,10 +99,11 @@ private:
 
 class TriggerResults {
 public:
-    using BitsContainer = TriggerDescriptorCollection::BitsContainer;
-    static constexpr size_t MaxNumberOfTriggers = TriggerDescriptorCollection::MaxNumberOfTriggers;
-    static constexpr size_t MaxNumberOfTriggerJets = TriggerDescriptorCollection::MaxNumberOfTriggerJets;
-    using Bits = TriggerDescriptorCollection::Bits;
+    using BitsContainer = unsigned long long;
+    using JetBitsContainer = TriggerDescriptorCollection::BitsContainer;
+    using FilterBitsContainer = TriggerDescriptorCollection::FilterBitsContainer;
+    static constexpr size_t MaxNumberOfTriggers = std::numeric_limits<BitsContainer>::digits;
+    using Bits = std::bitset<MaxNumberOfTriggers>;
     using Pattern = TriggerDescriptorCollection::Pattern;
 
     using DescriptorsPtr = std::shared_ptr<const TriggerDescriptorCollection>;
@@ -128,27 +143,26 @@ public:
     bool AnyMatch() const;
     bool AnyAcceptAndMatch() const;
 
-    bool MatchEx(size_t index, const std::vector<BitsContainer>& reco_jet_matches = {}) const;
-    bool AcceptAndMatchEx(size_t index, const std::vector<BitsContainer>& reco_jet_matches = {}) const;
-    bool MatchEx(const Pattern& pattern, const std::vector<BitsContainer>& reco_jet_matches = {}) const;
-    bool AcceptAndMatchEx(const Pattern& pattern, const std::vector<BitsContainer>& reco_jet_matches = {}) const;
+    bool MatchEx(size_t index, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool AcceptAndMatchEx(size_t index, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool MatchEx(const Pattern& pattern, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool AcceptAndMatchEx(const Pattern& pattern, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
 
     template<typename PatternCollection>
     bool AnyAcceptAndMatchEx(const PatternCollection& patterns,
-                             const std::vector<BitsContainer>& reco_jet_matches = {}) const
+                             const std::vector<JetBitsContainer>& reco_jet_matches = {}) const
     {
         return std::any_of(patterns.begin(), patterns.end(),
                            [&](const Pattern& pattern) { return AcceptAndMatchEx(pattern, reco_jet_matches); });
     }
 
-    bool AnyMatchEx(const std::vector<BitsContainer>& reco_jet_matches = {}) const;
-    bool AnyAcceptAndMatchEx(const std::vector<BitsContainer>& reco_jet_matches = {}) const;
+    bool AnyMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool AnyAcceptAndMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
 
 private:
     void CheckIndex(size_t index) const;
     const TriggerDescriptorCollection& GetTriggerDescriptors() const;
     size_t GetIndex(const Pattern& pattern) const;
-    BitsContainer GetJetFilterMatchBits(BitsContainer match_bits, unsigned filter_index) const;
 
 private:
     Bits accept_bits, match_bits;

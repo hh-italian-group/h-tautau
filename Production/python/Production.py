@@ -174,16 +174,16 @@ if period == 'Run2018':
 
 ### MET filters for 2016 and MET recipe for 2016
 if period == 'Run2016':
-    process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
-    process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
-    process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+    #process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+    #process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+    #process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
-    process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
-    process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
-    process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+    #process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
+    #process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
+    #process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-    runMetCorAndUncFromMiniAOD(process, isData = isData)
+    runMetCorAndUncFromMiniAOD(process, isData = isData or options.isEmbedded)
 
     MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
@@ -265,6 +265,17 @@ else:
 jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
 objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
+if period == 'Run2016' and options.isEmbedded :
+    objects_InputTag             = cms.InputTag('selectedPatTrigger')
+
+genJets_inputTag = cms.InputTag('slimmedGenJets')
+
+if period == 'Run2017' and options.isEmbedded :
+    genJets_inputTag = cms.InputTag('slimmedGenJetsAK8SoftDropSubJets')
+
+if period == 'Run2018' and options.isEmbedded :
+    genJets_inputTag = cms.InputTag('slimmedGenJetsAK8SoftDropSubJets')
+
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
     isMC            = cms.bool(not isData or options.isEmbedded),
@@ -300,7 +311,7 @@ for channel in channels:
         genEventInfoProduct     = cms.InputTag('generator'),
         topGenEvent             = cms.InputTag('genEvt'),
         genParticles            = cms.InputTag('prunedGenParticles'),
-        genJets                 = cms.InputTag('slimmedGenJets'),
+        genJets                 = genJets_inputTag,
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData or options.isEmbedded),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
@@ -335,8 +346,8 @@ if period == 'Run2016':
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
         process.fullPatMetSequence *
-        process.BadPFMuonFilter *
-        process.BadChargedCandidateFilter *
+        #process.BadPFMuonFilter *
+        #process.BadChargedCandidateFilter *
         process.topGenSequence *
         process.tupleProductionSequence
     )

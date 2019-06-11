@@ -12,10 +12,6 @@
 #include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
 
-namespace {
-bool EnableThreadSafety() { ROOT::EnableThreadSafety(); return true; }
-}
-
 int TupleStore::tuple_counter = 0;
 
 std::unique_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
@@ -40,9 +36,6 @@ void TupleStore::ReleaseEventTuple()
     eventTuple_ptr.reset();
   }
 }
-
-
-const bool BaseTupleProducer::enableThreadSafety = EnableThreadSafety();
 
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel) :
     treeName(ToString(_channel)),
@@ -94,10 +87,10 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
 
-    if(period == analysis::Period::Run2016){
-        badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
-        badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
-    }
+    // if(period == analysis::Period::Run2016){
+    //     badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
+    //     badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
+    // }
 
     m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
 
@@ -620,19 +613,19 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     setResult(Filter::HBHEiso_noise, "Flag_HBHENoiseIsoFilter");
     setResult(Filter::ECAL_TP, "Flag_EcalDeadCellTriggerPrimitiveFilter");
     setResult(Filter::ee_badSC_noise, "Flag_eeBadScFilter");
+    setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
 
-    if(period == analysis::Period::Run2016){
-        edm::Handle<bool> badPFMuon;
-        edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);
-        filters.SetResult(Filter::badMuon, *badPFMuon);
-
-        edm::Handle<bool> badChCandidate;
-        edmEvent->getByToken(badChCandidateFilter_token, badChCandidate);
-        filters.SetResult(Filter::badChargedHadron,*badChCandidate);
-    }
+    // if(period == analysis::Period::Run2016){
+    //     edm::Handle<bool> badPFMuon;
+    //     edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);
+    //     filters.SetResult(Filter::badMuon, *badPFMuon);
+    //
+    //     edm::Handle<bool> badChCandidate;
+    //     edmEvent->getByToken(badChCandidateFilter_token, badChCandidate);
+    //     filters.SetResult(Filter::badChargedHadron,*badChCandidate);
+    // }
 
     if(period == analysis::Period::Run2017 || period == analysis::Period::Run2018){
-        setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
         //setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
         setResult(Filter::ecalBadCalib, "ecalBadCalibReducedMINIAODFilter");
     }
@@ -916,8 +909,12 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         float jet_resolution = resolution.getResolution(parameters);
         eventTuple().jets_resolution.push_back(jet_resolution); // percentage
 
-        eventTuple().jets_triggerFilterMatch.push_back(triggerTools.GetJetMatchBits(p4,
-                                                       cuts::H_tautau_2016::DeltaR_triggerMatch));
+        const auto raw_match_bits = triggerTools.GetJetMatchBits(p4, cuts::H_tautau_2016::DeltaR_triggerMatch);
+        const auto match_bits = TriggerDescriptorCollection::ConvertToRootRepresentation(raw_match_bits);
+        for(size_t n = 0; n < match_bits.size(); ++n) {
+            const std::string br_name = "jets_triggerFilterMatch_" + std::to_string(n);
+            eventTuple.get<std::vector<ULong64_t>>(br_name).push_back(match_bits.at(n));
+        }
     }
 
     for(const auto jet_cand : jets){

@@ -162,7 +162,6 @@ protected:
     std::shared_ptr<RecoilCorrector> recoilPFMetCorrector;
 
 private:
-    static const bool enableThreadSafety;
     const edm::Event *edmEvent;
     edm::Handle<std::vector<pat::Electron> > pat_electrons;
     edm::Handle<std::vector<pat::Tau> > pat_taus;
@@ -313,30 +312,6 @@ protected:
     {
         return l1.IsMoreIsolated(l2);
     }
-
-    template<typename HiggsCandidate>
-    static bool HiggsComparitor(const HiggsCandidate& h1, const HiggsCandidate& h2)
-    {
-        const auto& h1_leg1 = h1.GetFirstDaughter();
-        const auto& h2_leg1 = h2.GetFirstDaughter();
-        if(h1_leg1 != h2_leg1) {
-            if(h1_leg1.GetIsolation() != h2_leg1.GetIsolation()) return h1_leg1.IsMoreIsolated(h2_leg1);
-            if(h1_leg1.GetMomentum().pt() != h2_leg1.GetMomentum().pt())
-                return h1_leg1.GetMomentum().pt() > h2_leg1.GetMomentum().pt();
-        }
-
-        const auto& h1_leg2 = h1.GetSecondDaughter();
-        const auto& h2_leg2 = h2.GetSecondDaughter();
-        if(h1_leg2 != h2_leg2) {
-            if(h1_leg2.GetIsolation() != h2_leg2.GetIsolation()) return h1_leg2.IsMoreIsolated(h2_leg2);
-            if(h1_leg2.GetMomentum().pt() != h2_leg2.GetMomentum().pt())
-                return h1_leg2.GetMomentum().pt() > h2_leg2.GetMomentum().pt();
-        }
-
-        if(h1_leg1 == h2_leg1 && h1_leg2 == h2_leg2) return false;
-        throw analysis::exception("not found a good criteria for best tau pair");
-    }
-
 
     template<typename Candidate>
     static float GetUserFloat(const Candidate& obj, const std::string& name)
