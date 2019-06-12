@@ -18,9 +18,11 @@ std::unique_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
 
 ntuple::EventTuple& TupleStore::GetTuple()
 {
-  ROOT::CompressionSettings(ROOT::kLZ4, 5);
   if(tuple_counter == 0){
-    eventTuple_ptr = std::make_unique<ntuple::EventTuple>("events",&edm::Service<TFileService>()->file(),false);
+    TFile& file = edm::Service<TFileService>()->file();
+    file.SetCompressionAlgorithm(ROOT::kLZ4);
+    file.SetCompressionLevel(4);
+    eventTuple_ptr = std::make_unique<ntuple::EventTuple>("events",&file,false);
   }
   ++tuple_counter;
   return *eventTuple_ptr;

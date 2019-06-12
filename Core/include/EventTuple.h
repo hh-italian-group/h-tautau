@@ -126,7 +126,6 @@ using Point3D = analysis::Point3D_Float;
     VAR(Double_t, weight_xs_withTopPt) \
     VAR(Double_t, weight_total) \
     VAR(Double_t, weight_total_withTopPt) \
-    VAR(Bool_t,isData) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \

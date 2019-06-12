@@ -97,7 +97,10 @@ if options.eventList != '':
 ## and add btag discriminator to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 #https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTools#Jet_Tools
-btagVector = ['None']
+btagVector = []
+
+if period == 'Run2018':
+    btagVector.append('None')
 
 if period == 'Run2017':
     btagVector2017 = [
