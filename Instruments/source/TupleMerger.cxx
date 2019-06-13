@@ -37,8 +37,8 @@ public:
         std::cout << "All file has been merged. Number of files = " << input_files.size() << std::endl;
 
         for(const auto& iter : output_eventTuple){
-          output_eventTuple.at(iter.first)->Write();
-          std::cout << ". Number of output entries = " << output_eventTuple.at(iter.first)->GetEntries() << std::endl;
+          iter.second->Write();
+          std::cout << ". Number of output entries = " << iter.second->GetEntries() << std::endl;
         }
         output_summaryTuple.Write();
         output_expressTuple.Write();
@@ -52,6 +52,7 @@ public:
           ntuple::EventTuple eventTuple("events", file.get(), true);
           size_t n_duplicates = 0;
           for(const auto& event : eventTuple) {
+              std::cout << "In eventTuple" << std::endl;
               const analysis::Channel channel = static_cast<analysis::Channel>(event.channelId);
               const analysis::EventIdentifier eventId(event.run,event.lumi,event.evt);
               if(processed_entries[channel].count(eventId)) {
@@ -59,10 +60,12 @@ public:
                   continue;
               }
               processed_entries[channel].insert(eventId);
-              if(!output_eventTuple.at(channel))
+              std::cout << "Insert event" << std::endl;
+              if(!output_eventTuple[channel])
                 output_eventTuple[channel] = ntuple::CreateEventTuple(analysis::ToString(channel), file.get(), false,
                                                     ntuple::TreeState::Full);
               output_eventTuple[channel]->Fill();
+              std::cout << "Filled tuple" << std::endl;
           }
           n_total_duplicates += n_duplicates;
 
