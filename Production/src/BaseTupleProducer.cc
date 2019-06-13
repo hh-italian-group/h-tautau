@@ -14,7 +14,7 @@
 
 int TupleStore::tuple_counter = 0;
 
-std::unique_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
+std::shared_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
 
 ntuple::EventTuple& TupleStore::GetTuple()
 {
@@ -22,7 +22,7 @@ ntuple::EventTuple& TupleStore::GetTuple()
     TFile& file = edm::Service<TFileService>()->file();
     file.SetCompressionAlgorithm(ROOT::kLZ4);
     file.SetCompressionLevel(4);
-    eventTuple_ptr = std::make_unique<ntuple::EventTuple>("events",&file,false);
+    eventTuple_ptr = ntuple::CreateEventTuple("events",&file,false,ntuple::TreeState::Full);
   }
   ++tuple_counter;
   return *eventTuple_ptr;

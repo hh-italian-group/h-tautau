@@ -107,7 +107,7 @@ public:
 
 private:
   static int tuple_counter;
-  static std::unique_ptr<ntuple::EventTuple> eventTuple_ptr;
+  static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
 
 };
 
