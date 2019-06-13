@@ -131,11 +131,13 @@ TriggerDescriptorCollection::RootBitsContainer TriggerDescriptorCollection::Conv
     BitsContainer match_bits)
 {
     TriggerDescriptorCollection::RootBitsContainer result;
-    if(match_bits.backend().size() != result.size())
+    if(match_bits.backend().size() > result.size())
         throw exception("TriggerDescriptorCollection: inconsistent definition of containers");
-    for(size_t n = 0; n < result.size(); ++n) {
+    size_t n = 0;
+    for(; n < match_bits.backend().size(); ++n)
         result[n] = *(match_bits.backend().limbs() + n);
-    }
+    for(; n < result.size(); ++n)
+        result[n] = 0;
     return result;
 }
 
@@ -143,11 +145,9 @@ TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::ConvertF
     const RootBitsContainer& match_bits)
 {
     TriggerDescriptorCollection::BitsContainer result;
-        if(result.backend().size() != match_bits.size())
-        throw exception("TriggerDescriptorCollection: inconsistent definition of containers");
-    for(size_t n = 0; n < match_bits.size(); ++n) {
+    result.backend().resize(match_bits.size(), match_bits.size());
+    for(size_t n = 0; n < match_bits.size(); ++n)
         *(result.backend().limbs() + n) = match_bits[n];
-    }
     return result;
 }
 

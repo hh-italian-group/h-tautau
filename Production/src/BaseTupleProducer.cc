@@ -11,6 +11,34 @@
 #include "DataFormats/L1Trigger/interface/BXVector.h"
 #include "h-tautau/Core/include/DiscriminatorIdResults.h"
 
+
+int TupleStore::tuple_counter = 0;
+
+std::shared_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
+
+ntuple::EventTuple& TupleStore::GetTuple()
+{
+  if(tuple_counter == 0){
+    TFile& file = edm::Service<TFileService>()->file();
+    file.SetCompressionAlgorithm(ROOT::kLZ4);
+    file.SetCompressionLevel(4);
+    eventTuple_ptr = ntuple::CreateEventTuple("events",&file,false,ntuple::TreeState::Full);
+  }
+  ++tuple_counter;
+  return *eventTuple_ptr;
+}
+
+void TupleStore::ReleaseEventTuple()
+{
+  if(tuple_counter==0)
+    throw analysis::exception("Tuple Counter equal zero.");
+  --tuple_counter;
+  if(tuple_counter == 0){
+    eventTuple_ptr->Write();
+    eventTuple_ptr.reset();
+  }
+}
+
 BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel) :
     treeName(ToString(_channel)),
     anaData(&edm::Service<TFileService>()->file(), treeName + "_stat"),
@@ -19,6 +47,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     muonsMiniAOD_token(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
     vtxMiniAOD_token(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
     pfMETAOD_token(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
+    genMETAOD_token(mayConsume<edm::View<reco::GenMET> >(iConfig.getParameter<edm::InputTag>("genMetSrc"))),
     jetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
     fatJetsMiniAOD_token(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("fatJetSrc"))),
     PUInfo_token(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
@@ -42,25 +71,28 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenBosonInfo(iConfig.getParameter<bool>("saveGenBosonInfo")),
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
-    eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
-    eventTuple(*eventTuple_ptr),
+    isEmbedded(iConfig.getParameter<bool>("isEmbedded")),
+    //eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
+    eventTuple(TupleStore::GetTuple()),
+    //eventTuple(*eventTuple_ptr),
     triggerTools(mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIM")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "HLT")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "PAT")),
+                 mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIMembedding")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
                  iConfig.getParameter<std::string>("triggerCfg"),
-                 _channel)
+                 _channel, isEmbedded)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
 
-    if(period == analysis::Period::Run2016){
-        badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
-        badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
-    }
+    // if(period == analysis::Period::Run2016){
+    //     badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
+    //     badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
+    // }
 
     m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
 
@@ -80,7 +112,6 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 {
     InitializeAODCollections(iEvent, iSetup);
     primaryVertex = vertices->ptrAt(0);
-
     InitializeCandidateCollections();
     try {
         Cutter cut(&GetAnaData().Selection());
@@ -94,7 +125,8 @@ void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
 void BaseTupleProducer::endJob()
 {
-    eventTuple.Write();
+    //eventTuple.Write();
+    TupleStore::ReleaseEventTuple();
 }
 
 void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -112,6 +144,8 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(PUInfo_token, PUInfo);
     if(isMC) {
+        if(!isEmbedded)
+          iEvent.getByToken(genMETAOD_token, genMET);
         iEvent.getByToken(genWeights_token, genEvt);
         iEvent.getByToken(genParticles_token, genParticles);
         iEvent.getByToken(lheEventProduct_token, lheEventProduct);
@@ -123,14 +157,12 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
 
     iSetup.get<JetCorrectionsRecord>().get("AK4PFchs", jetCorParColl);
     jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
-
     resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
 }
 
 void BaseTupleProducer::InitializeCandidateCollections()
 {
     using METUncertainty = pat::MET::METUncertainty;
-
     electrons.clear();
     for(size_t n = 0; n < pat_electrons->size(); ++n) {
         const edm::Ptr<pat::Electron> ele_ptr(pat_electrons, n);
@@ -141,12 +173,11 @@ void BaseTupleProducer::InitializeCandidateCollections()
     for(const auto& muon : *pat_muons)
         muons.push_back(MuonCandidate(muon, Isolation(muon)));
 
-
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
 
     taus.clear();
     for(const auto& tau : *pat_taus) {
-        TauCandidate tauCandidate(tau, Isolation(tau));
+        TauCandidate tauCandidate(tau,0);
         taus.push_back(tauCandidate);
     }
 
@@ -159,7 +190,6 @@ void BaseTupleProducer::InitializeCandidateCollections()
     fatJets.clear();
     for(const auto& jet : * pat_fatJets)
         fatJets.push_back(JetCandidate(jet));
-
 }
 
 const double BaseTupleProducer::Isolation(const pat::Electron& electron)
@@ -178,16 +208,6 @@ const double BaseTupleProducer::Isolation(const pat::Muon& muon)
                              - 0.5 * muon.pfIsolationR04().sumPUPt;
     const double abs_iso = muon.pfIsolationR04().sumChargedHadronPt + std::max(sum_neutral, 0.0);
     return abs_iso / muon.pt();
-}
-
-const double BaseTupleProducer::Isolation(const pat::Tau& tau)
-{
-    static const std::map<analysis::Period, analysis::TauIdDiscriminator> discriminators = {
-        { analysis::Period::Run2016, analysis::TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016 },
-        { analysis::Period::Run2017, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 }
-    };
-    const auto& desc = analysis::tau_id::GetTauIdDescriptors().at(discriminators.at(period));
-    return tau.tauID(desc.ToStringRaw());
 }
 
 //https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017#Preliminary_Recommendations_for
@@ -235,6 +255,31 @@ bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period 
         if(abs_eta > 3.0 && (
                          patJet.neutralEmEnergyFraction() >= 0.9 ||
                          patJet.neutralHadronEnergyFraction() <= 0.02 ||
+                         patJet.neutralMultiplicity() <= 10)) return false;
+
+    }
+
+    if(period == analysis::Period::Run2018)
+    {
+        if(abs_eta <= 2.6 && (
+                         patJet.neutralHadronEnergyFraction() >= 0.9 ||
+                         patJet.neutralEmEnergyFraction() >= 0.9 ||
+                         patJet.nConstituents() <= 1 ||
+                         patJet.chargedHadronEnergyFraction() <= 0 ||
+                         patJet.chargedMultiplicity() <= 0)) return false;
+        if(abs_eta > 2.6 && abs_eta <= 2.7 && (
+                         patJet.neutralHadronEnergyFraction() >= 0.9 ||
+                         patJet.neutralEmEnergyFraction() >= 0.99 ||
+                         patJet.chargedMultiplicity() <= 0)) return false;
+
+        if(abs_eta > 2.7 && abs_eta <= 3.0 && (
+                                           patJet.neutralEmEnergyFraction() <= 0.02 ||
+                                           patJet.neutralEmEnergyFraction() >= 0.99 ||
+                                           patJet.neutralMultiplicity() <= 2)) return false;
+
+        if(abs_eta > 3.0 && (
+                         patJet.neutralEmEnergyFraction() >= 0.9 ||
+                         patJet.neutralHadronEnergyFraction() <= 0.2 ||
                          patJet.neutralMultiplicity() <= 10)) return false;
 
     }
@@ -323,19 +368,48 @@ void BaseTupleProducer::FillGenParticleInfo()
 {
     using analysis::GenEventType;
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
+    static const std::set<int> leptons = { 11, 13, 15 };
     static const std::set<int> bosons = { 23, 24, 25, 35 };
 
     std::vector<const reco::GenParticle*> particles_to_store;
+    std::map<int,std::vector<const reco::GenParticle*>> particles_to_store_backup;
 
     std::map<int, size_t> particle_counts;
     for(const auto& particle : *genParticles) {
         const auto& flag = particle.statusFlags();
-        if(!flag.isPrompt() || !flag.isLastCopy()) continue;
+        if(!flag.isPrompt() || !flag.isLastCopy() || !flag.fromHardProcess()) continue;
         const int abs_pdg = std::abs(particle.pdgId());
         ++particle_counts[abs_pdg];
-        if(saveGenBosonInfo && bosons.count(abs_pdg))
-            particles_to_store.push_back(&particle);
+        if(saveGenBosonInfo && bosons.count(abs_pdg)){
+          particles_to_store.push_back(&particle);
+        }
+        if(saveGenBosonInfo && leptons.count(abs_pdg)){
+          particles_to_store_backup[abs_pdg].push_back(&particle);
+        }
+
     }
+
+    if(saveGenBosonInfo && particles_to_store.empty()){
+      if(particles_to_store_backup[tauPdgId].size() > 0) {
+        if(particles_to_store_backup[tauPdgId].size() != 2)
+          throw analysis::exception("More than 2 prompt taus for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+        particles_to_store = particles_to_store_backup.at(tauPdgId);
+      }
+      else if(particles_to_store_backup[muonPdgId].size() > 0) {
+        if(particles_to_store_backup[muonPdgId].size() != 2)
+          throw analysis::exception("More than 2 prompt muons for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+        particles_to_store = particles_to_store_backup.at(muonPdgId);
+      }
+      else if(particles_to_store_backup[electronPdgId].size() > 0) {
+        if(particles_to_store_backup[electronPdgId].size() != 2)
+          throw analysis::exception("More than 2 prompt electrons for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+        particles_to_store = particles_to_store_backup.at(electronPdgId);
+      }
+
+    }
+
+    if(saveGenBosonInfo && particles_to_store.empty())
+      throw analysis::exception("Particles to store is empty for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
 
     eventTuple().genParticles_nPromptElectrons = particle_counts[electronPdgId];
     eventTuple().genParticles_nPromptMuons = particle_counts[muonPdgId];
@@ -500,10 +574,14 @@ void BaseTupleProducer::FillLegGenMatch(const analysis::LorentzVectorXYZ& p4)
         eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM(matched_p4));
         const auto matched_visible_p4 = match.visible_daughters_p4;
         eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM(matched_visible_p4));
+        eventTuple().lep_gen_chargedParticles.push_back(match.n_chargedParticles);
+        eventTuple().lep_gen_neutralParticles.push_back(match.n_neutralParticles);
     } else {
         eventTuple().lep_gen_match.push_back(default_int_value);
         eventTuple().lep_gen_p4.push_back(ntuple::LorentzVectorM());
         eventTuple().lep_gen_visible_p4.push_back(ntuple::LorentzVectorM());
+        eventTuple().lep_gen_chargedParticles.push_back(default_int_value);
+        eventTuple().lep_gen_neutralParticles.push_back(default_int_value);
     }
 }
 
@@ -526,20 +604,20 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     setResult(Filter::HBHEiso_noise, "Flag_HBHENoiseIsoFilter");
     setResult(Filter::ECAL_TP, "Flag_EcalDeadCellTriggerPrimitiveFilter");
     setResult(Filter::ee_badSC_noise, "Flag_eeBadScFilter");
+    setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
 
-    if(period == analysis::Period::Run2016){
-        edm::Handle<bool> badPFMuon;
-        edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);
-        filters.SetResult(Filter::badMuon, *badPFMuon);
+    // if(period == analysis::Period::Run2016){
+    //     edm::Handle<bool> badPFMuon;
+    //     edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);
+    //     filters.SetResult(Filter::badMuon, *badPFMuon);
+    //
+    //     edm::Handle<bool> badChCandidate;
+    //     edmEvent->getByToken(badChCandidateFilter_token, badChCandidate);
+    //     filters.SetResult(Filter::badChargedHadron,*badChCandidate);
+    // }
 
-        edm::Handle<bool> badChCandidate;
-        edmEvent->getByToken(badChCandidateFilter_token, badChCandidate);
-        filters.SetResult(Filter::badChargedHadron,*badChCandidate);
-    }
-
-    if(period == analysis::Period::Run2017){
-        setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
-        setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
+    if(period == analysis::Period::Run2017 || period == analysis::Period::Run2018){
+        //setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
         setResult(Filter::ecalBadCalib, "ecalBadCalibReducedMINIAODFilter");
     }
 
@@ -787,6 +865,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     // MET
     eventTuple().pfMET_p4 = met->GetMomentum();
     eventTuple().pfMET_cov = met->GetCovMatrix();
+    if(isMC & !isEmbedded){
+      ntuple::LorentzVectorM genMet_momentum(genMET->at(0).pt(),0,genMET->at(0).eta(),0);
+      eventTuple().genMET_p4 = genMet_momentum;
+    }
+
     FillMetFilters(period);
 
     std::set<const pat::Jet*> selected_jets;
@@ -808,7 +891,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
         eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
-        eventTuple().jets_partonFlavour.push_back(jet->partonFlavour());
         eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
         // Jet resolution
         JME::JetParameters parameters;
@@ -821,8 +903,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         const auto raw_match_bits = triggerTools.GetJetMatchBits(p4, cuts::H_tautau_2016::DeltaR_triggerMatch);
         const auto match_bits = TriggerDescriptorCollection::ConvertToRootRepresentation(raw_match_bits);
         for(size_t n = 0; n < match_bits.size(); ++n) {
-            const std::string br_name = "jets_triggerFilterMatch" + std::to_string(n);
-            eventTuple.get<std::vector<uint64_t>>(br_name).push_back(match_bits.at(n));
+            const std::string br_name = "jets_triggerFilterMatch_" + std::to_string(n);
+            eventTuple.get<std::vector<ULong64_t>>(br_name).push_back(match_bits.at(n));
         }
     }
 

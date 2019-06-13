@@ -22,6 +22,8 @@ struct LeptonMatchResult {
     const reco::GenParticle* gen_particle{nullptr};
     std::vector<const reco::GenParticle*> visible_daughters;
     LorentzVectorXYZ visible_daughters_p4;
+    int n_chargedParticles;
+    int n_neutralParticles;
 };
 
 void FindFinalStateDaughters(const reco::GenParticle& particle, std::set<const reco::GenParticle*>& daughters,

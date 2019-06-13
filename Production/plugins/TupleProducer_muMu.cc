@@ -23,7 +23,6 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     selection.other_electrons = CollectVetoElectrons();
     selection.electronVeto = selection.other_electrons.size();
-    cut(!selection.electronVeto, "no_extra_ele");
 
     static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects;
     auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.muons, DeltaR_betweenSignalObjects, "H_mu_mu");
@@ -109,6 +108,10 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
 void TupleProducer_muMu::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
+
+    Lock lock(eventTuple.GetMutex());
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::MuMu);
