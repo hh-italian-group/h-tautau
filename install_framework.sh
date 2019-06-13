@@ -3,8 +3,7 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
-INSTALL_MODES=( ["prod16"]="CMSSW_10_2_14 _amd64_gcc700" \
-                ["prod17"]="CMSSW_10_2_14 _amd64_gcc700" \
+INSTALL_MODES=( ["prod"]="CMSSW_10_2_14 _amd64_gcc700" \
                 ["ana"]="CMSSW_10_2_14 _amd64_gcc700" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=4
@@ -73,22 +72,7 @@ else
     cd "$RELEASE"
 fi
 
-if [ $MODE = "prod16" ] ; then
-    run_cmd git cms-init
-
-    # MET filters
-    #git cms-merge-topic -u cms-met:CMSSW_8_0_X-METFilterUpdate #outdated
-    #git cms-merge-topic -u cms-met:fromCMSSW_8_0_20_postICHEPfilter
-
-    # MET corrections
-    #git cms-merge-topic cms-met:METRecipe_8020
-    run_cmd git cms-merge-topic cms-met:METRecipe_8020_for80Xintegration
-
-    # Tau ID
-    run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_8_0_X_tau-pog_tauIDOnMiniAOD-legacy-backport-81Xv2
-fi
-
-if [ $MODE = "prod17" ] ; then
+if [ $MODE = "prod" ] ; then
     run_cmd git cms-init
 
     # Electron MVA identification
@@ -107,11 +91,14 @@ if [ $MODE = "prod17" ] ; then
 #    git checkout CMSSW_9_4_0_pre3_TnP
     # Go back to the src/
     run_cmd git cms-addpkg RecoMET/METFilters
+    #run_cmd git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
     #Add DeepTau code from Tau POG repository (note "-u" option preventing checkout of unnecessary stuff)
     run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2
     #Add 2017v2 training file
-    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2_alone/DeepTauId/deepTau_2017v2p6_e6.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
+    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_core.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
+    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_inner.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
+    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_outer.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
     #cd $CMSSW_BASE/src
 fi
 
@@ -137,15 +124,15 @@ run_cmd git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-ut
 run_cmd git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
 # Recoil Corrections
-if [ $MODE = "prod16" -o $MODE = "prod17" ] ; then
+if [ $MODE = "prod" ] ; then
     run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
 fi
 
 # Install analysis packages
 declare -A ANA_PACKAGES
-ANA_PACKAGES=( ["AnalysisTools"]="prod16:master prod17:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod16:prod_v4 prod17:prod_v5 ana:ana_v4 ana_osx:ana_v4" \
-               ["hh-bbtautau"]="prod16:ana_v4 prod17:ana_v5 ana:ana_v4 ana_osx:ana_v4" )
+ANA_PACKAGES=( ["AnalysisTools"]="prod:master ana:master ana_osx:master" \
+               ["h-tautau"]="prod:prod_v5 ana:ana_v4 ana_osx:ana_v4" \
+               ["hh-bbtautau"]="prod:ana_v5 ana:ana_v4 ana_osx:ana_v4" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do

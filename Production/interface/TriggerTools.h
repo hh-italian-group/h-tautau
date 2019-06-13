@@ -24,12 +24,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class CMSSW_Process { SIM, HLT, RECO, PAT };
+enum class CMSSW_Process { SIM, HLT, RECO, PAT, SIMembedding };
 ENUM_NAMES(CMSSW_Process) = {
     { CMSSW_Process::SIM, "SIM" },
     { CMSSW_Process::HLT, "HLT" },
     { CMSSW_Process::RECO, "RECO" },
-    { CMSSW_Process::PAT, "PAT" }
+    { CMSSW_Process::PAT, "PAT" },
+    { CMSSW_Process::SIMembedding, "SIMembedding" }
 };
 
 namespace detail {
@@ -61,10 +62,11 @@ public:
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
+                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIMembedding_token,
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
-                 const std::string& triggerCfg, Channel channel);
+                 const std::string& triggerCfg, Channel channel, bool _isEmbedded);
 
     static trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
                                                                     trigger_tools::SetupDescriptor& setup);
@@ -118,6 +120,7 @@ private:
     EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_token;
     EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_token;
     EDGetTokenT<BXVector<l1t::Tau>> l1Tau_token;
+    bool isEmbedded;
 
     const edm::Event* iEvent;
     analysis::TriggerDescriptorCollection triggerDescriptors;

@@ -62,17 +62,19 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
+                           EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIMembedding_token,
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                            EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
-                           const std::string& triggerCfg, Channel channel) :
+                           const std::string& triggerCfg, Channel channel, bool _isEmbedded) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
-    l1Tau_token(_l1Tau_token)
+    l1Tau_token(_l1Tau_token), isEmbedded(_isEmbedded)
 {
     triggerResults_tokens[CMSSW_Process::SIM] = _triggerResultsSIM_token;
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
+    triggerResults_tokens[CMSSW_Process::SIMembedding] = _triggerResultsSIMembedding_token;
 
     trigger_tools::SetupDescriptor setup;
     trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(triggerCfg,setup);
@@ -173,7 +175,9 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         return true;
     };
 
-    const auto& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
+    Handle<edm::TriggerResults>& triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::HLT);
+    if(isEmbedded) triggerResultsHLT = triggerResultsMap.at(CMSSW_Process::SIMembedding);
+
     const edm::TriggerNames& triggerNames = iEvent->triggerNames(*triggerResultsHLT);
     for (const pat::TriggerObjectStandAlone& triggerObject : *triggerObjects) {
         pat::TriggerObjectStandAlone unpackedTriggerObject(triggerObject);
