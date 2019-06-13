@@ -177,7 +177,7 @@ void BaseTupleProducer::InitializeCandidateCollections()
 
     taus.clear();
     for(const auto& tau : *pat_taus) {
-        TauCandidate tauCandidate(tau, Isolation(tau));
+        TauCandidate tauCandidate(tau,0);
         taus.push_back(tauCandidate);
     }
 
@@ -208,17 +208,6 @@ const double BaseTupleProducer::Isolation(const pat::Muon& muon)
                              - 0.5 * muon.pfIsolationR04().sumPUPt;
     const double abs_iso = muon.pfIsolationR04().sumChargedHadronPt + std::max(sum_neutral, 0.0);
     return abs_iso / muon.pt();
-}
-
-const double BaseTupleProducer::Isolation(const pat::Tau& tau)
-{
-    static const std::map<analysis::Period, analysis::TauIdDiscriminator> discriminators = {
-        { analysis::Period::Run2016, analysis::TauIdDiscriminator::byIsolationMVArun2v1DBoldDMwLT2016 },
-        { analysis::Period::Run2017, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 },
-        { analysis::Period::Run2018, analysis::TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017 } //to be fixed for 2018
-    };
-    const auto& desc = analysis::tau_id::GetTauIdDescriptors().at(discriminators.at(period));
-    return tau.tauID(desc.ToStringRaw());
 }
 
 //https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017#Preliminary_Recommendations_for
@@ -394,13 +383,13 @@ void BaseTupleProducer::FillGenParticleInfo()
         if(saveGenBosonInfo && bosons.count(abs_pdg)){
           particles_to_store.push_back(&particle);
         }
-        if(leptons.count(abs_pdg)){
+        if(saveGenBosonInfo && leptons.count(abs_pdg)){
           particles_to_store_backup[abs_pdg].push_back(&particle);
         }
 
     }
 
-    if(particles_to_store.empty()){
+    if(saveGenBosonInfo && particles_to_store.empty()){
       if(particles_to_store_backup[tauPdgId].size() > 0) {
         if(particles_to_store_backup[tauPdgId].size() != 2)
           throw analysis::exception("More than 2 prompt taus for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
@@ -419,7 +408,7 @@ void BaseTupleProducer::FillGenParticleInfo()
 
     }
 
-    if(particles_to_store.empty())
+    if(saveGenBosonInfo && particles_to_store.empty())
       throw analysis::exception("Particles to store is empty for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
 
     eventTuple().genParticles_nPromptElectrons = particle_counts[electronPdgId];

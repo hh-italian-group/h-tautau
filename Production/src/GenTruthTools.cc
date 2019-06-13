@@ -97,7 +97,7 @@ LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenPartic
           const reco::GenParticle* gen_visible_particle = visible_daughters.at(n);
           if(gen_visible_particle->charge() == 0)
             ++n_neutralParticles;
-          if(gen_visible_particle->charge() != 0)
+          else
             ++n_chargedParticles;
         }
 
