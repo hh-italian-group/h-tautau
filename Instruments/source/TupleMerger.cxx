@@ -26,7 +26,7 @@ public:
                         args.exclude_dir_list(), args.n_threads(), ROOT::kLZ4, 5),
         output_summaryTuple("summary", output_file.get(), false),
         output_expressTuple("all_events", output_file.get(), false),
-        n_total_duplicates(0)
+        n_total_duplicates(0),n_total_epress_duplicates(0)
     {
     }
 
@@ -43,16 +43,17 @@ public:
         output_summaryTuple.Write();
         output_expressTuple.Write();
 
-        std::cout << ". Total number of duplicated entires = " << n_total_duplicates << "." << std::endl;
+        std::cout << ". Total number of duplicated entries = " << n_total_duplicates << "." << std::endl;
+        std::cout << ". Total number of duplicated express entries = " << n_total_epress_duplicates << "." << std::endl;
     }
 
   private:
       virtual void ProcessFile(const std::string& /*file_name*/, const std::shared_ptr<TFile>& file) override
       {
-          ntuple::EventTuple eventTuple("events", file.get(), true);
+          //ntuple::EventTuple eventTuple("events", file.get(), true);
+          auto eventTuple = ntuple::CreateEventTuple("events", file.get(), true, ntuple::TreeState::Full);
           size_t n_duplicates = 0;
-          for(const auto& event : eventTuple) {
-              std::cout << "In eventTuple" << std::endl;
+          for(const auto& event : *eventTuple) {
               const analysis::Channel channel = static_cast<analysis::Channel>(event.channelId);
               const analysis::EventIdentifier eventId(event.run,event.lumi,event.evt);
               if(processed_entries[channel].count(eventId)) {
@@ -60,28 +61,37 @@ public:
                   continue;
               }
               processed_entries[channel].insert(eventId);
-              std::cout << "Insert event" << std::endl;
               if(!output_eventTuple[channel])
-                output_eventTuple[channel] = ntuple::CreateEventTuple(analysis::ToString(channel), file.get(), false,
+                output_eventTuple[channel] = ntuple::CreateEventTuple(analysis::ToString(channel), output_file.get(), false,
                                                     ntuple::TreeState::Full);
+              (*output_eventTuple[channel])() = event;
               output_eventTuple[channel]->Fill();
-              std::cout << "Filled tuple" << std::endl;
           }
           n_total_duplicates += n_duplicates;
 
-          ntuple::SummaryTuple input_summaryTuple("summary", file.get(), true);
+          auto input_summaryTuple = CreateSummaryTuple("summary", file.get(), true, ntuple::TreeState::Full);
           for(const ntuple::ProdSummary& summary : input_summaryTuple) {
               output_summaryTuple() = summary;
               output_summaryTuple.Fill();
           }
 
+
           ntuple::ExpressTuple input_expressTuple("all_events", file.get(), true);
+          size_t n_express_duplicates = 0;
           for(const ntuple::ExpressEvent& express : input_expressTuple) {
+              const analysis::EventIdentifier expressEventId(express.run,express.lumi,express.evt);
+              if(processed_entries_express.count(expressEventId)) {
+                  ++n_express_duplicates;
+                  continue;
+              }
+              processed_entries_express.insert(expressEventId);
               output_expressTuple() = express;
               output_expressTuple.Fill();
           }
+          n_total_epress_duplicates += n_express_duplicates;
 
-          std::cout << "\tn_entries = " << eventTuple.GetEntries() << ", n_duplicates = " << n_duplicates << ".\n";
+          std::cout << "\tn_entries = " << eventTuple->GetEntries() << ", n_duplicates = " << n_duplicates << ".\n";
+          std::cout << "\tn_express_entries = " << input_expressTuple.GetEntries() << ", n_express_duplicates = " << n_express_duplicates << ".\n";
       }
 
   private:
@@ -89,7 +99,8 @@ public:
       ntuple::SummaryTuple output_summaryTuple;
       ntuple::ExpressTuple output_expressTuple;
       std::map<analysis::Channel, std::set<analysis::EventIdentifier>> processed_entries;
-      size_t n_total_duplicates;
+      std::set<analysis::EventIdentifier> processed_entries_express;
+      size_t n_total_duplicates,n_total_epress_duplicates;
 };
 
 PROGRAM_MAIN(TupleMerger, Arguments)
