@@ -13,7 +13,6 @@ parser.add_argument('--work-area', required=False, dest='workArea', type=str, de
                     help="Work area")
 parser.add_argument('--cfg', required=True, dest='cfg', type=str, help="CMSSW configuration file")
 parser.add_argument('--site', required=True, dest='site', type=str, help="Site for stage out.")
-parser.add_argument('--dryrun', action="store_true", help="Submission dryrun.")
 parser.add_argument('--output', required=True, dest='output', type=str,
                     help="output path after /store/user/USERNAME")
 parser.add_argument('--blacklist', required=False, dest='blacklist', type=str, default="",
@@ -70,7 +69,7 @@ try:
         job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
         print job_file
         print job_collection
-        job_collection.submit(config,args.dryrun)
+        job_collection.submit(config)
 except RuntimeError as err:
     print >> sys.stderr, "ERROR:", str(err)
     sys.exit(1)
