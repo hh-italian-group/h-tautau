@@ -26,8 +26,8 @@ parser.add_argument('--lumiMask', required=False, dest='lumiMask', type=str, def
 					help="json file with a lumi mask (default: apply lumi mask from the config file)")
 parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', type=str, default="",
 					help="suffix that will be added to each job name")
-#parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
-#					help="number of units per job (default: use values from the config file)")
+parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
+					help="number of units per job (default: use values from the config file)")
 parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2500,
 					help="maximum amount of memory (in MB) a job is allowed to use (default: 2500 MB )")
 parser.add_argument('--numCores', required=False, type=int, default=1, help="number of cores per job (default: 1)")
@@ -67,7 +67,7 @@ job_names = Set(filter(lambda s: len(s) != 0, re.split(",", args.jobNames)))
 from crab_tools import JobCollection
 try:
     for job_file in args.job_file:
-        job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix)
+        job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
         print job_file
         print job_collection
         job_collection.submit(config,args.dryrun)
