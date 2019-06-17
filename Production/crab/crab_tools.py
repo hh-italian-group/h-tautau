@@ -98,5 +98,4 @@ class JobCollection:
         for job in self.jobs:
             if len(self.jobNames) == 0 or job.jobName in self.jobNames:
                 config.Data.lumiMask = self.lumiMask
-                print(dryrunBool)
                 job.submit(config, dryrunBool)
