@@ -165,6 +165,7 @@ namespace muonVeto {
     constexpr double dxy = 0.045; // <
     constexpr bool isMediumMuon = true; // = HIP safe
     constexpr double pfRelIso04 = 0.3; // <
+    constexpr double tightIso = 0.1; // <
 }
 
 namespace jetID {

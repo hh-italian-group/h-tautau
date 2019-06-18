@@ -62,7 +62,7 @@ struct SelectionResultsBase {
 
     edm::EventID eventId;
 
-    bool Zveto, electronVeto, muonVeto,electronTightVeto, muonTightVeto;
+    bool Zveto, electronVeto, muonVeto;
     std::vector<sv_fit::FitResults> svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;

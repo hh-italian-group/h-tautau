@@ -225,25 +225,20 @@ protected:
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
     void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
 
-    std::vector<ElectronCandidate> CollectVetoElectrons(
+    std::vector<ElectronCandidate> CollectVetoElectrons(bool isTightSelection = false,
             const std::vector<const ElectronCandidate*>& signalElectrons = {});
-    std::vector<MuonCandidate> CollectVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
-
-    std::vector<ElectronCandidate> CollectTightVetoElectrons(
-            const std::vector<const ElectronCandidate*>& signalElectrons = {});
-    std::vector<MuonCandidate> CollectTightVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
+    std::vector<MuonCandidate> CollectVetoMuons(bool isTightSelection = false,
+            const std::vector<const MuonCandidate*>& signalMuons = {});
 
     std::vector<JetCandidate> CollectJets();
 
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
-                            const std::vector<const ElectronCandidate*>& signalElectrons) const;
+                            const std::vector<const ElectronCandidate*>& signalElectrons,
+                            bool isTightSelection) const;
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
-                        const std::vector<const MuonCandidate*>& signalMuons) const;
+                        const std::vector<const MuonCandidate*>& signalMuons,
+                        bool isTightSelection) const;
 
-    void SelectTightVetoElectron(const ElectronCandidate& electron, Cutter& cut,
-                            const std::vector<const ElectronCandidate*>& signalElectrons) const;
-    void SelectTightVetoMuon(const MuonCandidate& muon, Cutter& cut,
-                        const std::vector<const MuonCandidate*>& signalMuons) const;
     void SelectJet(const JetCandidate& jet, Cutter& cut) const;
 
     template<typename Candidate1, typename Candidate2>
