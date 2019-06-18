@@ -108,5 +108,56 @@ LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenPartic
     return result;
 }
 
+float GetNumberOfPileUpInteractions(edm::Handle<std::vector<PileupSummaryInfo>>& pu_infos)
+{
+    if(pu_infos.isValid()) {
+        for(const PileupSummaryInfo& pu : *pu_infos) {
+            if(pu.getBunchCrossing() == 0)
+                return pu.getTrueNumInteractions();
+        }
+    }
+    return std::numeric_limits<float>::lowest();
+}
+
+LheSummary ExtractLheSummary(const LHEEventProduct& lheEventProduct)
+{
+    static constexpr int c_quark = 4, b_quark = 5, H0 = 35, h0 = 25;
+    static const std::set<int> quarks_and_gluons = { 1, 2, 3, 4, 5, 6, 21 };
+
+    LheSummary summary;
+    const lhef::HEPEUP& lheEvent = lheEventProduct.hepeup();
+    const std::vector<lhef::HEPEUP::FiveVector>& lheParticles = lheEvent.PUP;
+    std::vector<analysis::LorentzVectorXYZ> h0_p4;
+    for(size_t n = 0; n < lheParticles.size(); ++n) {
+        summary.index.push_back(n);
+        const int absPdgId = std::abs(lheEvent.IDUP[n]);
+        summary.pdgId.push_back(lheEvent.IDUP[n]);
+        const int status = lheEvent.ISTUP[n];
+        const auto mother_indices = lheEvent.MOTHUP[n];
+        summary.first_mother_index.push_back(mother_indices.first);
+        summary.last_mother_index.push_back(mother_indices.second);
+        const analysis::LorentzVectorXYZ p4_XYZ = analysis::LorentzVectorXYZ(lheParticles[n][0], lheParticles[n][1],
+                                                          lheParticles[n][2], lheParticles[n][3]);
+        summary.p4.push_back(LorentzVectorM(p4_XYZ));
+
+        if(absPdgId == H0) summary.m_H = lheParticles[n][4];
+        if(absPdgId == h0)
+            h0_p4.push_back(analysis::LorentzVectorXYZ(lheParticles[n][0], lheParticles[n][1],
+                                                              lheParticles[n][2], lheParticles[n][3]));
+        if(status != 1 || !quarks_and_gluons.count(absPdgId)) continue;
+        ++summary.n_partons;
+        if(absPdgId == c_quark) ++summary.n_c_partons;
+        if(absPdgId == b_quark) ++summary.n_b_partons;
+        summary.HT += std::sqrt(std::pow(lheParticles[n][0], 2) + std::pow(lheParticles[n][1], 2));
+    }
+    if(h0_p4.size() == 2) {
+        const analysis::LorentzVectorXYZ H_p4 = h0_p4.at(0) + h0_p4.at(1);
+        const auto boosted_h0 = ROOT::Math::VectorUtil::boost(h0_p4.at(0), H_p4.BoostToCM());
+        summary.cosTheta_hh = ROOT::Math::VectorUtil::CosTheta(boosted_h0, ROOT::Math::Cartesian3D<>(0, 0, 1));
+        summary.m_hh = H_p4.mass();
+    }
+    return summary;
+}
+
 } // namespace gen_truth
 } // namespace analysis

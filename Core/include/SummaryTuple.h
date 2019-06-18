@@ -12,22 +12,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(ULong64_t, numberOfProcessedEvents) \
     VAR(Double_t, totalShapeWeight) \
     VAR(Double_t, totalShapeWeight_withTopPt) \
-    /* Trigger information */ \
-    VAR(std::vector<Int_t>, triggers_channel) \
-    VAR(std::vector<std::string>, triggers_pattern) \
     /* Skimmer Variables */\
     VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \
     VAR(UInt_t, n_splits) /* Number of splits for a file in TupleSkimmer. */ \
     VAR(UInt_t, split_seed) /* Seed for splitting in TupleSkimmer. */ \
-    /* MC truth event splitting */ \
-    VAR(std::vector<UInt_t>, lhe_n_partons) \
-    VAR(std::vector<UInt_t>, lhe_n_b_partons) \
-    VAR(std::vector<UInt_t>, lhe_ht10_bin) \
-    VAR(std::vector<ULong64_t>, lhe_n_events) \
-    /* Top reweighting */ \
-    VAR(std::vector<Int_t>, genEventType) /* top gen event type */ \
-    VAR(std::vector<ULong64_t>, genEventType_n_events) /* n events for top gen event type */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

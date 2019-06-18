@@ -8,13 +8,6 @@ namespace analysis {
 SummaryInfo::SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source) :
                          summary(_summary)
 {
-    for(size_t n = 0; n < summary.triggers_channel.size(); ++n) {
-        const int channel_id = summary.triggers_channel.at(n);
-        const Channel channel = static_cast<Channel>(channel_id);
-        if(!triggerDescriptors.count(channel))
-            triggerDescriptors[channel] = std::make_shared<TriggerDescriptorCollection>();
-        triggerDescriptors[channel]->Add(summary.triggers_pattern.at(n), {});
-    }
     if(!_uncertainties_source.empty())
         jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
 }
