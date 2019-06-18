@@ -57,13 +57,14 @@ class JobCollection:
         if len(lines) <= 2:
             raise RuntimeError("file '{}' is empty".format(file_name))
         header_items = filter(lambda s: len(s) != 0, re.split(" |\n", lines[0]))
+        index_line = 0
         if header_items[0].startswith("lumiMask"):
-            self.pyCfgParams = filter(lambda s: len(s) != 0, re.split(" |\t", lines[1]))
+            index_line = 1
             lumi = filter(lambda s: len(s) != 0, re.split("=", header_items[0]))
             self.lumiMask = lumi[1]
         else:
             self.lumiMask =  ''
-            self.pyCfgParams = filter(lambda s: len(s) != 0, re.split(" |\t", lines[0]))
+        self.pyCfgParams = filter(lambda s: len(s) != 0, re.split(" |\t", lines[index_line]))
         #if len(header_items) == 0 or len(header_items) > 1:
         #    raise RuntimeError("invalid jobs file header '{}' in file '{}'".format(lines[0], file_name))
         self.splitting = 'Automatic'
@@ -102,4 +103,4 @@ class JobCollection:
         for job in self.jobs:
             if len(self.jobNames) == 0 or job.jobName in self.jobNames:
                 config.Data.lumiMask = self.lumiMask
-                #job.submit(config)
+                job.submit(config)
