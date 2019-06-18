@@ -651,6 +651,22 @@ std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectVetoMuon
     return CollectObjects("vetoMuons", base_selector, muons);
 }
 
+std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectTightVetoElectrons(
+        const std::vector<const ElectronCandidate*>& signalElectrons)
+{
+    using namespace std::placeholders;
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectTightVetoElectron, this, _1, _2, signalElectrons);
+    return CollectObjects("tightVetoElectrons", base_selector, electrons);
+}
+
+std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectTightVetoMuons(
+        const std::vector<const MuonCandidate*>& signalMuons)
+{
+    using namespace std::placeholders;
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectTightVetoMuon, this, _1, _2, signalMuons);
+    return CollectObjects("tightVetoMuons", base_selector, muons);
+}
+
 std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets()
 {
     using namespace cuts::btag_2016;
@@ -681,7 +697,30 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     cut(electron_dxy < dxy, "dxy", electron_dxy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const float passID = electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose");
+    const float passID = electron->electronID("mvaEleID-Fall17-iso-V2-wpLoose");
+    cut(passID > 0.5, "electronId");
+    for(size_t n = 0; n < signalElectrons.size(); ++n) {
+        std::ostringstream ss_name;
+        ss_name << "isNotSignal_" << n + 1;
+        const bool isNotSignal =  &(*electron) != &(*(*signalElectrons.at(n)));
+        cut(isNotSignal, ss_name.str());
+    }
+}
+
+void BaseTupleProducer::SelectTightVetoElectron(const ElectronCandidate& electron, Cutter& cut,
+                                           const std::vector<const ElectronCandidate*>& signalElectrons) const
+{
+    using namespace cuts::H_tautau_2016::electronVeto;
+
+    cut(true, "gt0_cand");
+    const LorentzVector& p4 = electron.GetMomentum();
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double electron_dxy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
+    cut(electron_dxy < dxy, "dxy", electron_dxy);
+    const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
+    cut(electron_dz < dz, "dz", electron_dz);
+    const float passID = electron->electronID("mvaEleID-Fall17-iso-V2-wp80");
     cut(passID > 0.5, "electronId");
     for(size_t n = 0; n < signalElectrons.size(); ++n) {
         std::ostringstream ss_name;
@@ -706,6 +745,32 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     cut(muon_dz < dz, "dz", muon_dz);
     cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
     bool passMuonId = muon->isLooseMuon();
+    cut(passMuonId, "muonID");
+    for(size_t n = 0; n < signalMuons.size(); ++n) {
+        std::ostringstream ss_name;
+        ss_name << "isNotSignal_" << n + 1;
+        const bool isNotSignal =  &(*muon) != &(*(*signalMuons.at(n)));
+        cut(isNotSignal, ss_name.str());
+    }
+}
+
+
+void BaseTupleProducer::SelectTightVetoMuon(const MuonCandidate& muon, Cutter& cut,
+                                       const std::vector<const MuonCandidate*>& signalMuons) const
+{
+    using namespace cuts::H_tautau_2016::muonVeto;
+
+    cut(true, "gt0_cand");
+    const LorentzVector& p4 = muon.GetMomentum();
+    cut(p4.pt() > pt, "pt", p4.pt());
+    cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
+    const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
+    cut(muon_dxy < dxy, "dxy", muon_dxy);
+    const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
+    cut(muon_dz < dz, "dz", muon_dz);
+    double tightIso = 0.1;
+    cut(muon.GetIsolation() < tightIso, "iso", muon.GetIsolation());
+    bool passMuonId = muon->isTightMuon(*primaryVertex);
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;

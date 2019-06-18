@@ -62,7 +62,7 @@ struct SelectionResultsBase {
 
     edm::EventID eventId;
 
-    bool Zveto, electronVeto, muonVeto;
+    bool Zveto, electronVeto, muonVeto,electronTightVeto, muonTightVeto;
     std::vector<sv_fit::FitResults> svfitResult;
     std::map<size_t, kin_fit::FitResults> kinfitResults;
     JetCandidateVector jets;
@@ -71,6 +71,8 @@ struct SelectionResultsBase {
     MuonCandidateVector muons;
     ElectronCandidateVector other_electrons;
     MuonCandidateVector other_muons;
+    ElectronCandidateVector other_tight_electrons;
+    MuonCandidateVector other_tight_muons;
     const Vertex* primaryVertex;
     std::vector<TriggerResults> triggerResults;
     std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;

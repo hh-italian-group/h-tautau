@@ -24,6 +24,10 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     selection.other_electrons = CollectVetoElectrons();
     selection.electronVeto = selection.other_electrons.size();
 
+    selection.other_tight_electrons = CollectTightVetoElectrons();
+    selection.electronTightVeto = selection.other_tight_electrons.size();
+    cut(!selection.electronTightVeto, "tightElectronVeto");
+
     static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects;
     auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.muons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses_indexes.size(), "mu_mu_pair");

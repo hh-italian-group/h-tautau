@@ -228,11 +228,21 @@ protected:
     std::vector<ElectronCandidate> CollectVetoElectrons(
             const std::vector<const ElectronCandidate*>& signalElectrons = {});
     std::vector<MuonCandidate> CollectVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
+
+    std::vector<ElectronCandidate> CollectTightVetoElectrons(
+            const std::vector<const ElectronCandidate*>& signalElectrons = {});
+    std::vector<MuonCandidate> CollectTightVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
+
     std::vector<JetCandidate> CollectJets();
 
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
                             const std::vector<const ElectronCandidate*>& signalElectrons) const;
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
+                        const std::vector<const MuonCandidate*>& signalMuons) const;
+
+    void SelectTightVetoElectron(const ElectronCandidate& electron, Cutter& cut,
+                            const std::vector<const ElectronCandidate*>& signalElectrons) const;
+    void SelectTightVetoMuon(const MuonCandidate& muon, Cutter& cut,
                         const std::vector<const MuonCandidate*>& signalMuons) const;
     void SelectJet(const JetCandidate& jet, Cutter& cut) const;
 

@@ -23,6 +23,14 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.electronVeto = selection.other_electrons.size();
     selection.muonVeto = selection.other_muons.size();
 
+    selection.other_tight_electrons = CollectTightVetoElectrons();
+    selection.electronTightVeto = selection.other_tight_electrons.size();
+    cut(!selection.electronTightVeto, "tightElectronVeto");
+
+    selection.other_tight_muons = CollectTightVetoMuons();
+    selection.muonTightVeto = selection.other_tight_muons.size();
+    cut(!selection.muonTightVeto, "tightElectronVeto");
+
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 1, "taus");
 
