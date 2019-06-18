@@ -25,8 +25,8 @@ parser.add_argument('--lumiMask', required=False, dest='lumiMask', type=str, def
 					help="json file with a lumi mask (default: apply lumi mask from the config file)")
 parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', type=str, default="",
 					help="suffix that will be added to each job name")
-parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
-					help="number of units per job (default: use values from the config file)")
+parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=1000,
+					help="number of units per job")
 parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2500,
 					help="maximum amount of memory (in MB) a job is allowed to use (default: 2500 MB )")
 parser.add_argument('--numCores', required=False, type=int, default=1, help="number of cores per job (default: 1)")

@@ -53,12 +53,6 @@ public:
         const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
         trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = analysis::TriggerTools::ReadConfig(triggerCfg,setup);
 
-        std::map<Channel, TriggerDescriptorCollection> triggerDescriptors;
-        const std::vector<std::string> channelsStrings = cfg.getParameter<std::vector<std::string>>("channels");
-        for(const auto& channel_name : channelsStrings) {
-            const Channel channel = analysis::Parse<Channel>(channel_name);
-            triggerDescriptors[channel] = analysis::TriggerTools::CreateTriggerDescriptors(trigger_file_descriptors,channel);
-        }
     }
 
 private:

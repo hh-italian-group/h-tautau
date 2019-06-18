@@ -1,4 +1,3 @@
-empty
 sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=False saveGenJetInfo=True applyTriggerCut=False storeLHEinfo=True saveGenParticleInfo=True
 
 GluGluToHHTo2B2Tau_node_12_correctedcfg	/GluGluToHHTo2B2Tau_node_12_13TeV-madgraph_correctedcfg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
