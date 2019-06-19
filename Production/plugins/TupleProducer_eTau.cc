@@ -93,7 +93,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     cut(electron_xy < dxy, "dxy", electron_xy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const float passID = electron->electronID("mvaEleID-Fall17-noIso-V1-wp90");
+    const float passID = electron->electronID("mvaEleID-Fall17-noIso-V2-wp90");
     cut(passID > 0.5, "electronId");
 }
 
