@@ -636,18 +636,18 @@ void BaseTupleProducer::ApplyBaseSelection(analysis::SelectionResultsBase& selec
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectVetoElectrons(
-        const std::vector<const ElectronCandidate*>& signalElectrons)
+        bool isTightSelection, const std::vector<const ElectronCandidate*>& signalElectrons)
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons);
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons, isTightSelection);
     return CollectObjects("vetoElectrons", base_selector, electrons);
 }
 
 std::vector<BaseTupleProducer::MuonCandidate> BaseTupleProducer::CollectVetoMuons(
-        const std::vector<const MuonCandidate*>& signalMuons)
+        bool isTightSelection, const std::vector<const MuonCandidate*>& signalMuons)
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoMuon, this, _1, _2, signalMuons);
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoMuon, this, _1, _2, signalMuons, isTightSelection);
     return CollectObjects("vetoMuons", base_selector, muons);
 }
 
@@ -669,7 +669,8 @@ std::vector<BaseTupleProducer::JetCandidate> BaseTupleProducer::CollectJets()
 }
 
 void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
-                                           const std::vector<const ElectronCandidate*>& signalElectrons) const
+                                           const std::vector<const ElectronCandidate*>& signalElectrons,
+                                           bool isTightSelection) const
 {
     using namespace cuts::H_tautau_2016::electronVeto;
 
@@ -681,7 +682,8 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
     cut(electron_dxy < dxy, "dxy", electron_dxy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const float passID = electron->electronID("mvaEleID-Fall17-iso-V2-wpLoose");
+    const float passID = isTightSelection ? electron->electronID("mvaEleID-Fall17-iso-V2-wp80")
+                                          : electron->electronID("mvaEleID-Fall17-iso-V2-wpLoose");
     cut(passID > 0.5, "electronId");
     for(size_t n = 0; n < signalElectrons.size(); ++n) {
         std::ostringstream ss_name;
@@ -692,7 +694,8 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
 }
 
 void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
-                                       const std::vector<const MuonCandidate*>& signalMuons) const
+                                       const std::vector<const MuonCandidate*>& signalMuons,
+                                       bool isTightSelection) const
 {
     using namespace cuts::H_tautau_2016::muonVeto;
 
@@ -704,8 +707,9 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     cut(muon_dxy < dxy, "dxy", muon_dxy);
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
-    cut(muon.GetIsolation() < pfRelIso04, "iso", muon.GetIsolation());
-    bool passMuonId = muon->isLooseMuon();
+    double iso_cut = isTightSelection ? tightIso : pfRelIso04;
+    cut(muon.GetIsolation() < iso_cut, "iso", muon.GetIsolation());
+    bool passMuonId = isTightSelection ? muon->isTightMuon(*primaryVertex) : muon->isLooseMuon();
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;
@@ -890,7 +894,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
         eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
+        analysis::DiscriminatorIdResults jet_pu_id;
+        jet_pu_id.SetResult(analysis::DiscriminatorWP::Loose,jet->userInt("pileupJetId:fullId") & (1 << 2));
+        jet_pu_id.SetResult(analysis::DiscriminatorWP::Medium,jet->userInt("pileupJetId:fullId") & (1 << 1));
+        jet_pu_id.SetResult(analysis::DiscriminatorWP::Tight,jet->userInt("pileupJetId:fullId") & (1 << 0));
+        eventTuple().jets_pu_id.push_back(jet_pu_id.GetResultBits());
         eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
         // Jet resolution
         JME::JetParameters parameters;

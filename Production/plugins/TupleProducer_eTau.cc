@@ -23,11 +23,17 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
 
     std::sort(electrons.begin(),electrons.end(),&LeptonComparitor<ElectronCandidate>);
     selection.electrons.push_back(electrons.at(0));
-    selection.other_electrons = CollectVetoElectrons({&electrons.at(0)});
+    selection.other_electrons = CollectVetoElectrons(false,{&electrons.at(0)});
     selection.electronVeto = selection.other_electrons.size();
 
     selection.other_muons = CollectVetoMuons();
     selection.muonVeto = selection.other_muons.size();
+
+    auto other_tight_electrons = CollectVetoElectrons(true,{&electrons.at(0)});
+    cut(other_tight_electrons.empty(), "tightElectronVeto");
+
+    auto other_tight_muons = CollectVetoMuons(true);
+    cut( other_tight_muons.empty(), "tightElectronVeto");
 
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");

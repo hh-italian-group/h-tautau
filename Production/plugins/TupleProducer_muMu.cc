@@ -24,6 +24,9 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     selection.other_electrons = CollectVetoElectrons();
     selection.electronVeto = selection.other_electrons.size();
 
+    selection.other_tight_electrons = CollectVetoElectrons(true);
+    cut(selection.other_tight_electrons.size() == 0, "tightElectronVeto");
+
     static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects;
     auto higgses_indexes = FindCompatibleObjects(selection.muons, selection.muons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses_indexes.size(), "mu_mu_pair");
@@ -52,13 +55,9 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     std::sort(higgses_indexes.begin(), higgses_indexes.end(), Comparitor);
     auto selected_higgs_index = higgses_indexes.front();
-    analysis::CompositeCandidate<MuonCandidate,MuonCandidate> selected_higgs =
-        analysis::CompositeCandidate<MuonCandidate,MuonCandidate>(selection.muons.at(selected_higgs_index.first), selection.muons.at(selected_higgs_index.second));
-    if (selected_higgs.GetFirstDaughter().GetMomentum().Pt() < selected_higgs.GetSecondDaughter().GetMomentum().Pt())
-        selected_higgs = analysis::CompositeCandidate<MuonCandidate,MuonCandidate>(selected_higgs.GetSecondDaughter(), selected_higgs.GetFirstDaughter());
+    analysis::CompositeCandidate<MuonCandidate,MuonCandidate> selected_higgs(selection.muons.at(selected_higgs_index.first), selection.muons.at(selected_higgs_index.second));
 
-    cut(selected_higgs.GetFirstDaughter().GetIsolation() < muonID::pfRelIso04 ||
-        selected_higgs.GetSecondDaughter().GetIsolation() < muonID::pfRelIso04, "iso_of_1_daughter");
+    cut(selected_higgs.GetFirstDaughter().GetIsolation() < muonID::pfRelIso04, "iso_of_1st_daughter");
 
     if(applyTriggerMatch){
         analysis::TriggerResults triggerResults(refTriggerResults);
@@ -69,13 +68,18 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     selection.higgses_pair_indexes.push_back(selected_higgs_index);
 
+    selection.other_muons = CollectVetoMuons(false,{ &selected_higgs.GetFirstDaughter(),
+        &selected_higgs.GetSecondDaughter() });
+    selection.muonVeto = selection.other_muons.size();
+
+    auto other_tight_muons = CollectVetoMuons(true,{ &selected_higgs.GetFirstDaughter(),
+        &selected_higgs.GetSecondDaughter() });
+    cut(other_tight_muons.empty(), "no_extra_muon");
+
     if(runSVfit)
         selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
 
-    selection.other_muons = CollectVetoMuons({ &selected_higgs.GetFirstDaughter(),
-        &selected_higgs.GetSecondDaughter() });
-    selection.muonVeto = selection.other_muons.size();
-    cut(!selection.muonVeto, "no_extra_muon");
+
 
     ApplyBaseSelection(selection);
 
