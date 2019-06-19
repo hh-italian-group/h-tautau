@@ -71,8 +71,6 @@ struct SelectionResultsBase {
     MuonCandidateVector muons;
     ElectronCandidateVector other_electrons;
     MuonCandidateVector other_muons;
-    ElectronCandidateVector other_tight_electrons;
-    MuonCandidateVector other_tight_muons;
     const Vertex* primaryVertex;
     std::vector<TriggerResults> triggerResults;
     std::vector<std::pair<size_t,size_t>> higgses_pair_indexes;

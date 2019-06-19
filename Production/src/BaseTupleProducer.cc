@@ -894,7 +894,11 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
         eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
-        eventTuple().jets_pu_id.push_back(jet->userInt("pileupJetId:fullId"));
+        analysis::DiscriminatorIdResults jet_pu_id;
+        jet_pu_id.SetResult(analysis::DiscriminatorWP::Loose,jet->userInt("pileupJetId:fullId") & (1 << 2));
+        jet_pu_id.SetResult(analysis::DiscriminatorWP::Medium,jet->userInt("pileupJetId:fullId") & (1 << 1));
+        jet_pu_id.SetResult(analysis::DiscriminatorWP::Tight,jet->userInt("pileupJetId:fullId") & (1 << 0));
+        eventTuple().jets_pu_id.push_back(jet_pu_id.GetResultBits());
         eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
         // Jet resolution
         JME::JetParameters parameters;

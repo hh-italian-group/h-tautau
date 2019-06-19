@@ -70,7 +70,7 @@ using Point3D = analysis::Point3D_Float;
     JVAR(Float_t, deepFlavour_uds, col) /* Jet deepFlavour uds value */ \
     JVAR(Float_t, deepFlavour_g, col) /* Jet deepFlavour g value */ \
     JVAR(Float_t, rawf, col) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    JVAR(Int_t, pu_id, col) /* Jet MVA id value */ \
+    JVAR(uint16_t, pu_id, col) /* Jet MVA id value */ \
     JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
     JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \

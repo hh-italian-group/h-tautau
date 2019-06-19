@@ -68,16 +68,18 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     selection.higgses_pair_indexes.push_back(selected_higgs_index);
 
-    if(runSVfit)
-        selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
-
     selection.other_muons = CollectVetoMuons(false,{ &selected_higgs.GetFirstDaughter(),
         &selected_higgs.GetSecondDaughter() });
     selection.muonVeto = selection.other_muons.size();
 
-    selection.other_tight_muons = CollectVetoMuons(true,{ &selected_higgs.GetFirstDaughter(),
+    auto other_tight_muons = CollectVetoMuons(true,{ &selected_higgs.GetFirstDaughter(),
         &selected_higgs.GetSecondDaughter() });
-    cut(selection.other_tight_muons.size() == 0, "no_extra_muon");
+    cut(other_tight_muons.empty(), "no_extra_muon");
+
+    if(runSVfit)
+        selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
+
+
 
     ApplyBaseSelection(selection);
 

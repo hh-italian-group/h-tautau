@@ -29,11 +29,11 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     selection.other_electrons = CollectVetoElectrons();
     selection.electronVeto = selection.other_electrons.size();
 
-    selection.other_tight_electrons = CollectVetoElectrons(true);
-    cut(selection.other_tight_electrons.size() == 0, "tightElectronVeto");
+    auto other_tight_electrons = CollectVetoElectrons(true);
+    cut(other_tight_electrons.empty(), "tightElectronVeto");
 
-    selection.other_tight_muons = CollectVetoMuons(true,{&muons.at(0)});
-    cut(selection.other_tight_muons.size() == 0, "tightElectronVeto");
+    auto other_tight_muons = CollectVetoMuons(true,{&muons.at(0)});
+    cut(other_tight_muons.empty(), "tightElectronVeto");
 
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");
