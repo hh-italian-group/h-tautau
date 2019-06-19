@@ -3,8 +3,8 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
-INSTALL_MODES=( ["prod"]="CMSSW_10_2_14 _amd64_gcc700" \
-                ["ana"]="CMSSW_10_2_14 _amd64_gcc700" \
+INSTALL_MODES=( ["prod"]="CMSSW_10_2_15 _amd64_gcc700" \
+                ["ana"]="CMSSW_10_2_15 _amd64_gcc700" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=4
 
