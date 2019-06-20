@@ -70,7 +70,7 @@ public:
           n_total_duplicates += n_duplicates;
 
           auto input_summaryTuple = CreateSummaryTuple("summary", file.get(), true, ntuple::TreeState::Full);
-          for(const ntuple::ProdSummary& summary : input_summaryTuple) {
+          for(const ntuple::ProdSummary& summary : *input_summaryTuple) {
               output_summaryTuple() = summary;
               output_summaryTuple.Fill();
           }
