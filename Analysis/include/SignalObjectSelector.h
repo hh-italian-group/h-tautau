@@ -20,7 +20,6 @@ ENUM_NAMES(SignalMode) = {
     { SignalMode::TauPOG_default, "TauPOG_default" },
     { SignalMode::TauPOG_deepTauVsJet, "TauPOG_deepTauVsJet" },
     { SignalMode::TauPOG_deepTauVsJet_full, "TauPOG_deepTauVsJet_full" },
-    { SignalMode::TauPOG_dpfTau, "TauPOG_dpfTau" },
     { SignalMode::HH, "HH" },
     { SignalMode::Skimmer, "Skimmer" },
     { SignalMode::TauPOG_Skimmer, "TauPOG_Skimmer" }

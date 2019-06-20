@@ -46,7 +46,7 @@ std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory
         { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
                              "weight_tau_id", "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy",
                              "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs",
-                             "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt", "file_desc_id",
+                             "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt", "isData", "file_desc_id",
                              "split_id" } },
         { TreeState::Skimmed, { } }
     };
