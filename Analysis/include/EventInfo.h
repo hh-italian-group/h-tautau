@@ -297,7 +297,6 @@ private:
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo = nullptr,
-                                               TauIdDiscriminator discr = TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
                                                Period period = analysis::Period::Run2017,
                                                JetOrdering jet_ordering = JetOrdering::DeepCSV);
 
