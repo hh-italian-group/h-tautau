@@ -85,7 +85,10 @@ class JobCollection:
         if len(lumi_mask) != 0:
             self.lumiMask = lumi_mask
 
-        for line in lines[2:]:
+        index_sample = 1
+        if header_items[0].startswith("lumiMask"):
+            index_sample = 2
+        for line in lines[index_sample:]:
             self.jobs.append(Job(line, jobNameSuffix,unitsPerJob))
         input_file.close()
 
