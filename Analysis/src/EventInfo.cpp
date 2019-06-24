@@ -5,11 +5,17 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-SummaryInfo::SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source) :
+SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel, const std::string& _uncertainties_source,
+                         const std::string& _trigger_cfg) :
                          summary(_summary)
 {
     if(!_uncertainties_source.empty())
         jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
+    if(!_trigger_cfg.empty()){
+        std::map<LegType, double> deltaPt_map;
+        triggerDescriptors[_channel] = TriggerDescriptorCollection::Load(_trigger_cfg,_channel,deltaPt_map);
+    }
+
 }
 
 std::shared_ptr<const TriggerDescriptorCollection> SummaryInfo::GetTriggerDescriptors(Channel channel) const

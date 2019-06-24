@@ -113,7 +113,7 @@ trigger_tools::TriggerFileDescriptorCollection TriggerTools::ReadConfig(const st
 }
 
 TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger_tools::TriggerFileDescriptorCollection& trigger_file_descriptors,
-                                                                         Channel channel)
+                                                                         Channel channel, std::map<LegType, double> deltaPt_map)
 {
     TriggerDescriptorCollection triggerDescriptors;
     for(const auto& entry : trigger_file_descriptors) {
@@ -125,6 +125,7 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
+            const double delta_pt = deltaPt_map.at(type);
             boost::optional<double> eta;
             if(leg_list.Has("eta"))
                 eta = leg_list.Get<double>("eta");
@@ -132,7 +133,7 @@ TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger
             if(leg_list.Has("applyL1match"))
                 applyL1match = leg_list.Get<bool>("applyL1match");
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
-            legs_vector.emplace_back(type,pt,eta,applyL1match,filters);
+            legs_vector.emplace_back(type,pt,delta_pt,eta,applyL1match,filters);
         }
         triggerDescriptors.Add(entry.first, legs_vector);
     }

@@ -98,7 +98,8 @@ class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source = "");
+    explicit SummaryInfo(const ProdSummary& _summary, const Channel& _channel, const std::string& _uncertainties_source = "",
+                         const std::string& _trigger_cfg = "");
     std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const;
     const ProdSummary& operator*() const;
     const ProdSummary* operator->() const;
