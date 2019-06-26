@@ -12,8 +12,7 @@ SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel, c
     if(!_uncertainties_source.empty())
         jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
     if(!_trigger_cfg.empty()){
-        std::map<LegType, double> deltaPt_map;
-        triggerDescriptors[_channel] = TriggerDescriptorCollection::Load(_trigger_cfg,_channel,deltaPt_map);
+        triggerDescriptors[_channel] = TriggerDescriptorCollection::Load(_trigger_cfg,_channel);
     }
 
 }

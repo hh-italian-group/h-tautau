@@ -12,6 +12,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 #include "AnalysisTypes.h"
+#include "h-tautau/Core/include/TriggerFileDescriptor.h"
+#include "h-tautau/Core/include/TriggerFileConfigEntryReader.h"
+#include "AnalysisTools/Core/include/PropertyConfigReader.h"
 
 namespace analysis {
 
@@ -81,7 +84,7 @@ public:
     static FilterBitsContainer GetJetFilterMatchBits(BitsContainer match_bits, unsigned filter_index);
     static RootBitsContainer ConvertToRootRepresentation(BitsContainer match_bits);
     static BitsContainer ConvertFromRootRepresentation(const RootBitsContainer& match_bits);
-    static TriggerDescriptorCollection Load(const std::string& cfg_name, const Channel& channel, std::map<LegType, double> deltaPt_map);
+    static std::shared_ptr<TriggerDescriptorCollection> Load(const std::string& cfg_name, const Channel& channel);
 
     size_t size() const;
     const TriggerDescriptor& at(size_t index) const;
@@ -145,9 +148,9 @@ public:
     bool AnyMatch() const;
     bool AnyAcceptAndMatch() const;
 
-    bool MatchEx(size_t index, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool MatchEx(size_t index, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
     bool AcceptAndMatchEx(size_t index, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
-    bool MatchEx(const Pattern& pattern, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool MatchEx(const Pattern& pattern, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
     bool AcceptAndMatchEx(const Pattern& pattern, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
 
     template<typename PatternCollection>
@@ -158,8 +161,8 @@ public:
                            [&](const Pattern& pattern) { return AcceptAndMatchEx(pattern, pt_firstLeg, pt_secondLeg, reco_jet_matches); });
     }
 
-    bool AnyMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
-    bool AnyAcceptAndMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool AnyMatchEx(double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
+    bool AnyAcceptAndMatchEx(double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches = {}) const;
 
 private:
     void CheckIndex(size_t index) const;

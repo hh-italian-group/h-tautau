@@ -151,17 +151,50 @@ TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::ConvertF
     return result;
 }
 
-TriggerDescriptorCollection TriggerDescriptorCollection::Load(const std::string& cfg_name, const Channel& channel, std::map<LegType, double> deltaPt_map)
+std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(const std::string& cfg_name, const Channel& channel)
 {
-    TriggerDescriptorCollection triggerDescriptor;
+    std::shared_ptr<TriggerDescriptorCollection> triggerDescriptors;
     trigger_tools::SetupDescriptor setup;
-    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(cfg_name,setup);
 
-    deltaPt_map = setup.deltaPt_map;
+    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
+    analysis::ConfigReader config_reader;
+    trigger_tools::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+    config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
 
-    triggerDescriptor = CreateTriggerDescriptors(trigger_file_descriptors,channel,deltaPt_map);
+    trigger_tools::SetupDescriptorCollection setup_file_descriptors;
+    trigger_tools::SetupConfigEntryReader setup_entry_reader(setup_file_descriptors);
+    config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
 
-    return triggerDescriptor;
+    //const std::string triggerCfg_full = edm::FileInPath(cfg_name).fullPath();
+    config_reader.ReadConfig(cfg_name);
+
+    if(setup_file_descriptors.size() != 1)
+        throw exception("More than 1 setup in Reading Trigger Tools cfg");
+    setup = setup_file_descriptors.begin()->second;
+
+    for(const auto& entry : trigger_file_descriptors) {
+        trigger_tools::TriggerFileDescriptor trigger_file_descriptor = entry.second;
+        if(!trigger_file_descriptor.channels.count(channel)) continue;
+        const auto& legs = trigger_file_descriptor.legs;
+        std::vector<TriggerDescriptorCollection::Leg> legs_vector;
+        for (size_t n = 0; n < legs.size(); ++n){
+            const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
+            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
+            const double pt = leg_list.Get<double>("pt");
+            const double delta_pt = setup.deltaPt_map.at(type);
+            boost::optional<double> eta = 0;
+            if(leg_list.Has("eta"))
+                eta = leg_list.Get<double>("eta");
+            bool applyL1match = false;
+            if(leg_list.Has("applyL1match"))
+                applyL1match = leg_list.Get<bool>("applyL1match");
+            const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
+            legs_vector.emplace_back(type,pt,delta_pt,eta,applyL1match,filters);
+        }
+        triggerDescriptors->Add(entry.first, legs_vector);
+    }
+
+    return triggerDescriptors;
 }
 
 const std::vector<std::string>& TriggerDescriptorCollection::GetJetFilters() const { return jet_filters; }
@@ -198,9 +231,9 @@ bool TriggerResults::MatchEx(size_t index, double pt_firstLeg, double pt_secondL
 
     const auto& desc = GetTriggerDescriptors().at(index);
 
-    const TriggerDescriptorCollection::Leg& first_leg = descriptor.lepton_legs.at(0);
+    const TriggerDescriptorCollection::Leg& first_leg = desc.lepton_legs.at(0);
     if(pt_firstLeg <= first_leg.pt + first_leg.delta_pt) return false;
-    const TriggerDescriptorCollection::Leg& second_leg = descriptor.lepton_legs.at(1);
+    const TriggerDescriptorCollection::Leg& second_leg = desc.lepton_legs.at(1);
     if(pt_secondLeg <= second_leg.pt + second_leg.delta_pt) return false;
 
     const size_t n_legs = desc.jet_legs.size();
@@ -245,9 +278,9 @@ bool TriggerResults::AcceptAndMatchEx(size_t index, double pt_firstLeg, double p
     return MatchEx(index,pt_firstLeg,pt_secondLeg,reco_jet_matches);
 }
 
-bool TriggerResults::MatchEx(const Pattern& pattern, const std::vector<JetBitsContainer>& reco_jet_matches) const
+bool TriggerResults::MatchEx(const Pattern& pattern, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
-    return MatchEx(GetIndex(pattern), reco_jet_matches);
+    return MatchEx(GetIndex(pattern),pt_firstLeg,pt_secondLeg, reco_jet_matches);
 }
 
 bool TriggerResults::AcceptAndMatchEx(const Pattern& pattern, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
@@ -255,20 +288,20 @@ bool TriggerResults::AcceptAndMatchEx(const Pattern& pattern, double pt_firstLeg
     return AcceptAndMatchEx(GetIndex(pattern), pt_firstLeg, pt_secondLeg, reco_jet_matches);
 }
 
-bool TriggerResults::AnyMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches) const
+bool TriggerResults::AnyMatchEx(double pt_firstLeg, double pt_secondLeg,const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AnyMatch()) return false;
     for(size_t n = 0; n < GetTriggerDescriptors().size(); ++n) {
-        if(MatchEx(n, reco_jet_matches)) return true;
+        if(MatchEx(n,pt_firstLeg,pt_secondLeg,reco_jet_matches)) return true;
     }
     return false;
 }
 
-bool TriggerResults::AnyAcceptAndMatchEx(const std::vector<JetBitsContainer>& reco_jet_matches) const
+bool TriggerResults::AnyAcceptAndMatchEx(double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AnyAcceptAndMatch()) return false;
     for(size_t n = 0; n < GetTriggerDescriptors().size(); ++n) {
-        if(AcceptAndMatchEx(n, reco_jet_matches)) return true;
+        if(AcceptAndMatchEx(n,pt_firstLeg,pt_secondLeg,reco_jet_matches)) return true;
     }
 
     return false;

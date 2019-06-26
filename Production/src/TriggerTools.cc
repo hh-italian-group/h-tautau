@@ -6,8 +6,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "AnalysisTools/Core/include/ConfigReader.h"
-#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
-#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
+#include "h-tautau/Core/include/TriggerFileDescriptor.h"
+#include "h-tautau/Core/include/TriggerFileConfigEntryReader.h"
 #include "AnalysisTools/Core/include/PropertyConfigReader.h"
 
 namespace trigger_tools {
@@ -66,9 +66,9 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                            EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
-                           const std::string& triggerCfg, Channel channel, bool _isEmbedded) :
+                           const std::string& triggerCfg, Channel _channel, bool _isEmbedded) :
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
-    l1Tau_token(_l1Tau_token), isEmbedded(_isEmbedded)
+    l1Tau_token(_l1Tau_token), isEmbedded(_isEmbedded), channel(_channel)
 {
     triggerResults_tokens[CMSSW_Process::SIM] = _triggerResultsSIM_token;
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
@@ -76,68 +76,13 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
     triggerResults_tokens[CMSSW_Process::SIMembedding] = _triggerResultsSIMembedding_token;
 
-    trigger_tools::SetupDescriptor setup;
-    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = TriggerTools::ReadConfig(triggerCfg,setup);
+    triggerDescriptors[channel] = TriggerDescriptorCollection::Load(triggerCfg,channel);
 
-    deltaPt_map = setup.deltaPt_map;
-
-    triggerDescriptors = CreateTriggerDescriptors(trigger_file_descriptors,channel);
-
-    pathTriggerObjects.resize(triggerDescriptors.size());
+    pathTriggerObjects.resize(triggerDescriptors.at(channel)->size());
     for (size_t n = 0; n < pathTriggerObjects.size(); ++n) {
         auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(n);
-        legId_triggerObjPtr_vector.resize(triggerDescriptors.at(n).lepton_legs.size(), {});
+        legId_triggerObjPtr_vector.resize(triggerDescriptors.at(channel)->at(n).lepton_legs.size(), {});
     }
-}
-
-trigger_tools::TriggerFileDescriptorCollection TriggerTools::ReadConfig(const std::string& cfg_path,
-                                                                        trigger_tools::SetupDescriptor& setup)
-{
-    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
-    analysis::ConfigReader config_reader;
-    trigger_tools::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
-    config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
-
-    trigger_tools::SetupDescriptorCollection setup_file_descriptors;
-    trigger_tools::SetupConfigEntryReader setup_entry_reader(setup_file_descriptors);
-    config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
-
-    const std::string triggerCfg_full = edm::FileInPath(cfg_path).fullPath();
-    config_reader.ReadConfig(triggerCfg_full);
-
-    if(setup_file_descriptors.size() != 1)
-        throw exception("More than 1 setup in Reading Trigger Tools cfg");
-    setup = setup_file_descriptors.begin()->second;
-
-    return trigger_file_descriptors;
-}
-
-TriggerDescriptorCollection TriggerTools::CreateTriggerDescriptors(const trigger_tools::TriggerFileDescriptorCollection& trigger_file_descriptors,
-                                                                         Channel channel, std::map<LegType, double> deltaPt_map)
-{
-    TriggerDescriptorCollection triggerDescriptors;
-    for(const auto& entry : trigger_file_descriptors) {
-        trigger_tools::TriggerFileDescriptor trigger_file_descriptor = entry.second;
-        if(!trigger_file_descriptor.channels.count(channel)) continue;
-        const auto& legs = trigger_file_descriptor.legs;
-        std::vector<TriggerDescriptorCollection::Leg> legs_vector;
-        for (size_t n = 0; n < legs.size(); ++n){
-            const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
-            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
-            const double pt = leg_list.Get<double>("pt");
-            const double delta_pt = deltaPt_map.at(type);
-            boost::optional<double> eta;
-            if(leg_list.Has("eta"))
-                eta = leg_list.Get<double>("eta");
-            bool applyL1match = false;
-            if(leg_list.Has("applyL1match"))
-                applyL1match = leg_list.Get<bool>("applyL1match");
-            const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
-            legs_vector.emplace_back(type,pt,delta_pt,eta,applyL1match,filters);
-        }
-        triggerDescriptors.Add(entry.first, legs_vector);
-    }
-    return triggerDescriptors;
 }
 
 void TriggerTools::Initialize(const edm::Event &_iEvent)
@@ -186,7 +131,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         trigger_tools::UnpackFilters(*iEvent,*triggerResultsHLT,unpackedTriggerObject);
         const auto& paths = unpackedTriggerObject.pathNames(false, true); //isLastFilter=false
         if(hasExpectedType(LegType::jet, unpackedTriggerObject)) {
-            const auto& jet_filters = triggerDescriptors.GetJetFilters();
+            const auto& jet_filters = triggerDescriptors.at(channel)->GetJetFilters();
             bool jet_added = false;
             size_t jet_index;
             for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
@@ -200,8 +145,8 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         } else {
             for(const auto& path : paths) {
                 size_t index;
-                if(!triggerDescriptors.FindPatternMatch(path,index)) continue;
-                const auto& descriptor = triggerDescriptors.at(index);
+                if(!triggerDescriptors.at(channel)->FindPatternMatch(path,index)) continue;
+                const auto& descriptor = triggerDescriptors.at(channel)->at(index);
                 for(unsigned n = 0; n < descriptor.lepton_legs.size(); ++n){
                     const TriggerDescriptorCollection::Leg& leg = descriptor.lepton_legs.at(n);
                     if(!hasExpectedType(leg.type, unpackedTriggerObject)
@@ -221,7 +166,7 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
     for (size_t i = 0; i < triggerResultsHLT->size(); ++i) {
         if(triggerPrescales->getPrescaleForIndex(i) != 1) continue;
         size_t index;
-        if(triggerDescriptors.FindPatternMatch(triggerNames.triggerName(i), index))
+        if(triggerDescriptors.at(channel)->FindPatternMatch(triggerNames.triggerName(i), index))
             results.SetAccept(index, triggerResultsHLT->accept(i));
     }
 }
@@ -232,7 +177,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     const auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(index);
     TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
-    const auto& descriptor = triggerDescriptors.at(index);
+    const auto& descriptor = triggerDescriptors.at(channel)->at(index);
 
     for(size_t n = 0; n < legId_triggerObjPtr_vector.size(); ++n) {
         const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
@@ -339,7 +284,7 @@ TriggerTools::BitsContainer TriggerTools::GetJetMatchBitsImpl(const LorentzVecto
                                                               double deltaR_Limit) const
 {
     auto trig_objs = jetTriggerObjects;
-    const auto& jet_filters = triggerDescriptors.GetJetFilters();
+    const auto& jet_filters = triggerDescriptors.at(channel)->GetJetFilters();
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
         for(size_t jet_index = 0; jet_index < trig_objs.momentums.size(); ++jet_index) {
