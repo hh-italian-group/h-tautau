@@ -14,10 +14,25 @@ namespace ParticleCode {
     enum ParticleType {baryon, meson, lepton, diquark};
 };
 
-inline const std::set<int> neutrinos = { ParticleCode::nu_e, ParticleCode::nu_mu, ParticleCode::nu_tau };
+inline const std::set<int>& neutrinos()
+{
+    static const std::set<int> neutrinos = { ParticleCode::nu_e, ParticleCode::nu_mu, ParticleCode::nu_tau };
+    return neutrinos;
+}
 
-inline std::set<int> light_leptons = { ParticleCode::e, ParticleCode::mu };
+inline const std::set<int>& light_leptons()
+{
+    static const std::set<int> light_leptons = { ParticleCode::e, ParticleCode::mu };
+    return light_leptons;
+}
 
-inline  std::set<int> light_and_invisible = analysis::tools::union_sets({light_leptons, neutrinos});
+inline const std::set<int>& light_and_invisible()
+{
+//    auto neutrinos_ = neutrinos();
+    const std::set<int>& neutrinos_ = neutrinos();
+    const std::set<int>& light_leptons_ = light_leptons();
+    static const std::set<int> light_and_invisible = analysis::tools::union_sets({light_leptons_, neutrinos_});
+    return light_and_invisible;
+}
 
 } // particles

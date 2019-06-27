@@ -141,7 +141,7 @@ void GenEvent::intializeNames(const std::string& fileName)
     }
 }
 
-void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) const //, unsigned iteration = 0)
+void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) const
 {
     const int pdgParticle = particle->pdg;
     const auto particleName = GetParticleName(pdgParticle);
@@ -199,10 +199,13 @@ LorentzVectorM GenEvent::GetFinalStateMomentum(const GenParticle& particle, std:
 {
     using pair = std::pair<bool, bool>;
     static const std::set<int> empty = {};
+    auto neutrinos = particles::neutrinos();
+    auto light_leptons = particles::light_leptons();
+    auto light_and_invisible = particles::light_and_invisible();
 
     static const std::map<pair, const std::set<int>*> to_exclude {
-        { pair(false, false), &empty }, { pair(true, false), &particles::neutrinos },
-        { pair(false, true), &particles::light_leptons }, { pair(true, true), &particles::light_and_invisible },
+        { pair(false, false), &empty }, { pair(true, false), &neutrinos },
+        { pair(false, true), &light_leptons }, { pair(true, true), &light_and_invisible },
     };
 
     std::set<const GenParticle*> daughters_set;
@@ -213,7 +216,7 @@ LorentzVectorM GenEvent::GetFinalStateMomentum(const GenParticle& particle, std:
 
     LorentzVectorM p4;
     for(auto daughter : visible_daughters) {
-        if(excludeLightLeptons && particles::light_leptons.count(std::abs(daughter->pdg))
+        if(excludeLightLeptons && light_leptons.count(std::abs(daughter->pdg))
             && daughter->genStatusFlags.isDirectTauDecayProduct()) continue;
         p4 += daughter->momentum;
     }
