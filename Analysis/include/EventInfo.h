@@ -107,7 +107,7 @@ public:
 
 private:
     ProdSummary summary;
-    std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
+    std::map<Channel, std::shared_ptr<const TriggerDescriptorCollection>> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
 
 };
