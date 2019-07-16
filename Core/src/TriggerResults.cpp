@@ -69,16 +69,12 @@ const TriggerDescriptorCollection::TriggerDescriptor& TriggerDescriptorCollectio
 
 void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<Leg>& legs)
 {
-    std::cout << "In Add" << std::endl;
-    std::cout << "descriptors size: " << descriptors.size() << std::endl;
     if(desc_indices.count(pattern))
         throw exception("Duplicated trigger pattern '%1%'.") % pattern;
     if(descriptors.size() == TriggerResults::MaxNumberOfTriggers)
         throw exception("Maximal number of triggers is exceeded.");
     desc_indices[pattern] = descriptors.size();
-    std::cout << "created map, descriptors size: " << descriptors.size() << std::endl;
     descriptors.emplace_back(pattern, legs);
-    std::cout << "emplaced descriptors" << std::endl;
     path_index_cache.clear();
     for(auto& leg : descriptors.back().jet_legs) {
         leg.jet_filter_indices.clear();
@@ -157,7 +153,7 @@ TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::ConvertF
 
 std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(const std::string& cfg_name, const Channel& channel)
 {
-    std::shared_ptr<TriggerDescriptorCollection> triggerDescriptors;
+    std::shared_ptr<TriggerDescriptorCollection> triggerDescriptors = std::make_shared<TriggerDescriptorCollection>();
     trigger_tools::SetupDescriptor setup;
 
     trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
@@ -171,39 +167,31 @@ std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(c
 
     //const std::string triggerCfg_full = edm::FileInPath(cfg_name).fullPath();
     config_reader.ReadConfig(cfg_name);
-    std::cout << "Read config" << std::endl;
 
     if(setup_file_descriptors.size() != 1)
         throw exception("More than 1 setup in Reading Trigger Tools cfg");
     setup = setup_file_descriptors.begin()->second;
 
-    for(const auto& entry : trigger_file_descriptors) {
-        trigger_tools::TriggerFileDescriptor trigger_file_descriptor = entry.second;
-        if(!trigger_file_descriptor.channels.count(channel)) continue;
-        std::cout << "NOt repeated channel" << std::endl;
-        const auto& legs = trigger_file_descriptor.legs;
+    for(const auto& entry : trigger_file_descriptors.get_ordered_by_insertion()) {
+        const trigger_tools::TriggerFileDescriptor* trigger_file_descriptor = entry.second;
+        if(!trigger_file_descriptor->channels.count(channel)) continue;
+        const auto& legs = trigger_file_descriptor->legs;
         std::vector<TriggerDescriptorCollection::Leg> legs_vector;
         for (size_t n = 0; n < legs.size(); ++n){
             const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
             const double delta_pt = setup.deltaPt_map.at(type);
-            std::cout << "created deltaPt: " << delta_pt << std::endl;
             boost::optional<double> eta;
             if(leg_list.Has("eta"))
                 eta = leg_list.Get<double>("eta");
-            std::cout << "created eta: " << eta.get() << std::endl;
             bool applyL1match = false;
             if(leg_list.Has("applyL1match"))
                 applyL1match = leg_list.Get<bool>("applyL1match");
-            std::cout << "created applyL1match: " << applyL1match << std::endl;
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
             legs_vector.emplace_back(type,pt,delta_pt,eta,applyL1match,filters);
-            std::cout << "emplaced back legs vector " << std::endl;
         }
-        std::cout << "pattern: " << entry.first << std::endl;
         (*triggerDescriptors).Add(entry.first, legs_vector);
-        std::cout << "added trigger descriptor" << std::endl;
     }
 
     return triggerDescriptors;

@@ -86,7 +86,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  iConfig.getParameter<std::string>("triggerCfg"),
                  _channel, isEmbedded)
 {
-    std::cout << "BTP constructor" << std::endl;
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
 

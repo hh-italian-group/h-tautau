@@ -2,6 +2,8 @@
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
+#include "AnalysisTools/Core/include/map_vec.h"
+#include "h-tautau/Core/include/AnalysisTypes.h"
 
 namespace trigger_tools {
 
@@ -20,6 +22,6 @@ struct TriggerFileDescriptor {
 
 };
 
-using TriggerFileDescriptorCollection = std::unordered_map<std::string, TriggerFileDescriptor>;
+using TriggerFileDescriptorCollection = analysis::map_vec<std::string, TriggerFileDescriptor>;
 
 } // namespace analysis

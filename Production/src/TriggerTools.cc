@@ -70,16 +70,13 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerPrescales_token(_triggerPrescales_token), triggerObjects_token(_triggerObjects_token),
     l1Tau_token(_l1Tau_token), isEmbedded(_isEmbedded), channel(_channel)
 {
-    std::cout << "TT constructor" << std::endl;
     triggerResults_tokens[CMSSW_Process::SIM] = _triggerResultsSIM_token;
     triggerResults_tokens[CMSSW_Process::HLT] = _triggerResultsHLT_token;
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
     triggerResults_tokens[CMSSW_Process::SIMembedding] = _triggerResultsSIMembedding_token;
 
-    std::cout << "trigger cfg: " << triggerCfg << std::endl;
     triggerDescriptors[channel] = TriggerDescriptorCollection::Load(triggerCfg,channel);
-    std::cout << "Loaded trigger" << std::endl;
 
     pathTriggerObjects.resize(triggerDescriptors.at(channel)->size());
     for (size_t n = 0; n < pathTriggerObjects.size(); ++n) {
