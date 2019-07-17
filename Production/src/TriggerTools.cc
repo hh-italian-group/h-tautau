@@ -76,12 +76,12 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
     triggerResults_tokens[CMSSW_Process::SIMembedding] = _triggerResultsSIMembedding_token;
 
-    triggerDescriptors[channel] = TriggerDescriptorCollection::Load(triggerCfg,channel);
+    triggerDescriptors = TriggerDescriptorCollection::Load(triggerCfg,channel);
 
-    pathTriggerObjects.resize(triggerDescriptors.at(channel)->size());
+    pathTriggerObjects.resize(triggerDescriptors->size());
     for (size_t n = 0; n < pathTriggerObjects.size(); ++n) {
         auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(n);
-        legId_triggerObjPtr_vector.resize(triggerDescriptors.at(channel)->at(n).lepton_legs.size(), {});
+        legId_triggerObjPtr_vector.resize(triggerDescriptors->at(n).lepton_legs.size(), {});
     }
 }
 
@@ -131,7 +131,7 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         trigger_tools::UnpackFilters(*iEvent,*triggerResultsHLT,unpackedTriggerObject);
         const auto& paths = unpackedTriggerObject.pathNames(false, true); //isLastFilter=false
         if(hasExpectedType(LegType::jet, unpackedTriggerObject)) {
-            const auto& jet_filters = triggerDescriptors.at(channel)->GetJetFilters();
+            const auto& jet_filters = triggerDescriptors->GetJetFilters();
             bool jet_added = false;
             size_t jet_index;
             for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
@@ -145,8 +145,8 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
         } else {
             for(const auto& path : paths) {
                 size_t index;
-                if(!triggerDescriptors.at(channel)->FindPatternMatch(path,index)) continue;
-                const auto& descriptor = triggerDescriptors.at(channel)->at(index);
+                if(!triggerDescriptors->FindPatternMatch(path,index)) continue;
+                const auto& descriptor = triggerDescriptors->at(index);
                 for(unsigned n = 0; n < descriptor.lepton_legs.size(); ++n){
                     const TriggerDescriptorCollection::Leg& leg = descriptor.lepton_legs.at(n);
                     if(!hasExpectedType(leg.type, unpackedTriggerObject)
@@ -166,7 +166,7 @@ void TriggerTools::SetTriggerAcceptBits(analysis::TriggerResults& results)
     for (size_t i = 0; i < triggerResultsHLT->size(); ++i) {
         if(triggerPrescales->getPrescaleForIndex(i) != 1) continue;
         size_t index;
-        if(triggerDescriptors.at(channel)->FindPatternMatch(triggerNames.triggerName(i), index))
+        if(triggerDescriptors->FindPatternMatch(triggerNames.triggerName(i), index))
             results.SetAccept(index, triggerResultsHLT->accept(i));
     }
 }
@@ -177,7 +177,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
     const auto& legId_triggerObjPtr_vector = pathTriggerObjects.at(index);
     TriggerTools::VectorTriggerObjectSet matched_legId_triggerObjectSet_vector(legId_triggerObjPtr_vector.size());
     const double deltaR2 = std::pow(deltaR_Limit, 2);
-    const auto& descriptor = triggerDescriptors.at(channel)->at(index);
+    const auto& descriptor = triggerDescriptors->at(index);
 
     for(size_t n = 0; n < legId_triggerObjPtr_vector.size(); ++n) {
         const auto& triggerObjectSet = legId_triggerObjPtr_vector.at(n);
@@ -284,7 +284,7 @@ TriggerTools::BitsContainer TriggerTools::GetJetMatchBitsImpl(const LorentzVecto
                                                               double deltaR_Limit) const
 {
     auto trig_objs = jetTriggerObjects;
-    const auto& jet_filters = triggerDescriptors.at(channel)->GetJetFilters();
+    const auto& jet_filters = triggerDescriptors->GetJetFilters();
     const double deltaR2 = std::pow(deltaR_Limit, 2);
     for(size_t filter_index = 0; filter_index < jet_filters.size(); ++filter_index) {
         for(size_t jet_index = 0; jet_index < trig_objs.momentums.size(); ++jet_index) {

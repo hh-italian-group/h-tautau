@@ -12,16 +12,14 @@ SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel, c
     if(!_uncertainties_source.empty())
         jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
     if(!_trigger_cfg.empty()){
-        triggerDescriptors[_channel] = TriggerDescriptorCollection::Load(_trigger_cfg,_channel);
+        triggerDescriptors = TriggerDescriptorCollection::Load(_trigger_cfg,_channel);
     }
 
 }
 
-std::shared_ptr<const TriggerDescriptorCollection> SummaryInfo::GetTriggerDescriptors(Channel channel) const
+std::shared_ptr<const TriggerDescriptorCollection> SummaryInfo::GetTriggerDescriptors() const
 {
-    if(!triggerDescriptors.count(channel))
-        throw exception("Information for channel %1% not found.") % channel;
-    return triggerDescriptors.at(channel);
+    return triggerDescriptors;
 }
 
 const SummaryInfo::ProdSummary& SummaryInfo::operator*() const { return summary; }
@@ -95,7 +93,7 @@ event(&_event), summaryInfo(_summaryInfo), selected_htt_index(_selected_htt_inde
     triggerResults.SetAcceptBits(event->trigger_accepts);
     triggerResults.SetMatchBits(event->trigger_matches.at(selected_htt_index));
     if(summaryInfo)
-        triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors(EventInfoBase::GetChannel()));
+        triggerResults.SetDescriptors(summaryInfo->GetTriggerDescriptors());
 }
 
 
@@ -172,9 +170,10 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
         const JetCandidate& jet = all_jets.at(n);
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
-        if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, event->jets_pu_id.at(n) )) continue;
+        analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id.at(n));
+        if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
-        if(applyPu && (event->jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+        if(applyPu && !jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
         if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
         if(passBtag && !bTagger.Pass(*event,n,DiscriminatorWP::Medium)) continue;
 

@@ -80,8 +80,8 @@ public:
     void SetTriggerMatchBits(TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     {
         std::array<VectorTriggerObjectSet, 2> matched_legIds;
-        for (size_t n = 0; n < triggerDescriptors.at(channel)->size(); ++n) {
-            const auto& descriptor = triggerDescriptors.at(channel)->at(n);
+        for (size_t n = 0; n < triggerDescriptors->size(); ++n) {
+            const auto& descriptor = triggerDescriptors->at(n);
             matched_legIds.at(0) = FindMatchingTriggerObjects(n,candidate.GetFirstDaughter().GetMomentum(),
                                                               detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),
                                                               deltaR_Limit);
@@ -119,7 +119,7 @@ private:
     Channel channel;
 
     const edm::Event* iEvent;
-    std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
+    std::shared_ptr<TriggerDescriptorCollection> triggerDescriptors;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;

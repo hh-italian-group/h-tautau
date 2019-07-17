@@ -231,11 +231,14 @@ bool TriggerResults::MatchEx(size_t index, double pt_firstLeg, double pt_secondL
 
     const auto& desc = GetTriggerDescriptors().at(index);
 
+
     const TriggerDescriptorCollection::Leg& first_leg = desc.lepton_legs.at(0);
     if(pt_firstLeg <= first_leg.pt + first_leg.delta_pt) return false;
-    const TriggerDescriptorCollection::Leg& second_leg = desc.lepton_legs.at(1);
-    if(pt_secondLeg <= second_leg.pt + second_leg.delta_pt) return false;
-
+    if(desc.lepton_legs.size() > 1){
+      const TriggerDescriptorCollection::Leg& second_leg = desc.lepton_legs.at(1);
+      if(pt_secondLeg <= second_leg.pt + second_leg.delta_pt) return false;
+    }
+    
     const size_t n_legs = desc.jet_legs.size();
     if(reco_jet_matches.size() < n_legs) return false;
 

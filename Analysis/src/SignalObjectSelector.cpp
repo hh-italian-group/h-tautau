@@ -261,8 +261,9 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
             if(ROOT::Math::VectorUtil::DeltaR(second_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, event.jets_pu_id.at(n))) continue;
-            if((event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+            analysis::DiscriminatorIdResults jet_pu_id(event.jets_pu_id.at(n));
+            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, jet_pu_id)) continue;
+            if(!jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
 //            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();

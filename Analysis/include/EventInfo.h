@@ -42,14 +42,14 @@ public:
 
     explicit SummaryInfo(const ProdSummary& _summary, const Channel& _channel, const std::string& _uncertainties_source = "",
                          const std::string& _trigger_cfg = "");
-    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const;
+    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors() const;
     const ProdSummary& operator*() const;
     const ProdSummary* operator->() const;
     const jec::JECUncertaintiesWrapper& GetJecUncertainties() const;
 
 private:
     ProdSummary summary;
-    std::map<Channel, std::shared_ptr<const TriggerDescriptorCollection>> triggerDescriptors;
+    std::shared_ptr<const TriggerDescriptorCollection> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
 
 };
