@@ -51,7 +51,7 @@ using Point3D = analysis::Point3D_Float;
     OTHERVAR(Float_t, iso, col) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     OTHERVAR(Bool_t, elePassConversionVeto, col) /* ele passed conversionVeto requirement */ \
     OTHERVAR(uint16_t, eleId_iso, col) /* ele passed Id with isolation requirement */ \
-    OTHERVAR(uint16_t, eleId_NoIso, col) /* ele passed Id without isolation requirement */ \
+    OTHERVAR(uint16_t, eleId_noIso, col) /* ele passed Id without isolation requirement */ \
     OTHERVAR(uint16_t, muonId, col) /* muon passed Id requirement */ \
     /**/
 
