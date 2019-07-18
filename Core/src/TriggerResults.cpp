@@ -130,24 +130,21 @@ TriggerDescriptorCollection::FilterBitsContainer TriggerDescriptorCollection::Ge
 TriggerDescriptorCollection::RootBitsContainer TriggerDescriptorCollection::ConvertToRootRepresentation(
     BitsContainer match_bits)
 {
-    TriggerDescriptorCollection::RootBitsContainer result;
-    if(match_bits.backend().size() > result.size())
-        throw exception("TriggerDescriptorCollection: inconsistent definition of containers");
-    size_t n = 0;
-    for(; n < match_bits.backend().size(); ++n)
-        result[n] = *(match_bits.backend().limbs() + n);
-    for(; n < result.size(); ++n)
-        result[n] = 0;
+    static const BitsContainer mask = (BitsContainer(1) << std::numeric_limits<RootBitsContainerUnit>::digits) - 1;
+    RootBitsContainer result;
+    for(size_t n = 0; n < result.size(); ++n) {
+        result[n] = ((match_bits >> (std::numeric_limits<RootBitsContainerUnit>::digits * n))
+                     & mask).convert_to<RootBitsContainer>();
+    }
     return result;
 }
 
 TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::ConvertFromRootRepresentation(
     const RootBitsContainer& match_bits)
 {
-    TriggerDescriptorCollection::BitsContainer result;
-    result.backend().resize(match_bits.size(), match_bits.size());
+    BitsContainer result(0);
     for(size_t n = 0; n < match_bits.size(); ++n)
-        *(result.backend().limbs() + n) = match_bits[n];
+        result |= (BitsContainer(match_bits[n]) << (std::numeric_limits<RootBitsContainerUnit>::digits * n));
     return result;
 }
 
@@ -238,7 +235,7 @@ bool TriggerResults::MatchEx(size_t index, double pt_firstLeg, double pt_secondL
       const TriggerDescriptorCollection::Leg& second_leg = desc.lepton_legs.at(1);
       if(pt_secondLeg <= second_leg.pt + second_leg.delta_pt) return false;
     }
-    
+
     const size_t n_legs = desc.jet_legs.size();
     if(reco_jet_matches.size() < n_legs) return false;
 
