@@ -134,7 +134,7 @@ TriggerDescriptorCollection::RootBitsContainer TriggerDescriptorCollection::Conv
     RootBitsContainer result;
     for(size_t n = 0; n < result.size(); ++n) {
         result[n] = ((match_bits >> (std::numeric_limits<RootBitsContainerUnit>::digits * n))
-                     & mask).convert_to<RootBitsContainer>();
+                     & mask).convert_to<RootBitsContainerUnit>();
     }
     return result;
 }
