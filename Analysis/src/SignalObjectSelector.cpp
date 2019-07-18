@@ -24,6 +24,10 @@ SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
     	DR2_leptons = std::pow(cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects, 2);
 	discriminator = TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017;
     }
+    else if(mode == SignalMode::bbtautau){
+    	DR2_leptons = std::pow(cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects, 2);
+	discriminator = TauIdDiscriminator::byDeepTau2017v2VSjet;
+    }
 
     else if(mode == SignalMode::Skimmer || mode == SignalMode::TauPOG_Skimmer){
         double DR = std::min(cuts::H_tautau_2016::DeltaR_betweenSignalObjects,cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects);
@@ -42,6 +46,8 @@ bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton
 	return PassTauPOG_LeptonSelection(lepton,channel);
     if(mode == SignalMode::HH)
         return PassHH_LeptonSelection(lepton,channel);
+    if(mode == SignalMode::bbtautau)
+        return Pass_bbtautau_LeptonSelection(lepton,channel);
     if(mode == SignalMode::Skimmer)
         return PassSkimmer_LeptonSelection(lepton);
     if(mode == SignalMode::TauPOG_Skimmer)
@@ -60,6 +66,8 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const ntupl
         const auto& first_leg = lepton_candidates.at(event.first_daughter_indexes.at(n));
         const auto& second_leg = lepton_candidates.at(event.second_daughter_indexes.at(n));
         if(ROOT::Math::VectorUtil::DeltaR2(first_leg.p4(), second_leg.p4()) <= DR2_leptons) continue;
+        if()
+        (eventInfo->GetLeg(1)->charge() + eventInfo->GetLeg(2)->charge()) != 0
         const Channel channel = static_cast<Channel>(event.channelId);
         if(!PassLeptonSelection(first_leg,channel)) continue;
         if(!PassLeptonSelection(second_leg,channel)) continue;
