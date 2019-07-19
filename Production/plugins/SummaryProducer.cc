@@ -17,11 +17,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TauIdResults.h"
-#include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Production/interface/GenTruthTools.h"
-#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
-#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
-#include "h-tautau/Production/interface/TriggerTools.h"
 
 
 class SummaryProducer : public edm::EDAnalyzer {
@@ -31,7 +27,6 @@ public:
     using GenEventCountMap = ntuple::GenEventCountMap;
     using GenEventTypeCountMap = ntuple::GenEventTypeCountMap;
     using Channel = analysis::Channel;
-    using TriggerDescriptorCollection = analysis::TriggerDescriptorCollection;
 
     SummaryProducer(const edm::ParameterSet& cfg) :
         start(clock::now()),
@@ -48,10 +43,6 @@ public:
         if(isMC)
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
-
-        trigger_tools::SetupDescriptor setup;
-        const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
-        trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = analysis::TriggerTools::ReadConfig(triggerCfg,setup);
 
     }
 

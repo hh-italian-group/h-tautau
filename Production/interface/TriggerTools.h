@@ -19,8 +19,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/PropertyConfigReader.h"
 #include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
-#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
-#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
+#include "h-tautau/Core/include/TriggerFileDescriptor.h"
+#include "h-tautau/Core/include/TriggerFileConfigEntryReader.h"
 
 namespace analysis {
 
@@ -66,12 +66,7 @@ public:
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
-                 const std::string& triggerCfg, Channel channel, bool _isEmbedded);
-
-    static trigger_tools::TriggerFileDescriptorCollection ReadConfig(const std::string& cfg_path,
-                                                                    trigger_tools::SetupDescriptor& setup);
-
-    static TriggerDescriptorCollection CreateTriggerDescriptors(const trigger_tools::TriggerFileDescriptorCollection& trigger_file_descriptors, Channel channel);
+                 const std::string& triggerCfg, Channel _channel, bool _isEmbedded);
 
     void Initialize(const edm::Event& iEvent);
 
@@ -85,8 +80,8 @@ public:
     void SetTriggerMatchBits(TriggerResults& results, const HiggsCandidate& candidate, double deltaR_Limit)
     {
         std::array<VectorTriggerObjectSet, 2> matched_legIds;
-        for (size_t n = 0; n < triggerDescriptors.size(); ++n) {
-            const auto& descriptor = triggerDescriptors.at(n);
+        for (size_t n = 0; n < triggerDescriptors->size(); ++n) {
+            const auto& descriptor = triggerDescriptors->at(n);
             matched_legIds.at(0) = FindMatchingTriggerObjects(n,candidate.GetFirstDaughter().GetMomentum(),
                                                               detail::GetTriggerObjectTypes(*candidate.GetFirstDaughter()),
                                                               deltaR_Limit);
@@ -121,10 +116,10 @@ private:
     EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_token;
     EDGetTokenT<BXVector<l1t::Tau>> l1Tau_token;
     bool isEmbedded;
+    Channel channel;
 
     const edm::Event* iEvent;
-    analysis::TriggerDescriptorCollection triggerDescriptors;
-    std::map<LegType, double> deltaPt_map;
+    std::shared_ptr<const TriggerDescriptorCollection> triggerDescriptors;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
