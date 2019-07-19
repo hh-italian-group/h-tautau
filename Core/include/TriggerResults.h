@@ -98,7 +98,7 @@ public:
 private:
     std::vector<TriggerDescriptor> descriptors;
     std::unordered_map<Pattern, size_t> desc_indices;
-    std::unordered_map<std::string, size_t> path_index_cache;
+    mutable std::unordered_map<std::string, size_t> path_index_cache;
     std::vector<std::string> jet_filters;
 };
 
