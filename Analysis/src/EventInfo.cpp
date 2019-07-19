@@ -170,7 +170,7 @@ EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta
         const JetCandidate& jet = all_jets.at(n);
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
-        analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id.at(n));
+        analysis::DiscriminatorIdResults jet_pu_id = jet->GetPuId();
         if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && !jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;

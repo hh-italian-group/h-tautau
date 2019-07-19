@@ -119,7 +119,7 @@ private:
     Channel channel;
 
     const edm::Event* iEvent;
-    std::shared_ptr<TriggerDescriptorCollection> triggerDescriptors;
+    std::shared_ptr<const TriggerDescriptorCollection> triggerDescriptors;
     std::map<CMSSW_Process, Handle<edm::TriggerResults>> triggerResultsMap;
     edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
     edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
