@@ -282,4 +282,107 @@ bool SignalObjectSelector::PassTauPOG_Skimmer_LeptonSelection(const ntuple::Tupl
     return true;
 }
 
+SignalObjectSelector::SelectedSignalJets::SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedJetPair()),
+    selectedVBFjetPair(ntuple::UndefinedJetPair()), n_bjets(0) { }
+
+bool SignalObjectSelector::SelectedSignalJets::HasBjetPair(size_t njets) const
+{
+    return selectedBjetPair.first < njets && selectedBjetPair.second < njets;
+}
+
+bool SignalObjectSelector::SelectedSignalJets::HasVBFPair(size_t njets) const
+{
+    return selectedVBFjetPair.first < njets && selectedVBFjetPair.second < njets;
+}
+
+bool SignalObjectSelector::SelectedSignalJets::isSelectedBjet(size_t n) const
+{
+    return selectedBjetPair.first == n || selectedBjetPair.second == n;
+}
+
+bool SignalObjectSelector::SelectedSignalJets::isSelectedVBFjet(size_t n) const
+{
+    return selectedVBFjetPair.first == n || selectedVBFjetPair.second == n;
+}
+
+SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(const ntuple::Event& event,
+                                                                  const analysis::Period& period,
+                                                                  analysis::JetOrdering jet_ordering,
+                                                                  size_t selected_higgs_index)
+{
+    BTagger bTagger(period, jet_ordering);
+    const double bjet_pt_cut = bTagger.PtCut();
+    const double bjet_eta_cut = bTagger.EtaCut();
+
+    SelectedSignalJets selected_signal_jets;
+
+    const auto CreateJetInfo = [&](bool useBTag) -> auto {
+        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
+        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+            const size_t first_leg_id = event.first_daughter_indexes.at(selected_higgs_index);
+            const auto& first_leg = event.lep_p4.at(first_leg_id);
+            if(ROOT::Math::VectorUtil::DeltaR(first_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            const size_t second_leg_id = event.second_daughter_indexes.at(selected_higgs_index);
+            const auto& second_leg = event.lep_p4.at(second_leg_id);
+            if(ROOT::Math::VectorUtil::DeltaR(second_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            if(selected_signal_jets.isSelectedBjet(n)) continue;
+            if(selected_signal_jets.isSelectedVBFjet(n)) continue;
+            analysis::DiscriminatorIdResults jet_pu_id(event.jets_pu_id.at(n));
+            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, jet_pu_id)) continue;
+            if(!jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
+//            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
+
+            const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
+            jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
+        }
+        return jet_info_vector;
+    };
+
+    auto jet_info_vector = CreateJetInfo(true);
+    auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
+    selected_signal_jets.n_bjets = bjets_ordered.size();
+    if(bjets_ordered.size() >= 1){
+        selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
+    }
+
+    if(bjets_ordered.size() >= 2){
+        if(bTagger.Pass(event,bjets_ordered.at(1).index)){
+            selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
+        }
+    }
+
+    auto jet_info_vector_vbf = CreateJetInfo(false);
+    auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,
+                                                    cuts::hh_bbtautau_2017::jetID::vbf_pt_cut,
+                                                    cuts::hh_bbtautau_2017::jetID::vbf_eta_cut);
+
+    double max_mjj = -std::numeric_limits<double>::infinity();
+    for(size_t n = 0; n < vbf_jets_ordered.size(); ++n) {
+        const auto& jet_1 = vbf_jets_ordered.at(n);
+        for(size_t h = n+1; h < vbf_jets_ordered.size(); ++h) {
+            const auto& jet_2 = vbf_jets_ordered.at(h);
+            const auto jet_12 = jet_1.p4 + jet_2.p4;
+            if(jet_12.M() > max_mjj){
+                max_mjj = jet_12.M();
+                selected_signal_jets.selectedVBFjetPair = std::make_pair(vbf_jets_ordered.at(n).index,
+                                                                         vbf_jets_ordered.at(h).index);
+            }
+        }
+    }
+
+
+    if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
+
+    auto jet_info_vector_new = CreateJetInfo(true);
+    auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
+    if(new_bjets_ordered.size() >= 1)
+        selected_signal_jets.selectedBjetPair.second = new_bjets_ordered.at(0).index;
+    else{
+        selected_signal_jets.selectedVBFjetPair = ntuple::UndefinedJetPair();
+        if (bjets_ordered.size() >= 2)
+            selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
+    }
+    return selected_signal_jets;
+}
+
 } // namespace analysis

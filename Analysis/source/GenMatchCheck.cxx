@@ -52,7 +52,7 @@ public:
 
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data(),Parse<Channel>(args.tree_name())));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {

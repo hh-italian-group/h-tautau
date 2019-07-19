@@ -87,14 +87,15 @@ TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id)
 }
 
 const LorentzVectorE& TupleJet::p4() const { return event->jets_p4.at(jet_id); }
+analysis::DiscriminatorIdResults TupleJet::GetPuId() const
+{
+    analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id.at(jet_id));
+    return jet_pu_id;
+}
+
 bool TupleJet::PassPuId(DiscriminatorWP wp) const {
-    if(wp == DiscriminatorWP::Loose)
-        return event->jets_pu_id.at(jet_id) & (1 << 2);
-    if(wp == DiscriminatorWP::Medium)
-        return event->jets_pu_id.at(jet_id) & (1 << 1);
-    if(wp == DiscriminatorWP::Tight)
-        return event->jets_pu_id.at(jet_id) & (1 << 0);
-    return false;
+    analysis::DiscriminatorIdResults jet_pu_id = GetPuId();
+    return jet_pu_id.Passed(wp);
 }
 TupleObject::DiscriminatorResult TupleJet::csv() const { return event->jets_csv.at(jet_id); }
 TupleObject::DiscriminatorResult TupleJet::deepcsv() const { return event->jets_deepCsv_BvsAll.at(jet_id); }

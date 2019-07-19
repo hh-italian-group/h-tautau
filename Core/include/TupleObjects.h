@@ -62,6 +62,7 @@ public:
     TupleJet(const ntuple::Event& _event, size_t _jet_id);
     const LorentzVectorE& p4() const;
     bool PassPuId(DiscriminatorWP wp) const;
+    analysis::DiscriminatorIdResults GetPuId() const;
     DiscriminatorResult csv() const;
     DiscriminatorResult deepcsv() const;
     DiscriminatorResult deepFlavour() const;
