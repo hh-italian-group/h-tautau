@@ -45,6 +45,7 @@ public:
 
     bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
     bool PassedOldDecayMode() const;
+    bool PassedNewDecayMode() const;
     DiscriminatorResult GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const;
 
     int CompareIsolations(const TupleLepton& other, analysis::TauIdDiscriminator disc) const;

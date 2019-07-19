@@ -49,6 +49,7 @@ bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discri
 }
 
 bool TupleLepton::PassedOldDecayMode() const { return event->lep_oldDecayModeFinding.at(object_id); }
+bool TupleLepton::PassedNewDecayMode() const { return event->lep_newDecayModeFinding.at(object_id); }
 
 TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {

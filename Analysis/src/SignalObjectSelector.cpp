@@ -110,14 +110,14 @@ bool PassLeptonVetoSelection(const ntuple::Event& event)
     return true;
 }
 
-bool PassMETfilters(const ntuple::Event& event, bool is_Data)
+bool PassMETfilters(const ntuple::Event& event, const analysis::Period period, bool is_Data)
 {
     using Filter = ntuple::MetFilters::Filter;
     auto event_metFilters = ntuple::MetFilters(event.metFilters);
     if (!event_metFilters.Pass(Filter::PrimaryVertex)  || !event_metFilters.Pass(Filter::BeamHalo) ||
         !event_metFilters.Pass(Filter::HBHE_noise)  || !event_metFilters.Pass(Filter::HBHEiso_noise) ||
-        !event_metFilters.Pass(Filter::ECAL_TP) || !event_metFilters.Pass(Filter::badMuon) ||
-        !event_metFilters.Pass(Filter::ecalBadCalib)) return false;
+        !event_metFilters.Pass(Filter::ECAL_TP) || !event_metFilters.Pass(Filter::badMuon)) return false;
+    if((period == Period::Run2017 || period == Period::Run2018) && !event_metFilters.Pass(Filter::ecalBadCalib)) return false; //not in 2016
     if(is_Data && !event_metFilters.Pass(Filter::ee_badSC_noise)) return false;
     return true;
 }
@@ -245,7 +245,7 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const ntuple::TupleLepton& lep
 
     if(lepton.leg_type() == LegType::e) {
         if(!lepton.passConversionVeto()) return false;
-        if(!passEleIso(DiscriminatorWP::Medium)) return false;
+        if(!lepton.passEleIso(DiscriminatorWP::Medium)) return false;
         return true;
     }
     if(lepton.leg_type() == LegType::mu) {
@@ -255,10 +255,10 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const ntuple::TupleLepton& lep
     }
     if(!(lepton.leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
     if(!(lepton.p4().pt() > pt_map.at(channel))) return false;
+    if((mode == SignalMode::HH) && !(lepton.PassedNewDecayMode())) return false;
     if((mode == SignalMode::HH && (lepton.decayMode() == 5 || lepton.decayMode() == 6))) return false;
     if(!lepton.Passed(TauIdDiscriminator::byDeepTau2017v2VSe,deepTauDiscriminators.at(channel).first)) return false;
     if(!lepton.Passed(TauIdDiscriminator::byDeepTau2017v2VSmu,deepTauDiscriminators.at(channel).second)) return false;
-    if(!lepton.Passed(TauIdDiscriminator::byDeepTau2017v2VSjet,DiscriminatorWP::Medium)) return false;
     return true;
 }
 
