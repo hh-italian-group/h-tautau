@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
+#include "h-tautau/JetTools/include/BTagger.h"
 
 namespace analysis {
 
@@ -95,8 +96,8 @@ public:
 
     bool PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
     boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event) const;
-    bool PassLeptonVetoSelection(const ntuple::Event& event);
-    bool PassMETfilters(const ntuple::Event& event);
+    bool PassLeptonVetoSelection(const ntuple::Event& event) const;
+    bool PassMETfilters(const ntuple::Event& event, const analysis::Period period, bool is_Data) const;
 
     struct SelectedSignalJets{
         JetPair selectedBjetPair;

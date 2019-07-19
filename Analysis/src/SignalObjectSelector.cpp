@@ -99,7 +99,7 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const ntupl
     return boost::optional<size_t>();
 }
 
-bool PassLeptonVetoSelection(const ntuple::Event& event)
+bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) const
 {
     for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
         analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
@@ -110,7 +110,7 @@ bool PassLeptonVetoSelection(const ntuple::Event& event)
     return true;
 }
 
-bool PassMETfilters(const ntuple::Event& event, const analysis::Period period, bool is_Data)
+bool SignalObjectSelector::PassMETfilters(const ntuple::Event& event, const analysis::Period period, bool is_Data) const
 {
     using Filter = ntuple::MetFilters::Filter;
     auto event_metFilters = ntuple::MetFilters(event.metFilters);
