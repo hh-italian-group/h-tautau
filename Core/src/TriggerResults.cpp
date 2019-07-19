@@ -91,7 +91,7 @@ void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<
     }
 }
 
-bool TriggerDescriptorCollection::FindPatternMatch(const std::string& path_name, size_t& index)
+bool TriggerDescriptorCollection::FindPatternMatch(const std::string& path_name, size_t& index) const
 {
     auto iter = path_index_cache.find(path_name);
     if(iter == path_index_cache.end()) {

@@ -90,7 +90,7 @@ public:
     const TriggerDescriptor& at(size_t index) const;
     const TriggerDescriptor& at(const Pattern& pattern) const;
     void Add(const Pattern& pattern, const std::vector<Leg>& legs);
-    bool FindPatternMatch(const std::string& path_name, size_t& index);
+    bool FindPatternMatch(const std::string& path_name, size_t& index) const;
     size_t GetIndex(const Pattern& pattern) const;
 
     const std::vector<std::string>& GetJetFilters() const;
