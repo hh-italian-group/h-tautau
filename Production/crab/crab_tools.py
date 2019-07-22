@@ -54,7 +54,7 @@ class JobCollection:
         input_file = open(file_name, 'r')
         lines = [ s.strip() for s in input_file.readlines() ]
         lines = filter(lambda s: len(s) != 0 and s[0] != '#', lines)
-        if len(lines) <= 2:
+        if len(lines) <= 1:
             raise RuntimeError("file '{}' is empty".format(file_name))
         header_items = filter(lambda s: len(s) != 0, re.split(" |\n", lines[0]))
         index_line = 0
