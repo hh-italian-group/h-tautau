@@ -102,10 +102,14 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const ntupl
 bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) const
 {
     for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
-        analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
-        if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
-        analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
-        if(muonId.Passed(DiscriminatorWP::Medium)) return false;
+        if(event.other_lepton_type.at(n) == LegType::e){
+          analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
+          if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
+        }
+        if(event.other_lepton_type.at(n) == LegType::mu){
+          analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
+          if(muonId.Passed(DiscriminatorWP::Medium)) return false;
+        }
     }
     return true;
 }

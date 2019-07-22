@@ -11,10 +11,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/JetTools/include/BTagger.h"
+#include "h-tautau/Core/include/Candidate.h"
 
 namespace analysis {
 
-enum class SignalMode { HTT, HTT_sync, TauPOG_default, TauPOG_deepTauVsJet, TauPOG_deepTauVsJet_full, TauPOG_dpfTau, HH_legacy, HH, Skimmer, TauPOG_Skimmer };
+enum class SignalMode { HTT = 1, HTT_sync = 2, TauPOG_default = 3, TauPOG_deepTauVsJet = 4,
+                        TauPOG_deepTauVsJet_full = 5, TauPOG_dpfTau = 6, HH_legacy = 7, HH = 8,
+                        Skimmer = 9, TauPOG_Skimmer = 10 };
 
 ENUM_NAMES(SignalMode) = {
     { SignalMode::HTT, "HTT" },
@@ -88,6 +91,18 @@ namespace jet_ordering {
 
 }
 
+class EventCandidate {
+public:
+  using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
+  using JetCandidate = Candidate<ntuple::TupleJet>;
+  using MET = MissingET<ntuple::TupleMet>;
+
+private:
+  std::shared_ptr<LepCandidate> lepton_candidate;
+  std::shared_ptr<JetCandidate> jet_candidate;
+  std::shared_ptr<MET> met_candidate;
+};
+
 class SignalObjectSelector {
 public:
     using JetPair = ntuple::JetPair;
@@ -97,7 +112,7 @@ public:
     bool PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
     boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event) const;
     bool PassLeptonVetoSelection(const ntuple::Event& event) const;
-    bool PassMETfilters(const ntuple::Event& event, const analysis::Period period, bool is_Data) const;
+    bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
 
     struct SelectedSignalJets{
         JetPair selectedBjetPair;
