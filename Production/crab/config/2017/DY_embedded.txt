@@ -1,4 +1,4 @@
-sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+sampleType=Emb_17 applyTriggerMatch=True runSVfit=False runKinFit=False storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
 
 EmbeddingRun2017B_ElTauFinalState	/EmbeddingRun2017B/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
 EmbeddingRun2017C_ElTauFinalState	/EmbeddingRun2017C/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
@@ -14,4 +14,4 @@ EmbeddingRun2017B_TauTauFinalState	/EmbeddingRun2017B/TauTauFinalState-inputDoub
 EmbeddingRun2017C_TauTauFinalState	/EmbeddingRun2017C/TauTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
 EmbeddingRun2017D_TauTauFinalState	/EmbeddingRun2017D/TauTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
 EmbeddingRun2017E_TauTauFinalState	/EmbeddingRun2017E/TauTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
-EmbeddingRun2017F_TauTauFinalState	/EmbeddingRun2017F/TauTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER		
+EmbeddingRun2017F_TauTauFinalState	/EmbeddingRun2017F/TauTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER

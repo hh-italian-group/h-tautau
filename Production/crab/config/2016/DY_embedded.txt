@@ -1,4 +1,4 @@
-globalTag=94X_mcRun2_asymptotic sampleType=Summer16MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+globalTag=94X_mcRun2_asymptotic sampleType=Emb_16 applyTriggerMatch=True runSVfit=False runKinFit=False storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
 
 EmbeddingRun2016B_ElTauFinalState	   /EmbeddingRun2016B/ElTauFinalState-imputSep16DoubleMu_mirror_miniAOD-v2/USER
 EmbeddingRun2016C_ElTauFinalState	   /EmbeddingRun2016C/ElTauFinalState-imputSep16DoubleMu_mirror_miniAOD-v2/USER

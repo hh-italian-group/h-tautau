@@ -1,5 +1,5 @@
 Automatic
-globalTag=102X_upgrade2018_realistic_v19 sampleType=Autumn18 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+globalTag=102X_upgrade2018_realistic_v19 sampleType=Emb_18ABC runSVfit=False runKinFit=False storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
 
 EmbeddingRun2018A_ElTauFinalState	/EmbeddingRun2018A/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
 EmbeddingRun2018B_ElTauFinalState	/EmbeddingRun2018B/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
