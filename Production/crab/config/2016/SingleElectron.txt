@@ -1,11 +1,11 @@
 EventAwareLumiBased /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt
-globalTag=80X_dataRun2_2016LegacyRepro_v4 sampleType=Run2016 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
+globalTag=94X_mcRun2_asymptotic sampleType=Run2016 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
 
-SingleElectron_Run2016B-18Apr2017_ver1-v1   150000  /SingleElectron/Run2016B-18Apr2017_ver1-v1/MINIAOD
-SingleElectron_Run2016B-18Apr2017_ver2-v1	150000	/SingleElectron/Run2016B-18Apr2017_ver2-v1/MINIAOD
-SingleElectron_Run2016C-18Apr2017-v1        150000	/SingleElectron/Run2016C-18Apr2017-v1/MINIAOD
-SingleElectron_Run2016D-18Apr2017-v1        150000	/SingleElectron/Run2016D-18Apr2017-v1/MINIAOD
-SingleElectron_Run2016E-18Apr2017-v1        150000	/SingleElectron/Run2016E-18Apr2017-v1/MINIAOD
-SingleElectron_Run2016F-18Apr2017-v1        150000	/SingleElectron/Run2016F-18Apr2017-v1/MINIAOD
-SingleElectron_Run2016G-18Apr017-v1         150000	/SingleElectron/Run2016G-18Apr2017-v1/MINIAOD
-SingleElectron_Run2016H-18Apr2017-v1        150000  /SingleElectron/Run2016H-18Apr2017-v1/MINIAOD
+SingleElectron_Run2016B-18Apr2017_ver1-v1       /SingleElectron/Run2016B-18Apr2017_ver1-v1/MINIAOD
+SingleElectron_Run2016B-18Apr2017_ver2-v1	    /SingleElectron/Run2016B-18Apr2017_ver2-v1/MINIAOD
+SingleElectron_Run2016C-18Apr2017-v1         	/SingleElectron/Run2016C-18Apr2017-v1/MINIAOD
+SingleElectron_Run2016D-18Apr2017-v1         	/SingleElectron/Run2016D-18Apr2017-v1/MINIAOD
+SingleElectron_Run2016E-18Apr2017-v1         	/SingleElectron/Run2016E-18Apr2017-v1/MINIAOD
+SingleElectron_Run2016F-18Apr2017-v1         	/SingleElectron/Run2016F-18Apr2017-v1/MINIAOD
+SingleElectron_Run2016G-18Apr017-v1          	/SingleElectron/Run2016G-18Apr2017-v1/MINIAOD
+SingleElectron_Run2016H-18Apr2017-v1            /SingleElectron/Run2016H-18Apr2017-v1/MINIAOD

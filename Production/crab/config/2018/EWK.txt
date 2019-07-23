@@ -1,0 +1,9 @@
+Automatic
+globalTag=102X_upgrade2018_realistic_v19 sampleType=Autumn18 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+
+EWKWMinus2Jets_WToLNu_M-50_TuneCP5	             /EWKWMinus2Jets_WToLNu_M-50_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM
+EWKWPlus2Jets_WToLNu_M-50_TuneCP5	             /EWKWPlus2Jets_WToLNu_M-50_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM
+EWKZ2Jets_ZToLL_M-50_TuneCP5_PSweights	         /EWKZ2Jets_ZToLL_M-50_TuneCP5_PSweights_13TeV-madgraph-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM
+EWKZ2Jets_ZToNuNu_TuneCP5_PSweights	             /EWKZ2Jets_ZToNuNu_TuneCP5_PSweights_13TeV-madgraph-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM
+EWK_LLJJ_MLL-50_MJJ-120_TuneCP5	                 /EWK_LLJJ_MLL-50_MJJ-120_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM
+EWK_LLJJ_MLL_105-160_SM_5f_LO_TuneCH3-herwig7    /EWK_LLJJ_MLL_105-160_SM_5f_LO_TuneCH3_13TeV-madgraph-herwig7/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM				
