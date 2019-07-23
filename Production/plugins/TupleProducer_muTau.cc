@@ -25,16 +25,18 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     selection.muons.push_back(muons.at(0));
     selection.other_muons = CollectVetoMuons({&muons.at(0)});
     selection.muonVeto = selection.other_muons.size();
-    cut(!selection.muonVeto, "no_extra_muon");
 
     selection.other_electrons = CollectVetoElectrons();
     selection.electronVeto = selection.other_electrons.size();
-    cut(!selection.electronVeto, "no_extra_ele");
+
+    auto other_tight_electrons = CollectVetoElectrons(true);
+    cut(other_tight_electrons.empty(), "tightElectronVeto");
+
+    auto other_tight_muons = CollectVetoMuons(true,{&muons.at(0)});
+    cut(other_tight_muons.empty(), "tightElectronVeto");
 
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");
-
-
 
     static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
 
@@ -113,6 +115,10 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
 void TupleProducer_muTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
+
+    Lock lock(eventTuple.GetMutex());
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::MuTau);

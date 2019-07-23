@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "EventTuple.h"
 #include "DiscriminatorIdResults.h"
 #include "TauIdResults.h"
+#include "TriggerResults.h"
 
 namespace ntuple {
 
@@ -53,16 +54,20 @@ private:
 
 class TupleJet : public TupleObject {
 public:
+    using FilterBits = analysis::TriggerDescriptorCollection::BitsContainer;
+
     TupleJet(const ntuple::Event& _event, size_t _jet_id);
     const LorentzVectorE& p4() const;
     bool PassPuId(DiscriminatorWP wp) const;
+    analysis::DiscriminatorIdResults GetPuId() const;
     DiscriminatorResult csv() const;
     DiscriminatorResult deepcsv() const;
     DiscriminatorResult deepFlavour() const;
+    Integer partonFlavour() const;
     Integer hadronFlavour() const;
     RealNumber rawf() const;
     RealNumber resolution() const;
-    ULong64_t triggerFilterMatch() const;
+    FilterBits triggerFilterMatch() const;
     size_t jet_index() const;
 private:
     size_t jet_id;

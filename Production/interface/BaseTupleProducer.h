@@ -99,6 +99,19 @@ inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso
 }
 }
 
+class TupleStore {
+public:
+
+  static ntuple::EventTuple& GetTuple();
+  static void ReleaseEventTuple();
+
+private:
+  static int tuple_counter;
+  static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+
+};
+
+
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
@@ -124,6 +137,7 @@ private:
     edm::EDGetToken muonsMiniAOD_token;
     edm::EDGetToken vtxMiniAOD_token;
     edm::EDGetToken pfMETAOD_token;
+    edm::EDGetToken genMETAOD_token;
     edm::EDGetToken jetsMiniAOD_token;
     edm::EDGetToken fatJetsMiniAOD_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_token;
@@ -139,8 +153,8 @@ protected:
     const analysis::Period period;
     const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
-    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo;
-    std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
+    //std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
@@ -148,7 +162,6 @@ protected:
     std::shared_ptr<RecoilCorrector> recoilPFMetCorrector;
 
 private:
-    static const bool enableThreadSafety;
     const edm::Event *edmEvent;
     edm::Handle<std::vector<pat::Electron> > pat_electrons;
     edm::Handle<std::vector<pat::Tau> > pat_taus;
@@ -159,6 +172,7 @@ private:
     edm::Handle<std::vector<pat::Jet> > pat_fatJets;
     edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
     edm::Handle<LHEEventProduct> lheEventProduct;
+    edm::Handle<edm::View<reco::GenMET>> genMET;
     edm::Handle<GenEventInfoProduct> genEvt;
     edm::Handle<TtGenEvent> topGenEvent;
     edm::Handle<double> rho;
@@ -211,15 +225,20 @@ protected:
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
     void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
 
-    std::vector<ElectronCandidate> CollectVetoElectrons(
+    std::vector<ElectronCandidate> CollectVetoElectrons(bool isTightSelection = false,
             const std::vector<const ElectronCandidate*>& signalElectrons = {});
-    std::vector<MuonCandidate> CollectVetoMuons(const std::vector<const MuonCandidate*>& signalMuons = {});
+    std::vector<MuonCandidate> CollectVetoMuons(bool isTightSelection = false,
+            const std::vector<const MuonCandidate*>& signalMuons = {});
+
     std::vector<JetCandidate> CollectJets();
 
     void SelectVetoElectron(const ElectronCandidate& electron, Cutter& cut,
-                            const std::vector<const ElectronCandidate*>& signalElectrons) const;
+                            const std::vector<const ElectronCandidate*>& signalElectrons,
+                            bool isTightSelection) const;
     void SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
-                        const std::vector<const MuonCandidate*>& signalMuons) const;
+                        const std::vector<const MuonCandidate*>& signalMuons,
+                        bool isTightSelection) const;
+
     void SelectJet(const JetCandidate& jet, Cutter& cut) const;
 
     template<typename Candidate1, typename Candidate2>
@@ -298,30 +317,6 @@ protected:
     {
         return l1.IsMoreIsolated(l2);
     }
-
-    template<typename HiggsCandidate>
-    static bool HiggsComparitor(const HiggsCandidate& h1, const HiggsCandidate& h2)
-    {
-        const auto& h1_leg1 = h1.GetFirstDaughter();
-        const auto& h2_leg1 = h2.GetFirstDaughter();
-        if(h1_leg1 != h2_leg1) {
-            if(h1_leg1.GetIsolation() != h2_leg1.GetIsolation()) return h1_leg1.IsMoreIsolated(h2_leg1);
-            if(h1_leg1.GetMomentum().pt() != h2_leg1.GetMomentum().pt())
-                return h1_leg1.GetMomentum().pt() > h2_leg1.GetMomentum().pt();
-        }
-
-        const auto& h1_leg2 = h1.GetSecondDaughter();
-        const auto& h2_leg2 = h2.GetSecondDaughter();
-        if(h1_leg2 != h2_leg2) {
-            if(h1_leg2.GetIsolation() != h2_leg2.GetIsolation()) return h1_leg2.IsMoreIsolated(h2_leg2);
-            if(h1_leg2.GetMomentum().pt() != h2_leg2.GetMomentum().pt())
-                return h1_leg2.GetMomentum().pt() > h2_leg2.GetMomentum().pt();
-        }
-
-        if(h1_leg1 == h2_leg1 && h1_leg2 == h2_leg2) return false;
-        throw analysis::exception("not found a good criteria for best tau pair");
-    }
-
 
     template<typename Candidate>
     static float GetUserFloat(const Candidate& obj, const std::string& name)

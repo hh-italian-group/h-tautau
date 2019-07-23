@@ -7,8 +7,6 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 options = VarParsing('analysis')
-options.register('globalTag', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
-                        "Global Tag to use.")
 options.register('sampleType', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
 options.register('applyTriggerMatch', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -47,6 +45,8 @@ options.register('saveGenJetInfo', True, VarParsing.multiplicity.singleton, VarP
                         "Save generator-level information for jets.")
 options.register('saveGenParticleInfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Save generator-level information for particles.")
+options.register('isEmbedded', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                        "Is DY embedded sample.")
 options.register('dumpPython', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Dump full config into stdout.")
 options.register('numberOfThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
@@ -57,7 +57,7 @@ options.parseArguments()
 sampleConfig = importlib.import_module('h-tautau.Production.sampleConfig')
 isData = sampleConfig.IsData(options.sampleType)
 period = sampleConfig.GetPeriod(options.sampleType)
-triggerCfg = sampleConfig.GetTriggerCfg(period)
+triggerCfg = sampleConfig.GetTriggerCfg(options.sampleType)
 
 processName = 'tupleProduction'
 process = cms.Process(processName)
@@ -74,7 +74,7 @@ process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 
-process.GlobalTag.globaltag = options.globalTag
+process.GlobalTag.globaltag = sampleConfig.GetGlobalTag(options.sampleType)
 #from Configuration.AlCa.GlobalTag import GlobalTag
 #process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag, '')
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
@@ -96,22 +96,14 @@ if options.eventList != '':
 
 ## and add btag discriminator to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
+#https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTools#Jet_Tools
+btagVector = []
+
+if period == 'Run2018':
+    btagVector.append('None')
 
 if period == 'Run2017':
-    btagVector = [
-      'pfDeepFlavourJetTags:probb',
-      'pfDeepFlavourJetTags:probbb',
-      'pfDeepFlavourJetTags:problepb',
-      'pfDeepFlavourJetTags:probc',
-      'pfDeepFlavourJetTags:probuds',
-      'pfDeepFlavourJetTags:probg'
-       ]
-if period == 'Run2016':
-    btagVector = [
-        'pfDeepCSVJetTags:probudsg',
-        'pfDeepCSVJetTags:probb',
-        'pfDeepCSVJetTags:probc',
-        'pfDeepCSVJetTags:probbb',
+    btagVector2017 = [
         'pfDeepFlavourJetTags:probb',
         'pfDeepFlavourJetTags:probbb',
         'pfDeepFlavourJetTags:problepb',
@@ -119,48 +111,87 @@ if period == 'Run2016':
         'pfDeepFlavourJetTags:probuds',
         'pfDeepFlavourJetTags:probg'
     ]
+    btagVector.extend(btagVector2017)
+
+if period == 'Run2016':
+    btagVector2016 = [
+        'pfDeepFlavourJetTags:probb',
+        'pfDeepFlavourJetTags:probbb',
+        'pfDeepFlavourJetTags:problepb',
+        'pfDeepFlavourJetTags:probc',
+        'pfDeepFlavourJetTags:probuds',
+        'pfDeepFlavourJetTags:probg',
+        'pfDeepCSVJetTags:probudsg',
+        'pfDeepCSVJetTags:probb',
+        'pfDeepCSVJetTags:probc',
+        'pfDeepCSVJetTags:probbb'
+    ]
+    btagVector.extend(btagVector2016)
+
+
+jec_levels = ['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']
 
 updateJetCollection(
     process,
     jetSource = cms.InputTag('slimmedJets'),
     pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
     svSource = cms.InputTag('slimmedSecondaryVertices'),
-    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    jetCorrections = ('AK4PFchs', cms.vstring(jec_levels), 'None'),
     btagDiscriminators = btagVector,
     postfix='NewDFTraining'
 )
-process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
-                                   process.updatedPatJetsNewDFTraining *
-                                   process.patJetCorrFactorsTransientCorrectedNewDFTraining *
-                                   process.pfImpactParameterTagInfosNewDFTraining *
-                                   process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
-                                   process.pfDeepCSVTagInfosNewDFTraining *
-                                   process.pfDeepFlavourTagInfosNewDFTraining *
-                                   process.pfDeepFlavourJetTagsNewDFTraining *
-                                   process.updatedPatJetsTransientCorrectedNewDFTraining *
-                                   process.selectedUpdatedPatJetsNewDFTraining)
+if period == 'Run2016':
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       process.pfDeepCSVTagInfosNewDFTraining *
+                                       process.pfDeepCSVJetTagsNewDFTraining *
+                                       process.pfDeepFlavourTagInfosNewDFTraining *
+                                       process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
 
+if period == 'Run2017':
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       process.pfImpactParameterTagInfosNewDFTraining *
+                                       process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       process.pfDeepCSVTagInfosNewDFTraining *
+                                       process.pfDeepFlavourTagInfosNewDFTraining *
+                                       process.pfDeepFlavourJetTagsNewDFTraining *
+                                       process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
 
-
+if period == 'Run2018':
+    process.jecSequence = cms.Sequence(process.patJetCorrFactorsNewDFTraining *
+                                       process.updatedPatJetsNewDFTraining *
+                                       #process.patJetCorrFactorsTransientCorrectedNewDFTraining *
+                                       #process.pfImpactParameterTagInfosNewDFTraining *
+                                       #process.pfInclusiveSecondaryVertexFinderTagInfosNewDFTraining *
+                                       #process.updatedPatJetsTransientCorrectedNewDFTraining *
+                                       process.selectedUpdatedPatJetsNewDFTraining)
 
 
 ### MET filters for 2016 and MET recipe for 2016
 if period == 'Run2016':
-    process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
-    process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
-    process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+    #process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+    #process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+    #process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
-    process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
-    process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
-    process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+    #process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
+    #process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
+    #process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
-    runMetCorAndUncFromMiniAOD(process, isData = isData)
+    runMetCorAndUncFromMiniAOD(process, isData = isData or options.isEmbedded)
 
     MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
 ### MET filters for 2017 and MET recipe for 2017
-if period == 'Run2017':
+if period == 'Run2017' or period == 'Run2018':
     process.load('RecoMET.METFilters.ecalBadCalibFilter_cfi')
 
     baddetEcallist = cms.vuint32(
@@ -184,11 +215,12 @@ if period == 'Run2017':
         debug = cms.bool(False)
         )
 
+if period == 'Run2017':
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
 
     runMetCorAndUncFromMiniAOD (
             process,
-            isData = isData, # false for MC
+            isData = isData or options.isEmbedded, # false for MC
             fixEE2017 = True,
             fixEE2017Params = {'userawPt': True, 'ptThreshold':50.0, 'minEtaThreshold':2.65, 'maxEtaThreshold': 3.139} ,
             postfix = "ModifiedMET"
@@ -196,28 +228,22 @@ if period == 'Run2017':
 
     MetInputTag = cms.InputTag('slimmedMETsModifiedMET', '', processName)
 
+if period == 'Run2018':
+    MetInputTag = cms.InputTag('slimmedMETs')
+
 # Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco'} #add 2018 'Run2018': '2018-Prompt'
+ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco', 'Run2018': '2018-Prompt'}
 setupEgammaPostRecoSeq(process, runVID=True, runEnergyCorrections=False, era=ele_era[period])
 
-
-if period == 'Run2016':
-    tauSrc_InputTag = cms.InputTag('slimmedTaus')
-
-if period == 'Run2017':
-    import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
-    updatedTauName = "slimmedTausNewID"
-    tauIdEmbedder = tauIdConfig.TauIDEmbedder(
-        process, cms, debug = True, updatedTauName = updatedTauName,
-        toKeep = [ "2017v2", "2016v1", "deepTau2017v2",  "againstEle2018", ]
-    )
-    tauIdEmbedder.runTauID()
-    tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
-
-if period == 'Run2016':
-    tauAntiEle = importlib.import_module('h-tautau.Production.runTauAgainstElectron')
-    tauAntiEle.rerunAgainstElectron(process, process.NewTauIDsEmbedded)
+import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
+updatedTauName = "slimmedTausNewID"
+tauIdEmbedder = tauIdConfig.TauIDEmbedder(
+    process, cms, debug = True, updatedTauName = updatedTauName,
+    toKeep = [ "2017v2", "deepTau2017v2",  "againstEle2018", "2016v1"]
+)
+tauIdEmbedder.runTauID()
+tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
 
 
 ### Top gen level info
@@ -238,16 +264,24 @@ else:
 
 ### Tuple production sequence
 
-if period == 'Run2016':
-    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
-    objects_InputTag                 = cms.InputTag('selectedPatTrigger')
 
-if period == 'Run2017':
-    jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
-    objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
+objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+
+if period == 'Run2016' and options.isEmbedded :
+    objects_InputTag             = cms.InputTag('selectedPatTrigger')
+
+genJets_inputTag = cms.InputTag('slimmedGenJets')
+
+if period == 'Run2017' and options.isEmbedded :
+    genJets_inputTag = cms.InputTag('slimmedGenJetsAK8SoftDropSubJets')
+
+if period == 'Run2018' and options.isEmbedded :
+    genJets_inputTag = cms.InputTag('slimmedGenJetsAK8SoftDropSubJets')
+
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData),
+    isMC            = cms.bool(not isData or options.isEmbedded),
     saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
     lheEventProduct = cms.InputTag('externalLHEProducer'),
     genEvent        = cms.InputTag('generator'),
@@ -273,15 +307,16 @@ for channel in channels:
         fatJetSrc               = cms.InputTag('slimmedJetsAK8'),
         PUInfo                  = cms.InputTag('slimmedAddPileupInfo'),
         pfMETSrc                = MetInputTag,
+        genMetSrc               = cms.InputTag('genMetTrue'),
         prescales               = cms.InputTag('patTrigger'),
         objects                 = objects_InputTag,
         lheEventProducts        = cms.InputTag('externalLHEProducer'),
         genEventInfoProduct     = cms.InputTag('generator'),
         topGenEvent             = cms.InputTag('genEvt'),
         genParticles            = cms.InputTag('prunedGenParticles'),
-        genJets                 = cms.InputTag('slimmedGenJets'),
+        genJets                 = genJets_inputTag,
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
-        isMC                    = cms.bool(not isData),
+        isMC                    = cms.bool(not isData or options.isEmbedded),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),
@@ -296,6 +331,7 @@ for channel in channels:
         saveGenBosonInfo        = cms.bool(options.saveGenBosonInfo),
         saveGenJetInfo          = cms.bool(options.saveGenJetInfo),
         saveGenParticleInfo     = cms.bool(options.saveGenParticleInfo),
+        isEmbedded              = cms.bool(options.isEmbedded),
         rho                     = cms.InputTag('fixedGridRhoAll'),
     ))
 
@@ -310,12 +346,12 @@ if period == 'Run2016':
         process.egmGsfElectronIDSequence *
         process.egammaPostRecoSeq *
         process.jecSequence *
-        process.fullPatMetSequence *
-        process.BadPFMuonFilter *
-        process.BadChargedCandidateFilter *
-        process.topGenSequence *
         process.rerunMvaIsolationSequence *
-        process.rerunDiscriminationAgainstElectronMVA6 *
+        getattr(process, updatedTauName) *
+        process.fullPatMetSequence *
+        #process.BadPFMuonFilter *
+        #process.BadChargedCandidateFilter *
+        process.topGenSequence *
         process.tupleProductionSequence
     )
 
@@ -326,8 +362,19 @@ if period == 'Run2017':
         process.jecSequence *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
-        #process.fullPatMetSequence +
         process.fullPatMetSequenceModifiedMET *
+        process.ecalBadCalibReducedMINIAODFilter *
+        process.topGenSequence *
+        process.tupleProductionSequence
+    )
+
+if period == 'Run2018':
+    process.p = cms.Path(
+        process.egmGsfElectronIDSequence *
+        process.egammaPostRecoSeq *
+        process.jecSequence *
+        process.rerunMvaIsolationSequence *
+        getattr(process, updatedTauName) *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *
         process.tupleProductionSequence

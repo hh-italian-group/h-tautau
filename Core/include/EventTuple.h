@@ -31,6 +31,8 @@ using Point3D = analysis::Point3D_Float;
     LVAR(Int_t, gen_match) /* Generator matching, see Htautau Twiki*/\
     LVAR(LorentzVectorM, gen_p4) /* 4-momentum of the matched gen particle */ \
     LVAR(LorentzVectorM, gen_visible_p4) /* 4-momentum of the matched gen particle */ \
+    LVAR(Int_t, gen_chargedParticles) /* tau decay mode */ \
+    LVAR(Int_t, gen_neutralParticles) /* tau decay mode */ \
     LVAR(Int_t, decayMode) /* tau decay mode */ \
     LVAR(Bool_t, oldDecayModeFinding) /* tau passed the old decay mode finding requirements */ \
     LVAR(Bool_t, newDecayModeFinding) /* tau passed the new decay mode finding requirements */ \
@@ -68,10 +70,14 @@ using Point3D = analysis::Point3D_Float;
     JVAR(Float_t, deepFlavour_uds, col) /* Jet deepFlavour uds value */ \
     JVAR(Float_t, deepFlavour_g, col) /* Jet deepFlavour g value */ \
     JVAR(Float_t, rawf, col) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    JVAR(Int_t, pu_id, col) /* Jet MVA id value */ \
+    JVAR(uint16_t, pu_id, col) /* Jet MVA id value */ \
+    JVAR(Int_t, partonFlavour, col) \
     JVAR(Int_t, hadronFlavour, col) \
     JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \
-    JVAR(ULong64_t, triggerFilterMatch, col) /* Trigger filters matching bits */ \
+    JVAR(ULong64_t, triggerFilterMatch_0, col) /* Trigger filters matching bits */ \
+    JVAR(ULong64_t, triggerFilterMatch_1, col) /* Trigger filters matching bits */ \
+    JVAR(ULong64_t, triggerFilterMatch_2, col) /* Trigger filters matching bits */ \
+    JVAR(ULong64_t, triggerFilterMatch_3, col) /* Trigger filters matching bits */ \
     /**/
 
 #define FATJET_DATA(col) \
@@ -120,7 +126,7 @@ using Point3D = analysis::Point3D_Float;
     VAR(Double_t, weight_xs_withTopPt) \
     VAR(Double_t, weight_total) \
     VAR(Double_t, weight_total_withTopPt) \
-    VAR(Bool_t,isData) \
+    VAR(Bool_t, isData) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -182,6 +188,7 @@ using Point3D = analysis::Point3D_Float;
     VAR(UInt_t, jets_nTotal_hadronFlavour_c) \
     VAR(std::vector<LorentzVectorE>, genJets_p4) \
     VAR(std::vector<Int_t>, genJets_hadronFlavour) \
+    VAR(LorentzVectorM, genMET_p4) \
     /* Vetos */\
     VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \

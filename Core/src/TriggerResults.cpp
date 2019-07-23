@@ -1,7 +1,7 @@
 /*! Definition of class to represent trigger results.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
-#include "h-tautau/Analysis/include/TriggerResults.h"
+#include "h-tautau/Core/include/TriggerResults.h"
 #include <boost/regex.hpp>
 #include "AnalysisTools/Core/include/TextIO.h"
 
@@ -12,7 +12,7 @@ TriggerDescriptorCollection::JetTriggerObjectCollection::JetTriggerObjectCollect
 bool TriggerDescriptorCollection::JetTriggerObjectCollection::GetJetFilterMatchBit(size_t filter_index,
                                                                                    size_t jet_index) const
 {
-    return ( match_bits >> (filter_index * MaxNumberOfTriggerJets + jet_index) ) & 1;
+    return ((match_bits >> (filter_index * MaxNumberOfTriggerJets + jet_index)) & BitsContainer(1)) != BitsContainer(0);
 }
 
 void TriggerDescriptorCollection::JetTriggerObjectCollection::SetJetFilterMatchBit(size_t filter_index,
@@ -23,9 +23,9 @@ void TriggerDescriptorCollection::JetTriggerObjectCollection::SetJetFilterMatchB
     match_bits = match_result ? match_bits | mask : match_bits & ~mask;
 }
 
-TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, boost::optional<double> _eta, bool _applyL1match,
+TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, double _delta_pt, boost::optional<double> _eta, bool _applyL1match,
     const FilterVector& _filters)
-    : type(_type), pt(_pt), eta(_eta), applyL1match(_applyL1match), filters(_filters) { }
+    : type(_type), pt(_pt), delta_pt(_delta_pt), eta(_eta), applyL1match(_applyL1match), filters(_filters) { }
 
 TriggerDescriptorCollection::TriggerDescriptor::TriggerDescriptor(const Pattern _pattern,
                                                                   const std::vector<Leg>& legs_info) :
@@ -71,7 +71,7 @@ void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<
 {
     if(desc_indices.count(pattern))
         throw exception("Duplicated trigger pattern '%1%'.") % pattern;
-    if(descriptors.size() == MaxNumberOfTriggers)
+    if(descriptors.size() == TriggerResults::MaxNumberOfTriggers)
         throw exception("Maximal number of triggers is exceeded.");
     desc_indices[pattern] = descriptors.size();
     descriptors.emplace_back(pattern, legs);
@@ -91,7 +91,7 @@ void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<
     }
 }
 
-bool TriggerDescriptorCollection::FindPatternMatch(const std::string& path_name, size_t& index)
+bool TriggerDescriptorCollection::FindPatternMatch(const std::string& path_name, size_t& index) const
 {
     auto iter = path_index_cache.find(path_name);
     if(iter == path_index_cache.end()) {
@@ -119,11 +119,79 @@ size_t TriggerDescriptorCollection::GetIndex(const Pattern& pattern) const
     return desc_indices.at(pattern);
 }
 
-TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::GetJetFilterMatchBits(
-    BitsContainer match_bits, unsigned filter_index) const
+TriggerDescriptorCollection::FilterBitsContainer TriggerDescriptorCollection::GetJetFilterMatchBits(
+    BitsContainer match_bits, unsigned filter_index)
 {
-    static constexpr BitsContainer mask((1 << MaxNumberOfTriggerJets) - 1);
-    return ( match_bits >> (filter_index * MaxNumberOfTriggerJets) ) & mask;
+    static constexpr FilterBitsContainer mask((FilterBitsContainer(1) << MaxNumberOfTriggerJets) - 1);
+    const auto filter_bits = (match_bits >> (filter_index * MaxNumberOfTriggerJets)).convert_to<FilterBitsContainer>();
+    return filter_bits & mask;
+}
+
+TriggerDescriptorCollection::RootBitsContainer TriggerDescriptorCollection::ConvertToRootRepresentation(
+    BitsContainer match_bits)
+{
+    static const BitsContainer mask = (BitsContainer(1) << std::numeric_limits<RootBitsContainerUnit>::digits) - 1;
+    RootBitsContainer result;
+    for(size_t n = 0; n < result.size(); ++n) {
+        result[n] = ((match_bits >> (std::numeric_limits<RootBitsContainerUnit>::digits * n))
+                     & mask).convert_to<RootBitsContainerUnit>();
+    }
+    return result;
+}
+
+TriggerDescriptorCollection::BitsContainer TriggerDescriptorCollection::ConvertFromRootRepresentation(
+    const RootBitsContainer& match_bits)
+{
+    BitsContainer result(0);
+    for(size_t n = 0; n < match_bits.size(); ++n)
+        result |= (BitsContainer(match_bits[n]) << (std::numeric_limits<RootBitsContainerUnit>::digits * n));
+    return result;
+}
+
+std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(const std::string& cfg_name, const Channel& channel)
+{
+    std::shared_ptr<TriggerDescriptorCollection> triggerDescriptors = std::make_shared<TriggerDescriptorCollection>();
+    trigger_tools::SetupDescriptor setup;
+
+    trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors;
+    analysis::ConfigReader config_reader;
+    trigger_tools::TriggerFileConfigEntryReader trigger_entry_reader(trigger_file_descriptors);
+    config_reader.AddEntryReader("PATTERN", trigger_entry_reader, true);
+
+    trigger_tools::SetupDescriptorCollection setup_file_descriptors;
+    trigger_tools::SetupConfigEntryReader setup_entry_reader(setup_file_descriptors);
+    config_reader.AddEntryReader("SETUP", setup_entry_reader, false);
+
+    //const std::string triggerCfg_full = edm::FileInPath(cfg_name).fullPath();
+    config_reader.ReadConfig(cfg_name);
+
+    if(setup_file_descriptors.size() != 1)
+        throw exception("More than 1 setup in Reading Trigger Tools cfg");
+    setup = setup_file_descriptors.begin()->second;
+
+    for(const auto& entry : trigger_file_descriptors.get_ordered_by_insertion()) {
+        const trigger_tools::TriggerFileDescriptor* trigger_file_descriptor = entry.second;
+        if(!trigger_file_descriptor->channels.count(channel)) continue;
+        const auto& legs = trigger_file_descriptor->legs;
+        std::vector<TriggerDescriptorCollection::Leg> legs_vector;
+        for (size_t n = 0; n < legs.size(); ++n){
+            const analysis::PropertyList leg_list = analysis::Parse<analysis::PropertyList>(legs.at(n));
+            const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
+            const double pt = leg_list.Get<double>("pt");
+            const double delta_pt = setup.deltaPt_map.at(type);
+            boost::optional<double> eta;
+            if(leg_list.Has("eta"))
+                eta = leg_list.Get<double>("eta");
+            bool applyL1match = false;
+            if(leg_list.Has("applyL1match"))
+                applyL1match = leg_list.Get<bool>("applyL1match");
+            const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
+            legs_vector.emplace_back(type,pt,delta_pt,eta,applyL1match,filters);
+        }
+        (*triggerDescriptors).Add(entry.first, legs_vector);
+    }
+
+    return triggerDescriptors;
 }
 
 const std::vector<std::string>& TriggerDescriptorCollection::GetJetFilters() const { return jet_filters; }
@@ -154,11 +222,20 @@ bool TriggerResults::AnyAccept() const { return accept_bits.any(); }
 bool TriggerResults::AnyMatch() const { return match_bits.any(); }
 bool TriggerResults::AnyAcceptAndMatch() const { return (accept_bits & match_bits).any(); }
 
-bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::MatchEx(size_t index, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!Match(index)) return false;
 
     const auto& desc = GetTriggerDescriptors().at(index);
+
+
+    const TriggerDescriptorCollection::Leg& first_leg = desc.lepton_legs.at(0);
+    if(pt_firstLeg <= first_leg.pt + first_leg.delta_pt) return false;
+    if(desc.lepton_legs.size() > 1){
+      const TriggerDescriptorCollection::Leg& second_leg = desc.lepton_legs.at(1);
+      if(pt_secondLeg <= second_leg.pt + second_leg.delta_pt) return false;
+    }
+
     const size_t n_legs = desc.jet_legs.size();
     if(reco_jet_matches.size() < n_legs) return false;
 
@@ -167,9 +244,9 @@ bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& rec
     if(n_legs == 1) {
         bool match_found = false;
         for(size_t reco_jet_index = 0; !match_found && reco_jet_index < reco_jet_matches.size(); ++reco_jet_index) {
-            BitsContainer match_bits = std::numeric_limits<BitsContainer>::max();
+            FilterBitsContainer match_bits = std::numeric_limits<FilterBitsContainer>::max();
             for(unsigned filter_index : desc.jet_legs.at(0).jet_filter_indices) {
-                match_bits &= GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
+                match_bits &= TriggerDescriptorCollection::GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
             }
             match_found = match_bits != 0;
         }
@@ -179,14 +256,14 @@ bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& rec
     if(n_legs == 2 && reco_jet_matches.size() == 2) {
         bool match_found = false;
         for(size_t flip = 0; !match_found && flip < n_legs; ++flip) {
-            std::vector<BitsContainer> match_bits(n_legs, std::numeric_limits<BitsContainer>::max());
+            std::vector<FilterBitsContainer> match_bits(n_legs, std::numeric_limits<FilterBitsContainer>::max());
             for(size_t n = 0; n < n_legs; ++n) {
                 const size_t reco_jet_index = (n + flip) % 2;
                 for(unsigned filter_index : desc.jet_legs.at(n).jet_filter_indices) {
-                    match_bits.at(n) &= GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
+                    match_bits.at(n) &= TriggerDescriptorCollection::GetJetFilterMatchBits(reco_jet_matches.at(reco_jet_index), filter_index);
                 }
             }
-            const Bits cmb(match_bits.at(0) | match_bits.at(1));
+            const std::bitset<TriggerDescriptorCollection::MaxNumberOfJetFilters> cmb(match_bits.at(0) | match_bits.at(1));
             match_found = match_bits.at(0) != 0 && match_bits.at(1) != 0 && cmb.count() >= n_legs;
         }
         return match_found;
@@ -195,36 +272,36 @@ bool TriggerResults::MatchEx(size_t index, const std::vector<BitsContainer>& rec
     throw exception("Unsupported number of jet trigger legs.");
 }
 
-bool TriggerResults::AcceptAndMatchEx(size_t index, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AcceptAndMatchEx(size_t index, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AcceptAndMatch(index)) return false;
-    return MatchEx(index, reco_jet_matches);
+    return MatchEx(index,pt_firstLeg,pt_secondLeg,reco_jet_matches);
 }
 
-bool TriggerResults::MatchEx(const Pattern& pattern, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::MatchEx(const Pattern& pattern, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
-    return MatchEx(GetIndex(pattern), reco_jet_matches);
+    return MatchEx(GetIndex(pattern),pt_firstLeg,pt_secondLeg, reco_jet_matches);
 }
 
-bool TriggerResults::AcceptAndMatchEx(const Pattern& pattern, const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AcceptAndMatchEx(const Pattern& pattern, double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
-    return AcceptAndMatchEx(GetIndex(pattern), reco_jet_matches);
+    return AcceptAndMatchEx(GetIndex(pattern), pt_firstLeg, pt_secondLeg, reco_jet_matches);
 }
 
-bool TriggerResults::AnyMatchEx(const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AnyMatchEx(double pt_firstLeg, double pt_secondLeg,const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AnyMatch()) return false;
     for(size_t n = 0; n < GetTriggerDescriptors().size(); ++n) {
-        if(MatchEx(n, reco_jet_matches)) return true;
+        if(MatchEx(n,pt_firstLeg,pt_secondLeg,reco_jet_matches)) return true;
     }
     return false;
 }
 
-bool TriggerResults::AnyAcceptAndMatchEx(const std::vector<BitsContainer>& reco_jet_matches) const
+bool TriggerResults::AnyAcceptAndMatchEx(double pt_firstLeg, double pt_secondLeg, const std::vector<JetBitsContainer>& reco_jet_matches) const
 {
     if(!AnyAcceptAndMatch()) return false;
     for(size_t n = 0; n < GetTriggerDescriptors().size(); ++n) {
-        if(AcceptAndMatchEx(n, reco_jet_matches)) return true;
+        if(AcceptAndMatchEx(n,pt_firstLeg,pt_secondLeg,reco_jet_matches)) return true;
     }
 
     return false;
@@ -244,12 +321,5 @@ const TriggerDescriptorCollection& TriggerResults::GetTriggerDescriptors() const
 }
 
 size_t TriggerResults::GetIndex(const Pattern& pattern) const { return GetTriggerDescriptors().GetIndex(pattern); }
-
-TriggerResults::BitsContainer TriggerResults::GetJetFilterMatchBits(BitsContainer match_bits,
-                                                                    unsigned filter_index) const
-{
-    static constexpr BitsContainer mask((1 << MaxNumberOfTriggerJets) - 1);
-    return ( match_bits >> (filter_index * MaxNumberOfTriggerJets) ) & mask;
-}
 
 } // namespace nutple

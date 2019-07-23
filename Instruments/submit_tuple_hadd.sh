@@ -11,10 +11,10 @@ QUEUE="$1"
 JOB_LIST_FILE="$2"
 TUPLE_OUTPUT_PATH="$3"
 CRAB_OUTPUT_PATHS="${@:4}"
-MERGE_EXE=$CMSSW_BASE/build/AnalysisTools/MergeRootFiles
+MERGE_EXE=$CMSSW_BASE/build/h-tautau/TupleMerger
 
 if [ ! -f $MERGE_EXE ] ; then
-	echo "ERROR: MergeRootFiles executable not found."
+	echo "ERROR: TupleMerger executable not found."
 	exit 1
 fi
 

@@ -52,7 +52,7 @@ public:
 
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data()));
+        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data(),Parse<Channel>(args.tree_name())));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
@@ -60,7 +60,7 @@ public:
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
 
-            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,args.period(), jet_ordering);
+            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),args.period(), jet_ordering);
             if(!event.is_initialized()) continue;
             if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;

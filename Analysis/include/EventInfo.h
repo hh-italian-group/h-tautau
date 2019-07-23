@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/Candidate.h"
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Core/include/SummaryTuple.h"
+#include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
@@ -20,7 +21,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SVfitAnaInterface.h"
 #include "KinFitInterface.h"
 #include "MT2.h"
-#include "TriggerResults.h"
+
 #include "SignalObjectSelector.h"
 
 #include <numeric>
@@ -33,79 +34,22 @@ using JetCandidate = Candidate<ntuple::TupleJet>;
 using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
 using MET = MissingET<ntuple::TupleMet>;
 
-namespace jet_ordering {
 
-    template<typename LorentzVector>
-    struct JetInfo {
-        LorentzVector p4;
-        size_t index;
-        double tag;
-
-        JetInfo() : index(0), tag(0.0) { }
-
-        JetInfo(const LorentzVector _p4, size_t _index, double _tag)
-            : p4(_p4), index(_index), tag(_tag) { }
-
-    };
-
-    template<typename LorentzVector>
-    bool CompareJets(const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2,
-                     double pt_thr, double eta_thr)
-    {
-        const auto eta1 = std::abs(jet_1.p4.eta());
-        const auto eta2 = std::abs(jet_2.p4.eta());
-        if(eta1 < eta_thr && eta2 >= eta_thr) return true;
-        if(eta1 >= eta_thr && eta2 < eta_thr) return false;
-        const auto pt1 = jet_1.p4.pt();
-        const auto pt2 = jet_2.p4.pt();
-        if(pt1 > pt_thr && pt2 <= pt_thr) return true;
-        if(pt1 <= pt_thr && pt2 > pt_thr) return false;
-
-        if(jet_1.tag != jet_2.tag)
-            return jet_1.tag > jet_2.tag;
-        return pt1 > pt2;
-    };
-
-    template<typename LorentzVector>
-    std::vector<JetInfo<LorentzVector>> OrderJets(
-                                  const std::vector<JetInfo<LorentzVector>>& jet_info_vector,
-                                  bool apply_hard_cut,
-                                  double pt_cut = std::numeric_limits<double>::lowest(),
-                                  double eta_cut = std::numeric_limits<double>::max())
-    {
-        const auto comparitor = [&](const JetInfo<LorentzVector>& jet_1,
-                                    const JetInfo<LorentzVector>& jet_2) -> bool {
-            return analysis::jet_ordering::CompareJets(jet_1, jet_2, pt_cut, eta_cut);
-        };
-
-        std::vector<JetInfo<LorentzVector>> jets_ordered;
-        if(apply_hard_cut){
-            for(size_t n = 0; n < jet_info_vector.size(); ++n) {
-                if(jet_info_vector.at(n).p4.Pt() > pt_cut && std::abs(jet_info_vector.at(n).p4.eta()) < eta_cut)
-                    jets_ordered.push_back(jet_info_vector.at(n));
-            }
-        }
-        else
-            jets_ordered = jet_info_vector;
-        std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
-        return jets_ordered;
-    }
-
-}
 
 class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary, const std::string& _uncertainties_source = "");
-    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors(Channel channel) const;
+    explicit SummaryInfo(const ProdSummary& _summary, const Channel& _channel, const std::string& _uncertainties_source = "",
+                         const std::string& _trigger_cfg = "");
+    std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors() const;
     const ProdSummary& operator*() const;
     const ProdSummary* operator->() const;
     const jec::JECUncertaintiesWrapper& GetJecUncertainties() const;
 
 private:
     ProdSummary summary;
-    std::map<Channel, std::shared_ptr<TriggerDescriptorCollection>> triggerDescriptors;
+    std::shared_ptr<const TriggerDescriptorCollection> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
 
 };
@@ -121,29 +65,14 @@ public:
     using Lock = std::lock_guard<Mutex>;
     using HiggsTTCandidate = CompositeCandidate<LepCandidate, LepCandidate>;
 
-    struct SelectedSignalJets{
-        JetPair selectedBjetPair;
-        JetPair selectedVBFjetPair;
-        size_t n_bjets;
 
-        SelectedSignalJets();
-        bool HasBjetPair(size_t njets) const;
-        bool HasVBFPair(size_t njets) const;
-        bool isSelectedBjet(size_t n) const;
-        bool isSelectedVBFjet(size_t n) const;
-    };
-
-    static SelectedSignalJets SelectSignalJets(const Event& event,
-                                               const analysis::Period& period,
-                                               JetOrdering jet_ordering,
-                                               size_t selected_higgs_index);
     std::array<size_t,2> GetSelectedBjetIndices() const;
     std::set<size_t> GetSelectedBjetIndicesSet() const;
 
     Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
 
     EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
-                  size_t _selected_htt_index, const SelectedSignalJets& _selected_signal_jets,
+                  size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
 
@@ -168,7 +97,7 @@ public:
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
-    const SelectedSignalJets& GetSelectedSignalJets() const;
+    const SignalObjectSelector::SelectedSignalJets& GetSelectedSignalJets() const;
     Period GetPeriod() const;
     JetOrdering GetJetOrdering() const;
 
@@ -255,21 +184,8 @@ protected:
     size_t selected_htt_index;
 
 private:
-    template<typename LorentzVector>
-    static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, int jets_pu_id)
-    {
-        if(period !=  analysis::Period::Run2017)
-            return true;
-
-        const double abs_eta = std::abs(jet_p4.eta());
-        return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
-                    abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                    abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto && (jets_pu_id & (1 << 2)) == 0);
-    }
-
-private:
     EventIdentifier eventIdentifier;
-    SelectedSignalJets selected_signal_jets;
+    SignalObjectSelector::SelectedSignalJets selected_signal_jets;
     Period period;
     JetOrdering jet_ordering;
 
@@ -296,7 +212,6 @@ private:
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo = nullptr,
-                                               TauIdDiscriminator discr = TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
                                                Period period = analysis::Period::Run2017,
                                                JetOrdering jet_ordering = JetOrdering::DeepCSV);
 
