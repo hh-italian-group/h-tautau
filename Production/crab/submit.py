@@ -13,7 +13,6 @@ parser.add_argument('--work-area', required=False, dest='workArea', type=str, de
                     help="Work area")
 parser.add_argument('--cfg', required=True, dest='cfg', type=str, help="CMSSW configuration file")
 parser.add_argument('--site', required=True, dest='site', type=str, help="Site for stage out.")
-parser.add_argument('--dryrun', action="store_true", help="Submission dryrun.")
 parser.add_argument('--output', required=True, dest='output', type=str,
                     help="output path after /store/user/USERNAME")
 parser.add_argument('--blacklist', required=False, dest='blacklist', type=str, default="",
@@ -26,10 +25,12 @@ parser.add_argument('--lumiMask', required=False, dest='lumiMask', type=str, def
 					help="json file with a lumi mask (default: apply lumi mask from the config file)")
 parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', type=str, default="",
 					help="suffix that will be added to each job name")
-parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=-1,
-					help="number of units per job (default: use values from the config file)")
+parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=1000,
+					help="number of units per job")
 parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2500,
 					help="maximum amount of memory (in MB) a job is allowed to use (default: 2500 MB )")
+parser.add_argument('--numCores', required=False, type=int, default=1, help="number of cores per job (default: 1)")
+parser.add_argument('--allowNonValid', action="store_true", help="Allow nonvalid dataset as an input.")
 parser.add_argument('job_file', type=str, nargs='+', help="text file with jobs descriptions")
 args = parser.parse_args()
 
@@ -44,8 +45,10 @@ config.General.workArea = args.workArea
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = args.cfg
 config.JobType.maxMemoryMB = args.maxMemory
+config.JobType.numCores = args.numCores
 
 config.Data.inputDBS = 'global'
+config.Data.allowNonValidInputDataset = args.allowNonValid
 config.General.transferOutputs = True
 config.General.transferLogs = True
 config.Data.publication = False
@@ -66,7 +69,7 @@ try:
         job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
         print job_file
         print job_collection
-        job_collection.submit(config,args.dryrun)
+        job_collection.submit(config)
 except RuntimeError as err:
     print >> sys.stderr, "ERROR:", str(err)
     sys.exit(1)

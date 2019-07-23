@@ -4,11 +4,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "AnalysisTools/Core/include/EventIdentifier.h"
-#include "AnalysisTools/Core/include/Tools.h"
-#include "AnalysisTools/Core/include/AnalysisMath.h"
-#include "h-tautau/Core/include/AnalysisTypes.h"
-#include "h-tautau/Core/include/EventTuple.h"
-#include "h-tautau/Core/include/TauIdResults.h"
 
 namespace ntuple {
 
@@ -85,14 +80,15 @@ TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id)
 }
 
 const LorentzVectorE& TupleJet::p4() const { return event->jets_p4.at(jet_id); }
+analysis::DiscriminatorIdResults TupleJet::GetPuId() const
+{
+    analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id.at(jet_id));
+    return jet_pu_id;
+}
+
 bool TupleJet::PassPuId(DiscriminatorWP wp) const {
-    if(wp == DiscriminatorWP::Loose)
-        return event->jets_pu_id.at(jet_id) & (1 << 2);
-    if(wp == DiscriminatorWP::Medium)
-        return event->jets_pu_id.at(jet_id) & (1 << 1);
-    if(wp == DiscriminatorWP::Tight)
-        return event->jets_pu_id.at(jet_id) & (1 << 0);
-    return false;
+    analysis::DiscriminatorIdResults jet_pu_id = GetPuId();
+    return jet_pu_id.Passed(wp);
 }
 TupleObject::DiscriminatorResult TupleJet::csv() const { return event->jets_csv.at(jet_id); }
 TupleObject::DiscriminatorResult TupleJet::deepcsv() const { return event->jets_deepCsv_BvsAll.at(jet_id); }
@@ -101,11 +97,22 @@ TupleObject::DiscriminatorResult TupleJet::deepFlavour() const
     return event->jets_deepFlavour_b.at(jet_id) + event->jets_deepFlavour_bb.at(jet_id)
            + event->jets_deepFlavour_lepb.at(jet_id);
 }
+TupleObject::Integer TupleJet::partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
 TupleObject::Integer TupleJet::hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
 TupleObject::RealNumber TupleJet::rawf() const { return event->jets_rawf.at(jet_id); }
 TupleObject::RealNumber TupleJet::resolution() const { return event->jets_resolution.at(jet_id); }
-ULong64_t TupleJet::triggerFilterMatch() const { return event->jets_triggerFilterMatch.at(jet_id); }
 size_t TupleJet::jet_index() const { return jet_id; }
+
+TupleJet::FilterBits TupleJet::triggerFilterMatch() const
+{
+    analysis::TriggerDescriptorCollection::RootBitsContainer match_bits = {{
+        event->jets_triggerFilterMatch_0.at(jet_id),
+        event->jets_triggerFilterMatch_1.at(jet_id),
+        event->jets_triggerFilterMatch_2.at(jet_id),
+        event->jets_triggerFilterMatch_3.at(jet_id),
+    }};
+    return analysis::TriggerDescriptorCollection::ConvertFromRootRepresentation(match_bits);
+}
 
 TupleSubJet::TupleSubJet(const ntuple::Event& _event, size_t _jet_id)
     : TupleObject(_event), jet_id(_jet_id)

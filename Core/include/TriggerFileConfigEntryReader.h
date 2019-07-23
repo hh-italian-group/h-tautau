@@ -8,26 +8,18 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace trigger_tools {
 
-class TriggerFileConfigEntryReader : public analysis::ConfigEntryReaderT<TriggerFileDescriptor> {
+class TriggerFileConfigEntryReader : public analysis::ConfigEntryReader {
 public:
-    using Condition = ConfigEntryReader::Condition;
-    using ConfigEntryReaderT<TriggerFileDescriptor>::ConfigEntryReaderT;
+    TriggerFileConfigEntryReader(TriggerFileDescriptorCollection& _descriptors);
 
-    virtual void EndEntry() override
-    {
-        CheckReadParamCounts("channels", 1, Condition::less_equal);
-        CheckReadParamCounts("leg", 0, Condition::greater_equal);
-
-        ConfigEntryReaderT<TriggerFileDescriptor>::EndEntry();
-    }
-
+    virtual void StartEntry(const std::string& name, const std::string& reference_name) override;
+    virtual void EndEntry() override;
     virtual void ReadParameter(const std::string& /*param_name*/, const std::string& /*param_value*/,
-                               std::istringstream& /*ss*/) override
-    {
-        ParseEnumList("channels", current.channels);
-        ParseEntry("leg", current.legs);
+                               std::istringstream& /*ss*/) override;
 
-    }
+private:
+    TriggerFileDescriptor current;
+    TriggerFileDescriptorCollection* descriptors;
 };
 
 class SetupConfigEntryReader : public analysis::ConfigEntryReaderT<SetupDescriptor> {

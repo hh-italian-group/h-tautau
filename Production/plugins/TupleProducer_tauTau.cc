@@ -23,8 +23,11 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.electronVeto = selection.other_electrons.size();
     selection.muonVeto = selection.other_muons.size();
 
-    cut(!selection.electronVeto, "no_extra_ele");
-    cut(!selection.muonVeto, "no_extra_muon");
+    auto other_tight_electrons = CollectVetoElectrons(true);
+    cut(other_tight_electrons.empty(), "tightElectronVeto");
+
+    auto other_tight_muons = CollectVetoMuons(true);
+    cut(other_tight_muons.empty(), "tightElectronVeto");
 
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 1, "taus");
@@ -81,6 +84,10 @@ void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut)
 void TupleProducer_tauTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
+
+    Lock lock(eventTuple.GetMutex());
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::TauTau);

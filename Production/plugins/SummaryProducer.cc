@@ -11,17 +11,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
 
-#include "AnalysisTools/Core/include/Tools.h"
-#include "h-tautau/Core/include/SummaryTuple.h"
-#include "h-tautau/Core/include/EventTuple.h"
-#include "h-tautau/Analysis/include/TriggerResults.h"
-#include "h-tautau/Production/interface/GenTruthTools.h"
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "AnalysisTools/Core/include/Tools.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
-#include "h-tautau/Production/interface/TriggerFileDescriptor.h"
-#include "h-tautau/Production/interface/TriggerFileConfigEntryReader.h"
-#include "h-tautau/Production/interface/TriggerTools.h"
+#include "h-tautau/Core/include/EventTuple.h"
+#include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TauIdResults.h"
+#include "h-tautau/Production/interface/GenTruthTools.h"
+
 
 class SummaryProducer : public edm::EDAnalyzer {
 public:
@@ -30,7 +27,6 @@ public:
     using GenEventCountMap = ntuple::GenEventCountMap;
     using GenEventTypeCountMap = ntuple::GenEventTypeCountMap;
     using Channel = analysis::Channel;
-    using TriggerDescriptorCollection = analysis::TriggerDescriptorCollection;
 
     SummaryProducer(const edm::ParameterSet& cfg) :
         start(clock::now()),
@@ -48,26 +44,6 @@ public:
             expressTuple = std::shared_ptr<ntuple::ExpressTuple>(
                     new ntuple::ExpressTuple("all_events", &edm::Service<TFileService>()->file(), false));
 
-        trigger_tools::SetupDescriptor setup;
-        const auto& triggerCfg = cfg.getParameter<std::string>("triggerCfg");
-        trigger_tools::TriggerFileDescriptorCollection trigger_file_descriptors = analysis::TriggerTools::ReadConfig(triggerCfg,setup);
-
-        std::map<Channel, TriggerDescriptorCollection> triggerDescriptors;
-        const std::vector<std::string> channelsStrings = cfg.getParameter<std::vector<std::string>>("channels");
-        for(const auto& channel_name : channelsStrings) {
-            const Channel channel = analysis::Parse<Channel>(channel_name);
-            triggerDescriptors[channel] = analysis::TriggerTools::CreateTriggerDescriptors(trigger_file_descriptors,channel);
-        }
-
-        for(const auto& channel_desc : triggerDescriptors) {
-            const Channel channel = channel_desc.first;
-            const int channel_id = static_cast<int>(channel);
-            const TriggerDescriptorCollection& descs = channel_desc.second;
-            for(size_t n = 0; n < descs.size(); ++n) {
-                (*summaryTuple)().triggers_channel.push_back(channel_id);
-                (*summaryTuple)().triggers_pattern.push_back(descs.at(n).pattern);
-            }
-        }
     }
 
 private:
@@ -133,16 +109,6 @@ private:
 
     virtual void endJob() override
     {
-        for(const auto& count_entry : genEventCountMap) {
-            (*summaryTuple)().lhe_n_partons.push_back(count_entry.first.n_partons);
-            (*summaryTuple)().lhe_n_b_partons.push_back(count_entry.first.n_b_partons);
-            (*summaryTuple)().lhe_ht10_bin.push_back(count_entry.first.ht10_bin);
-            (*summaryTuple)().lhe_n_events.push_back(count_entry.second);
-        }
-        for(const auto& count_entry : genEventTypeCountMap) {
-            (*summaryTuple)().genEventType.push_back(static_cast<int>(count_entry.first));
-            (*summaryTuple)().genEventType_n_events.push_back(count_entry.second);
-        }
         const auto stop = clock::now();
         (*summaryTuple)().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
         summaryTuple->Fill();

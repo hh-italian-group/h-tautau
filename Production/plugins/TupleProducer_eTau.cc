@@ -23,13 +23,17 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
 
     std::sort(electrons.begin(),electrons.end(),&LeptonComparitor<ElectronCandidate>);
     selection.electrons.push_back(electrons.at(0));
-    selection.other_electrons = CollectVetoElectrons({&electrons.at(0)});
+    selection.other_electrons = CollectVetoElectrons(false,{&electrons.at(0)});
     selection.electronVeto = selection.other_electrons.size();
-    cut(!selection.electronVeto, "no_extra_electron");
 
     selection.other_muons = CollectVetoMuons();
     selection.muonVeto = selection.other_muons.size();
-    cut(!selection.muonVeto, "no_extra_muon");
+
+    auto other_tight_electrons = CollectVetoElectrons(true,{&electrons.at(0)});
+    cut(other_tight_electrons.empty(), "tightElectronVeto");
+
+    auto other_tight_muons = CollectVetoMuons(true);
+    cut( other_tight_muons.empty(), "tightElectronVeto");
 
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");
@@ -89,7 +93,7 @@ void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron,
     cut(electron_xy < dxy, "dxy", electron_xy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const float passID = electron->electronID("mvaEleID-Fall17-noIso-V1-wp90");
+    const float passID = electron->electronID("mvaEleID-Fall17-noIso-V2-wp90");
     cut(passID > 0.5, "electronId");
 }
 
@@ -109,6 +113,10 @@ void TupleProducer_eTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) c
 void TupleProducer_eTau::FillEventTuple(const SelectionResultsBase& selection)
 {
     using Channel = analysis::Channel;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
+
+    Lock lock(eventTuple.GetMutex());
 
     BaseTupleProducer::FillEventTuple(selection);
     eventTuple().channelId = static_cast<int>(Channel::ETau);
