@@ -5,12 +5,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel, const std::string& _uncertainties_source,
+SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel,
                          const std::string& _trigger_cfg) :
                          summary(_summary)
 {
-    if(!_uncertainties_source.empty())
-        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(_uncertainties_source);
     if(!_trigger_cfg.empty()){
         triggerDescriptors = TriggerDescriptorCollection::Load(_trigger_cfg,_channel);
     }
@@ -387,12 +385,15 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
+                                               UncertaintySource uncertainty_source,
+                                               UncertaintyScale scale,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo,
                                                Period period,
                                                JetOrdering jet_ordering)
 {
-    boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event);
+    EventCandidate event_candidate(event,uncertainty_source,scale,period);
+    boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event_candidate);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
     SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event,period,jet_ordering,*selected_higgs_index);
     return EventInfoBase(event,summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);

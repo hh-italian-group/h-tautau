@@ -43,7 +43,7 @@ ENUM_NAMES(EventEnergyScale) = {
     { EventEnergyScale::TopPtUp, "TopPtUp" }, { EventEnergyScale::TopPtDown, "TopPtDown" },
 };
 
-enum class UncertaintyScale { Central = 0, Up = 1, Down = 2 };
+enum class UncertaintyScale { Central = 0, Up = 1, Down = -1 };
 ENUM_NAMES(UncertaintyScale) = {
     { UncertaintyScale::Central, "Central" }, { UncertaintyScale::Up, "Up" }, { UncertaintyScale::Down, "Down" }
 };

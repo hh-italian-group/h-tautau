@@ -38,7 +38,7 @@ SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
         throw analysis::exception("Signal Mode for SignalObjectSelector constructor not supported");
 }
 
-bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const
+bool SignalObjectSelector::PassLeptonSelection(const LepCandidate& lepton, Channel channel) const
 {
     if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
         return PassHTT_LeptonSelection(lepton,channel,mode == SignalMode::HTT_sync);
@@ -55,8 +55,9 @@ bool SignalObjectSelector::PassLeptonSelection(const ntuple::TupleLepton& lepton
     throw analysis::exception("Signal Mode for SignalObjectSelector class not supported");
 }
 
-boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const ntuple::Event& event) const
+boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const EventCandidate& event_candidate) const
 {
+    const ntuple::Event& event = event_candidate.GetEvent();
     std::vector<ntuple::TupleLepton> lepton_candidates;
     for(size_t n = 0; n < event.lep_p4.size(); ++n)
         lepton_candidates.emplace_back(event, n);
@@ -102,11 +103,11 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const ntupl
 bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) const
 {
     for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
-        if(event.other_lepton_type.at(n) == LegType::e){
+        if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::e){
           analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
           if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
         }
-        if(event.other_lepton_type.at(n) == LegType::mu){
+        if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
           analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
           if(muonId.Passed(DiscriminatorWP::Medium)) return false;
         }

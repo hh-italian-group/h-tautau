@@ -16,7 +16,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
-#include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
+#include "h-tautau/Analysis/include/EventCandidate.h"
 
 #include "SVfitAnaInterface.h"
 #include "KinFitInterface.h"
@@ -40,7 +40,7 @@ class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
 
-    explicit SummaryInfo(const ProdSummary& _summary, const Channel& _channel, const std::string& _uncertainties_source = "",
+    explicit SummaryInfo(const ProdSummary& _summary, const Channel& _channel,
                          const std::string& _trigger_cfg = "");
     std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors() const;
     const ProdSummary& operator*() const;
@@ -210,6 +210,8 @@ private:
 };
 
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
+                                               UncertaintySource uncertainty_source,
+                                               UncertaintyScale scale,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo = nullptr,
                                                Period period = analysis::Period::Run2017,

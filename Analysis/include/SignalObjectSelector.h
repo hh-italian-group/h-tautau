@@ -12,6 +12,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/Core/include/Candidate.h"
+#include "h-tautau/Analysis/include/EventCandidate.h"
 
 namespace analysis {
 
@@ -91,26 +92,16 @@ namespace jet_ordering {
 
 }
 
-class EventCandidate {
-public:
-  using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
-  using JetCandidate = Candidate<ntuple::TupleJet>;
-  using MET = MissingET<ntuple::TupleMet>;
-
-private:
-  std::shared_ptr<LepCandidate> lepton_candidate;
-  std::shared_ptr<JetCandidate> jet_candidate;
-  std::shared_ptr<MET> met_candidate;
-};
 
 class SignalObjectSelector {
 public:
     using JetPair = ntuple::JetPair;
+    using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
 
     SignalObjectSelector(SignalMode _mode);
 
-    bool PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event) const;
+    bool PassLeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    boost::optional<size_t> GetHiggsCandidateIndex(const EventCandidate& event_candidate) const;
     bool PassLeptonVetoSelection(const ntuple::Event& event) const;
     bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
 
@@ -144,12 +135,12 @@ public:
      }
 
 private:
-    bool PassHTT_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel, bool is_sync) const;
-    bool PassTauPOG_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    bool PassHH_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    bool PassHH_legacy_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    bool PassSkimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
-    bool PassTauPOG_Skimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
+    bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync) const;
+    bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    bool PassSkimmer_LeptonSelection(const LepCandidate& lepton) const;
+    bool PassTauPOG_Skimmer_LeptonSelection(const LepCandidate& lepton) const;
 
 
 
