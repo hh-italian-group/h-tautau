@@ -1,5 +1,5 @@
 /** \class reco::GenStatusFlags
- *
+ The original code can be found at https://github.com/cms-sw/cmssw/blob/master/DataFormats/HepMCCandidate/interface/GenStatusFlags.h
  * enum for generator status flags */
 
 
@@ -111,7 +111,8 @@ public:
     bool isLastCopyBeforeFSR() const { return flags[kIsLastCopyBeforeFSR]; }
     void setIsLastCopyBeforeFSR(bool b) { flags[kIsLastCopyBeforeFSR] = b; }
 
-// private:
+    const std::bitset<15>& getFlags() const {return flags;}
+ private:
      std::bitset<15> flags;
 
 

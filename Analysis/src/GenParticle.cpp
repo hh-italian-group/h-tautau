@@ -59,15 +59,14 @@ GenParticleSet GenEvent::GetParticles(int particle_pgd, bool requireIsLastCopy) 
     return results;
 }
 
-void GenEvent::GetTypesParticles(const std::set<particles::ParticleCode::ParticleType>& type_names, const GenParticle* mother, GenParticleSet& result) const
+void GenEvent::GetChosenParticlesTypes(const std::set<particles::ParticleType>& type_names, const GenParticle* mother, GenParticleSet& result) const
 {
     if(mother->genStatusFlags.isPrompt() && mother->genStatusFlags.isLastCopy() && particle_types.count(mother->pdg)
         && type_names.count(particle_types.at(mother->pdg))) {
-//        if(shared && areParented(mother,mother->daughters.at(0)) && areParented(mother,mother->daughters.at(1)) )
         result.insert(mother);
     } else {
         for(const GenParticle* daughter : mother->daughters)
-            GetTypesParticles(type_names, daughter, result);
+            GetChosenParticlesTypes(type_names, daughter, result);
     }
 }
 
@@ -75,7 +74,7 @@ bool GenEvent::areParented(const GenParticle* daughter, const GenParticle* mothe
 {
     for (size_t i = 0; i < daughter->mothers.size(); i++) {
         const GenParticle* mother_ = daughter->mothers.at(i);
-        if(mother_ == mother)
+        if(mother_ == mother || areParented(mother_, mother))
             return true;
         if(areParented(mother_,mother))
             return true;
@@ -83,14 +82,14 @@ bool GenEvent::areParented(const GenParticle* daughter, const GenParticle* mothe
     return false;
 }
 
-std::string& GenEvent::GetParticleName(int pdgId) const
+const std::string& GenEvent::GetParticleName(int pdgId)
 {
     auto iter = particle_names.find(pdgId);
     if(iter == particle_names.end()) throw exception("Name not found for particle with pdgId = %1%") % pdgId;
     return iter->second;
 }
 
-void GenEvent::intializeNames(const std::string& fileName)
+void GenEvent::InitializeParticleDataTable(const std::string& fileName)
 {
     particle_names.clear();
     particle_types.clear();
@@ -104,35 +103,41 @@ void GenEvent::intializeNames(const std::string& fileName)
         std::getline(f, line);
         if(line.empty() || line[0] == '#')
             continue;
-        auto pdg_name_type = SplitValueList(line, false, ",");
-        if(pdg_name_type.size() < 2)
+        auto pdg_name_type_charge = SplitValueList(line, false, ",");
+        if(pdg_name_type_charge.size() < 2)
             throw exception("Invalid particle definition (1): '%1%'") % line;
 
-        const int pdgId = Parse<int>(pdg_name_type.at(0));
-        const std::string& name = pdg_name_type.at(1);
+        const int pdgId = Parse<int>(pdg_name_type_charge.at(0));
+        const std::string& name = pdg_name_type_charge.at(1);
         if(particle_names.count(pdgId))
             throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
         particle_names[pdgId] = name;
 
-        if(pdg_name_type.size() > 2){
+        if(pdg_name_type_charge.size() >= 3){
 
-            const std::string& type_str = pdg_name_type.at(2);
+            const std::string& type_str = pdg_name_type_charge.at(2);
 
-            std::map<std::string, particles::ParticleCode::ParticleType> ParticleTypeMap;
+            std::map<std::string, particles::ParticleType> ParticleTypeMap;
             if(type_str == "baryon")
-                ParticleTypeMap[type_str] = particles::ParticleCode::ParticleType::baryon;
+                ParticleTypeMap[type_str] = particles::ParticleType::baryon;
             else if(type_str == "meson")
-                ParticleTypeMap[type_str] = particles::ParticleCode::ParticleType::meson;
+                ParticleTypeMap[type_str] = particles::ParticleType::meson;
 
             if(ParticleTypeMap.count(type_str)){
                 if(particle_types.count(pdgId))
                     throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
                 particle_types[pdgId] = ParticleTypeMap.at(type_str);
+
+//                std::ostringstream ss_type;
+//                ss_type << "particles::ParticleType::"<< type_str;
+//                std::string type = ss_type.str();
+
+//                particle_types[pdgId] = Parse<particles::ParticleType>(type);
             }
         }
 
-        if(pdg_name_type.size() == 4){
-            const int& charge = Parse<int>(pdg_name_type.at(3));
+        if(pdg_name_type_charge.size() >= 4){
+            const int& charge = Parse<int>(pdg_name_type_charge.at(3));
             if(particle_charge.count(pdgId))
                 throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
             particle_charge[pdgId] = charge;
@@ -147,16 +152,15 @@ void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) c
     const auto particleName = GetParticleName(pdgParticle);
     const int particleStatus = particle->status;
     const LorentzVectorM genParticle_momentum = particle->momentum;
-    const std::bitset<15> genStatusFlags_ = particle->genStatusFlags.flags ;
-    // for (unsigned n = 0; n < iteration; ++n)
-    //     std::cout << "  ";
+    const auto flag = particle->genStatusFlags.GenStatusFlags::getFlags();
+    const std::bitset<15> genStatusFlags_ = flag ;
     auto mothers_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
     std::cout << particleName                              << " <" << pdgParticle
               << "> pt=" << genParticle_momentum.Pt()      << " eta=" << genParticle_momentum.Eta()
               << " phi=" << genParticle_momentum.Phi()     << " E=" << genParticle_momentum.E()
-              << " m=" << genParticle_momentum.M()         << " index=" << particle->index
-              << " mother_index=" << mothers_index;
+              << " m=" << genParticle_momentum.M()         << " index=" << particle->index;
     if(particle->mothers.size() > 0){
+        std::cout  << " mother_index=" << mothers_index;
         for(size_t index_mother = 1; index_mother < particle->mothers.size(); ++index_mother)
             std::cout  << "," << particle->mothers.at(index_mother)->index;
     }
@@ -223,13 +227,25 @@ LorentzVectorM GenEvent::GetFinalStateMomentum(const GenParticle& particle, std:
     return p4;
 }
 
-std::map<int, std::string> GenEvent::particleNames() {return particle_names; }
+int GenEvent::GetParticleCharge(int pdg)
+{
+    if(particle_charge.count(pdg))
+        return particle_charge.at(pdg);
+    else
+        throw exception("pdg '%1%' not found ") %pdg;
+}
 
-std::map<int, int> GenEvent::particleCharge() {return particle_charge; }
+particles::ParticleType GenEvent::GetParticleType(int pdg)
+{
+    if(particle_types.count(pdg))
+        return particle_types.at(pdg);
+    else
+        throw exception("pdg '%1%' not found ") %pdg;
+}
 
 
 std::map<int, std::string> GenEvent::particle_names;
-std::map<int, particles::ParticleCode::ParticleType> GenEvent::particle_types;
+std::map<int, particles::ParticleType> GenEvent::particle_types;
 std::map<int,int> GenEvent::particle_charge;
 
 } //analysis

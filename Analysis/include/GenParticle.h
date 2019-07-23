@@ -9,7 +9,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/Particle.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "AnalysisTools/Core/include/exception.h"
-#include <iostream>
 #include <fstream>
 namespace analysis {
 
@@ -19,8 +18,6 @@ using GenParticleVector = std::vector<GenParticle>;
 using GenParticleSet = std::set<const GenParticle*>;
 using GenParticlePtrVector = std::vector<const GenParticle*>;
 using ParticleCodeMap = std::map<int,GenParticleSet>;
-using GenParticleVector2D = std::vector<GenParticlePtrVector>;
-
 
 class GenParticle {
 public:
@@ -48,15 +45,15 @@ public:
 
     GenParticleSet GetParticles(int particle_pgd, bool requireIsLastCopy) const;
 
-    void GetTypesParticles(const std::set<particles::ParticleCode::ParticleType>& type_names, const GenParticle* mother, GenParticleSet& result) const;
+    void GetChosenParticlesTypes(const std::set<particles::ParticleType>& type_names, const GenParticle* mother, GenParticleSet& result) const;
 
     bool areParented(const GenParticle* daughter, const GenParticle* mother) const;
 
-    std::string& GetParticleName(int pdgId) const;
+    static const std::string& GetParticleName(int pdgId);
 
-    static void intializeNames(const std::string& fileName);
+    static void InitializeParticleDataTable(const std::string& fileName);
 
-    void PrintChain(const GenParticle* particle, const std::string& pre) const;
+    void PrintChain(const GenParticle* particle, const std::string& pre = "") const;
 
     void Print() const;
 
@@ -65,12 +62,12 @@ public:
     LorentzVectorM GetFinalStateMomentum(const GenParticle& particle, std::vector<const GenParticle*>& visible_daughters,
                                        bool excludeInvisible, bool excludeLightLeptons);
 
-    static std::map<int, std::string> particleNames();
-    static std::map<int, int> particleCharge();
+    static int GetParticleCharge(int pdg);
+    static particles::ParticleType GetParticleType(int pdg);
 
 private:
     static std::map<int, std::string> particle_names;
-    static std::map<int, particles::ParticleCode::ParticleType> particle_types;
+    static std::map<int, particles::ParticleType> particle_types;
     static std::map<int, int> particle_charge;
 
 };

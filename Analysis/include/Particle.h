@@ -6,12 +6,35 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <string>
 #include <set>
 #include "AnalysisTools/Core/include/Tools.h"
+#include "AnalysisTools/Core/include/EnumNameMap.h"
 
 namespace particles {
 namespace ParticleCode {
 
     enum pdg {e= 11, mu =13, tau = 15 , b = 5, higgs = 25, nu_e = 12, nu_mu = 14, nu_tau = 16, gamma= 22, g= 21};
-    enum ParticleType {baryon, meson, lepton, diquark};
+
+    ENUM_NAMES(pdg) = {
+        { pdg::e, "e" },
+        { pdg::mu, "mu" },
+        { pdg::tau, "tau" },
+        { pdg::b, "b" },
+        { pdg::higgs, "higgs" },
+        { pdg::nu_e, "nu_e" },
+        { pdg::nu_mu, "nu_mu" },
+        { pdg::nu_tau, "nu_tau" },
+        { pdg::gamma, "gamma" },
+        { pdg::g, "g" }
+    };
+};
+
+enum class ParticleType {baryon, meson, lepton, diquark, boson};
+
+ENUM_NAMES(ParticleType) = {
+    { ParticleType::baryon, "baryon" },
+    { ParticleType::meson, "meson" },
+    { ParticleType::lepton, "lepton" },
+    { ParticleType::diquark, "diquark"},
+    { ParticleType::boson, "boson"}
 };
 
 inline const std::set<int>& neutrinos()
