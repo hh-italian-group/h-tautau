@@ -1,5 +1,4 @@
-EventAwareLumiBased
-globalTag=94X_mcRun2_asymptotic sampleType=Summer16MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+globalTag=94X_mcRun2_asymptotic_v3 sampleType=Summer16MC applyTriggerCut=False storeLHEinfo=True saveGenParticleInfo=True
 
 GluGluToBulkGravitonToHHTo2B2Tau_M-250_narrow	      /GluGluToBulkGravitonToHHTo2B2Tau_M-250_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 GluGluToBulkGravitonToHHTo2B2Tau_M-260_narrow	      /GluGluToBulkGravitonToHHTo2B2Tau_M-260_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM

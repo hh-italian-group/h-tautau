@@ -10,15 +10,3 @@ DY4JetsToLL_M-50                        /DY4JetsToLL_M-50_TuneCP5_13TeV-madgraph
 DYBBJetsToLL_M-50	                /DYBBJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM
 DYJetsToLL_M-10to50	                /DYJetsToLL_M-10to50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM
 DYJetsToLL_M-10to50	                /DYJetsToLL_M-10to50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM
-EmbeddingRun2018A_ElTauFinalState	/EmbeddingRun2018A/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018B_ElTauFinalState	/EmbeddingRun2018B/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018C_ElTauFinalState	/EmbeddingRun2018C/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018D_ElTauFinalState	/EmbeddingRun2018D/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018A_MuTauFinalState	/EmbeddingRun2018A/MuTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018B_MuTauFinalState	/EmbeddingRun2018B/MuTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018C_MuTauFinalState	/EmbeddingRun2018C/MuTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018D_MuTauFinalState	/EmbeddingRun2018D/MuTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018A_TauTauFinalState	/EmbeddingRun2018A/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018B_TauTauFinalState	/EmbeddingRun2018B/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018C_TauTauFinalState	/EmbeddingRun2018C/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
-EmbeddingRun2018D_TauTauFinalState	/EmbeddingRun2018D/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER

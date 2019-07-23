@@ -1,11 +1,11 @@
-EventAwareLumiBased /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt
-globalTag=94X_mcRun2_asymptotic sampleType=Run2016 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
+lumiMask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt
+globalTag=94X_mcRun2_asymptotic_v3 sampleType=Run2016 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
 
-SingleMuon_Run2016B-18Apr2017_ver1-v1		/SingleMuon/Run2016B-18Apr2017_ver1-v1/MINIAOD
-SingleMuon_Run2016B-18Apr2017_ver2-v1		/SingleMuon/Run2016B-18Apr2017_ver2-v1/MINIAOD
-SingleMuon_Run2016C-18Apr2017-v1        	/SingleMuon/Run2016C-18Apr2017-v1/MINIAOD
-SingleMuon_Run2016D-18Apr2017-v1        	/SingleMuon/Run2016D-18Apr2017-v1/MINIAOD
-SingleMuon_Run2016E-18Apr2017-v1        	/SingleMuon/Run2016E-18Apr2017-v1/MINIAOD
-SingleMuon_Run2016F-18Apr2017-v2        	/SingleMuon/Run2016F-18Apr2017-v2/MINIAOD
-SingleMuon_Run2016G-18Apr2017-v1        	/SingleMuon/Run2016G-18Apr2017-v1/MINIAOD
-SingleMuon_Run2016H-18Apr2017-v1        	/SingleMuon/Run2016H-18Apr2017-v1/MINIAOD
+SingleMuon_Run2016B	/SingleMuon/Run2016B-17Jul2018_ver1-v1/MINIAOD
+SingleMuon_Run2016B	/SingleMuon/Run2016B-17Jul2018_ver2-v1/MINIAOD
+SingleMuon_Run2016C	/SingleMuon/Run2016C-17Jul2018-v1/MINIAOD
+SingleMuon_Run2016D	/SingleMuon/Run2016D-17Jul2018-v1/MINIAOD
+SingleMuon_Run2016E	/SingleMuon/Run2016E-17Jul2018-v1/MINIAOD
+SingleMuon_Run2016F	/SingleMuon/Run2016F-17Jul2018-v1/MINIAOD
+SingleMuon_Run2016G	/SingleMuon/Run2016G-17Jul2018-v1/MINIAOD
+SingleMuon_Run2016H	/SingleMuon/Run2016H-17Jul2018-v1/MINIAOD

@@ -1,5 +1,4 @@
-EventAwareLumiBased
-globalTag=94X_mcRun2_asymptotic sampleType=Summer16MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+globalTag=94X_mcRun2_asymptotic sampleType=Summer16MC applyTriggerCut=False storeLHEinfo=True saveGenParticleInfo=True
 
 GluGluToHHTo2B2Tau_node_box	            /GluGluToHHTo2B2Tau_node_box_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 GluGluToHHTo2B2Tau_node_SM	            /GluGluToHHTo2B2Tau_node_SM_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
@@ -9,6 +8,3 @@ GluGluToHHTo2B2Tau_node_13          	/GluGluToHHTo2B2Tau_node_13_13TeV-madgraph/
 GluGluToHHTo2B2Tau_node_12          	/GluGluToHHTo2B2Tau_node_12_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 GluGluToHHTo2B2Tau_node_11          	/GluGluToHHTo2B2Tau_node_11_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 GluGluToHHTo2B2Tau_node_10	            /GluGluToHHTo2B2Tau_node_10_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
-GluGluToHHTo2B2Tau_node_3_correctedcfg	/GluGluToHHTo2B2Tau_node_3_13TeV-madgraph_correctedcfg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
-GluGluToHHTo2B2Tau_node_4_correctedcfg	/GluGluToHHTo2B2Tau_node_4_13TeV-madgraph_correctedcfg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
-GluGluToHHTo2B2Tau_node_7_correctedcfg	/GluGluToHHTo2B2Tau_node_7_13TeV-madgraph_correctedcfg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
