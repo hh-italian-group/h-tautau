@@ -3,8 +3,8 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
-INSTALL_MODES=( ["prod"]="CMSSW_10_2_15 _amd64_gcc700" \
-                ["ana"]="CMSSW_10_2_15 _amd64_gcc700" \
+INSTALL_MODES=( ["prod"]="CMSSW_10_2_16 _amd64_gcc700" \
+                ["ana"]="CMSSW_10_2_16 _amd64_gcc700" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=4
 
@@ -94,11 +94,11 @@ if [ $MODE = "prod" ] ; then
     #run_cmd git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
     #Add DeepTau code from Tau POG repository (note "-u" option preventing checkout of unnecessary stuff)
-    run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2
+    #run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2
     #Add 2017v2 training file
-    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_core.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
-    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_inner.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
-    run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_outer.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
+    #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_core.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
+    #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_inner.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
+    #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_outer.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
     #cd $CMSSW_BASE/src
 fi
 
