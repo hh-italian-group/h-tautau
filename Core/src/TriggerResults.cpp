@@ -23,9 +23,11 @@ void TriggerDescriptorCollection::JetTriggerObjectCollection::SetJetFilterMatchB
     match_bits = match_result ? match_bits | mask : match_bits & ~mask;
 }
 
-TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, double _delta_pt, boost::optional<double> _eta, bool _applyL1match,
-    const FilterVector& _filters)
-    : type(_type), pt(_pt), delta_pt(_delta_pt), eta(_eta), applyL1match(_applyL1match), filters(_filters) { }
+TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, double _delta_pt,
+    boost::optional<double> _eta, boost::optional<unsigned> _run_switch, bool _applyL1match,
+    const FilterVector& _filters, boost::optional<FilterVector> _legacy_filters)
+    : type(_type), pt(_pt), delta_pt(_delta_pt), eta(_eta), run_switch(_run_switch),
+    applyL1match(_applyL1match), filters(_filters), legacy_filters(_legacy_filters) { }
 
 TriggerDescriptorCollection::TriggerDescriptor::TriggerDescriptor(const Pattern _pattern,
                                                                   const std::vector<Leg>& legs_info) :
@@ -182,11 +184,17 @@ std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(c
             boost::optional<double> eta;
             if(leg_list.Has("eta"))
                 eta = leg_list.Get<double>("eta");
+            boost::optional<unsigned> run_switch;
+            if(leg_list.Has("run_switch"))
+                run_switch = leg_list.Get<double>("run_switch");
             bool applyL1match = false;
             if(leg_list.Has("applyL1match"))
                 applyL1match = leg_list.Get<bool>("applyL1match");
+            boost::optional<TriggerDescriptorCollection::FilterVector> legacy_filters;
+            if(leg_list.Has("legacy_filters"))
+                legacy_filters = leg_list.GetList<std::string>("legacy_filters", false);
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
-            legs_vector.emplace_back(type,pt,delta_pt,eta,applyL1match,filters);
+            legs_vector.emplace_back(type,pt,delta_pt,eta,run_switch,applyL1match,filters,legacy_filters);
         }
         (*triggerDescriptors).Add(entry.first, legs_vector);
     }

@@ -64,11 +64,14 @@ public:
         double pt;
         double delta_pt;
         boost::optional<double> eta;
+        boost::optional<unsigned> run_switch;
         bool applyL1match;
         FilterVector filters;
+        boost::optional<FilterVector> legacy_filters;
         std::vector<unsigned> jet_filter_indices;
-        Leg(const LegType _type, double _pt, double _delta_pt, boost::optional<double> _eta, bool _applyL1match,
-            const FilterVector& _filters);
+        Leg(const LegType _type, double _pt, double _delta_pt, boost::optional<double> _eta,
+            boost::optional<unsigned> _run_switch, bool _applyL1match,
+            const FilterVector& _filters, boost::optional<FilterVector> _legacy_filters);
     };
 
     struct TriggerDescriptor {
