@@ -69,9 +69,9 @@ public:
     std::array<size_t,2> GetSelectedBjetIndices() const;
     std::set<size_t> GetSelectedBjetIndicesSet() const;
 
-    Channel GetChannel() const { return static_cast<Channel>(event->channelId); }
+    Channel GetChannel() const { return static_cast<Channel>(event_candidate->GetEvent().channelId); }
 
-    EventInfoBase(const Event& _event, const SummaryInfo* _summaryInfo,
+    EventInfoBase(EventCandidate& _event_candidate, const SummaryInfo* _summaryInfo,
                   size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
@@ -101,8 +101,6 @@ public:
     Period GetPeriod() const;
     JetOrdering GetJetOrdering() const;
 
-    const JetCollection& GetJets();
-    void SetJets(const JetCollection& new_jets);
     JetCollection SelectJets(double pt_cut = std::numeric_limits<double>::lowest(),
                              double eta_cut = std::numeric_limits<double>::max(),
                              bool applyPu = false, bool passBtag = false,
@@ -117,19 +115,8 @@ public:
     const JetCandidate& GetVBFJet(const size_t index);
     const JetCandidate& GetBJet(const size_t index);
     const HiggsBBCandidate& GetHiggsBB();
-    const MET& GetMET();
     size_t GetLegIndex(const size_t leg_id);
     static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
-
-    template<typename LorentzVector>
-    void SetMetMomentum(const LorentzVector& new_met_p4)
-    {
-        Lock lock(*mutex);
-        if(!tuple_met)
-            tuple_met = std::shared_ptr<ntuple::TupleMet>(new ntuple::TupleMet(*event, MetType::PF));
-        met = std::make_shared<MET>(*tuple_met, tuple_met->cov());
-        met->SetMomentum(new_met_p4);
-    }
 
     const kin_fit::FitResults& GetKinFitResults();
     const sv_fit_ana::FitResults& GetSVFitResults();
@@ -142,7 +129,6 @@ public:
 
     const LepCandidate& GetFirstLeg();
     const LepCandidate& GetSecondLeg();
-    std::shared_ptr<EventInfoBase> ApplyShift(UncertaintySource uncertainty_source, UncertaintyScale scale);
 
     const LepCandidate& GetLeg(size_t leg_id)
     {
@@ -171,13 +157,18 @@ public:
         return GetHiggsTT(useSVfit).GetMomentum();
     }
 
+    EventCandidate GetEventCandidate()
+    {
+        return *event_candidate;
+    }
+
 
 
 
 
 
 protected:
-    const Event* event;
+    EventCandidate* event_candidate;
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
     std::shared_ptr<Mutex> mutex;
@@ -189,14 +180,9 @@ private:
     Period period;
     JetOrdering jet_ordering;
 
-
-    std::shared_ptr<std::list<ntuple::TupleJet>> tuple_jets;
-    std::shared_ptr<JetCollection> jets;
     std::shared_ptr<std::list<ntuple::TupleFatJet>> tuple_fatJets;
     std::shared_ptr<FatJetCollection> fatJets;
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
-    std::shared_ptr<ntuple::TupleMet> tuple_met;
-    std::shared_ptr<MET> met;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     std::shared_ptr<sv_fit_ana::FitResults> svfit_results;
     boost::optional<double> mt2;
@@ -209,12 +195,13 @@ private:
 
 };
 
+//to be added isEmbedded flag
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
-                                               UncertaintySource uncertainty_source,
-                                               UncertaintyScale scale,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo = nullptr,
                                                Period period = analysis::Period::Run2017,
-                                               JetOrdering jet_ordering = JetOrdering::DeepCSV);
+                                               JetOrdering jet_ordering = JetOrdering::DeepCSV,
+                                               UncertaintySource uncertainty_source = UncertaintySource::None,
+                                               UncertaintyScale scale = UncertaintyScale::Central);
 
 } // namespace analysis
