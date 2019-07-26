@@ -13,6 +13,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 
-    std::pair<double,double> GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale);
+    double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt);
 
 } // namespace analysis

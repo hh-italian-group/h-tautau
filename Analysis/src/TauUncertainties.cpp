@@ -7,7 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 
-    std::pair<double,double> GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale)
+    double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt)
     {
         static const std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor = {
           { analysis::Period::Run2016, { {0, PhysicalValue(-0.6,1.0)},
@@ -21,12 +21,14 @@ namespace analysis {
                                         {10, PhysicalValue(-1.2,0.8)} } }
         };
 
-        std::pair<double,double> correction_factor;
-        PhysicalValue tau_correction = tau_correction_factor.at(period).at(decayMode);
-        double result = 1 + ((tau_correction.GetValue() + static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
-        double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
-        correction_factor.first = result;
-        correction_factor.second = uncertainty;
+        double correction_factor;
+        if(pt > 400)
+            correction_factor = 1 + static_cast<int>(scale) * 0.03;
+        else{
+            PhysicalValue tau_correction = tau_correction_factor.at(period).at(decayMode);
+            correction_factor = 1 + ((tau_correction.GetValue() + static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
+            //double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
+        }    
         return correction_factor;
     }
 

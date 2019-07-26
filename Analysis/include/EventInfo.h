@@ -69,7 +69,7 @@ public:
     std::array<size_t,2> GetSelectedBjetIndices() const;
     std::set<size_t> GetSelectedBjetIndicesSet() const;
 
-    Channel GetChannel() const { return static_cast<Channel>(event_candidate->GetEvent().channelId); }
+    Channel GetChannel() const { return static_cast<Channel>(event_candidate.GetEvent().channelId); }
 
     EventInfoBase(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
                   size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
@@ -86,7 +86,6 @@ public:
     const Event* operator->() const;
 
     const EventIdentifier& GetEventId() const;
-    EventEnergyScale GetEnergyScale() const;
     const TriggerResults& GetTriggerResults() const;
     const SummaryInfo& GetSummaryInfo() const;
     static const kin_fit::FitProducer& GetKinFitProducer();
@@ -164,13 +163,14 @@ public:
 
     const JetCollection& GetJets();
     const MET& GetMET();
+    EventEnergyScale GetEnergyScale() const;
 
 
 
 
 
 protected:
-    EventCandidate* event_candidate;
+    EventCandidate event_candidate;
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
     std::shared_ptr<Mutex> mutex;
@@ -182,17 +182,11 @@ private:
     Period period;
     JetOrdering jet_ordering;
 
-    std::shared_ptr<std::list<ntuple::TupleFatJet>> tuple_fatJets;
-    std::shared_ptr<FatJetCollection> fatJets;
     std::shared_ptr<HiggsBBCandidate> higgs_bb;
     std::shared_ptr<kin_fit::FitResults> kinfit_results;
     std::shared_ptr<sv_fit_ana::FitResults> svfit_results;
     boost::optional<double> mt2;
     double mva_score;
-    std::shared_ptr<ntuple::TupleLepton> tuple_leg1;
-    std::shared_ptr<LepCandidate> leg1;
-    std::shared_ptr<ntuple::TupleLepton> tuple_leg2;
-    std::shared_ptr<LepCandidate> leg2;
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
 
 };

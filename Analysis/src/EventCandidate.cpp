@@ -1,4 +1,4 @@
-/*! Definition of wrappers for KinFit.
+/*! Definition of class EventCandidate.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "h-tautau/Analysis/include/EventCandidate.h"
@@ -8,10 +8,12 @@ namespace analysis {
     using LepCollection = std::vector<LepCandidate>;
     using JetCandidate = Candidate<ntuple::TupleJet>;
     using JetCollection = std::vector<JetCandidate>;
+    using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
+    using FatJetCollection = std::vector<FatJetCandidate>;
     using MET = MissingET<ntuple::TupleMet>;
 
     EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-    UncertaintyScale _scale, analysis::Period _period) : event(_event), uncertainty_source(_uncertainty_source),
+    UncertaintyScale _scale, analysis::Period _period) : event(&_event), uncertainty_source(_uncertainty_source),
     scale(_scale), period(_period) {}
 
     void EventCandidate::InitializeJecUncertainty(const std::string& file_uncertainty_source)
@@ -19,7 +21,7 @@ namespace analysis {
         jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(file_uncertainty_source);
     }
 
-    LepCollection& EventCandidate::GetLeptons()
+    const LepCollection& EventCandidate::GetLeptons()
     {
       if(!lepton_candidates) {
         CreateLeptons();
@@ -27,7 +29,7 @@ namespace analysis {
       return *lepton_candidates;
     }
 
-    JetCollection& EventCandidate::GetJets()
+    const JetCollection& EventCandidate::GetJets()
     {
       if(!jet_candidates) {
           CreateJets();
@@ -35,7 +37,20 @@ namespace analysis {
       return *jet_candidates;
     }
 
-    MET& EventCandidate::GetMET()
+    const FatJetCollection& EventCandidate::GetFatJets()
+    {
+        if(!fatJets) {
+            fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
+            tuple_fatJets = std::make_shared<std::vector<ntuple::TupleFatJet>>();
+            for(size_t n = 0; n < event->fatJets_p4.size(); ++n) {
+                tuple_fatJets->emplace_back(*event, n);
+                fatJets->push_back(FatJetCandidate(tuple_fatJets->back()));
+            }
+        }
+        return *fatJets;
+    }
+
+    const MET& EventCandidate::GetMET()
     {
         if(!met) {
             if(uncertainty_source == UncertaintySource::TauES)
@@ -43,7 +58,7 @@ namespace analysis {
             else if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source))
                 CreateJets();
             else{
-                tuple_met = std::make_shared<ntuple::TupleMet>(event, MetType::PF);
+                tuple_met = std::make_shared<ntuple::TupleMet>(*event, MetType::PF);
                 met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
             }
     }
@@ -52,7 +67,7 @@ namespace analysis {
 
     const ntuple::Event& EventCandidate::GetEvent() const
     {
-        return event;
+        return *event;
     }
 
     UncertaintyScale EventCandidate::GetScale() const
@@ -70,27 +85,26 @@ namespace analysis {
         double shifted_met_px = 0;
         double shifted_met_py = 0;
 
-        if(uncertainty_source == UncertaintySource::TauES){
-          tuple_met = std::make_shared<ntuple::TupleMet>(event, MetType::PF);
+        if(uncertainty_source == UncertaintySource::TauES || uncertainty_source == UncertaintySource::None){
+          tuple_met = std::make_shared<ntuple::TupleMet>(*event, MetType::PF);
           met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
         }
 
 
         lepton_candidates = std::make_shared<LepCollection>();
         tuple_leptons = std::make_shared<std::vector<ntuple::TupleLepton>>();
-        for(size_t n = 0; n < event.lep_p4.size(); ++n){
-          tuple_leptons->emplace_back(event, n);
-          ntuple::TupleLepton tuple_lepton = ntuple::TupleLepton(event, n);
-          lepton_candidates->push_back(LepCandidate(tuple_lepton,tuple_lepton.iso()));
+        for(size_t n = 0; n < event->lep_p4.size(); ++n){
+          tuple_leptons->emplace_back(*event, n);
+          lepton_candidates->emplace_back(tuple_leptons->back(),tuple_leptons->back().iso());
         }
         for(size_t n = 0; n < tuple_leptons->size(); ++n) {
           auto tuple_lepton = tuple_leptons->at(n);
-          analysis::LorentzVectorM lepton_p4(tuple_lepton.p4());
-          LorentzVectorM corrected_lepton_p4;
+          LorentzVectorM lepton_p4(tuple_lepton.p4());
+          LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
           if(tuple_lepton.leg_type() == analysis::LegType::tau  && tuple_lepton.gen_match() == GenLeptonMatch::Tau){
 
               UncertaintyScale current_scale = uncertainty_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
-              double sf = GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale).first;
+              double sf = GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale,tuple_lepton.p4().pt());
 
 
               if(tuple_lepton.decayMode() == 0){
@@ -108,33 +122,33 @@ namespace analysis {
           lepton_candidates->at(n).SetMomentum(corrected_lepton_p4);
         }
 
-        shifted_met_px += met->GetMomentum().px();
-        shifted_met_py += met->GetMomentum().py();
-        analysis::LorentzVectorXYZ shifted_met;
-        double E = std::hypot(shifted_met_px,shifted_met_py);
-        shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
-        met->SetMomentum(shifted_met);
-
+        if(uncertainty_source == UncertaintySource::TauES || uncertainty_source == UncertaintySource::None){
+            shifted_met_px += met->GetMomentum().px();
+            shifted_met_py += met->GetMomentum().py();
+            analysis::LorentzVectorXYZ shifted_met;
+            double E = std::hypot(shifted_met_px,shifted_met_py);
+            shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+            met->SetMomentum(shifted_met);
+        }
 
     }
 
     void EventCandidate::CreateJets()
     {
         if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source)){
-            tuple_met = std::make_shared<ntuple::TupleMet>(event, MetType::PF);
+            tuple_met = std::make_shared<ntuple::TupleMet>(*event, MetType::PF);
             met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
         }
 
         jet_candidates = std::make_shared<JetCollection>();
         tuple_jets = std::make_shared<std::vector<ntuple::TupleJet>>();
-        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
-          tuple_jets->emplace_back(event, n);
-          ntuple::TupleJet tuple_jet = ntuple::TupleJet(event, n);
-          jet_candidates->push_back(JetCandidate(tuple_jet));
+        for(size_t n = 0; n < event->jets_p4.size(); ++n) {
+          tuple_jets->emplace_back(*event, n);
+          jet_candidates->push_back(JetCandidate(tuple_jets->back()));
         }
 
         if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source)){
-          const auto& other_jets_p4 = event.other_jets_p4;
+          const auto& other_jets_p4 = event->other_jets_p4;
           auto shifted_met_p4(met->GetMomentum());
           *jet_candidates = jecUncertainties->ApplyShift(*jet_candidates,uncertainty_source,scale,&other_jets_p4,&shifted_met_p4);
           met->SetMomentum(shifted_met_p4);

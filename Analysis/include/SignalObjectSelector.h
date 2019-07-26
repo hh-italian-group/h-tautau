@@ -102,8 +102,8 @@ public:
 
     bool PassLeptonSelection(const LepCandidate& lepton, Channel channel) const;
     boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate) const;
-    bool PassLeptonVetoSelection(const EventCandidate& event_candidate) const;
-    bool PassMETfilters(const EventCandidate& event_candidate, Period period, bool is_Data) const;
+    bool PassLeptonVetoSelection(const ntuple::Event& event) const;
+    bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
 
     struct SelectedSignalJets{
         JetPair selectedBjetPair;
@@ -117,7 +117,7 @@ public:
         bool isSelectedVBFjet(size_t n) const;
     };
 
-    static SelectedSignalJets SelectSignalJets(const EventCandidate& event_candidate,
+    static SelectedSignalJets SelectSignalJets(EventCandidate& event_candidate,
                                                const analysis::Period& period,
                                                analysis::JetOrdering jet_ordering,
                                                size_t selected_higgs_index);

@@ -100,9 +100,8 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
     return boost::optional<size_t>();
 }
 
-bool SignalObjectSelector::PassLeptonVetoSelection(const EventCandidate& event_candidate) const
+bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) const
 {
-    const ntuple::Event& event = event_candidate.GetEvent();
     for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::e){
           analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
@@ -116,9 +115,8 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const EventCandidate& event_c
     return true;
 }
 
-bool SignalObjectSelector::PassMETfilters(const EventCandidate& event_candidate, const analysis::Period period, bool is_Data) const
+bool SignalObjectSelector::PassMETfilters(const ntuple::Event& event, const analysis::Period period, bool is_Data) const
 {
-    const ntuple::Event& event = event_candidate.GetEvent();
     using Filter = ntuple::MetFilters::Filter;
     auto event_metFilters = ntuple::MetFilters(event.metFilters);
     if (!event_metFilters.Pass(Filter::PrimaryVertex)  || !event_metFilters.Pass(Filter::BeamHalo) ||
@@ -312,7 +310,7 @@ bool SignalObjectSelector::SelectedSignalJets::isSelectedVBFjet(size_t n) const
     return selectedVBFjetPair.first == n || selectedVBFjetPair.second == n;
 }
 
-SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(const EventCandidate& event_candidate,
+SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(EventCandidate& event_candidate,
                                                                   const analysis::Period& period,
                                                                   analysis::JetOrdering jet_ordering,
                                                                   size_t selected_higgs_index)
@@ -325,23 +323,23 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
     const ntuple::Event& event = event_candidate.GetEvent();
 
     const auto CreateJetInfo = [&](bool useBTag) -> auto {
-        std::vector<analysis::jet_ordering::JetInfo<decltype(event.jets_p4)::value_type>> jet_info_vector;
-        for(size_t n = 0; n < event.jets_p4.size(); ++n) {
+        std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
+        for(size_t n = 0; n < event_candidate.GetJets().size(); ++n) {
             const size_t first_leg_id = event.first_daughter_indexes.at(selected_higgs_index);
-            const auto& first_leg = event.lep_p4.at(first_leg_id);
-            if(ROOT::Math::VectorUtil::DeltaR(first_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            const auto& first_leg = event_candidate.GetLeptons().at(first_leg_id).GetMomentum();
+            if(ROOT::Math::VectorUtil::DeltaR(first_leg, event_candidate.GetJets().at(n).GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             const size_t second_leg_id = event.second_daughter_indexes.at(selected_higgs_index);
-            const auto& second_leg = event.lep_p4.at(second_leg_id);
-            if(ROOT::Math::VectorUtil::DeltaR(second_leg, event.jets_p4.at(n)) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            const auto& second_leg = event_candidate.GetLeptons().at(second_leg_id).GetMomentum();
+            if(ROOT::Math::VectorUtil::DeltaR(second_leg, event_candidate.GetJets().at(n).GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
-            analysis::DiscriminatorIdResults jet_pu_id(event.jets_pu_id.at(n));
-            if(!PassEcalNoiceVetoJets(event.jets_p4.at(n), period, jet_pu_id)) continue;
+            analysis::DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
+            if(!PassEcalNoiceVetoJets(event_candidate.GetJets().at(n).GetMomentum(), period, jet_pu_id)) continue;
             if(!jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
 //            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
-            const double tag = useBTag ? bTagger.BTag(event,n) : event.jets_p4.at(n).Pt();
-            jet_info_vector.emplace_back(event.jets_p4.at(n),n,tag);
+            const double tag = useBTag ? bTagger.BTag(event,n) : event_candidate.GetJets().at(n).GetMomentum().Pt();
+            jet_info_vector.emplace_back(event_candidate.GetJets().at(n).GetMomentum(),n,tag);
         }
         return jet_info_vector;
     };
