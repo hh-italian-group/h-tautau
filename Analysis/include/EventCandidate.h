@@ -24,19 +24,18 @@ public:
     UncertaintyScale _scale, Period _period);
 
     EventCandidate(const EventCandidate& ) = default; //copy constructor
+    EventCandidate(EventCandidate&& ) = default; // move constructor
 
     EventCandidate& operator= ( const EventCandidate& ) = default; //assignment
 
-    static void InitializeJecUncertainty(const std::string& file_uncertainty_source)
-    {
-        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(file_uncertainty_source);
-    }
+    static void InitializeJecUncertainty(const std::string& file_uncertainty_source);
 
     LepCollection& GetLeptons();
     JetCollection& GetJets();
     MET& GetMET();
     const ntuple::Event& GetEvent() const;
-    const UncertaintyScale& GetScale();
+    UncertaintyScale GetScale() const;
+    UncertaintySource GetUncSource() const;
 
 private:
     void CreateLeptons();

@@ -71,7 +71,7 @@ public:
 
     Channel GetChannel() const { return static_cast<Channel>(event_candidate->GetEvent().channelId); }
 
-    EventInfoBase(EventCandidate& _event_candidate, const SummaryInfo* _summaryInfo,
+    EventInfoBase(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
                   size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
@@ -157,11 +157,13 @@ public:
         return GetHiggsTT(useSVfit).GetMomentum();
     }
 
-    EventCandidate GetEventCandidate()
+    EventCandidate& GetEventCandidate()
     {
-        return *event_candidate;
+        return event_candidate;
     }
 
+    const JetCollection& GetJets();
+    const MET& GetMET();
 
 
 

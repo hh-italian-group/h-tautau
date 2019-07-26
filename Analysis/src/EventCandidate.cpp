@@ -14,6 +14,11 @@ namespace analysis {
     UncertaintyScale _scale, analysis::Period _period) : event(_event), uncertainty_source(_uncertainty_source),
     scale(_scale), period(_period) {}
 
+    void EventCandidate::InitializeJecUncertainty(const std::string& file_uncertainty_source)
+    {
+        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(file_uncertainty_source);
+    }
+
     LepCollection& EventCandidate::GetLeptons()
     {
       if(!lepton_candidates) {
@@ -50,9 +55,14 @@ namespace analysis {
         return event;
     }
 
-    const UncertaintyScale& EventCandidate::GetScale()
+    UncertaintyScale EventCandidate::GetScale() const
     {
         return scale;
+    }
+
+    UncertaintySource EventCandidate::GetUncSource() const
+    {
+        return uncertainty_source;
     }
 
     void EventCandidate::CreateLeptons()

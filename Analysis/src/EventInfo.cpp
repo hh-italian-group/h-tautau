@@ -343,6 +343,9 @@ void EventInfoBase::SetMvaScore(double _mva_score)
 
 double EventInfoBase::GetMvaScore() const { return mva_score; }
 
+const JetCollection& GetJets() { return GetEventCandidate().GetJets(); }
+const MET& GetMET() { return GetEventCandidate().GetMET(); }
+
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo,
