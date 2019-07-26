@@ -132,7 +132,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
 {
     edmEvent = &iEvent;
     eventId = iEvent.id();
-    triggerTools.Initialize(iEvent);
+    triggerTools.Initialize(iEvent,!isMC && !isEmbedded);
 
     iEvent.getByToken(electronsMiniAOD_token, pat_electrons);
     iEvent.getByToken(tausMiniAOD_token, pat_taus);
