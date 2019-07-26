@@ -85,7 +85,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     }
 }
 
-void TriggerTools::Initialize(const edm::Event &_iEvent)
+void TriggerTools::Initialize(const edm::Event &_iEvent, bool isData)
 {
     iEvent = &_iEvent;
     for(const auto& entry : triggerResults_tokens)
@@ -149,8 +149,13 @@ void TriggerTools::Initialize(const edm::Event &_iEvent)
                 const auto& descriptor = triggerDescriptors->at(index);
                 for(unsigned n = 0; n < descriptor.lepton_legs.size(); ++n){
                     const TriggerDescriptorCollection::Leg& leg = descriptor.lepton_legs.at(n);
+                    TriggerDescriptorCollection::FilterVector filter_toPass;
+                    if(isData && leg.run_switch.is_initialized() && _iEvent.id().run() < *leg.run_switch)
+                        filter_toPass = *leg.legacy_filters;
+                    else
+                        filter_toPass = leg.filters;
                     if(!hasExpectedType(leg.type, unpackedTriggerObject)
-                        || !passFilters(unpackedTriggerObject,leg.filters)) continue;
+                        || !passFilters(unpackedTriggerObject,filter_toPass)) continue;
                     pathTriggerObjects.at(index).at(n).insert(&triggerObject);
                 }
             }
