@@ -30,8 +30,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
 using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
+using LepCollection = std::vector<LepCandidate>;
 using JetCandidate = Candidate<ntuple::TupleJet>;
+using JetCollection = std::vector<JetCandidate>;
 using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
+using FatJetCollection = std::vector<FatJetCandidate>;
 using MET = MissingET<ntuple::TupleMet>;
 
 
@@ -58,8 +61,6 @@ class EventInfoBase {
 public:
     using Event = ntuple::Event;
     using JetPair = ntuple::JetPair;
-    using JetCollection = std::vector<JetCandidate>;
-    using FatJetCollection = std::vector<FatJetCandidate>;
     using HiggsBBCandidate = CompositeCandidate<JetCandidate, JetCandidate>;
     using Mutex = std::recursive_mutex;
     using Lock = std::lock_guard<Mutex>;

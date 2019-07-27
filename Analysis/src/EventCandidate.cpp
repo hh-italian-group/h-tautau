@@ -4,13 +4,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/EventCandidate.h"
 
 namespace analysis {
-    using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
-    using LepCollection = std::vector<LepCandidate>;
-    using JetCandidate = Candidate<ntuple::TupleJet>;
-    using JetCollection = std::vector<JetCandidate>;
-    using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
-    using FatJetCollection = std::vector<FatJetCandidate>;
-    using MET = MissingET<ntuple::TupleMet>;
 
     EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
     UncertaintyScale _scale, analysis::Period _period) : event(&_event), uncertainty_source(_uncertainty_source),
@@ -44,7 +37,7 @@ namespace analysis {
             tuple_fatJets = std::make_shared<std::vector<ntuple::TupleFatJet>>();
             for(size_t n = 0; n < event->fatJets_p4.size(); ++n) {
                 tuple_fatJets->emplace_back(*event, n);
-                fatJets->push_back(FatJetCandidate(tuple_fatJets->back()));
+                fatJets->emplace_back(tuple_fatJets->back());
             }
         }
         return *fatJets;
@@ -53,16 +46,11 @@ namespace analysis {
     const MET& EventCandidate::GetMET()
     {
         if(!met) {
-            if(uncertainty_source == UncertaintySource::TauES)
-                CreateLeptons();
-            else if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source))
+            CreateLeptons();
+            if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source))
                 CreateJets();
-            else{
-                tuple_met = std::make_shared<ntuple::TupleMet>(*event, MetType::PF);
-                met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
-            }
-    }
-    return *met;
+        }
+        return *met;
     }
 
     const ntuple::Event& EventCandidate::GetEvent() const
@@ -85,7 +73,7 @@ namespace analysis {
         double shifted_met_px = 0;
         double shifted_met_py = 0;
 
-        if(uncertainty_source == UncertaintySource::TauES || uncertainty_source == UncertaintySource::None){
+        if(!met){
           tuple_met = std::make_shared<ntuple::TupleMet>(*event, MetType::PF);
           met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
         }
@@ -122,7 +110,7 @@ namespace analysis {
           lepton_candidates->at(n).SetMomentum(corrected_lepton_p4);
         }
 
-        if(uncertainty_source == UncertaintySource::TauES || uncertainty_source == UncertaintySource::None){
+        if(met){
             shifted_met_px += met->GetMomentum().px();
             shifted_met_py += met->GetMomentum().py();
             analysis::LorentzVectorXYZ shifted_met;
@@ -144,7 +132,7 @@ namespace analysis {
         tuple_jets = std::make_shared<std::vector<ntuple::TupleJet>>();
         for(size_t n = 0; n < event->jets_p4.size(); ++n) {
           tuple_jets->emplace_back(*event, n);
-          jet_candidates->push_back(JetCandidate(tuple_jets->back()));
+          jet_candidates->emplace_back(tuple_jets->back());
         }
 
         if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source)){

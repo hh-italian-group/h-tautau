@@ -25,10 +25,14 @@ namespace analysis {
         if(pt > 400)
             correction_factor = 1 + static_cast<int>(scale) * 0.03;
         else{
+            if(!tau_correction_factor.count(period))
+                throw exception("Period not found in tau correction map.");
+            if(!tau_correction_factor.at(period).count(decayMode))
+                throw exception("Decay mode not found in tau correction map.");
             PhysicalValue tau_correction = tau_correction_factor.at(period).at(decayMode);
             correction_factor = 1 + ((tau_correction.GetValue() + static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
             //double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
-        }    
+        }
         return correction_factor;
     }
 

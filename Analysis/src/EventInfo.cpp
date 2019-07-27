@@ -4,11 +4,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/EventInfo.h"
 
 namespace analysis {
-    using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
-    using LepCollection = std::vector<LepCandidate>;
-    using JetCandidate = Candidate<ntuple::TupleJet>;
-    using JetCollection = std::vector<JetCandidate>;
-    using MET = MissingET<ntuple::TupleMet>;
 
 SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel,
                          const std::string& _trigger_cfg) :
@@ -117,7 +112,7 @@ Period EventInfoBase::GetPeriod() const { return period; }
 JetOrdering EventInfoBase::GetJetOrdering() const {return jet_ordering; }
 
 
-EventInfoBase::JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
+JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
                                                        bool passBtag, JetOrdering jet_ordering,
                                                        const std::set<size_t>& jet_to_exclude_indexes,
                                                        double low_eta_cut)
@@ -167,7 +162,7 @@ double EventInfoBase::GetHT(bool includeHbbJets, bool apply_eta_cut)
     return ht;
 }
 
-const EventInfoBase::FatJetCollection& EventInfoBase::GetFatJets()
+const FatJetCollection& EventInfoBase::GetFatJets()
 {
     return GetEventCandidate().GetFatJets();
 }

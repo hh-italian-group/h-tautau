@@ -11,9 +11,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
 
 namespace analysis {
-
-class EventCandidate {
-public:
     using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
     using LepCollection = std::vector<LepCandidate>;
     using JetCandidate = Candidate<ntuple::TupleJet>;
@@ -21,6 +18,9 @@ public:
     using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
     using FatJetCollection = std::vector<FatJetCandidate>;
     using MET = MissingET<ntuple::TupleMet>;
+
+class EventCandidate {
+public:
 
     EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
     UncertaintyScale _scale, Period _period);
