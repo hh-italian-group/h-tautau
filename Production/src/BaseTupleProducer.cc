@@ -82,7 +82,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
-                 iConfig.getParameter<std::string>("triggerCfg"),
+                 edm::FileInPath(iConfig.getParameter<std::string>("triggerCfg")).fullPath(),
                  _channel, isEmbedded)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
