@@ -110,14 +110,14 @@ namespace analysis {
           lepton_candidates->at(n).SetMomentum(corrected_lepton_p4);
         }
 
-        if(met){
-            shifted_met_px += met->GetMomentum().px();
-            shifted_met_py += met->GetMomentum().py();
-            analysis::LorentzVectorXYZ shifted_met;
-            double E = std::hypot(shifted_met_px,shifted_met_py);
-            shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
-            met->SetMomentum(shifted_met);
-        }
+
+        shifted_met_px += met->GetMomentum().px();
+        shifted_met_py += met->GetMomentum().py();
+        analysis::LorentzVectorXYZ shifted_met;
+        double E = std::hypot(shifted_met_px,shifted_met_py);
+        shifted_met.SetPxPyPzE(shifted_met_px,shifted_met_py,0,E);
+        met->SetMomentum(shifted_met);
+
 
     }
 

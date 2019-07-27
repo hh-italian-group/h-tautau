@@ -29,16 +29,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
-using LepCollection = std::vector<LepCandidate>;
-using JetCandidate = Candidate<ntuple::TupleJet>;
-using JetCollection = std::vector<JetCandidate>;
-using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
-using FatJetCollection = std::vector<FatJetCandidate>;
-using MET = MissingET<ntuple::TupleMet>;
-
-
-
 class SummaryInfo {
 public:
     using ProdSummary = ntuple::ProdSummary;
