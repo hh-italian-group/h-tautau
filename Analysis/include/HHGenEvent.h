@@ -19,7 +19,7 @@ namespace analysis {
         std::array<LorentzVectorM, 2> vis_tau;
         std::array<LorentzVectorXYZ, 2> vis_charged_tau;
         std::array<LorentzVectorXYZ, 2> b_jets;
-        std::array<LorentzVectorXYZ, 5> b_jets_others;
+        std::vector<LorentzVectorM> b_jets_others; //////
         std::array<TauGenDecayMode, 2> tau_decay;
         LorentzVectorXYZ h_tautau_vis, h_bb_vis, h_bb_vis_all, h_bb_others_vis; //sum vis tau and bjets
     };

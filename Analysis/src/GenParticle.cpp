@@ -76,8 +76,6 @@ bool GenEvent::areParented(const GenParticle* daughter, const GenParticle* mothe
         const GenParticle* mother_ = daughter->mothers.at(i);
         if(mother_ == mother || areParented(mother_, mother))
             return true;
-        if(areParented(mother_,mother))
-            return true;
     }
     return false;
 }
@@ -113,28 +111,9 @@ void GenEvent::InitializeParticleDataTable(const std::string& fileName)
             throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
         particle_names[pdgId] = name;
 
-        if(pdg_name_type_charge.size() >= 3){
+        if(pdg_name_type_charge.size() >= 3)
+            particle_types[pdgId] = Parse<particles::ParticleType>(pdg_name_type_charge.at(2));
 
-            const std::string& type_str = pdg_name_type_charge.at(2);
-
-            std::map<std::string, particles::ParticleType> ParticleTypeMap;
-            if(type_str == "baryon")
-                ParticleTypeMap[type_str] = particles::ParticleType::baryon;
-            else if(type_str == "meson")
-                ParticleTypeMap[type_str] = particles::ParticleType::meson;
-
-            if(ParticleTypeMap.count(type_str)){
-                if(particle_types.count(pdgId))
-                    throw exception("Duplicated definition of particle with pdgId = %1%") % pdgId;
-                particle_types[pdgId] = ParticleTypeMap.at(type_str);
-
-//                std::ostringstream ss_type;
-//                ss_type << "particles::ParticleType::"<< type_str;
-//                std::string type = ss_type.str();
-
-//                particle_types[pdgId] = Parse<particles::ParticleType>(type);
-            }
-        }
 
         if(pdg_name_type_charge.size() >= 4){
             const int& charge = Parse<int>(pdg_name_type_charge.at(3));
@@ -153,20 +132,18 @@ void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) c
     const int particleStatus = particle->status;
     const LorentzVectorM genParticle_momentum = particle->momentum;
     const auto flag = particle->genStatusFlags.GenStatusFlags::getFlags();
-    const std::bitset<15> genStatusFlags_ = flag ;
     auto mothers_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
     std::cout << particleName                              << " <" << pdgParticle
               << "> pt=" << genParticle_momentum.Pt()      << " eta=" << genParticle_momentum.Eta()
               << " phi=" << genParticle_momentum.Phi()     << " E=" << genParticle_momentum.E()
               << " m=" << genParticle_momentum.M()         << " index=" << particle->index;
     if(particle->mothers.size() > 0){
-        std::cout  << " mother_index=" << mothers_index;
-        for(size_t index_mother = 1; index_mother < particle->mothers.size(); ++index_mother)
-            std::cout  << "," << particle->mothers.at(index_mother)->index;
+        for(size_t index_mother = 0; index_mother < particle->mothers.size(); ++index_mother)
+            std::cout << " mother_index=" << CollectionToString(particle->mothers, ",");
     }
 
     std::cout << " vertex=" << particle->vertex << " status=" << particleStatus
-              << " statusFlags=" << genStatusFlags_ << std::endl;
+              << " statusFlags=" << flag << std::endl;
 
     for(unsigned n = 0; n < particle->daughters.size(); ++n) {
         const GenParticle* daughter = particle->daughters.at(n);
