@@ -25,6 +25,12 @@ analysis::GenLeptonMatch TupleLepton::gen_match() const { return analysis::GenLe
 const LorentzVectorM& TupleLepton::gen_p4() const { return event->lep_gen_p4.at(object_id); }
 TupleObject::Integer TupleLepton::decayMode() const { return event->lep_decayMode.at(object_id); }
 analysis::LegType TupleLepton::leg_type() const { return analysis::LegType(event->lep_type.at(object_id)); }
+bool TupleLepton::passConversionVeto() const {return event->lep_elePassConversionVeto.at(object_id);}
+bool TupleLepton::passEleIso(DiscriminatorWP wp) const
+{
+    DiscriminatorIdResults eleIso(event->lep_eleId_iso.at(object_id));
+    return eleIso.Passed(wp);
+}
 
 bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
 {
@@ -43,6 +49,7 @@ bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discri
 }
 
 bool TupleLepton::PassedOldDecayMode() const { return event->lep_oldDecayModeFinding.at(object_id); }
+bool TupleLepton::PassedNewDecayMode() const { return event->lep_newDecayModeFinding.at(object_id); }
 
 TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {

@@ -68,7 +68,7 @@ public:
                  EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
                  const std::string& triggerCfg, Channel _channel, bool _isEmbedded);
 
-    void Initialize(const edm::Event& iEvent);
+    void Initialize(const edm::Event& iEvent, bool isData);
 
     void SetTriggerAcceptBits(TriggerResults& results);
 

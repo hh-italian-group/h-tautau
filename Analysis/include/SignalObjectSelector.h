@@ -9,11 +9,16 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
 #include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
+#include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/JetTools/include/BTagger.h"
+#include "h-tautau/Core/include/Candidate.h"
+#include "h-tautau/Analysis/include/EventCandidate.h"
 
 namespace analysis {
 
-enum class SignalMode { HTT, HTT_sync, TauPOG_default, TauPOG_deepTauVsJet, TauPOG_deepTauVsJet_full, TauPOG_dpfTau, HH, Skimmer, TauPOG_Skimmer };
+enum class SignalMode { HTT = 1, HTT_sync = 2, TauPOG_default = 3, TauPOG_deepTauVsJet = 4,
+                        TauPOG_deepTauVsJet_full = 5, TauPOG_dpfTau = 6, HH_legacy = 7, HH = 8,
+                        Skimmer = 9, TauPOG_Skimmer = 10 };
 
 ENUM_NAMES(SignalMode) = {
     { SignalMode::HTT, "HTT" },
@@ -21,6 +26,7 @@ ENUM_NAMES(SignalMode) = {
     { SignalMode::TauPOG_default, "TauPOG_default" },
     { SignalMode::TauPOG_deepTauVsJet, "TauPOG_deepTauVsJet" },
     { SignalMode::TauPOG_deepTauVsJet_full, "TauPOG_deepTauVsJet_full" },
+    { SignalMode::HH_legacy, "HH_legacy" },
     { SignalMode::HH, "HH" },
     { SignalMode::Skimmer, "Skimmer" },
     { SignalMode::TauPOG_Skimmer, "TauPOG_Skimmer" }
@@ -86,14 +92,18 @@ namespace jet_ordering {
 
 }
 
+
 class SignalObjectSelector {
 public:
     using JetPair = ntuple::JetPair;
+    using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
 
     SignalObjectSelector(SignalMode _mode);
 
-    bool PassLeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    boost::optional<size_t> GetHiggsCandidateIndex(const ntuple::Event& event) const;
+    bool PassLeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate) const;
+    bool PassLeptonVetoSelection(const ntuple::Event& event) const;
+    bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
 
     struct SelectedSignalJets{
         JetPair selectedBjetPair;
@@ -107,7 +117,7 @@ public:
         bool isSelectedVBFjet(size_t n) const;
     };
 
-    static SelectedSignalJets SelectSignalJets(const ntuple::Event& event,
+    static SelectedSignalJets SelectSignalJets(EventCandidate& event_candidate,
                                                const analysis::Period& period,
                                                analysis::JetOrdering jet_ordering,
                                                size_t selected_higgs_index);
@@ -125,11 +135,12 @@ public:
      }
 
 private:
-    bool PassHTT_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel, bool is_sync) const;
-    bool PassTauPOG_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    bool PassHH_LeptonSelection(const ntuple::TupleLepton& lepton, Channel channel) const;
-    bool PassSkimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
-    bool PassTauPOG_Skimmer_LeptonSelection(const ntuple::TupleLepton& lepton) const;
+    bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync) const;
+    bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
+    bool PassSkimmer_LeptonSelection(const LepCandidate& lepton) const;
+    bool PassTauPOG_Skimmer_LeptonSelection(const LepCandidate& lepton) const;
 
 
 

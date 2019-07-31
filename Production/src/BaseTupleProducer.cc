@@ -1,6 +1,5 @@
 #include "TROOT.h"
 #include "h-tautau/Production/interface/BaseTupleProducer.h"
-#include "h-tautau/McCorrections/include/TauUncertainties.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "../interface/GenTruthTools.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
@@ -83,7 +82,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
-                 iConfig.getParameter<std::string>("triggerCfg"),
+                 edm::FileInPath(iConfig.getParameter<std::string>("triggerCfg")).fullPath(),
                  _channel, isEmbedded)
 {
     root_ext::HistogramFactory<TH1D>::LoadConfig(
@@ -133,7 +132,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
 {
     edmEvent = &iEvent;
     eventId = iEvent.id();
-    triggerTools.Initialize(iEvent);
+    triggerTools.Initialize(iEvent,!isMC && !isEmbedded);
 
     iEvent.getByToken(electronsMiniAOD_token, pat_electrons);
     iEvent.getByToken(tausMiniAOD_token, pat_taus);
@@ -530,7 +529,7 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") > 0.5);
         eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") > 0.5);
         eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") > 0.5);
-        eventTuple().other_lepton_eleId_iso.push_back(eleId_noIso.GetResultBits());
+        eventTuple().other_lepton_eleId_noIso.push_back(eleId_noIso.GetResultBits());
         eventTuple().other_lepton_muonId.push_back(0);
         if(isMC) {
             const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(electron.GetMomentum()), *genParticles);
@@ -547,7 +546,7 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eventTuple().other_lepton_iso.push_back(muon.GetIsolation());
         eventTuple().other_lepton_elePassConversionVeto.push_back(false);
         eventTuple().other_lepton_eleId_iso.push_back(0);
-        eventTuple().other_lepton_eleId_iso.push_back(0);
+        eventTuple().other_lepton_eleId_noIso.push_back(0);
         analysis::DiscriminatorIdResults muonId;
         muonId.SetResult(analysis::DiscriminatorWP::Loose,muon->isLooseMuon());
         muonId.SetResult(analysis::DiscriminatorWP::Medium,muon->isMediumMuon());
@@ -761,7 +760,7 @@ void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selec
         eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V2-wpLoose") > 0.5);
         eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V2-wp90") > 0.5);
         eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V2-wp80") > 0.5);
-        eventTuple().lep_eleId_iso.push_back(eleId_noIso.GetResultBits());
+        eventTuple().lep_eleId_noIso.push_back(eleId_noIso.GetResultBits());
         eventTuple().lep_muonId.push_back(0);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
@@ -788,7 +787,7 @@ void BaseTupleProducer::FillMuon(const analysis::SelectionResultsBase& selection
         eventTuple().lep_newDecayModeFinding.push_back(false);
         eventTuple().lep_elePassConversionVeto.push_back(false);
         eventTuple().lep_eleId_iso.push_back(0);
-        eventTuple().lep_eleId_iso.push_back(0);
+        eventTuple().lep_eleId_noIso.push_back(0);
         analysis::DiscriminatorIdResults muonId;
         muonId.SetResult(analysis::DiscriminatorWP::Loose,muon->isLooseMuon());
         muonId.SetResult(analysis::DiscriminatorWP::Medium,muon->isMediumMuon());
@@ -820,7 +819,7 @@ void BaseTupleProducer::FillTau(const analysis::SelectionResultsBase& selection)
         eventTuple().lep_newDecayModeFinding.push_back(newDM);
         eventTuple().lep_elePassConversionVeto.push_back(false);
         eventTuple().lep_eleId_iso.push_back(0);
-        eventTuple().lep_eleId_iso.push_back(0);
+        eventTuple().lep_eleId_noIso.push_back(0);
         eventTuple().lep_muonId.push_back(0);
         for(const auto& tau_id_entry : analysis::tau_id::GetTauIdDescriptors()) {
             const auto& desc = tau_id_entry.second;
