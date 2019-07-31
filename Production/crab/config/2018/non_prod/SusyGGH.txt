@@ -1,4 +1,3 @@
-Automatic
 globalTag=102X_upgrade2018_realistic_v19 sampleType=Autumn18 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 SUSYGluGluToHToTauTau_M-100_TuneCP5     	/SUSYGluGluToHToTauTau_M-100_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM
@@ -29,4 +28,4 @@ SUSYGluGluToHToTauTau_M-700_TuneCP5	        /SUSYGluGluToHToTauTau_M-700_TuneCP5
 SUSYGluGluToHToTauTau_M-800_TuneCP5	        /SUSYGluGluToHToTauTau_M-800_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM
 SUSYGluGluToHToTauTau_M-80_TuneCP5	        /SUSYGluGluToHToTauTau_M-80_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM
 SUSYGluGluToHToTauTau_M-900_TuneCP5	        /SUSYGluGluToHToTauTau_M-900_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM
-SUSYGluGluToHToTauTau_M-90_TuneCP5	        /SUSYGluGluToHToTauTau_M-90_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM		
+SUSYGluGluToHToTauTau_M-90_TuneCP5	        /SUSYGluGluToHToTauTau_M-90_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM

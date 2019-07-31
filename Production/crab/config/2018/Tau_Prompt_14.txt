@@ -1,4 +1,5 @@
 lumiMask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/ReReco/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt
 globalTag=102X_dataRun2_Prompt_v14 sampleType=Autumn18 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=True
 
-EGamma_Run2018D	/EGamma/Run2018D-22Jan2019-v2/MINIAOD
+Tau_Run2018D	/Tau/Run2018D-PromptReco-v2/MINIAOD
+Tau_Run2018E	/Tau/Run2018E-PromptReco-v1/MINIAOD
