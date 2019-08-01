@@ -1,4 +1,4 @@
-globalTag=102X_mc2017_realistic_v7 sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=True saveGenBosonInfo=True saveGenJetInfo=True
+sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=True saveGenBosonInfo=True saveGenJetInfo=True
 
 ST_tW_antitop_5f_inclusiveDecays	                               /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights	               /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM

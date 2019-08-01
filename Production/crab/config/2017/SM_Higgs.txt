@@ -1,4 +1,4 @@
-globalTag=102X_mc2017_realistic_v7 sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 ZH_HToBB_ZToLL_M125_13TeV_powheg_herwigpp	/ZH_HToBB_ZToLL_M125_13TeV_powheg_herwigpp/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ZH_HToBB_ZToLL_M125	                        /ZH_HToBB_ZToLL_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM

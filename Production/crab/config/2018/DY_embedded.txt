@@ -1,4 +1,4 @@
-globalTag=102X_dataRun2_v11 sampleType=Emb_18ABC runSVfit=False runKinFit=False storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+sampleType=Emb_18ABC storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
 
 EmbeddingRun2018A_ElTauFinalState	/EmbeddingRun2018A/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
 EmbeddingRun2018B_ElTauFinalState	/EmbeddingRun2018B/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER

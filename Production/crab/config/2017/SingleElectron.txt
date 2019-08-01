@@ -1,5 +1,5 @@
 lumiMask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt
-globalTag=102X_dataRun2_v11 sampleType=Run2017 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
+sampleType=Run2017 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
 
 SingleElectron_Run2017B-31Mar2018-v1	/SingleElectron/Run2017B-31Mar2018-v1/MINIAOD
 SingleElectron_Run2017C-31Mar2018-v1	/SingleElectron/Run2017C-31Mar2018-v1/MINIAOD

@@ -1,4 +1,4 @@
-globalTag=102X_mcRun2_asymptotic_v7 sampleType=Summer16MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
+sampleType=MC_16 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
 ZH_HToBB_ZToLL_M125_amcatnloFXFX	/ZH_HToBB_ZToLL_M125_13TeV_amcatnloFXFX_madspin_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 ZH_HToBB_ZToLL_M125_ext1	        /ZH_HToBB_ZToLL_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3_ext1-v1/MINIAODSIM
@@ -7,5 +7,5 @@ ZHToTauTau_M125	                    /ZHToTauTau_M125_13TeV_powheg_pythia8/RunIIS
 WplusHToTauTau_M125	                /WplusHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 WminusHToTauTau_M125            	/WminusHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 VBFHToTauTau_M125	                /VBFHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
-GluGluHToTauTau_M125-v2	            /GluGluHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM
-GluGluHToTauTau_M125-v2         	/GluGluHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v3/MINIAODSIM
+GluGluHToTauTau_M125-v1            /GluGluHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM
+GluGluHToTauTau_M125-v3         	/GluGluHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v3/MINIAODSIM
