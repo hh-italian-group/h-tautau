@@ -1,4 +1,4 @@
-globalTag=94X_mc2017_realistic_v17 sampleType=Emb_17 applyTriggerMatch=True runSVfit=False runKinFit=False storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+globalTag=102X_dataRun2_v11 sampleType=Emb_17 applyTriggerMatch=True runSVfit=False runKinFit=False storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
 
 EmbeddingRun2017B_ElTauFinalState	/EmbeddingRun2017B/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
 EmbeddingRun2017C_ElTauFinalState	/EmbeddingRun2017C/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER

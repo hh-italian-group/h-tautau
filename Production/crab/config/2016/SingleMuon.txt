@@ -1,5 +1,5 @@
 lumiMask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt
-globalTag=102X_dataRun2_v11 sampleType=Run2016 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False energyScales=Central
+globalTag=102X_dataRun2_v11 sampleType=Run2016 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False 
 
 SingleMuon_Run2016B	/SingleMuon/Run2016B-17Jul2018_ver1-v1/MINIAOD
 SingleMuon_Run2016B	/SingleMuon/Run2016B-17Jul2018_ver2-v1/MINIAOD
