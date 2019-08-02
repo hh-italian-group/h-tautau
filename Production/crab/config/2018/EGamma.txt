@@ -1,4 +1,6 @@
 lumiMask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/ReReco/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt
-sampleType=Run2018D applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=True
+sampleType=Run2018ABC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False
 
-EGamma_Run2018D	/EGamma/Run2018D-22Jan2019-v2/MINIAOD
+EGamma_Run2018A	/EGamma/Run2018A-17Sep2018-v2/MINIAOD
+EGamma_Run2018B	/EGamma/Run2018B-17Sep2018-v1/MINIAOD
+EGamma_Run2018C	/EGamma/Run2018C-17Sep2018-v1/MINIAOD

@@ -4,4 +4,3 @@ sampleType=Run2018ABC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonIn
 Tau_Run2018A	/Tau/Run2018A-17Sep2018-v1/MINIAOD
 Tau_Run2018B	/Tau/Run2018B-17Sep2018-v1/MINIAOD
 Tau_Run2018C	/Tau/Run2018C-17Sep2018-v1/MINIAOD
-Tau_Run2018D	/Tau/Run2018D-PromptReco-v2/MINIAOD
