@@ -21,18 +21,18 @@ periodDict = { 'MC_16' : 'Run2016',
                'Emb_18D' : 'Run2018'
              }
 
-globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v6',
-                 'Run2016' : '102X_dataRun2_nanoAOD_2016_v1',
-                 'Emb_16' : '102X_dataRun2_nanoAOD_2016_v1',
+globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v7',
+                 'Run2016' : '102X_dataRun2_v11',
+                 'Emb_16' : '102X_dataRun2_v11',
                  #'Emb_16' : '80X_dataRun2_2016SeptRepro_v7',
-                 'MC_17' : '102X_mc2017_realistic_v6',
-                 'Run2017' : '102X_dataRun2_v8',
-                 'Emb_17' : '102X_dataRun2_v8',
-                 'MC_18' : '102X_upgrade2018_realistic_v18',
-                 'Run2018ABC' : '102X_dataRun2_Sep2018ABC_v2',
-                 'Run2018D' : '102X_dataRun2_Prompt_v13',
-                 'Emb_18ABC' : '102X_dataRun2_Sep2018ABC_v2',
-                 'Emb_18D' : '102X_dataRun2_Prompt_v13'
+                 'MC_17' : '102X_mc2017_realistic_v7',
+                 'Run2017' : '102X_dataRun2_v11',
+                 'Emb_17' : '102X_dataRun2_v11',
+                 'MC_18' : '102X_upgrade2018_realistic_v19',
+                 'Run2018ABC' : '102X_dataRun2_v11',
+                 'Run2018D' : '102X_dataRun2_Prompt_v14',
+                 'Emb_18ABC' : '102X_dataRun2_v11',
+                 'Emb_18D' : '102X_dataRun2_Prompt_v14'
                }
 
 hltPaths = {

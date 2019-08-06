@@ -1,5 +1,4 @@
-EventAwareLumiBased
-globalTag=80X_mcRun2_asymptotic_2016_TrancheIV_v8 sampleType=Summer16MC applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=True
+sampleType=MC_16 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=True
 
 QCD_Pt-1000toInf_MuEnrichedPt5          150000	/QCD_Pt-1000toInf_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
 QCD_Pt-1000toInf_MuEnrichedPt5_ext1     150000	/QCD_Pt-1000toInf_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v3/MINIAODSIM

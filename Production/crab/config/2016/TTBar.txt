@@ -1,10 +1,8 @@
-EventAwareLumiBased
-globalTag=80X_mcRun2_asymptotic_2016_TrancheIV_v8 sampleType=Summer16MC applyTriggerMatch=True saveGenTopInfo=True saveGenBosonInfo=False saveGenJetInfo=True
+sampleType=MC_16 applyTriggerMatch=True saveGenTopInfo=True saveGenBosonInfo=True saveGenJetInfo=True
 
-TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_sub1         4800	/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM split_jsons/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_sub1.json
-TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_sub2         4800	/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM split_jsons/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_sub2.json
-TTToSemilepton_TuneCUETP8M2_ttHtranche3_sub1	6800	/TTToSemilepton_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM split_jsons/TTToSemilepton_TuneCUETP8M2_ttHtranche3_sub1.json
-TTToSemilepton_TuneCUETP8M2_ttHtranche3_sub2	6800	/TTToSemilepton_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM split_jsons/TTToSemilepton_TuneCUETP8M2_ttHtranche3_sub2.json
-TTToSemilepton_TuneCUETP8M2_ttHtranche3_sub3	6800	/TTToSemilepton_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM split_jsons/TTToSemilepton_TuneCUETP8M2_ttHtranche3_sub3.json
-TT_TuneCUETP8M2T4                               10000	/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
-TT_TuneCUETP8M2T4_backup                        10000	/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_backup_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
+TTTo2L2Nu_TuneCP5_PSweights	        /TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM
+TTToSemiLeptonic_TuneCP5_PSweights	/TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM
+TT_TuneCUETP8M2T4	                /TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM
+TTToHadronic_TuneCP5_PSweights	    /TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM
+TTTo2L2Nu                       	/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
+TTToSemilepton	                    /TTToSemilepton_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM

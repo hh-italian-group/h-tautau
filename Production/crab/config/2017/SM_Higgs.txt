@@ -1,9 +1,7 @@
 sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=True saveGenJetInfo=True
 
-ZH_HToBB_ZToLL_M120_amcatnloFXFX	        /ZH_HToBB_ZToLL_M120_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ZH_HToBB_ZToLL_M125_13TeV_powheg_herwigpp	/ZH_HToBB_ZToLL_M125_13TeV_powheg_herwigpp/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ZH_HToBB_ZToLL_M125	                        /ZH_HToBB_ZToLL_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
-ZH_HToBB_ZToLL_M130	                        /ZH_HToBB_ZToLL_M130_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ZH_HToBB_ZToQQ_M125	                        /ZH_HToBB_ZToQQ_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 ZHToTauTau_M125	                            /ZHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
 WplusHToTauTau_M125	                        /WplusHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
