@@ -181,10 +181,10 @@ std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(c
             const analysis::LegType type = leg_list.Get<analysis::LegType>("type");
             const double pt = leg_list.Get<double>("pt");
             const double delta_pt = setup.deltaPt_map.at(type);
-            boost::optional<double> eta;
+            auto eta = boost::make_optional<double>(false,0);
             if(leg_list.Has("eta"))
                 eta = leg_list.Get<double>("eta");
-            boost::optional<unsigned> run_switch;
+            auto run_switch = boost::make_optional<unsigned>(false,0);
             if(leg_list.Has("run_switch"))
                 run_switch = leg_list.Get<double>("run_switch");
             bool applyL1match = false;

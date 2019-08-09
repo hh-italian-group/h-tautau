@@ -25,6 +25,9 @@ parser.add_argument('--lumiMask', required=False, dest='lumiMask', type=str, def
 					help="json file with a lumi mask (default: apply lumi mask from the config file)")
 parser.add_argument('--jobNameSuffix', required=False, dest='jobNameSuffix', type=str, default="",
 					help="suffix that will be added to each job name")
+parser.add_argument('--inputDBS', required=False, default="global", help="DBS instance")
+parser.add_argument('--splitting', required=False, default="Automatic",
+					help="suffix that will be added to each job name")
 parser.add_argument('--unitsPerJob', required=False, dest='unitsPerJob', type=int, default=1000,
 					help="number of units per job")
 parser.add_argument('--maxMemory', required=False, dest='maxMemory', type=int, default=2500,
@@ -47,7 +50,7 @@ config.JobType.psetName = args.cfg
 config.JobType.maxMemoryMB = args.maxMemory
 config.JobType.numCores = args.numCores
 
-config.Data.inputDBS = 'global'
+config.Data.inputDBS = args.inputDBS
 config.Data.allowNonValidInputDataset = args.allowNonValid
 config.General.transferOutputs = True
 config.General.transferLogs = True
@@ -66,10 +69,11 @@ job_names = Set(filter(lambda s: len(s) != 0, re.split(",", args.jobNames)))
 from crab_tools import JobCollection
 try:
     for job_file in args.job_file:
-        job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix, args.unitsPerJob)
+        job_collection = JobCollection(job_file, job_names, args.lumiMask, args.jobNameSuffix)
         print job_file
         print job_collection
-        job_collection.submit(config)
+        print "Splitting: {} with {} units per job".format(args.splitting, args.unitsPerJob)
+        job_collection.submit(config, args.splitting, args.unitsPerJob)
 except RuntimeError as err:
     print >> sys.stderr, "ERROR:", str(err)
     sys.exit(1)

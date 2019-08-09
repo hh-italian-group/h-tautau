@@ -21,9 +21,9 @@ options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarPar
                         "Analysis channels to run.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Event tuple file.")
-options.register('runSVfit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register('runSVfit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run SVfit algorithm on the selected tau pair.")
-options.register('runKinFit', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register('runKinFit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
 options.register('applyTriggerCut', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger cut for signal objects. Default: True")
@@ -82,9 +82,12 @@ process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring())
 process.TFileService = cms.Service('TFileService', fileName = cms.string(options.tupleOutput) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(0) )
 
+from AnalysisTools.Run.readFileList import *
 if len(options.fileList) > 0:
-    from AnalysisTools.Run.readFileList import *
     readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
+elif len(options.inputFiles) > 0:
+    addFilesToList(process.source.fileNames, options.inputFiles, options.fileNamePrefix)
+if options.maxEvents > 0:
     process.maxEvents.input = options.maxEvents
 
 if len(options.lumiFile) > 0:
