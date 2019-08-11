@@ -3,3 +3,7 @@ CMakeLists.txt.user*
 __init__.py
 *.swp
 .DS_Store
+/Production/crab/*.log
+/Production/crab/*.txt
+/Production/crab/work-area_*
+Production/crab/finished_*
