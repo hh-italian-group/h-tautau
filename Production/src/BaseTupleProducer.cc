@@ -428,8 +428,15 @@ void BaseTupleProducer::FillGenParticleInfo()
 		int particle_index = -1;
 		if(particle_ptr != nullptr){
             particle_index = static_cast<int>(particle_ptr - genParticles->data());
-		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0)
-		        throw std::runtime_error("Particle index exceeds the size.");
+		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0) {
+                if(saveGenTopInfo && std::abs(particle_ptr->pdgId()) == 6) {
+                    particle_index = -10;
+                } else {
+		                  throw analysis::exception("Particle index = %1% for particle with pdgId = %2% exceeds"
+                                                    " the size of gen particles collection = %3%.")
+                                                    % particle_index % particle_ptr->pdgId() % genParticles->size();
+                }
+            }
 		}
 		return particle_index;
 	};
@@ -440,16 +447,18 @@ void BaseTupleProducer::FillGenParticleInfo()
     	eventTuple().genParticles_vertex.push_back(ntuple::Point3D(particle->vertex()));
     	eventTuple().genParticles_pdg.push_back(particle->pdgId());
     	eventTuple().genParticles_status.push_back(particle->status());
-    	eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(particle->statusFlags().flags_.to_ulong()));
+    	eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(
+            particle->statusFlags().flags_.to_ulong()));
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
 
-
-    	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
-            eventTuple().genParticles_rel_pIndex.push_back(index);
-    		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
-    		int mother_index = returnIndex(mother_ptr);
-    		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
-    	}
+        if(index >= 0) {
+        	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
+                eventTuple().genParticles_rel_pIndex.push_back(index);
+        		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
+        		int mother_index = returnIndex(mother_ptr);
+        		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
+        	}
+        }
 
     };
 
