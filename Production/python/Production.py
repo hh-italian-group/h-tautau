@@ -80,7 +80,7 @@ process.GlobalTag.globaltag = sampleConfig.GetGlobalTag(options.sampleType)
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring())
 process.TFileService = cms.Service('TFileService', fileName = cms.string(options.tupleOutput) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(0) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 from AnalysisTools.Run.readFileList import *
 if len(options.fileList) > 0:

@@ -367,11 +367,13 @@ void BaseTupleProducer::FillGenParticleInfo()
 {
     using analysis::GenEventType;
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
-    static const std::set<int> leptons = { 11, 13, 15 };
+    static constexpr int electronNeutrinoPdgId = 12, muonNeutrinoPdgId = 14, tauNeutrinoPdgId = 16;
+    static const std::set<int> chargedLeptons = { electronPdgId, muonPdgId, tauPdgId };
+    static const std::set<int> neutralLeptons = { electronNeutrinoPdgId, muonNeutrinoPdgId, tauNeutrinoPdgId };
     static const std::set<int> bosons = { 23, 24, 25, 35 };
 
     std::vector<const reco::GenParticle*> particles_to_store;
-    std::map<int,std::vector<const reco::GenParticle*>> particles_to_store_backup;
+    std::vector<const reco::GenParticle*> particles_to_store_backup;
 
     std::map<int, size_t> particle_counts;
     for(const auto& particle : *genParticles) {
@@ -379,36 +381,25 @@ void BaseTupleProducer::FillGenParticleInfo()
         if(!flag.isPrompt() || !flag.isLastCopy() || !flag.fromHardProcess()) continue;
         const int abs_pdg = std::abs(particle.pdgId());
         ++particle_counts[abs_pdg];
-        if(saveGenBosonInfo && bosons.count(abs_pdg)){
-          particles_to_store.push_back(&particle);
+        if(saveGenBosonInfo) {
+            if(bosons.count(abs_pdg))
+                particles_to_store.push_back(&particle);
+            else if(chargedLeptons.count(abs_pdg) || neutralLeptons.count(abs_pdg))
+                particles_to_store_backup.push_back(&particle);
         }
-        if(saveGenBosonInfo && leptons.count(abs_pdg)){
-          particles_to_store_backup[abs_pdg].push_back(&particle);
-        }
-
     }
 
     if(saveGenBosonInfo && particles_to_store.empty()){
-      if(particles_to_store_backup[tauPdgId].size() > 0) {
-        if(particles_to_store_backup[tauPdgId].size() != 2)
-          throw analysis::exception("More than 2 prompt taus for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
-        particles_to_store = particles_to_store_backup.at(tauPdgId);
-      }
-      else if(particles_to_store_backup[muonPdgId].size() > 0) {
-        if(particles_to_store_backup[muonPdgId].size() != 2)
-          throw analysis::exception("More than 2 prompt muons for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
-        particles_to_store = particles_to_store_backup.at(muonPdgId);
-      }
-      else if(particles_to_store_backup[electronPdgId].size() > 0) {
-        if(particles_to_store_backup[electronPdgId].size() != 2)
-          throw analysis::exception("More than 2 prompt electrons for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
-        particles_to_store = particles_to_store_backup.at(electronPdgId);
-      }
-
+        if(particles_to_store_backup.size() < 2)
+            throw analysis::exception("Less than 2 prompt leptons in the event");
+        particles_to_store = particles_to_store_backup;
     }
 
-    if(saveGenBosonInfo && particles_to_store.empty())
-      throw analysis::exception("Particles to store is empty for event %1%.") % analysis::EventIdentifier(edmEvent->id().run(),edmEvent->id().luminosityBlock(),edmEvent->id().event());
+    if(saveGenBosonInfo && particles_to_store.empty()) {
+        throw analysis::exception("Particles to store is empty for event %1%.")
+                % analysis::EventIdentifier(edmEvent->id().run(), edmEvent->id().luminosityBlock(),
+                                            edmEvent->id().event());
+    }
 
     eventTuple().genParticles_nPromptElectrons = particle_counts[electronPdgId];
     eventTuple().genParticles_nPromptMuons = particle_counts[muonPdgId];
@@ -437,8 +428,15 @@ void BaseTupleProducer::FillGenParticleInfo()
 		int particle_index = -1;
 		if(particle_ptr != nullptr){
             particle_index = static_cast<int>(particle_ptr - genParticles->data());
-		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0)
-		        throw std::runtime_error("Particle index exceeds the size.");
+		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0) {
+                if(saveGenTopInfo && std::abs(particle_ptr->pdgId()) == 6) {
+                    particle_index = -10;
+                } else {
+		                  throw analysis::exception("Particle index = %1% for particle with pdgId = %2% exceeds"
+                                                    " the size of gen particles collection = %3%.")
+                                                    % particle_index % particle_ptr->pdgId() % genParticles->size();
+                }
+            }
 		}
 		return particle_index;
 	};
@@ -449,16 +447,18 @@ void BaseTupleProducer::FillGenParticleInfo()
     	eventTuple().genParticles_vertex.push_back(ntuple::Point3D(particle->vertex()));
     	eventTuple().genParticles_pdg.push_back(particle->pdgId());
     	eventTuple().genParticles_status.push_back(particle->status());
-    	eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(particle->statusFlags().flags_.to_ulong()));
+    	eventTuple().genParticles_statusFlags.push_back(static_cast<uint16_t>(
+            particle->statusFlags().flags_.to_ulong()));
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
 
-
-    	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
-            eventTuple().genParticles_rel_pIndex.push_back(index);
-    		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
-    		int mother_index = returnIndex(mother_ptr);
-    		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
-    	}
+        if(index >= 0) {
+        	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
+                eventTuple().genParticles_rel_pIndex.push_back(index);
+        		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
+        		int mother_index = returnIndex(mother_ptr);
+        		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
+        	}
+        }
 
     };
 

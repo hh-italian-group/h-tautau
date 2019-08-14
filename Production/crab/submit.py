@@ -53,7 +53,7 @@ config.JobType.numCores = args.numCores
 config.Data.inputDBS = args.inputDBS
 config.Data.allowNonValidInputDataset = args.allowNonValid
 config.General.transferOutputs = True
-config.General.transferLogs = True
+config.General.transferLogs = False
 config.Data.publication = False
 
 config.Site.storageSite = args.site
