@@ -132,14 +132,15 @@ void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) c
     const int particleStatus = particle->status;
     const LorentzVectorM genParticle_momentum = particle->momentum;
     const auto flag = particle->genStatusFlags.GenStatusFlags::getFlags();
-    auto mothers_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
     std::cout << particleName                              << " <" << pdgParticle
               << "> pt=" << genParticle_momentum.Pt()      << " eta=" << genParticle_momentum.Eta()
               << " phi=" << genParticle_momentum.Phi()     << " E=" << genParticle_momentum.E()
               << " m=" << genParticle_momentum.M()         << " index=" << particle->index;
     if(particle->mothers.size() > 0){
+        auto mothers_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
+        std::cout  << " mother_index=" << mothers_index;
         for(size_t index_mother = 0; index_mother < particle->mothers.size(); ++index_mother)
-            std::cout << " mother_index=" << CollectionToString(particle->mothers, ",");
+            std::cout  << "," << particle->mothers.at(index_mother)->index;
     }
 
     std::cout << " vertex=" << particle->vertex << " status=" << particleStatus
