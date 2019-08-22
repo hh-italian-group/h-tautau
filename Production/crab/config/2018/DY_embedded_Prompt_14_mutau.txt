@@ -1,0 +1,3 @@
+sampleType=Emb_18D anaChannels=muTau storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+
+EmbeddingRun2018D_MuTauFinalState	/EmbeddingRun2018D/MuTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER

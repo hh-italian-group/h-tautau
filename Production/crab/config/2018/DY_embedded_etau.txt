@@ -1,0 +1,5 @@
+sampleType=Emb_18ABC anaChannels=eTau storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+
+EmbeddingRun2018A_ElTauFinalState	/EmbeddingRun2018A/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
+EmbeddingRun2018B_ElTauFinalState	/EmbeddingRun2018B/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
+EmbeddingRun2018C_ElTauFinalState	/EmbeddingRun2018C/ElTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER

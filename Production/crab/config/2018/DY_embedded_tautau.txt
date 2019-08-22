@@ -1,0 +1,5 @@
+sampleType=Emb_18ABC anaChannels=tauTau storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+
+EmbeddingRun2018A_TauTauFinalState	/EmbeddingRun2018A/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
+EmbeddingRun2018B_TauTauFinalState	/EmbeddingRun2018B/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
+EmbeddingRun2018C_TauTauFinalState	/EmbeddingRun2018C/TauTauFinalState-inputDoubleMu_102X_miniAOD-v1/USER
