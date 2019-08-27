@@ -137,9 +137,9 @@ void GenEvent::PrintChain(const GenParticle* particle, const std::string& pre) c
               << " phi=" << genParticle_momentum.Phi()     << " E=" << genParticle_momentum.E()
               << " m=" << genParticle_momentum.M()         << " index=" << particle->index;
     if(particle->mothers.size() > 0){
-        auto mothers_index = particle->mothers.size() > 0 ?  particle->mothers.at(0)->index : 0;
+        auto mothers_index = particle->mothers.at(0)->index;
         std::cout  << " mother_index=" << mothers_index;
-        for(size_t index_mother = 0; index_mother < particle->mothers.size(); ++index_mother)
+        for(size_t index_mother = 1; index_mother < particle->mothers.size(); ++index_mother)
             std::cout  << "," << particle->mothers.at(index_mother)->index;
     }
 

@@ -40,7 +40,7 @@ using Point3D = analysis::Point3D_Float;
     LVAR(uint16_t, eleId_iso) /* ele passed Id with isolation requirement */ \
     LVAR(uint16_t, eleId_noIso) /* ele passed Id without isolation requirement */ \
     LVAR(uint16_t, muonId) /* muon passed Id requirement */ \
-    LVAR(size_t, genTauIndex) /* tau leg is matched with true tau */ \
+    LVAR(Int_t, genTauIndex) /* tau leg is matched with true tau */ \
     /**/
 
 #define OTHER_LEPTON_DATA(col) \
@@ -76,7 +76,7 @@ using Point3D = analysis::Point3D_Float;
     JVAR(Int_t, hadronFlavour, col) \
     JVAR(Float_t, resolution, col) /* Jet energy resolution in percentage */ \
     JVAR(ULong64_t, triggerFilterMatch, col) /* Trigger filters matching bits */ \
-    JVAR(size_t, genJetIndex, col) /* b is matched with true b */ \
+    JVAR(Int_t, genJetIndex, col) /* b is matched with true b */ \
     JVAR(ULong64_t, triggerFilterMatch_0, col) /* Trigger filters matching bits */ \
     JVAR(ULong64_t, triggerFilterMatch_1, col) /* Trigger filters matching bits */ \
     JVAR(ULong64_t, triggerFilterMatch_2, col) /* Trigger filters matching bits */ \
