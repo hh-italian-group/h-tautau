@@ -1,8 +1,8 @@
 lumiMask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt
-sampleType=Run2017 applyTriggerMatch=True saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False
+sampleType=Run2017 applyTriggerMatch=True anaChannels=tauTau saveGenTopInfo=False saveGenBosonInfo=False saveGenJetInfo=False
 
 Tau_Run2017B	/Tau/Run2017B-31Mar2018-v1/MINIAOD
 Tau_Run2017C	/Tau/Run2017C-31Mar2018-v1/MINIAOD
 Tau_Run2017D	/Tau/Run2017D-31Mar2018-v1/MINIAOD
 Tau_Run2017E	/Tau/Run2017E-31Mar2018-v1/MINIAOD
-Tau_Run2017F	/Tau/Run2017F-31Mar2018-v1/MINIAOD	
+Tau_Run2017F	/Tau/Run2017F-31Mar2018-v1/MINIAOD
