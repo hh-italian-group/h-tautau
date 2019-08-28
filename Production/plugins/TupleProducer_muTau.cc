@@ -109,6 +109,10 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
+    bool iso_condition = (tau->Passed(TauIdDiscriminator::byCombinedIsolationDeltaBetaCorr3Hits,DiscriminatorWP::Loose) ||
+        tau->Passed(TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,DiscriminatorWP::VVLoose) ||
+        tau->Passed(TauIdDiscriminator::byDeepTau2017v2VSjet,DiscriminatorWP::VVVLoose)) || (isMC && tau->gen_match() == analysis::GenLeptonMatch::Tau);
+    cut(iso_condition, "iso");
 }
 
 

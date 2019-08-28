@@ -31,7 +31,7 @@ public:
 
     void Run()
     {
-        Process(false, false);
+        Process(true, false);
 
         std::cout << "All file has been merged. Number of files = " << input_files.size() << std::endl;
 
