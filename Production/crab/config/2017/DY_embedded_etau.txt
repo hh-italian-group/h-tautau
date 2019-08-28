@@ -1,0 +1,7 @@
+sampleType=Emb_17 applyTriggerMatch=True anaChannels=eTau storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+
+EmbeddingRun2017B_ElTauFinalState	/EmbeddingRun2017B/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017C_ElTauFinalState	/EmbeddingRun2017C/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017D_ElTauFinalState	/EmbeddingRun2017D/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017E_ElTauFinalState	/EmbeddingRun2017E/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017F_ElTauFinalState	/EmbeddingRun2017F/ElTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER

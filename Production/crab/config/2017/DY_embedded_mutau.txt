@@ -1,0 +1,7 @@
+sampleType=Emb_17 applyTriggerMatch=True anaChannels=muTau storeLHEinfo=False saveGenParticleInfo=False isEmbedded=True
+
+EmbeddingRun2017B_MuTauFinalState	/EmbeddingRun2017B/MuTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017C_MuTauFinalState	/EmbeddingRun2017C/MuTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017D_MuTauFinalState	/EmbeddingRun2017D/MuTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017E_MuTauFinalState	/EmbeddingRun2017E/MuTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
+EmbeddingRun2017F_MuTauFinalState	/EmbeddingRun2017F/MuTauFinalState-inputDoubleMu_94X_miniAOD-v2/USER
