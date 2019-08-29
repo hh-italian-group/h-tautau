@@ -80,7 +80,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     cut(other_tight_muons.empty(), "no_extra_muon");
 
     if(runSVfit)
-        selection.svfitResult[n] = svfitProducer->Fit(selected_higgs, *met);
+        selection.svfitResult[0] = svfitProducer->Fit(selected_higgs, *met);
 
     ApplyBaseSelection(selection);
 

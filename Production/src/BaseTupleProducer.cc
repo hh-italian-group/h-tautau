@@ -866,14 +866,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     // HTT candidate
     for(const auto& result : selection.svfitResult){
-        eventTuple().SVfit_Higges_indexes.push_back(result.first);
+        eventTuple().SVfit_Higgs_index.push_back(result.first);
         eventTuple().SVfit_is_valid.push_back(result.second.has_valid_momentum);
         eventTuple().SVfit_p4.push_back(ntuple::LorentzVectorM(result.second.momentum));
         eventTuple().SVfit_p4_error.push_back(ntuple::LorentzVectorM(result.second.momentum_error));
         eventTuple().SVfit_mt.push_back(result.second.transverseMass);
         eventTuple().SVfit_mt_error.push_back(result.second.transverseMass_error);
-        eventTuple().SVfit_es_source.push_back(static_cast<Int_t>(UncertaintySource::None));
-        eventTuple().SVfit_es_scale.push_back(static_cast<Int_t>(UncertaintyScale::Central));
+        eventTuple().SVfit_unc_source.push_back(static_cast<Int_t>(UncertaintySource::None));
+        eventTuple().SVfit_unc_scale.push_back(static_cast<Int_t>(UncertaintyScale::Central));
     }
 
 

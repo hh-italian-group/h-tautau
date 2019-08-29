@@ -245,10 +245,10 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
 {
     Lock lock(*mutex);
     if(!svfit_results){
-        const auto iter = std::find(event_candidate.GetEvent().SVfit_Higges_indexes.begin(),
-                                    event_candidate.GetEvent().SVfit_Higges_indexes.end(), selected_htt_index);
+        const auto iter = std::find(event_candidate.GetEvent().SVfit_Higgs_index.begin(),
+                                    event_candidate.GetEvent().SVfit_Higgs_index.end(), selected_htt_index);
         svfit_results = std::make_shared<sv_fit_ana::FitResults>();
-        if(iter == event_candidate.GetEvent().SVfit_Higges_indexes.end()){
+        if(iter == event_candidate.GetEvent().SVfit_Higgs_index.end()){
             const auto& svfitProducer = GetSVFitProducer();
             const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
             svfit_results->has_valid_momentum = result.has_valid_momentum;
@@ -258,7 +258,7 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
             svfit_results->transverseMass_error = result.transverseMass_error;
         }
         else {
-            const size_t index = static_cast<size_t>(std::distance(event_candidate.GetEvent().SVfit_Higges_indexes.begin(), iter));
+            const size_t index = static_cast<size_t>(std::distance(event_candidate.GetEvent().SVfit_Higgs_index.begin(), iter));
             svfit_results->has_valid_momentum = event_candidate.GetEvent().SVfit_is_valid.at(index);
             svfit_results->momentum = event_candidate.GetEvent().SVfit_p4.at(index);
             svfit_results->momentum_error = event_candidate.GetEvent().SVfit_p4_error.at(index);
