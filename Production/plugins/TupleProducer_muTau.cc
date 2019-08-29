@@ -109,14 +109,7 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
-    bool match_condition = false;
-    if(isMC){
-        const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(p4), *genParticles);
-        match_condition = match.match == analysis::GenLeptonMatch::Tau;
-    }
-    bool iso_condition = (tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
-        tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
-        tau->tauID("byVVVLooseDeepTau2017v2VSjet") > 0.5) || match_condition;
+    bool iso_condition = PassMatchOrIsoSelection(tau);
     cut(iso_condition, "iso");
 }
 

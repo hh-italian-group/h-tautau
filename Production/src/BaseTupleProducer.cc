@@ -735,6 +735,19 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut) const
     // }
 }
 
+bool BaseTupleProducer::PassMatchOrIsoSelection(const TauCandidate& tau) const
+{
+    bool match_condition = false;
+    if(isMC){
+        const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(tau.GetMomentum()), *genParticles);
+        match_condition = match.match == analysis::GenLeptonMatch::Tau;
+    }
+    return (tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
+        tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
+        tau->tauID("byVVVLooseDeepTau2017v2VSjet") > 0.5 ||
+        tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT2016") > 0.5) || match_condition;
+}
+
 
 void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selection)
 {
