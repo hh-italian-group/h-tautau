@@ -151,7 +151,7 @@ private:
 
 protected:
     const analysis::Period period;
-    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
+    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
     //std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;

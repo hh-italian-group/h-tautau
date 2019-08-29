@@ -50,7 +50,7 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
         selection.higgses_pair_indexes.push_back(daughter_index);
 
         if(runSVfit)
-            selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
+            selection.svfitResult[n] = svfitProducer->Fit(selected_higgs, *met);
 
     }
 
