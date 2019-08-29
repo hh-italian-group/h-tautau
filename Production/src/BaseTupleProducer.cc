@@ -875,6 +875,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().SVfit_p4_error.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum_error));
         eventTuple().SVfit_mt.push_back(selection.svfitResult.at(n).transverseMass);
         eventTuple().SVfit_mt_error.push_back(selection.svfitResult.at(n).transverseMass_error);
+        eventTuple().SVfit_es_source.push_back(static_cast<Int_t>(UncertaintySource::None));
+        eventTuple().SVfit_es_scale.push_back(static_cast<Int_t>(UncertaintyScale::Central));
     }
 
 
@@ -967,11 +969,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     }
 
 
-    for(const auto& result : selection.kinfitResults) {
-        eventTuple().kinFit_jetPairId.push_back(result.first);
-        eventTuple().kinFit_m.push_back(result.second.mass);
-        eventTuple().kinFit_chi2.push_back(result.second.chi2);
-        eventTuple().kinFit_convergence.push_back(result.second.convergence);
+    for(size_t n = 0; n < selection.kinfitResults.size(); ++n) {
+        eventTuple().kinFit_Higges_indexes.push_back(n);
+        eventTuple().kinFit_jetPairId.push_back(selection.kinfitResults.at(n).first);
+        eventTuple().kinFit_m.push_back(selection.kinfitResults.at(n).second.mass);
+        eventTuple().kinFit_chi2.push_back(selection.kinfitResults.at(n).second.chi2);
+        eventTuple().kinFit_convergence.push_back(selection.kinfitResults.at(n).second.convergence);
+        eventTuple().kinFit_es_source.push_back(static_cast<Int_t>(UncertaintySource::None));
+        eventTuple().kinFit_es_scale.push_back(static_cast<Int_t>(UncertaintyScale::Central));
     }
 
     FillLheInfo();

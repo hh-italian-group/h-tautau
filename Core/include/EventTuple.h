@@ -146,6 +146,8 @@ using Point3D = analysis::Point3D_Float;
     VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit using integration method */ \
     VAR(std::vector<Float_t>, SVfit_mt) /* SVfit using integration method */ \
     VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit using integration method */ \
+    VAR(std::vector<Int_t>, SVfit_es_source) /* SVfit using integration method */ \
+    VAR(std::vector<Int_t>, SVfit_es_scale) /* SVfit using integration method */ \
     /* Signal leptons */ \
     LEG_DATA() /* muon, electron or tau */ \
     TAU_IDS() /* raw values of tau ID discriminators */ \
@@ -158,10 +160,13 @@ using Point3D = analysis::Point3D_Float;
     FATJET_DATA(fatJets) \
     SUBJET_DATA(subJets) \
     /* KinFit Variables */ \
+    VAR(std::vector<size_t>, kinFit_Higges_indexes) /* kinFit Higgs indexes */ \
     VAR(std::vector<UInt_t>, kinFit_jetPairId) /* indices of jet pairs for which KinFit is calculated */\
     VAR(std::vector<Float_t>, kinFit_m) /* KinFit m_bbtt mass */\
     VAR(std::vector<Float_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
+    VAR(std::vector<Int_t>, kinFit_es_source) /* kinFit */ \
+    VAR(std::vector<Int_t>, kinFit_es_scale) /* kinFit */ \
     /* Generator level information */\
     VAR(UInt_t, lhe_n_partons) \
     VAR(UInt_t, lhe_n_c_partons) \
