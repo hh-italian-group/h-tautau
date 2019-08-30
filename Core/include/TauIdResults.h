@@ -21,11 +21,11 @@ namespace analysis {
            "VLoose Loose Medium Tight VTight VVTight") \
     TAU_ID(byIsolationMVArun2017v2DBoldDMwLT2017, "by{wp}IsolationMVArun2017v2DBoldDMwLT{raw}2017", true, \
            "VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byDeepTau2017v2VSe, "by{wp}DeepTau2017v2VSe{raw}", true, \
+    TAU_ID(byDeepTau2017v2p1VSe, "by{wp}DeepTau2017v2p1VSe{raw}", true, \
            "VVVLoose VVLoose VLoose Loose Medium Tight VTight VVTight") \
-    TAU_ID(byDeepTau2017v2VSmu, "by{wp}DeepTau2017v2VSmu{raw}", true, \
+    TAU_ID(byDeepTau2017v2p1VSmu, "by{wp}DeepTau2017v2p1VSmu{raw}", true, \
            "VLoose Loose Medium Tight") \
-    TAU_ID(byDeepTau2017v2VSjet, "by{wp}DeepTau2017v2VSjet{raw}", true, \
+    TAU_ID(byDeepTau2017v2p1VSjet, "by{wp}DeepTau2017v2p1VSjet{raw}", true, \
            "VVVLoose VVLoose VLoose Loose Medium Tight VTight VVTight") \
     /**/
 

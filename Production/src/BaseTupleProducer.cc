@@ -741,7 +741,7 @@ bool BaseTupleProducer::PassMatchOrIsoSelection(const TauCandidate& tau) const
     }
     return (tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
         tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
-        tau->tauID("byVVVLooseDeepTau2017v2VSjet") > 0.5 ||
+        tau->tauID("byVVVLooseDeepTau2017v2p1VSjet") > 0.5 ||
         tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT2016") > 0.5) || match_condition;
 }
 

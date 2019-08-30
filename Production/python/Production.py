@@ -241,7 +241,7 @@ import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
 updatedTauName = "slimmedTausNewID"
 tauIdEmbedder = tauIdConfig.TauIDEmbedder(
     process, cms, debug = True, updatedTauName = updatedTauName,
-    toKeep = [ "2017v2", "deepTau2017v2",  "againstEle2018", "2016v1"]
+    toKeep = [ "2017v2", "deepTau2017v2p1",  "againstEle2018", "2016v1"]
 )
 tauIdEmbedder.runTauID()
 tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
