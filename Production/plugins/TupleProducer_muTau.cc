@@ -58,7 +58,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
         selection.higgses_pair_indexes.push_back(daughter_index);
 
         if(runSVfit)
-            selection.svfitResult.push_back(svfitProducer->Fit(selected_higgs, *met));
+            selection.svfitResult[n] = svfitProducer->Fit(selected_higgs, *met);
 
     }
 
@@ -109,6 +109,8 @@ void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) 
     auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
     cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
     cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
+    bool iso_condition = PassMatchOrIsoSelection(tau);
+    cut(iso_condition, "iso");
 }
 
 

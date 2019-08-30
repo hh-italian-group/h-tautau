@@ -23,8 +23,6 @@ options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singl
                         "Event tuple file.")
 options.register('runSVfit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Run SVfit algorithm on the selected tau pair.")
-options.register('runKinFit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                        "Run HHKinFit algorithm for on the selected tau pair and all possible jet combinations.")
 options.register('applyTriggerCut', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger cut for signal objects. Default: True")
 options.register('storeLHEinfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -243,7 +241,7 @@ import RecoTauTag.RecoTau.tools.runTauIdMVA as tauIdConfig
 updatedTauName = "slimmedTausNewID"
 tauIdEmbedder = tauIdConfig.TauIDEmbedder(
     process, cms, debug = True, updatedTauName = updatedTauName,
-    toKeep = [ "2017v2", "deepTau2017v2",  "againstEle2018", "2016v1"]
+    toKeep = [ "2017v2", "deepTau2017v2p1",  "againstEle2018", "2016v1"]
 )
 tauIdEmbedder.runTauID()
 tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
@@ -323,7 +321,6 @@ for channel in channels:
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),
-        runKinFit               = cms.bool(options.runKinFit),
         applyTriggerCut         = cms.bool(options.applyTriggerCut),
         storeLHEinfo            = cms.bool(options.storeLHEinfo),
         applyRecoilCorr         = cms.bool(options.applyRecoilCorr),

@@ -61,7 +61,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     applyTriggerMatch(iConfig.getParameter<bool>("applyTriggerMatch")),
     applyTriggerMatchCut(iConfig.getParameter<bool>("applyTriggerMatchCut")),
     runSVfit(iConfig.getParameter<bool>("runSVfit")),
-    runKinFit(iConfig.getParameter<bool>("runKinFit")),
     applyTriggerCut(iConfig.getParameter<bool>("applyTriggerCut")),
     storeLHEinfo(iConfig.getParameter<bool>("storeLHEinfo")),
     applyRecoilCorr(iConfig.getParameter<bool>("applyRecoilCorr")),
@@ -81,7 +80,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIMembedding")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
-                 mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", "RECO")),
+                 mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", isEmbedded ? "SIMembedding" : "RECO")),
                  edm::FileInPath(iConfig.getParameter<std::string>("triggerCfg")).fullPath(),
                  _channel, isEmbedded)
 {
@@ -99,8 +98,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
 //        svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
 //            edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
         svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer());
-    if(runKinFit)
-        kinfitProducer = std::shared_ptr<analysis::kin_fit::FitProducer>(new analysis::kin_fit::FitProducer());
 
     if(applyRecoilCorr)
         recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
@@ -735,6 +732,19 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut) const
     // }
 }
 
+bool BaseTupleProducer::PassMatchOrIsoSelection(const TauCandidate& tau) const
+{
+    bool match_condition = false;
+    if(isMC){
+        const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(tau.GetMomentum()), *genParticles);
+        match_condition = match.match == analysis::GenLeptonMatch::Tau;
+    }
+    return (tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
+        tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
+        tau->tauID("byVVVLooseDeepTau2017v2p1VSjet") > 0.5 ||
+        tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT2016") > 0.5) || match_condition;
+}
+
 
 void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selection)
 {
@@ -855,13 +865,15 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().rho = *rho;
 
     // HTT candidate
-    for(size_t n = 0; n < selection.svfitResult.size(); ++n){
-        eventTuple().SVfit_Higges_indexes.push_back(n);
-        eventTuple().SVfit_is_valid.push_back(selection.svfitResult.at(n).has_valid_momentum);
-        eventTuple().SVfit_p4.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum));
-        eventTuple().SVfit_p4_error.push_back(ntuple::LorentzVectorM(selection.svfitResult.at(n).momentum_error));
-        eventTuple().SVfit_mt.push_back(selection.svfitResult.at(n).transverseMass);
-        eventTuple().SVfit_mt_error.push_back(selection.svfitResult.at(n).transverseMass_error);
+    for(const auto& result : selection.svfitResult){
+        eventTuple().SVfit_Higgs_index.push_back(result.first);
+        eventTuple().SVfit_is_valid.push_back(result.second.has_valid_momentum);
+        eventTuple().SVfit_p4.push_back(ntuple::LorentzVectorM(result.second.momentum));
+        eventTuple().SVfit_p4_error.push_back(ntuple::LorentzVectorM(result.second.momentum_error));
+        eventTuple().SVfit_mt.push_back(result.second.transverseMass);
+        eventTuple().SVfit_mt_error.push_back(result.second.transverseMass_error);
+        eventTuple().SVfit_unc_source.push_back(static_cast<Int_t>(UncertaintySource::None));
+        eventTuple().SVfit_unc_scale.push_back(static_cast<Int_t>(UncertaintyScale::Central));
     }
 
 
@@ -951,14 +963,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().subJets_p4.push_back(ntuple::LorentzVectorE(sub_jet->p4()));
             eventTuple().subJets_parentIndex.push_back(parentIndex);
         }
-    }
-
-
-    for(const auto& result : selection.kinfitResults) {
-        eventTuple().kinFit_jetPairId.push_back(result.first);
-        eventTuple().kinFit_m.push_back(result.second.mass);
-        eventTuple().kinFit_chi2.push_back(result.second.chi2);
-        eventTuple().kinFit_convergence.push_back(result.second.convergence);
     }
 
     FillLheInfo();

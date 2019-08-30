@@ -151,7 +151,7 @@ private:
 
 protected:
     const analysis::Period period;
-    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, runKinFit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
+    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
     //std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
@@ -240,6 +240,7 @@ protected:
                         bool isTightSelection) const;
 
     void SelectJet(const JetCandidate& jet, Cutter& cut) const;
+    bool PassMatchOrIsoSelection(const TauCandidate& tau) const;
 
     template<typename Candidate1, typename Candidate2>
     std::vector<std::pair<size_t,size_t>> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
