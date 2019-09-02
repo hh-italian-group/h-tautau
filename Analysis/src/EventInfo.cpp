@@ -106,7 +106,7 @@ size_t EventInfoBase::GetNJets() const
 }
 
 size_t EventInfoBase::GetNFatJets() const { return event_candidate.GetEvent().fatJets_p4.size(); }
-
+size_t EventInfoBase::GetHttIndex() const { return selected_htt_index; }
 const SignalObjectSelector::SelectedSignalJets& EventInfoBase::GetSelectedSignalJets() const { return selected_signal_jets; }
 Period EventInfoBase::GetPeriod() const { return period; }
 JetOrdering EventInfoBase::GetJetOrdering() const {return jet_ordering; }
@@ -214,7 +214,7 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
     if(!HasBjetPair())
         throw exception("Can't retrieve KinFit results.");
     if(!kinfit_results) {
-        const size_t pairId = ntuple::CombinationPairToIndex(selected_signal_jets.selectedBjetPair, GetNJets());
+        const size_t pairId = ntuple::CombinationPairToIndex(selected_signal_jets.selectedBjetPair);
         const auto iter = std::find(event_candidate.GetEvent().kinFit_jetPairId.begin(),
                                     event_candidate.GetEvent().kinFit_jetPairId.end(), pairId);
         kinfit_results = std::make_shared<kin_fit::FitResults>();

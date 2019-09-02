@@ -5,31 +5,17 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace ntuple {
 
-size_t NumberOfCombinationPairs(size_t n_jets) { return n_jets * (n_jets - 1); }
 
-size_t CombinationPairToIndex(const JetPair& pair, size_t n_jets)
+size_t CombinationPairToIndex(const JetPair& pair)
 {
-    const size_t min = std::min(pair.first, pair.second);
-    const size_t max = std::max(pair.first, pair.second);
-    if(n_jets < 2 || min == max || max >= n_jets)
-        throw analysis::exception("bad combination pair (%1%, %2%) for n b-jets = %3%.")
-            % pair.first % pair.second % n_jets;
-    size_t index = pair.first * (n_jets - 1) + pair.second;
-    if(pair.first < pair.second)
-        --index;
-    return index;
+    return pair.first * 1000 + pair.second;
 }
 
-JetPair CombinationIndexToPair(size_t index, size_t n_jets)
+JetPair CombinationIndexToPair(size_t index)
 {
-    if(n_jets < 2 || index >= NumberOfCombinationPairs(n_jets))
-        throw analysis::exception("bad combination index = %1% for n b-jets = %2%.") % index % n_jets;
-
     JetPair pair;
-    pair.second = index % (n_jets - 1);
-    pair.first = (index - pair.second) / (n_jets - 1);
-    if(pair.first <= pair.second)
-        ++pair.second;
+    pair.second = index % 1000;
+    pair.first = (index - pair.second) / 1000;
     return pair;
 }
 

@@ -87,6 +87,7 @@ public:
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
+    size_t GetHttIndex() const;
     const SignalObjectSelector::SelectedSignalJets& GetSelectedSignalJets() const;
     Period GetPeriod() const;
     JetOrdering GetJetOrdering() const;
