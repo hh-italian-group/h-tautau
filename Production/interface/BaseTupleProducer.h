@@ -148,6 +148,7 @@ private:
     edm::EDGetTokenT<edm::View<reco::GenJet>> genJets_token;
     edm::EDGetTokenT<bool> badPFMuonFilter_token, badChCandidateFilter_token;
     edm::EDGetTokenT<double> m_rho_token;
+    std::map<std::string, edm::EDGetTokenT<bool>> customMetFilters_token;
 
 protected:
     const analysis::Period period;

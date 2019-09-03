@@ -78,6 +78,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "RECO")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "PAT")),
                  mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "SIMembedding")),
+                 mayConsume<edm::TriggerResults>(edm::InputTag("TriggerResults", "", "MERGE")),
                  consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales")),
                  consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects")),
                  mayConsume<BXVector<l1t::Tau>>(edm::InputTag("caloStage2Digis", "Tau", isEmbedded ? "SIMembedding" : "RECO")),
@@ -102,6 +103,12 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     if(applyRecoilCorr)
         recoilPFMetCorrector = std::shared_ptr<RecoilCorrector>(new RecoilCorrector(
             edm::FileInPath("HTT-utilities/RecoilCorrections/data/TypeIPFMET_2016BCD.root").fullPath()));
+
+    const edm::ParameterSet& customMetFilters = iConfig.getParameterSet("customMetFilters");
+    for(const auto& filterName : customMetFilters.getParameterNames()) {
+            customMetFilters_token[filterName] =
+                mayConsume<bool>(customMetFilters.getParameter<edm::InputTag>(filterName));
+        }
 }
 
 void BaseTupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -589,8 +596,14 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     MetFilters filters;
     const auto setResult = [&](Filter filter, const std::string& name) {
         bool result;
-        if(!triggerTools.TryGetAnyTriggerResult(name, result))
-            result = true;
+        auto iter = customMetFilters_token.find(name);
+        if(iter != customMetFilters_token.end()) {
+            edm::Handle<bool> result_handle;
+            edmEvent->getByToken(iter->second, result_handle);
+            result = *result_handle;
+        }
+        else if(!triggerTools.TryGetAnyTriggerResult(name, result))
+            throw cms::Exception("TauTriggerSelectionFilter") << "MET filter '" << name << "' not found.";
         filters.SetResult(filter, result);
     };
 
