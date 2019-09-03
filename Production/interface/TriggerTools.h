@@ -24,13 +24,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class CMSSW_Process { SIM, HLT, RECO, PAT, SIMembedding };
+enum class CMSSW_Process { SIM, HLT, RECO, PAT, SIMembedding, MERGE };
 ENUM_NAMES(CMSSW_Process) = {
     { CMSSW_Process::SIM, "SIM" },
     { CMSSW_Process::HLT, "HLT" },
     { CMSSW_Process::RECO, "RECO" },
     { CMSSW_Process::PAT, "PAT" },
-    { CMSSW_Process::SIMembedding, "SIMembedding" }
+    { CMSSW_Process::SIMembedding, "SIMembedding" },
+    { CMSSW_Process::MERGE, "MERGE" }
 };
 
 namespace detail {
@@ -63,6 +64,7 @@ public:
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIMembedding_token,
+                 EDGetTokenT<edm::TriggerResults>&& _triggerResultsMERGE_token,
                  EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                  EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                  EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
