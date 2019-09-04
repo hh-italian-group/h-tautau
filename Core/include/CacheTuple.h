@@ -4,8 +4,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 
 #include "AnalysisTools/Core/include/SmartTree.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
 
-using LorentzVectorM = analysis::LorentzVectorM_Float;
+using LorentzVectorM = analysis::LorentzVectorM;
 
 #define CACHE_DATA() \
     VAR(UInt_t, run) /* run */ \
@@ -22,7 +23,7 @@ using LorentzVectorM = analysis::LorentzVectorM_Float;
     VAR(std::vector<Int_t>, SVfit_unc_scale) /* SVfit using integration method */ \
     /* KinFit Variables */ \
     VAR(std::vector<size_t>, kinFit_Higgs_index) /* kinFit Higgs indexes */ \
-    VAR(std::vector<UInt_t>, kinFit_jetPairId) /* indices of jet pairs for which KinFit is calculated */\
+    VAR(std::vector<size_t>, kinFit_jetPairId) /* indices of jet pairs for which KinFit is calculated */\
     VAR(std::vector<Float_t>, kinFit_m) /* KinFit m_bbtt mass */\
     VAR(std::vector<Float_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\

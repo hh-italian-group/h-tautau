@@ -93,9 +93,9 @@ private:
         for(unsigned n = 0; n < signalObjectSelectors.size(); ++n){
             for(unsigned h = 0; h < unc_sources.size(); ++h){
                 for(int l = -1; l < 2; ++l){
-                    cacheTuple().run = event.run();
-                    cacheTuple().lumi = event.lumi();
-                    cacheTuple().evt = event.evt();
+                    cacheTuple().run = event.run;
+                    cacheTuple().lumi = event.lumi;
+                    cacheTuple().evt = event.evt;
                     SignalObjectSelector signalObjectSelector = signalObjectSelectors.at(n);
                     boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,&summaryInfo,run_period,jet_ordering);
                     if(!event_info_base.is_initialized()) continue;
@@ -117,10 +117,10 @@ private:
                         const sv_fit_ana::FitResults& result = event_info_base->GetSVFitResults();
                         cacheTuple().SVfit_Higgs_index.push_back(selected_htt_index);
                         cacheTuple().SVfit_is_valid.push_back(result.has_valid_momentum);
-                        cacheTuple().SVfit_p4.push_back(LorentzVectorM(result.momentum));
+                        cacheTuple().SVfit_p4.push_back(result.momentum);
                         cacheTuple().SVfit_p4_error.push_back(LorentzVectorM(result.momentum_error));
-                        cacheTuple().SVfit_mt.push_back(result.transverseMass);
-                        cacheTuple().SVfit_mt_error.push_back(result.transverseMass_error);
+                        cacheTuple().SVfit_mt.push_back(static_cast<Float_t>(result.transverseMass));
+                        cacheTuple().SVfit_mt_error.push_back(static_cast<Float_t>(result.transverseMass_error));
                         cacheTuple().SVfit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(h)));
                         cacheTuple().SVfit_unc_scale.push_back(l);
                         Htt_indexes.insert(selected_htt_index);
@@ -132,8 +132,8 @@ private:
                         const kin_fit::FitResults& result = event_info_base->GetKinFitResults();
                         cacheTuple().kinFit_Higgs_index.push_back(selected_htt_index);
                         cacheTuple().kinFit_jetPairId.push_back(selected_hbb_index);
-                        cacheTuple().kinFit_m.push_back(result.mass);
-                        cacheTuple().kinFit_chi2.push_back(result.chi2);
+                        cacheTuple().kinFit_m.push_back(static_cast<Float_t>(result.mass));
+                        cacheTuple().kinFit_chi2.push_back(static_cast<Float_t>(result.chi2));
                         cacheTuple().kinFit_convergence.push_back(result.convergence);
                         cacheTuple().kinFit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(h)));
                         cacheTuple().kinFit_unc_scale.push_back(l);
