@@ -63,6 +63,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsPAT_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIMembedding_token,
+                           EDGetTokenT<edm::TriggerResults>&& _triggerResultsMERGE_token,
                            EDGetTokenT<pat::PackedTriggerPrescales>&& _triggerPrescales_token,
                            EDGetTokenT<pat::TriggerObjectStandAloneCollection>&& _triggerObjects_token,
                            EDGetTokenT<BXVector<l1t::Tau>>&& _l1Tau_token,
@@ -75,6 +76,7 @@ TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM
     triggerResults_tokens[CMSSW_Process::RECO] = _triggerResultsRECO_token;
     triggerResults_tokens[CMSSW_Process::PAT] = _triggerResultsPAT_token;
     triggerResults_tokens[CMSSW_Process::SIMembedding] = _triggerResultsSIMembedding_token;
+    triggerResults_tokens[CMSSW_Process::MERGE] = _triggerResultsMERGE_token;
 
     triggerDescriptors = TriggerDescriptorCollection::Load(triggerCfg,channel);
 

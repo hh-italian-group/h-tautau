@@ -13,7 +13,7 @@ GluGluToRadionToHHTo2B2Tau_M-450_narrow	        /GluGluToRadionToHHTo2B2Tau_M-45
 GluGluToRadionToHHTo2B2Tau_M-500_narrow	        /GluGluToRadionToHHTo2B2Tau_M-500_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 GluGluToRadionToHHTo2B2Tau_M-550_narrow	        /GluGluToRadionToHHTo2B2Tau_M-550_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 GluGluToRadionToHHTo2B2Tau_M-600_narrow	        /GluGluToRadionToHHTo2B2Tau_M-600_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
-#GluGluToRadionToHHTo2B2Tau_M-650_narrow	    /GluGluToRadionToHHTo2B2Tau_M-650_narrow_13TeV-madgraph/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
+GluGluToRadionToHHTo2B2Tau_M-650_narrow	        /GluGluToRadionToHHTo2B2Tau_M-650_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
 #GluGluToRadionToHHTo2B2Tau_M-750_narrow	    /GluGluToRadionToHHTo2B2Tau_M-750_narrow_13TeV-madgraph/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM
 GluGluToRadionToHHTo2B2Tau_M-800_narrow	        /GluGluToRadionToHHTo2B2Tau_M-800_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
-GluGluToRadionToHHTo2B2Tau_M-900_narrow	        /GluGluToRadionToHHTo2B2Tau_M-900_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM								
+GluGluToRadionToHHTo2B2Tau_M-900_narrow	        /GluGluToRadionToHHTo2B2Tau_M-900_narrow_13TeV-madgraph/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM
