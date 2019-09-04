@@ -93,6 +93,9 @@ private:
         for(unsigned n = 0; n < signalObjectSelectors.size(); ++n){
             for(unsigned h = 0; h < unc_sources.size(); ++h){
                 for(int l = -1; l < 2; ++l){
+                    cacheTuple().run = event.run();
+                    cacheTuple().lumi = event.lumi();
+                    cacheTuple().evt = event.evt();
                     SignalObjectSelector signalObjectSelector = signalObjectSelectors.at(n);
                     boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,&summaryInfo,run_period,jet_ordering);
                     if(!event_info_base.is_initialized()) continue;

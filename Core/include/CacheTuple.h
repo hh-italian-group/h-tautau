@@ -8,6 +8,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 using LorentzVectorM = analysis::LorentzVectorM_Float;
 
 #define CACHE_DATA() \
+    VAR(UInt_t, run) /* run */ \
+    VAR(UInt_t, lumi) /* lumi section */ \
+    VAR(ULong64_t, evt) /* event number */ \
     /* SV Fit variables */ \
     VAR(std::vector<size_t>, SVfit_Higgs_index) /* SVfit using integration method */ \
     VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit using integration method */ \
