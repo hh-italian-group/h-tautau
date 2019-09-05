@@ -61,7 +61,6 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
     // std::vector<ntuple::TupleLepton> lepton_candidates;
     // for(size_t n = 0; n < event.lep_p4.size(); ++n)
     //     lepton_candidates.emplace_back(event, n);
-
     std::vector<size_t> higgs_candidates;
     for(size_t n = 0; n < event.first_daughter_indexes.size(); ++n){
         auto& first_leg = event_candidate.GetLeptons().at(event.first_daughter_indexes.at(n));
@@ -73,7 +72,6 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
         if(!PassLeptonSelection(second_leg,channel)) continue;
         higgs_candidates.push_back(n);
     }
-
     const auto Comparitor = [&](size_t h1, size_t h2) -> bool
     {
         bool are_identical = true;
@@ -97,6 +95,7 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
     };
 
     if(!higgs_candidates.empty()) return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
+    
     return boost::optional<size_t>();
 }
 
@@ -264,6 +263,7 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSe,deepTauDiscriminators.at(channel).first)) return false;
     if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSmu,deepTauDiscriminators.at(channel).second)) return false;
+    if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
     return true;
 }
 
