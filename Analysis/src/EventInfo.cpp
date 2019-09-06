@@ -343,9 +343,12 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                UncertaintyScale scale)
 {
     EventCandidate event_candidate(event,uncertainty_source,scale,period);
+    std::cout << "created EVT Candidate" << std::endl;
     boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event_candidate);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
+    std::cout << "found select higgs index" << std::endl;
     SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate,period,jet_ordering,*selected_higgs_index);
+    std::cout << "found selected signal jets" << std::endl;
     return EventInfoBase(std::move(event_candidate),summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
 
 }

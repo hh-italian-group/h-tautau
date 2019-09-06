@@ -88,6 +88,8 @@ namespace analysis {
         tuple_leptons = std::make_shared<std::vector<ntuple::TupleLepton>>();
         for(size_t n = 0; n < event->lep_p4.size(); ++n){
           tuple_leptons->emplace_back(*event, n);
+        }
+        for(size_t n = 0; n < tuple_leptons->size(); ++n){
           lepton_candidates->emplace_back(tuple_leptons->back(),tuple_leptons->back().iso());
         }
         for(size_t n = 0; n < tuple_leptons->size(); ++n) {
@@ -137,6 +139,8 @@ namespace analysis {
         tuple_jets = std::make_shared<std::vector<ntuple::TupleJet>>();
         for(size_t n = 0; n < event->jets_p4.size(); ++n) {
           tuple_jets->emplace_back(*event, n);
+        }
+        for(size_t n = 0; n < tuple_jets->size(); ++n) {
           jet_candidates->emplace_back(tuple_jets->back());
         }
 

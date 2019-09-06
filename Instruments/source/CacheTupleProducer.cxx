@@ -61,13 +61,16 @@ public:
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         auto outputFile = root_ext::CreateRootFile(args.output_file());
         for(unsigned c = 0; c < channels.size(); ++c){
+            std::cout << "channel: " << channels.at(c) <<std::endl;
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
             CacheTuple cache(channels.at(c), outputFile.get(), false);
             for(const auto& event : *originalTuple) {
                 FillCacheTuple(cache, event);
+                std::cout << "Filled CacheTuple" << std::endl;
                 cache.Fill();
             }
             cache.Write();
+            std::cout << "Written CacheTuple" << std::endl;
         }
 
 
@@ -82,11 +85,15 @@ private:
 
         std::set<size_t> Htt_indexes;
         std::set<std::pair<size_t,size_t>> HH_indexes;
-
+        std::cout << "signalObjectSelectors.size(): " << signalObjectSelectors.size() << std::endl;
+        std::cout << "vector_jet_ordering.size(): " << vector_jet_ordering.size() << std::endl;
+        std::cout << "unc_sources.size(): " << unc_sources.size() << std::endl;
         for(unsigned n = 0; n < signalObjectSelectors.size(); ++n){
+            std::cout << "n: " << n << std::endl;
             for(unsigned m = 0; m < vector_jet_ordering.size(); ++m){
                 for(unsigned h = 0; h < unc_sources.size(); ++h){
                     for(int variation = -1; variation < 2; ++variation){
+                        std::cout << "variation: " << variation << std::endl;
                         cacheTuple().run = event.run;
                         cacheTuple().lumi = event.lumi;
                         cacheTuple().evt = event.evt;
@@ -96,9 +103,10 @@ private:
                         UncertaintyScale scale = static_cast<UncertaintyScale>(variation);
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
                         if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
+                        std::cout << "passed check" << std::endl;
                         boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,nullptr,run_period,jet_ordering,unc_source,scale);
                         if(!event_info_base.is_initialized()) continue;
-
+                        std::cout << "Created Event Info" << std::endl;
 
                         if(args.hasBjetPair() && !event_info_base->HasBjetPair()) continue;
                         if(!signalObjectSelector.PassLeptonVetoSelection(event)) continue;

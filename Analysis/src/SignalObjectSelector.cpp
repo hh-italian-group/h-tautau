@@ -66,10 +66,15 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
         auto& first_leg = event_candidate.GetLeptons().at(event.first_daughter_indexes.at(n));
         auto& second_leg = event_candidate.GetLeptons().at(event.second_daughter_indexes.at(n));
         if(ROOT::Math::VectorUtil::DeltaR2(first_leg.GetMomentum(), second_leg.GetMomentum()) <= DR2_leptons) continue;
+        std::cout << "passed DR" << std::endl;
+        std::cout << "charge 1: " << first_leg.GetCharge() << ", charge 2: " << second_leg.GetCharge() << std::endl;
         if(first_leg.GetCharge() + second_leg.GetCharge() != 0) continue;
+        std::cout << "passed charge" << std::endl;
         const Channel channel = static_cast<Channel>(event.channelId);
         if(!PassLeptonSelection(first_leg,channel)) continue;
+        std::cout << "passed 1st lepton" << std::endl;
         if(!PassLeptonSelection(second_leg,channel)) continue;
+        std::cout << "passed 2nd lepton" << std::endl;
         higgs_candidates.push_back(n);
     }
     const auto Comparitor = [&](size_t h1, size_t h2) -> bool
@@ -95,7 +100,7 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
     };
 
     if(!higgs_candidates.empty()) return *std::min_element(higgs_candidates.begin(), higgs_candidates.end(), Comparitor);
-    
+
     return boost::optional<size_t>();
 }
 
