@@ -49,6 +49,11 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
                 return h1_leg2.GetMomentum().pt() > h2_leg2.GetMomentum().pt();
         }
 
+        if(h1_leg1.GetMomentum().energy() != h2_leg1.GetMomentum().energy())
+            return h1_leg1.GetMomentum().energy() > h2_leg1.GetMomentum().energy();
+        if(h1_leg2.GetMomentum().energy() != h2_leg2.GetMomentum().energy())
+            return h1_leg2.GetMomentum().energy() > h2_leg2.GetMomentum().energy();
+
         if(h1_leg1 == h2_leg1 && h1_leg2 == h2_leg2) return false;
         throw analysis::exception("not found a good criteria for best tau pair");
     };
