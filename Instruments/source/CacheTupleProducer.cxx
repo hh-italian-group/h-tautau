@@ -19,6 +19,9 @@ struct Arguments {
     REQ_ARG(std::string, jet_orderings);
     REQ_ARG(bool, isData);
     REQ_ARG(bool, hasBjetPair);
+    OPT_ARG(bool, runSVFit, true);
+    OPT_ARG(bool, runKinFit, true);
+    OPT_ARG(Long64_t, maxEvents, std::numeric_limits<Long64_t>::max());
 };
 
 namespace analysis {
@@ -61,16 +64,19 @@ public:
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         auto outputFile = root_ext::CreateRootFile(args.output_file());
         for(unsigned c = 0; c < channels.size(); ++c){
-            std::cout << "channel: " << channels.at(c) <<std::endl;
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
             CacheTuple cache(channels.at(c), outputFile.get(), false);
-            for(const auto& event : *originalTuple) {
-                FillCacheTuple(cache, event);
-                std::cout << "Filled CacheTuple" << std::endl;
+            const Long64_t n_entries = std::min(args.maxEvents(),originalTuple->GetEntries());
+            for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
+                originalTuple->GetEntry(current_entry);
+                if(static_cast<Channel>((*originalTuple)().channelId) == Channel::MuMu){
+                    (*originalTuple)().first_daughter_indexes = {0};
+                    (*originalTuple)().second_daughter_indexes = {1};
+                }
+                FillCacheTuple(cache, originalTuple->data());
                 cache.Fill();
             }
             cache.Write();
-            std::cout << "Written CacheTuple" << std::endl;
         }
 
 
@@ -85,15 +91,11 @@ private:
 
         std::set<size_t> Htt_indexes;
         std::set<std::pair<size_t,size_t>> HH_indexes;
-        std::cout << "signalObjectSelectors.size(): " << signalObjectSelectors.size() << std::endl;
-        std::cout << "vector_jet_ordering.size(): " << vector_jet_ordering.size() << std::endl;
-        std::cout << "unc_sources.size(): " << unc_sources.size() << std::endl;
+
         for(unsigned n = 0; n < signalObjectSelectors.size(); ++n){
-            std::cout << "n: " << n << std::endl;
             for(unsigned m = 0; m < vector_jet_ordering.size(); ++m){
                 for(unsigned h = 0; h < unc_sources.size(); ++h){
                     for(int variation = -1; variation < 2; ++variation){
-                        std::cout << "variation: " << variation << std::endl;
                         cacheTuple().run = event.run;
                         cacheTuple().lumi = event.lumi;
                         cacheTuple().evt = event.evt;
@@ -103,18 +105,17 @@ private:
                         UncertaintyScale scale = static_cast<UncertaintyScale>(variation);
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
                         if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
-                        std::cout << "passed check" << std::endl;
+
                         boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,nullptr,run_period,jet_ordering,unc_source,scale);
                         if(!event_info_base.is_initialized()) continue;
-                        std::cout << "Created Event Info" << std::endl;
 
                         if(args.hasBjetPair() && !event_info_base->HasBjetPair()) continue;
                         if(!signalObjectSelector.PassLeptonVetoSelection(event)) continue;
                         if(!signalObjectSelector.PassMETfilters(event,run_period,args.isData())) continue;
 
                         size_t selected_htt_index = event_info_base->GetHttIndex();
-                        size_t selected_hbb_index = ntuple::CombinationPairToIndex(event_info_base->GetSelectedSignalJets().selectedBjetPair);
-                        if(!Htt_indexes.count(selected_htt_index)){
+                        size_t selected_hbb_index = ntuple::LegPairToIndex(event_info_base->GetSelectedSignalJets().selectedBjetPair);
+                        if(!Htt_indexes.count(selected_htt_index) && args.runSVFit()){
                             const sv_fit_ana::FitResults& result = event_info_base->GetSVFitResults();
                             cacheTuple().SVfit_Higgs_index.push_back(selected_htt_index);
                             cacheTuple().SVfit_is_valid.push_back(result.has_valid_momentum);
@@ -129,7 +130,7 @@ private:
 
 
                         std::pair<size_t,size_t> hh_pair = std::make_pair(selected_htt_index,selected_hbb_index);
-                        if(!HH_indexes.count(hh_pair)){
+                        if(!HH_indexes.count(hh_pair) && args.runKinFit()){
                             const kin_fit::FitResults& result = event_info_base->GetKinFitResults();
                             cacheTuple().kinFit_Higgs_index.push_back(selected_htt_index);
                             cacheTuple().kinFit_jetPairId.push_back(selected_hbb_index);
@@ -146,9 +147,6 @@ private:
             }
 
         }
-
-
-
 
     }
 

@@ -38,16 +38,16 @@ SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
         throw analysis::exception("Signal Mode for SignalObjectSelector constructor not supported");
 }
 
-bool SignalObjectSelector::PassLeptonSelection(const LepCandidate& lepton, Channel channel) const
+bool SignalObjectSelector::PassLeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const
 {
     if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
         return PassHTT_LeptonSelection(lepton,channel,mode == SignalMode::HTT_sync);
     if(mode == SignalMode::TauPOG_default || mode == SignalMode::TauPOG_deepTauVsJet || mode == SignalMode::TauPOG_deepTauVsJet_full)
 	return PassTauPOG_LeptonSelection(lepton,channel);
     if(mode == SignalMode::HH_legacy)
-        return PassHH_legacy_LeptonSelection(lepton,channel);
+        return PassHH_legacy_LeptonSelection(lepton,channel,legId);
     if(mode == SignalMode::HH)
-        return PassHH_LeptonSelection(lepton,channel);
+        return PassHH_LeptonSelection(lepton,channel,legId);
     if(mode == SignalMode::Skimmer)
         return PassSkimmer_LeptonSelection(lepton);
     if(mode == SignalMode::TauPOG_Skimmer)
@@ -63,18 +63,15 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
     //     lepton_candidates.emplace_back(event, n);
     std::vector<size_t> higgs_candidates;
     for(size_t n = 0; n < event.first_daughter_indexes.size(); ++n){
+        if(event.first_daughter_indexes.at(n) >=event_candidate.GetLeptons().size() ||
+            event.second_daughter_indexes.at(n) >=event_candidate.GetLeptons().size())
+            throw analysis::exception("Daughter indexes greater than lepton size.");
         auto& first_leg = event_candidate.GetLeptons().at(event.first_daughter_indexes.at(n));
         auto& second_leg = event_candidate.GetLeptons().at(event.second_daughter_indexes.at(n));
         if(ROOT::Math::VectorUtil::DeltaR2(first_leg.GetMomentum(), second_leg.GetMomentum()) <= DR2_leptons) continue;
-        std::cout << "passed DR" << std::endl;
-        std::cout << "charge 1: " << first_leg.GetCharge() << ", charge 2: " << second_leg.GetCharge() << std::endl;
-        if(first_leg.GetCharge() + second_leg.GetCharge() != 0) continue;
-        std::cout << "passed charge" << std::endl;
         const Channel channel = static_cast<Channel>(event.channelId);
-        if(!PassLeptonSelection(first_leg,channel)) continue;
-        std::cout << "passed 1st lepton" << std::endl;
-        if(!PassLeptonSelection(second_leg,channel)) continue;
-        std::cout << "passed 2nd lepton" << std::endl;
+        if(!PassLeptonSelection(first_leg,channel,1)) continue;
+        if(!PassLeptonSelection(second_leg,channel,2)) continue;
         higgs_candidates.push_back(n);
     }
     const auto Comparitor = [&](size_t h1, size_t h2) -> bool
@@ -112,8 +109,13 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
           if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
-          analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
-          if(muonId.Passed(DiscriminatorWP::Medium)) return false;
+            const Channel channel = static_cast<Channel>(event.channelId);
+            if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
+                if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu) continue;
+                if(ROOT::Math::VectorUtil::DeltaR2(event.lep_gen_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
+            }
+            analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
+            if(muonId.Passed(DiscriminatorWP::Medium)) return false;
         }
     }
     return true;
@@ -204,7 +206,7 @@ bool SignalObjectSelector::PassTauPOG_LeptonSelection(const LepCandidate& lepton
     return true;
 }
 
-bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel) const
+bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const
 {
     //againstElectron first, againstMuon second
     static const std::map<Channel,std::pair<DiscriminatorWP,DiscriminatorWP>> againstDiscriminators =
@@ -222,7 +224,7 @@ bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lep
     if(lepton->leg_type() == LegType::e) return true;
     if(lepton->leg_type() == LegType::mu) {
         if(!(lepton.GetMomentum().pt() > cuts::hh_bbtautau_2017::MuTau::muonID::pt)) return false;
-        if(!(lepton->iso() < cuts::hh_bbtautau_2017::MuTau::muonID::pfRelIso04)) return false;
+        if(legId == 1 && !(lepton->iso() < cuts::hh_bbtautau_2017::MuTau::muonID::pfRelIso04)) return false;
         return true;
     }
     if(!(lepton->leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
@@ -231,12 +233,13 @@ bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lep
     if(!(lepton->PassedOldDecayMode())) return false;
     if(!lepton->Passed(TauIdDiscriminator::againstElectronMVA6,againstDiscriminators.at(channel).first)) return false;
     if(!lepton->Passed(TauIdDiscriminator::againstMuon3,againstDiscriminators.at(channel).second)) return false;
-    if(!lepton->Passed(TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,DiscriminatorWP::VVLoose)) return false;
+    if(legId == 1 && !lepton->Passed(TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,DiscriminatorWP::Medium)) return false;
+    if(legId == 2 && !lepton->Passed(TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,DiscriminatorWP::VVLoose)) return false;
     return true;
 }
 
 //to be changed
-bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel) const
+bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const
 {
 
     // WP for deepTau vs E (first) and deepTau vs Mu (second)
@@ -259,7 +262,7 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     }
     if(lepton->leg_type() == LegType::mu) {
         if(!(lepton.GetMomentum().pt() > cuts::hh_bbtautau_2017::MuTau::muonID::pt)) return false;
-        if(!(lepton->iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
+        if(legId == 1 && !(lepton->iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
         return true;
     }
     if(!(lepton->leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
@@ -268,7 +271,8 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSe,deepTauDiscriminators.at(channel).first)) return false;
     if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSmu,deepTauDiscriminators.at(channel).second)) return false;
-    if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
+    if(legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::Medium)) return false;
+    if(legId == 2 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
     return true;
 }
 

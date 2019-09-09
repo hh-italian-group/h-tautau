@@ -23,10 +23,10 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
 
     std::sort(muons.begin(),muons.end(),&LeptonComparitor<MuonCandidate>);
     selection.muons.push_back(muons.at(0));
-    selection.other_muons = CollectVetoMuons({&muons.at(0)});
+    selection.other_muons = CollectVetoMuons(false,{&muons.at(0)});
     selection.muonVeto = selection.other_muons.size();
 
-    selection.other_electrons = CollectVetoElectrons();
+    selection.other_electrons = CollectVetoElectrons(false);
     selection.electronVeto = selection.other_electrons.size();
 
     auto other_tight_electrons = CollectVetoElectrons(true);

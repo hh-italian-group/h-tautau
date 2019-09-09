@@ -6,22 +6,22 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace ntuple {
 
 
-size_t CombinationPairToIndex(const JetPair& pair)
+size_t LegPairToIndex(const LegPair& pair)
 {
     return pair.first * 1000 + pair.second;
 }
 
-JetPair CombinationIndexToPair(size_t index)
+LegPair LegIndexToPair(size_t index)
 {
-    JetPair pair;
+    LegPair pair;
     pair.second = index % 1000;
     pair.first = (index - pair.second) / 1000;
     return pair;
 }
 
-JetPair UndefinedJetPair()
+LegPair UndefinedJetPair()
 {
-    static JetPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
+    static LegPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
     return pair;
 }
 

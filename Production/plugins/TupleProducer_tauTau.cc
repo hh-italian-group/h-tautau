@@ -18,8 +18,8 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     }
 
     //Third-Lepton Veto
-    selection.other_electrons = CollectVetoElectrons();
-    selection.other_muons = CollectVetoMuons();
+    selection.other_electrons = CollectVetoElectrons(false);
+    selection.other_muons = CollectVetoMuons(false);
     selection.electronVeto = selection.other_electrons.size();
     selection.muonVeto = selection.other_muons.size();
 

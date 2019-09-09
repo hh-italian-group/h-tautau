@@ -50,7 +50,7 @@ private:
 class EventInfoBase {
 public:
     using Event = ntuple::Event;
-    using JetPair = ntuple::JetPair;
+    using LegPair = ntuple::LegPair;
     using HiggsBBCandidate = CompositeCandidate<JetCandidate, JetCandidate>;
     using Mutex = std::recursive_mutex;
     using Lock = std::lock_guard<Mutex>;

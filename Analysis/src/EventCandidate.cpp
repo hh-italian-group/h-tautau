@@ -90,7 +90,7 @@ namespace analysis {
           tuple_leptons->emplace_back(*event, n);
         }
         for(size_t n = 0; n < tuple_leptons->size(); ++n){
-          lepton_candidates->emplace_back(tuple_leptons->back(),tuple_leptons->back().iso());
+          lepton_candidates->emplace_back(tuple_leptons->at(n),tuple_leptons->at(n).iso());
         }
         for(size_t n = 0; n < tuple_leptons->size(); ++n) {
           auto tuple_lepton = tuple_leptons->at(n);
@@ -141,7 +141,7 @@ namespace analysis {
           tuple_jets->emplace_back(*event, n);
         }
         for(size_t n = 0; n < tuple_jets->size(); ++n) {
-          jet_candidates->emplace_back(tuple_jets->back());
+          jet_candidates->emplace_back(tuple_jets->at(n));
         }
 
         if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source)){
