@@ -17,6 +17,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/Analysis/include/EventCandidate.h"
+#include "h-tautau/Analysis/include/EventCacheProvider.h"
 
 #include "SVfitAnaInterface.h"
 #include "KinFitInterface.h"
@@ -109,8 +110,8 @@ public:
     size_t GetLegIndex(const size_t leg_id);
     static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
 
-    const kin_fit::FitResults& GetKinFitResults();
-    const sv_fit_ana::FitResults& GetSVFitResults();
+    const kin_fit::FitResults& GetKinFitResults(bool allow_calc = false);
+    const sv_fit_ana::FitResults& GetSVFitResults(bool allow_calc = false);
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET);
     double GetMT2();
@@ -163,6 +164,7 @@ public:
 
 protected:
     EventCandidate event_candidate;
+    EventCacheProvider eventCacheProvider;
     const SummaryInfo* summaryInfo;
     TriggerResults triggerResults;
     std::shared_ptr<Mutex> mutex;

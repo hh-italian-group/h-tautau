@@ -61,7 +61,7 @@ const analysis::LepCandidate& EventInfoBase::GetSecondLeg()
 EventInfoBase::EventInfoBase(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
                              size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                              Period _period, JetOrdering _jet_ordering) :
-event_candidate(_event_candidate), summaryInfo(_summaryInfo), selected_htt_index(_selected_htt_index), eventIdentifier(_event_candidate.GetEvent().run, _event_candidate.GetEvent().lumi, _event_candidate.GetEvent().evt),
+event_candidate(_event_candidate), eventCacheProvider(_event_candidate.GetEvent()),summaryInfo(_summaryInfo), selected_htt_index(_selected_htt_index), eventIdentifier(_event_candidate.GetEvent().run, _event_candidate.GetEvent().lumi, _event_candidate.GetEvent().evt),
  selected_signal_jets(_selected_signal_jets), period(_period), jet_ordering(_jet_ordering)
 {
     mutex = std::make_shared<Mutex>();
@@ -208,17 +208,21 @@ size_t EventInfoBase::GetLegIndex(size_t leg_id)
     throw exception("Invalid leg id = %1%.") % leg_id;
 }
 
-const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
+const kin_fit::FitResults& EventInfoBase::GetKinFitResults(bool allow_calc)
 {
     Lock lock(*mutex);
     if(!HasBjetPair())
         throw exception("Can't retrieve KinFit results.");
     if(!kinfit_results) {
-        const size_t pairId = ntuple::LegPairToIndex(selected_signal_jets.selectedBjetPair);
-        const auto iter = std::find(event_candidate.GetEvent().kinFit_jetPairId.begin(),
-                                    event_candidate.GetEvent().kinFit_jetPairId.end(), pairId);
         kinfit_results = std::make_shared<kin_fit::FitResults>();
-        if(iter == event_candidate.GetEvent().kinFit_jetPairId.end()){
+        LegPair selected_htt_pair = ntuple::LegIndexToPair(selected_htt_index);
+        kin_fit::FitResults kinfit_result_ref;
+        bool gotKinFit = eventCacheProvider.TryGetKinFit(kinfit_result_ref,selected_htt_pair,
+                                        selected_signal_jets.selectedBjetPair,
+                                        event_candidate.GetUncSource(),event_candidate.GetScale());
+        if(!allow_calc && !gotKinFit)
+            throw exception("Not allowed to calculate KinFit.");
+        else if(!gotKinFit){
             double energy_resolution_1 = GetBJet(1)->resolution() * GetBJet(1).GetMomentum().E();
             double energy_resolution_2 = GetBJet(2)->resolution() * GetBJet(2).GetMomentum().E();
             const auto& kinfitProducer = GetKinFitProducer();
@@ -231,24 +235,27 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults()
             kinfit_results->mass = result.mass;
         }
         else {
-            const size_t index = static_cast<size_t>(std::distance(event_candidate.GetEvent().kinFit_jetPairId.begin(), iter));
-            kinfit_results->convergence = event_candidate.GetEvent().kinFit_convergence.at(index);
-            kinfit_results->chi2 = event_candidate.GetEvent().kinFit_chi2.at(index);
-            kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
-            kinfit_results->mass = event_candidate.GetEvent().kinFit_m.at(index);
+            kinfit_results->convergence = kinfit_result_ref.convergence;
+            kinfit_results->chi2 = kinfit_result_ref.chi2;
+            kinfit_results->probability = kinfit_result_ref.probability;
+            kinfit_results->mass = kinfit_result_ref.mass;
         }
     }
     return *kinfit_results;
 }
 
-const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
+const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
 {
     Lock lock(*mutex);
     if(!svfit_results){
-        const auto iter = std::find(event_candidate.GetEvent().SVfit_Higgs_index.begin(),
-                                    event_candidate.GetEvent().SVfit_Higgs_index.end(), selected_htt_index);
         svfit_results = std::make_shared<sv_fit_ana::FitResults>();
-        if(iter == event_candidate.GetEvent().SVfit_Higgs_index.end()){
+        LegPair selected_htt_pair = ntuple::LegIndexToPair(selected_htt_index);
+        sv_fit_ana::FitResults svfit_result_ref;
+        bool gotSVFit = eventCacheProvider.TryGetSVFit(svfit_result_ref,selected_htt_pair,
+                                        event_candidate.GetUncSource(),event_candidate.GetScale());
+        if(!allow_calc && !gotSVFit)
+            throw exception("Not allowed to calculate SVFit.");
+        else if(!gotSVFit){
             const auto& svfitProducer = GetSVFitProducer();
             const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
             svfit_results->has_valid_momentum = result.has_valid_momentum;
@@ -258,12 +265,11 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults()
             svfit_results->transverseMass_error = result.transverseMass_error;
         }
         else {
-            const size_t index = static_cast<size_t>(std::distance(event_candidate.GetEvent().SVfit_Higgs_index.begin(), iter));
-            svfit_results->has_valid_momentum = event_candidate.GetEvent().SVfit_is_valid.at(index);
-            svfit_results->momentum = event_candidate.GetEvent().SVfit_p4.at(index);
-            svfit_results->momentum_error = event_candidate.GetEvent().SVfit_p4_error.at(index);
-            svfit_results->transverseMass = event_candidate.GetEvent().SVfit_mt.at(index);
-            svfit_results->transverseMass_error = event_candidate.GetEvent().SVfit_mt_error.at(index);
+            svfit_results->has_valid_momentum = svfit_result_ref.has_valid_momentum;
+            svfit_results->momentum = svfit_result_ref.momentum;
+            svfit_results->momentum_error = svfit_result_ref.momentum_error;
+            svfit_results->transverseMass = svfit_result_ref.transverseMass;
+            svfit_results->transverseMass_error = svfit_result_ref.transverseMass_error;
         }
     }
     return *svfit_results;

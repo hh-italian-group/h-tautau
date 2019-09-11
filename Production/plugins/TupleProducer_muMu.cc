@@ -69,7 +69,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
         selection.triggerResults.push_back(triggerResults);
     }
 
-    selection.higgses_pair_indexes.push_back(selected_higgs_index);
+    selection.higgses_pair_indexes.push_back({0,1});
 
     selection.other_muons = CollectVetoMuons(false,{ &selected_higgs.GetFirstDaughter(),
         &selected_higgs.GetSecondDaughter() });
