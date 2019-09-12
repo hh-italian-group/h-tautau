@@ -238,7 +238,7 @@ using LegPair = std::pair<size_t, size_t>;
 
 size_t LegPairToIndex(const LegPair& pair);
 LegPair LegIndexToPair(size_t index);
-LegPair UndefinedJetPair();
+LegPair UndefinedLegPair();
 std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory* directory,
                                              bool readMode, TreeState treeState);
 } // namespace ntuple

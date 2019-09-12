@@ -137,8 +137,8 @@ public:
 private:
     bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync) const;
     bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
-    bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const;
-    bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const;
+    bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const;
+    bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const;
     bool PassSkimmer_LeptonSelection(const LepCandidate& lepton) const;
     bool PassTauPOG_Skimmer_LeptonSelection(const LepCandidate& lepton) const;
 

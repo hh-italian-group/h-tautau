@@ -57,7 +57,7 @@ public:
         UncertaintySource unc_source;
         UncertaintyScale unc_scale;
 
-        KinFitKey() : htt_pair(ntuple::UndefinedJetPair()), hbb_pair(ntuple::UndefinedJetPair()),
+        KinFitKey() : htt_pair(ntuple::UndefinedLegPair()), hbb_pair(ntuple::UndefinedLegPair()),
                 unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
 
         KinFitKey(LegPair _htt_pair, LegPair _hbb_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
@@ -79,7 +79,7 @@ public:
         UncertaintySource unc_source;
         UncertaintyScale unc_scale;
 
-        SVFitKey() : htt_pair(ntuple::UndefinedJetPair()),
+        SVFitKey() : htt_pair(ntuple::UndefinedLegPair()),
                 unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
 
         SVFitKey(LegPair _htt_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :

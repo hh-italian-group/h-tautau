@@ -6,8 +6,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Core/include/CacheTuple.h"
+#include "h-tautau/Core/include/CacheSummaryTuple.h"
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Analysis/include/SignalObjectSelector.h"
+#include <ctime>
+#include <chrono>
 
 struct Arguments {
     REQ_ARG(std::string, input_file);
@@ -30,8 +33,11 @@ class CacheTupleProducer {
 public:
     using CacheEvent = cache_tuple::CacheEvent;
     using CacheTuple = cache_tuple::CacheTuple;
+    using CacheSummaryTuple = cache_ntuple::CacheSummaryTuple;
+    using clock = std::chrono::system_clock;
 
-    CacheTupleProducer(const Arguments& _args) : args(_args), run_period(Parse<analysis::Period>(args.period()))
+    CacheTupleProducer(const Arguments& _args) : args(_args), outputFile(root_ext::CreateRootFile(args.output_file())),
+                cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period()))
     {
         EventCandidate::InitializeJecUncertainty(run_period);
         std::vector<std::string> selections = SplitValueList(args.selections(),false,",");
@@ -53,6 +59,9 @@ public:
         for(unsigned n = 0; n < vector_channel.size(); ++n){
             channels.push_back(vector_channel.at(n));
         }
+        cacheSummary().numberOfOriginalEvents = 0;
+        cacheSummary().numberOfTimesSVFit = 0;
+        cacheSummary().numberOfTimesKinFit = 0;
 
     }
 
@@ -62,14 +71,13 @@ public:
                    % args.input_file() % args.output_file() % args.selections();
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
-        auto outputFile = root_ext::CreateRootFile(args.output_file());
         for(unsigned c = 0; c < channels.size(); ++c){
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
             CacheTuple cache(channels.at(c), outputFile.get(), false);
             const Long64_t n_entries = std::min(args.maxEvents(),originalTuple->GetEntries());
             for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
                 originalTuple->GetEntry(current_entry);
-                if(static_cast<Channel>((*originalTuple)().channelId) == Channel::MuMu){
+                if(static_cast<Channel>((*originalTuple)().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
                     (*originalTuple)().first_daughter_indexes = {0};
                     (*originalTuple)().second_daughter_indexes = {1};
                 }
@@ -77,6 +85,10 @@ public:
                 cache.Fill();
             }
             cache.Write();
+            const auto stop = clock::now();
+            cacheSummary().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+            cacheSummary.Fill();
+            cacheSummary.Write();
         }
 
 
@@ -91,17 +103,17 @@ private:
 
         std::set<size_t> Htt_indexes;
         std::set<std::pair<size_t,size_t>> HH_indexes;
-
-        for(unsigned n = 0; n < signalObjectSelectors.size(); ++n){
-            for(unsigned m = 0; m < vector_jet_ordering.size(); ++m){
-                for(unsigned h = 0; h < unc_sources.size(); ++h){
+        for(unsigned selector = 0; selector < signalObjectSelectors.size(); ++selector){
+            for(unsigned ordering = 0; ordering < vector_jet_ordering.size(); ++ordering){
+                for(unsigned source = 0; source < unc_sources.size(); ++source){
                     for(int variation = -1; variation < 2; ++variation){
+                        cacheSummary().numberOfOriginalEvents++;
                         cacheTuple().run = event.run;
                         cacheTuple().lumi = event.lumi;
                         cacheTuple().evt = event.evt;
-                        SignalObjectSelector signalObjectSelector = signalObjectSelectors.at(n);
-                        JetOrdering jet_ordering = vector_jet_ordering.at(m);
-                        UncertaintySource unc_source = unc_sources.at(h);
+                        const SignalObjectSelector& signalObjectSelector = signalObjectSelectors.at(selector);
+                        JetOrdering jet_ordering = vector_jet_ordering.at(ordering);
+                        UncertaintySource unc_source = unc_sources.at(source);
                         UncertaintyScale scale = static_cast<UncertaintyScale>(variation);
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
                         if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
@@ -116,6 +128,7 @@ private:
                         size_t selected_htt_index = event_info_base->GetHttIndex();
                         size_t selected_hbb_index = ntuple::LegPairToIndex(event_info_base->GetSelectedSignalJets().selectedBjetPair);
                         if(!Htt_indexes.count(selected_htt_index) && args.runSVFit()){
+                            cacheSummary().numberOfTimesSVFit++;
                             const sv_fit_ana::FitResults& result = event_info_base->GetSVFitResults();
                             cacheTuple().SVfit_Higgs_index.push_back(selected_htt_index);
                             cacheTuple().SVfit_is_valid.push_back(result.has_valid_momentum);
@@ -123,21 +136,22 @@ private:
                             cacheTuple().SVfit_p4_error.push_back(LorentzVectorM(result.momentum_error));
                             cacheTuple().SVfit_mt.push_back(static_cast<Float_t>(result.transverseMass));
                             cacheTuple().SVfit_mt_error.push_back(static_cast<Float_t>(result.transverseMass_error));
-                            cacheTuple().SVfit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(h)));
+                            cacheTuple().SVfit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(source)));
                             cacheTuple().SVfit_unc_scale.push_back(variation);
                             Htt_indexes.insert(selected_htt_index);
                         }
 
 
                         std::pair<size_t,size_t> hh_pair = std::make_pair(selected_htt_index,selected_hbb_index);
-                        if(!HH_indexes.count(hh_pair) && args.runKinFit()){
+                        if(!HH_indexes.count(hh_pair) && args.runKinFit() && event_info_base->HasBjetPair()){
+                            cacheSummary().numberOfTimesKinFit++;
                             const kin_fit::FitResults& result = event_info_base->GetKinFitResults();
                             cacheTuple().kinFit_Higgs_index.push_back(selected_htt_index);
                             cacheTuple().kinFit_jetPairId.push_back(selected_hbb_index);
                             cacheTuple().kinFit_m.push_back(static_cast<Float_t>(result.mass));
                             cacheTuple().kinFit_chi2.push_back(static_cast<Float_t>(result.chi2));
                             cacheTuple().kinFit_convergence.push_back(result.convergence);
-                            cacheTuple().kinFit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(h)));
+                            cacheTuple().kinFit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(source)));
                             cacheTuple().kinFit_unc_scale.push_back(variation);
                             HH_indexes.insert(hh_pair);
                         }
@@ -152,6 +166,9 @@ private:
 
 private:
     Arguments args;
+    std::shared_ptr<TFile> outputFile;
+    CacheSummaryTuple cacheSummary;
+    const clock::time_point start;
     analysis::Period run_period;
     std::vector<std::string> channels;
     std::vector<SignalObjectSelector> signalObjectSelectors;

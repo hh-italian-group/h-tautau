@@ -111,7 +111,8 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
             const Channel channel = static_cast<Channel>(event.channelId);
             if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
-                if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu) continue;
+                if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu)
+                    throw analysis::exception("First leg type is not a muon in mutau channel.");
                 if(ROOT::Math::VectorUtil::DeltaR2(event.lep_gen_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
             }
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
@@ -206,7 +207,7 @@ bool SignalObjectSelector::PassTauPOG_LeptonSelection(const LepCandidate& lepton
     return true;
 }
 
-bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const
+bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const
 {
     //againstElectron first, againstMuon second
     static const std::map<Channel,std::pair<DiscriminatorWP,DiscriminatorWP>> againstDiscriminators =
@@ -239,7 +240,7 @@ bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lep
 }
 
 //to be changed
-bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const
+bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const
 {
 
     // WP for deepTau vs E (first) and deepTau vs Mu (second)
@@ -296,8 +297,8 @@ bool SignalObjectSelector::PassTauPOG_Skimmer_LeptonSelection(const LepCandidate
     return true;
 }
 
-SignalObjectSelector::SelectedSignalJets::SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedJetPair()),
-    selectedVBFjetPair(ntuple::UndefinedJetPair()), n_bjets(0) { }
+SignalObjectSelector::SelectedSignalJets::SelectedSignalJets() : selectedBjetPair(ntuple::UndefinedLegPair()),
+    selectedVBFjetPair(ntuple::UndefinedLegPair()), n_bjets(0) { }
 
 bool SignalObjectSelector::SelectedSignalJets::HasBjetPair(size_t njets) const
 {
@@ -393,7 +394,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
     if(new_bjets_ordered.size() >= 1)
         selected_signal_jets.selectedBjetPair.second = new_bjets_ordered.at(0).index;
     else{
-        selected_signal_jets.selectedVBFjetPair = ntuple::UndefinedJetPair();
+        selected_signal_jets.selectedVBFjetPair = ntuple::UndefinedLegPair();
         if (bjets_ordered.size() >= 2)
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
     }

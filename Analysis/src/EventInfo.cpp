@@ -352,8 +352,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
     boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event_candidate);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
     SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate,period,jet_ordering,*selected_higgs_index);
-    EventInfoBase eventInfoBase(std::move(event_candidate),summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
-    return eventInfoBase;
+    return EventInfoBase(std::move(event_candidate),summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
 
 }
 
