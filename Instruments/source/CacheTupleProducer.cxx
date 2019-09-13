@@ -25,6 +25,7 @@ struct Arguments {
     OPT_ARG(bool, runSVFit, true);
     OPT_ARG(bool, runKinFit, true);
     OPT_ARG(Long64_t, maxEvents, std::numeric_limits<Long64_t>::max());
+    OPT_ARG(std::string, working_path, "./");
 };
 
 namespace analysis {
@@ -39,26 +40,16 @@ public:
     CacheTupleProducer(const Arguments& _args) : args(_args), outputFile(root_ext::CreateRootFile(args.output_file())),
                 cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period()))
     {
-        EventCandidate::InitializeJecUncertainty(run_period);
-        std::vector<std::string> selections = SplitValueList(args.selections(),false,",");
-        for(unsigned n = 0; n < selections.size(); ++n){
-            signalObjectSelectors.emplace_back(Parse<analysis::SignalMode>(selections.at(n)));
-        }
+        EventCandidate::InitializeJecUncertainty(run_period,args.working_path());
 
-        std::vector<std::string> sources = SplitValueList(args.unc_sources(),false,",");
-        for(unsigned n = 0; n < sources.size(); ++n){
-            unc_sources.emplace_back(Parse<analysis::UncertaintySource>(sources.at(n)));
+        auto signalModes = SplitValueListT<analysis::SignalMode>(args.selections(),false,",");
+        for(unsigned n = 0; n < signalModes.size(); ++n){
+            signalObjectSelectors.emplace_back(signalModes.at(n));
         }
+        unc_sources = SplitValueListT<analysis::UncertaintySource>(args.unc_sources(),false,",");
+        vector_jet_ordering = SplitValueListT<JetOrdering>(args.jet_orderings(),false,",");
+        channels = SplitValueList(args.channels(),false,",");
 
-        std::vector<std::string> jet_orderings = SplitValueList(args.jet_orderings(),false,",");
-        for(unsigned n = 0; n < jet_orderings.size(); ++n){
-            vector_jet_ordering.emplace_back(Parse<JetOrdering>(jet_orderings.at(n)));
-        }
-
-        std::vector<std::string> vector_channel = SplitValueList(args.channels(),false,",");
-        for(unsigned n = 0; n < vector_channel.size(); ++n){
-            channels.push_back(vector_channel.at(n));
-        }
         cacheSummary().numberOfOriginalEvents = 0;
         cacheSummary().numberOfTimesSVFit = 0;
         cacheSummary().numberOfTimesKinFit = 0;
@@ -86,7 +77,7 @@ public:
             }
             cache.Write();
             const auto stop = clock::now();
-            cacheSummary().exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+            cacheSummary().exeTime = static_cast<UInt_t>(std::chrono::duration_cast<std::chrono::seconds>(stop - start).count());
             cacheSummary.Fill();
             cacheSummary.Write();
         }
@@ -98,7 +89,7 @@ public:
 
 private:
 
-    void FillCacheTuple(CacheTuple& cacheTuple, const ntuple::Event& event) const
+    void FillCacheTuple(CacheTuple& cacheTuple, const ntuple::Event& event)
     {
 
         std::set<size_t> Htt_indexes;
@@ -129,7 +120,7 @@ private:
                         size_t selected_hbb_index = ntuple::LegPairToIndex(event_info_base->GetSelectedSignalJets().selectedBjetPair);
                         if(!Htt_indexes.count(selected_htt_index) && args.runSVFit()){
                             cacheSummary().numberOfTimesSVFit++;
-                            const sv_fit_ana::FitResults& result = event_info_base->GetSVFitResults();
+                            const sv_fit_ana::FitResults& result = event_info_base->GetSVFitResults(true);
                             cacheTuple().SVfit_Higgs_index.push_back(selected_htt_index);
                             cacheTuple().SVfit_is_valid.push_back(result.has_valid_momentum);
                             cacheTuple().SVfit_p4.push_back(result.momentum);
@@ -145,7 +136,7 @@ private:
                         std::pair<size_t,size_t> hh_pair = std::make_pair(selected_htt_index,selected_hbb_index);
                         if(!HH_indexes.count(hh_pair) && args.runKinFit() && event_info_base->HasBjetPair()){
                             cacheSummary().numberOfTimesKinFit++;
-                            const kin_fit::FitResults& result = event_info_base->GetKinFitResults();
+                            const kin_fit::FitResults& result = event_info_base->GetKinFitResults(true);
                             cacheTuple().kinFit_Higgs_index.push_back(selected_htt_index);
                             cacheTuple().kinFit_jetPairId.push_back(selected_hbb_index);
                             cacheTuple().kinFit_m.push_back(static_cast<Float_t>(result.mass));

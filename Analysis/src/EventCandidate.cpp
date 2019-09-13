@@ -9,14 +9,15 @@ namespace analysis {
     UncertaintyScale _scale, analysis::Period _period) : event(&_event), uncertainty_source(_uncertainty_source),
     scale(_scale), period(_period) {}
 
-    void EventCandidate::InitializeJecUncertainty(const analysis::Period& period)
+    void EventCandidate::InitializeJecUncertainty(const analysis::Period& period, const std::string working_path)
     {
         std::map<analysis::Period,std::string> file_uncertainty_sources = {
             {analysis::Period::Run2016,"h-tautau/McCorrections/data/2016/JES/Summer16_23Sep2016V4_MC_UncertaintySources_AK4PFchs.txt"},
             {analysis::Period::Run2017,"h-tautau/McCorrections/data/2017/JES/Fall17_17Nov2017_V32_MC_UncertaintySources_AK4PFchs.txt"},
             {analysis::Period::Run2018,"h-tautau/McCorrections/data/2018/JES/Autumn18_V8_MC_UncertaintySources_AK4PFchs.txt"}
         };
-        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(file_uncertainty_sources.at(period));
+        std::string full_path_source = tools::FullPath({working_path,file_uncertainty_sources.at(period)});
+        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(full_path_source);
     }
 
     const LepCollection& EventCandidate::GetLeptons()
