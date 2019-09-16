@@ -31,7 +31,7 @@ public:
 
     EventCandidate& operator= ( const EventCandidate& ) = default; //assignment
 
-    static void InitializeJecUncertainty(const analysis::Period& period, const std::string working_path);
+    static void InitializeJecUncertainty(Period period, const std::string& working_path);
 
     const LepCollection& GetLeptons();
     const JetCollection& GetJets();

@@ -17,13 +17,15 @@ class EventCacheProvider {
 public:
     using LegPair = ntuple::LegPair;
 
+    EventCacheProvider(){} //default constructor
+
     template<typename Event>
-    EventCacheProvider(const Event event){
+    EventCacheProvider(const Event& event){
         AddEvent(event);
     }
 
     template<typename Event>
-    void AddEvent(const Event event)
+    void AddEvent(const Event& event)
     {
         for(unsigned n = 0; n < event.kinFit_Higgs_index.size(); ++n){
             KinFitKey kinFitKey(ntuple::LegIndexToPair(event.kinFit_Higgs_index.at(n)),
@@ -48,8 +50,8 @@ public:
         }
     }
 
-    bool TryGetKinFit(kin_fit::FitResults kinfit_result, LegPair htt_pair, LegPair hbb_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
-    bool TryGetSVFit(sv_fit_ana::FitResults svfit_result, LegPair htt_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
+    bool TryGetKinFit(kin_fit::FitResults& kinfit_result, const LegPair& htt_pair, const LegPair& hbb_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
+    bool TryGetSVFit(sv_fit_ana::FitResults& svfit_result, const LegPair& htt_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
     struct KinFitKey{
         LegPair htt_pair;
@@ -57,20 +59,12 @@ public:
         UncertaintySource unc_source;
         UncertaintyScale unc_scale;
 
-        KinFitKey() : htt_pair(ntuple::UndefinedLegPair()), hbb_pair(ntuple::UndefinedLegPair()),
-                unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
+        KinFitKey();
+        KinFitKey(LegPair _htt_pair, LegPair _hbb_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale);
 
-        KinFitKey(LegPair _htt_pair, LegPair _hbb_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
-                htt_pair(_htt_pair), hbb_pair(_hbb_pair),
-                unc_source(_unc_source), unc_scale(_unc_scale) { }
+        bool operator<(const KinFitKey& other) const;
 
-        bool operator<(const KinFitKey& other) const
-        {
-            if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
-            if(hbb_pair != other.hbb_pair) return hbb_pair < other.hbb_pair;
-            if(unc_source != other.unc_source) return unc_source < other.unc_source;
-            return unc_scale < other.unc_scale;
-        }
+        //virtual ~KinFitKey(); // Pure virtual destructor
 
     };
 
@@ -79,18 +73,12 @@ public:
         UncertaintySource unc_source;
         UncertaintyScale unc_scale;
 
-        SVFitKey() : htt_pair(ntuple::UndefinedLegPair()),
-                unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
+        SVFitKey();
+        SVFitKey(LegPair _htt_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale);
 
-        SVFitKey(LegPair _htt_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
-                htt_pair(_htt_pair), unc_source(_unc_source), unc_scale(_unc_scale) { }
+        bool operator<(const SVFitKey& other) const;
 
-        bool operator<(const SVFitKey& other) const
-        {
-            if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
-            if(unc_source != other.unc_source) return unc_source < other.unc_source;
-            return unc_scale < other.unc_scale;
-        }
+        //virtual ~SVFitKey(); // Pure virtual destructor
     };
 
 private:

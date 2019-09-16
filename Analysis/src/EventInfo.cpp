@@ -216,8 +216,7 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults(bool allow_calc)
     if(!kinfit_results) {
         kinfit_results = std::make_shared<kin_fit::FitResults>();
         LegPair selected_htt_pair = ntuple::LegIndexToPair(selected_htt_index);
-        kin_fit::FitResults kinfit_result_ref;
-        bool gotKinFit = eventCacheProvider.TryGetKinFit(kinfit_result_ref,selected_htt_pair,
+        bool gotKinFit = eventCacheProvider.TryGetKinFit(*kinfit_results,selected_htt_pair,
                                         selected_signal_jets.selectedBjetPair,
                                         event_candidate.GetUncSource(),event_candidate.GetScale());
         if(!allow_calc && !gotKinFit)
@@ -234,12 +233,6 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults(bool allow_calc)
             kinfit_results->probability = TMath::Prob(result.chi2, 2);
             kinfit_results->mass = result.mass;
         }
-        else {
-            kinfit_results->convergence = kinfit_result_ref.convergence;
-            kinfit_results->chi2 = kinfit_result_ref.chi2;
-            kinfit_results->probability = kinfit_result_ref.probability;
-            kinfit_results->mass = kinfit_result_ref.mass;
-        }
     }
     return *kinfit_results;
 }
@@ -250,8 +243,7 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
     if(!svfit_results){
         svfit_results = std::make_shared<sv_fit_ana::FitResults>();
         LegPair selected_htt_pair = ntuple::LegIndexToPair(selected_htt_index);
-        sv_fit_ana::FitResults svfit_result_ref;
-        bool gotSVFit = eventCacheProvider.TryGetSVFit(svfit_result_ref,selected_htt_pair,
+        bool gotSVFit = eventCacheProvider.TryGetSVFit(*svfit_results,selected_htt_pair,
                                         event_candidate.GetUncSource(),event_candidate.GetScale());
         if(!allow_calc && !gotSVFit)
             throw exception("Not allowed to calculate SVFit.");
@@ -263,13 +255,6 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
             svfit_results->momentum_error = result.momentum_error;
             svfit_results->transverseMass = result.transverseMass;
             svfit_results->transverseMass_error = result.transverseMass_error;
-        }
-        else {
-            svfit_results->has_valid_momentum = svfit_result_ref.has_valid_momentum;
-            svfit_results->momentum = svfit_result_ref.momentum;
-            svfit_results->momentum_error = svfit_result_ref.momentum_error;
-            svfit_results->transverseMass = svfit_result_ref.transverseMass;
-            svfit_results->transverseMass_error = svfit_result_ref.transverseMass_error;
         }
     }
     return *svfit_results;

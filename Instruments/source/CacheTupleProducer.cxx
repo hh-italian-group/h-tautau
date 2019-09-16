@@ -4,9 +4,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Run/include/program_main.h"
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "AnalysisTools/Core/include/ProgressReporter.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Core/include/CacheTuple.h"
-#include "h-tautau/Core/include/CacheSummaryTuple.h"
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Analysis/include/SignalObjectSelector.h"
 #include <ctime>
@@ -54,6 +54,7 @@ public:
         cacheSummary().numberOfTimesSVFit = 0;
         cacheSummary().numberOfTimesKinFit = 0;
 
+        progressReporter = std::make_shared<analysis::tools::ProgressReporter>(10, std::cout);
     }
 
     void Run()
@@ -68,6 +69,7 @@ public:
             const Long64_t n_entries = std::min(args.maxEvents(),originalTuple->GetEntries());
             for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
                 originalTuple->GetEntry(current_entry);
+                progressReporter->Report(current_entry);
                 if(static_cast<Channel>((*originalTuple)().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
                     (*originalTuple)().first_daughter_indexes = {0};
                     (*originalTuple)().second_daughter_indexes = {1};
@@ -75,6 +77,7 @@ public:
                 FillCacheTuple(cache, originalTuple->data());
                 cache.Fill();
             }
+            progressReporter->Report(originalTuple->GetEntries(),true);
             cache.Write();
             const auto stop = clock::now();
             cacheSummary().exeTime = static_cast<UInt_t>(std::chrono::duration_cast<std::chrono::seconds>(stop - start).count());
@@ -165,6 +168,7 @@ private:
     std::vector<SignalObjectSelector> signalObjectSelectors;
     std::vector<UncertaintySource> unc_sources;
     std::vector<JetOrdering> vector_jet_ordering;
+    std::shared_ptr<analysis::tools::ProgressReporter> progressReporter;
 };
 
 } // namespace analysis
