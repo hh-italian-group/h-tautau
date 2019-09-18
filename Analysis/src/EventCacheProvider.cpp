@@ -31,21 +31,6 @@ namespace analysis {
         return gotSVFit;
     }
 
-    EventCacheProvider::KinFitKey::KinFitKey() : htt_pair(ntuple::UndefinedLegPair()), hbb_pair(ntuple::UndefinedLegPair()),
-            unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
-
-    EventCacheProvider::KinFitKey::KinFitKey(LegPair _htt_pair, LegPair _hbb_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
-            htt_pair(_htt_pair), hbb_pair(_hbb_pair),
-            unc_source(_unc_source), unc_scale(_unc_scale) { }
-
-    bool EventCacheProvider::KinFitKey::operator<(const KinFitKey& other) const
-    {
-        if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
-        if(hbb_pair != other.hbb_pair) return hbb_pair < other.hbb_pair;
-        if(unc_source != other.unc_source) return unc_source < other.unc_source;
-        return unc_scale < other.unc_scale;
-    }
-
     EventCacheProvider::SVFitKey::SVFitKey() : htt_pair(ntuple::UndefinedLegPair()),
             unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
 
@@ -55,6 +40,19 @@ namespace analysis {
     bool EventCacheProvider::SVFitKey::operator<(const SVFitKey& other) const
     {
         if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
+        if(unc_source != other.unc_source) return unc_source < other.unc_source;
+        return unc_scale < other.unc_scale;
+    }
+
+    EventCacheProvider::KinFitKey::KinFitKey() : SVFitKey(),hbb_pair(ntuple::UndefinedLegPair()) { }
+
+    EventCacheProvider::KinFitKey::KinFitKey(LegPair _htt_pair, LegPair _hbb_pair, UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
+            SVFitKey(_htt_pair,_unc_source,_unc_scale), hbb_pair(_hbb_pair) { }
+
+    bool EventCacheProvider::KinFitKey::operator<(const KinFitKey& other) const
+    {
+        if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
+        if(hbb_pair != other.hbb_pair) return hbb_pair < other.hbb_pair;
         if(unc_source != other.unc_source) return unc_source < other.unc_source;
         return unc_scale < other.unc_scale;
     }

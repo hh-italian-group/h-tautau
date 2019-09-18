@@ -63,27 +63,32 @@ public:
                    % args.input_file() % args.output_file() % args.selections();
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
+        size_t n_tot_events = 0;
+        std::map<std::string,std::shared_ptr<ntuple::EventTuple>> map_event;
         for(unsigned c = 0; c < channels.size(); ++c){
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
+            map_event[channels.at(c)] = originalTuple;
+            n_tot_events += originalTuple->GetEntries();
+        }
+        for(unsigned c = 0; c < channels.size(); ++c){
             CacheTuple cache(channels.at(c), outputFile.get(), false);
-            const Long64_t n_entries = std::min(args.maxEvents(),originalTuple->GetEntries());
+            const Long64_t n_entries = std::min(args.maxEvents(),map_event.at(channels.at(c))->GetEntries());
             for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
-                originalTuple->GetEntry(current_entry);
-                progressReporter->Report(current_entry);
-                if(static_cast<Channel>((*originalTuple)().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
-                    (*originalTuple)().first_daughter_indexes = {0};
-                    (*originalTuple)().second_daughter_indexes = {1};
+                map_event.at(channels.at(c))->GetEntry(current_entry);
+                if(static_cast<Channel>((*(map_event.at(channels.at(c))))().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
+                    (*(map_event.at(channels.at(c))))().first_daughter_indexes = {0};
+                    (*(map_event.at(channels.at(c))))().second_daughter_indexes = {1};
                 }
-                FillCacheTuple(cache, originalTuple->data());
+                FillCacheTuple(cache, map_event.at(channels.at(c))->data());
                 cache.Fill();
             }
-            progressReporter->Report(originalTuple->GetEntries(),true);
             cache.Write();
             const auto stop = clock::now();
             cacheSummary().exeTime = static_cast<UInt_t>(std::chrono::duration_cast<std::chrono::seconds>(stop - start).count());
             cacheSummary.Fill();
             cacheSummary.Write();
         }
+        progressReporter->Report(n_tot_events,true);
 
 
 

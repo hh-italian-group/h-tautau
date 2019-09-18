@@ -233,6 +233,9 @@ const kin_fit::FitResults& EventInfoBase::GetKinFitResults(bool allow_calc)
             kinfit_results->probability = TMath::Prob(result.chi2, 2);
             kinfit_results->mass = result.mass;
         }
+        else{
+            kinfit_results->probability = TMath::Prob(kinfit_results->chi2, 2);
+        }
     }
     return *kinfit_results;
 }

@@ -53,21 +53,6 @@ public:
     bool TryGetKinFit(kin_fit::FitResults& kinfit_result, const LegPair& htt_pair, const LegPair& hbb_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
     bool TryGetSVFit(sv_fit_ana::FitResults& svfit_result, const LegPair& htt_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
-    struct KinFitKey{
-        LegPair htt_pair;
-        LegPair hbb_pair;
-        UncertaintySource unc_source;
-        UncertaintyScale unc_scale;
-
-        KinFitKey();
-        KinFitKey(LegPair _htt_pair, LegPair _hbb_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale);
-
-        bool operator<(const KinFitKey& other) const;
-
-        //virtual ~KinFitKey(); // Pure virtual destructor
-
-    };
-
     struct SVFitKey{
         LegPair htt_pair;
         UncertaintySource unc_source;
@@ -78,8 +63,19 @@ public:
 
         bool operator<(const SVFitKey& other) const;
 
-        //virtual ~SVFitKey(); // Pure virtual destructor
+        virtual ~SVFitKey(){} // virtual destructor
+        SVFitKey( const SVFitKey & ) = default;
     };
+
+    struct KinFitKey : SVFitKey {
+        LegPair hbb_pair;
+
+        KinFitKey();
+        KinFitKey(LegPair _htt_pair, LegPair _hbb_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale);
+        bool operator<(const KinFitKey& other) const;
+    };
+
+
 
 private:
     std::map<KinFitKey,kin_fit::FitResults> kinFit_map;
