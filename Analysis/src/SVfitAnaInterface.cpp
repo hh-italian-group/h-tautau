@@ -29,8 +29,23 @@ classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const ntuple::TupleLepton&
     }
     if(lepton.leg_type() == analysis::LegType::tau){
         const auto& momentum = lepton.p4();
+        double minVisMass = classic_svFit::electronMass;
+        double maxVisMass = classic_svFit::tauLeptonMass;
+        if ( lepton.decayMode() == -1 ) {
+          minVisMass = classic_svFit::chargedPionMass;
+          maxVisMass = 1.5;
+        } else if ( lepton.decayMode() == 0 ) {
+          minVisMass = classic_svFit::chargedPionMass;
+          maxVisMass = minVisMass;
+        } else {
+          minVisMass = 0.3;
+          maxVisMass = 1.5;
+        }
+        double preciseVisMass = momentum.mass();
+        if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
+        if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
         return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay,
-                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M(),
+                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass,
                                                   lepton.decayMode());
     }
     throw exception("Leg Type not supported for SVFitAnaInterface.");

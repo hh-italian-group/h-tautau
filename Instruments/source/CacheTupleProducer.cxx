@@ -24,7 +24,7 @@ struct Arguments {
     REQ_ARG(bool, hasBjetPair);
     OPT_ARG(bool, runSVFit, true);
     OPT_ARG(bool, runKinFit, true);
-    OPT_ARG(Long64_t, maxEvents, std::numeric_limits<Long64_t>::max());
+    OPT_ARG(Long64_t, max_events_per_tree, std::numeric_limits<Long64_t>::max());
     OPT_ARG(std::string, working_path, "./");
 };
 
@@ -38,7 +38,8 @@ public:
     using clock = std::chrono::system_clock;
 
     CacheTupleProducer(const Arguments& _args) : args(_args), outputFile(root_ext::CreateRootFile(args.output_file())),
-                cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period()))
+                cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period())),
+                progressReporter(10, std::cout)
     {
         EventCandidate::InitializeJecUncertainty(run_period,args.working_path());
 
@@ -54,7 +55,6 @@ public:
         cacheSummary().numberOfTimesSVFit = 0;
         cacheSummary().numberOfTimesKinFit = 0;
 
-        progressReporter = std::make_shared<analysis::tools::ProgressReporter>(10, std::cout);
     }
 
     void Run()
@@ -64,31 +64,39 @@ public:
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         size_t n_tot_events = 0;
-        std::map<std::string,std::shared_ptr<ntuple::EventTuple>> map_event;
+        std::map<std::string,std::pair<std::shared_ptr<ntuple::EventTuple>,Long64_t>> map_event;
         for(unsigned c = 0; c < channels.size(); ++c){
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
-            map_event[channels.at(c)] = originalTuple;
-            n_tot_events += originalTuple->GetEntries();
+            const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
+            map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
+            n_tot_events += n_events;
         }
+
+        size_t n_total = n_tot_events, n_processed_events = 0;
+        progressReporter.SetTotalNumberOfEvents(n_total);
         for(unsigned c = 0; c < channels.size(); ++c){
+            std::cout << "Channel: " << channels.at(c) << std::endl;
             CacheTuple cache(channels.at(c), outputFile.get(), false);
-            const Long64_t n_entries = std::min(args.maxEvents(),map_event.at(channels.at(c))->GetEntries());
+            auto& originalTuple = *map_event.at(channels.at(c)).first;
+            const Long64_t n_entries = map_event.at(channels.at(c)).second;
             for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
-                map_event.at(channels.at(c))->GetEntry(current_entry);
-                if(static_cast<Channel>((*(map_event.at(channels.at(c))))().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
-                    (*(map_event.at(channels.at(c))))().first_daughter_indexes = {0};
-                    (*(map_event.at(channels.at(c))))().second_daughter_indexes = {1};
+                originalTuple.GetEntry(current_entry);
+                if(static_cast<Channel>(originalTuple().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
+                    originalTuple().first_daughter_indexes = {0};
+                    originalTuple().second_daughter_indexes = {1};
                 }
-                FillCacheTuple(cache, map_event.at(channels.at(c))->data());
+                FillCacheTuple(cache, originalTuple.data());
                 cache.Fill();
+                if(++n_processed_events % 100 == 0) progressReporter.Report(n_processed_events,false);
             }
+            progressReporter.Report(n_processed_events, true);
             cache.Write();
             const auto stop = clock::now();
             cacheSummary().exeTime = static_cast<UInt_t>(std::chrono::duration_cast<std::chrono::seconds>(stop - start).count());
             cacheSummary.Fill();
             cacheSummary.Write();
         }
-        progressReporter->Report(n_tot_events,true);
+        progressReporter.Report(n_tot_events,true);
 
 
 
@@ -173,7 +181,7 @@ private:
     std::vector<SignalObjectSelector> signalObjectSelectors;
     std::vector<UncertaintySource> unc_sources;
     std::vector<JetOrdering> vector_jet_ordering;
-    std::shared_ptr<analysis::tools::ProgressReporter> progressReporter;
+    analysis::tools::ProgressReporter progressReporter;
 };
 
 } // namespace analysis

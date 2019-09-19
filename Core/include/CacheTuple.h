@@ -56,4 +56,4 @@ DECLARE_TREE(cache_ntuple, CacheProdSummary, CacheSummaryTuple, CACHE_SUMMARY_DA
 #define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
 INITIALIZE_TREE(cache_ntuple, CacheSummaryTuple, CACHE_SUMMARY_DATA)
 #undef VAR
-#undef SUMMARY_DATA
+#undef CACHE_SUMMARY_DATA
