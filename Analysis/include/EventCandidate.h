@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "h-tautau/Analysis/include/TauUncertainties.h"
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
+#include "AnalysisTools/Core/include/Tools.h"
 
 namespace analysis {
     using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
@@ -30,7 +31,7 @@ public:
 
     EventCandidate& operator= ( const EventCandidate& ) = default; //assignment
 
-    static void InitializeJecUncertainty(const std::string& file_uncertainty_source);
+    static void InitializeJecUncertainty(Period period, const std::string& working_path);
 
     const LepCollection& GetLeptons();
     const JetCollection& GetJets();

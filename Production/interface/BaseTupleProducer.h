@@ -226,10 +226,10 @@ protected:
     void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
     void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
 
-    std::vector<ElectronCandidate> CollectVetoElectrons(bool isTightSelection = false,
-            const std::vector<const ElectronCandidate*>& signalElectrons = {});
-    std::vector<MuonCandidate> CollectVetoMuons(bool isTightSelection = false,
-            const std::vector<const MuonCandidate*>& signalMuons = {});
+    std::vector<ElectronCandidate> CollectVetoElectrons(bool isTightSelection,
+            const std::vector<const ElectronCandidate*>& signalElectrons);
+    std::vector<MuonCandidate> CollectVetoMuons(bool isTightSelection,
+            const std::vector<const MuonCandidate*>& signalMuons);
 
     std::vector<JetCandidate> CollectJets();
 

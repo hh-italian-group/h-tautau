@@ -234,12 +234,11 @@ template<typename T>
 constexpr T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
 
 enum class TreeState { Full, Skimmed };
-using JetPair = std::pair<size_t, size_t>;
+using LegPair = std::pair<size_t, size_t>;
 
-size_t NumberOfCombinationPairs(size_t n_jets);
-size_t CombinationPairToIndex(const JetPair& pair, size_t n_jets);
-JetPair CombinationIndexToPair(size_t index, size_t n_jets);
-JetPair UndefinedJetPair();
+size_t LegPairToIndex(const LegPair& pair);
+LegPair LegIndexToPair(size_t index);
+LegPair UndefinedLegPair();
 std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory* directory,
                                              bool readMode, TreeState treeState);
 } // namespace ntuple

@@ -9,9 +9,17 @@ namespace analysis {
     UncertaintyScale _scale, analysis::Period _period) : event(&_event), uncertainty_source(_uncertainty_source),
     scale(_scale), period(_period) {}
 
-    void EventCandidate::InitializeJecUncertainty(const std::string& file_uncertainty_source)
+    void EventCandidate::InitializeJecUncertainty(Period period, const std::string& working_path)
     {
-        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(file_uncertainty_source);
+        std::map<analysis::Period,std::string> file_uncertainty_sources = {
+            {analysis::Period::Run2016,"h-tautau/McCorrections/data/2016/JES/Summer16_23Sep2016V4_MC_UncertaintySources_AK4PFchs.txt"},
+            {analysis::Period::Run2017,"h-tautau/McCorrections/data/2017/JES/Fall17_17Nov2017_V32_MC_UncertaintySources_AK4PFchs.txt"},
+            {analysis::Period::Run2018,"h-tautau/McCorrections/data/2018/JES/Autumn18_V8_MC_UncertaintySources_AK4PFchs.txt"}
+        };
+        if(!file_uncertainty_sources.count(period))
+            throw exception("Period not found in file uncertainty source.");
+        std::string full_path_source = tools::FullPath({working_path,file_uncertainty_sources.at(period)});
+        jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(full_path_source);
     }
 
     const LepCollection& EventCandidate::GetLeptons()
@@ -83,7 +91,9 @@ namespace analysis {
         tuple_leptons = std::make_shared<std::vector<ntuple::TupleLepton>>();
         for(size_t n = 0; n < event->lep_p4.size(); ++n){
           tuple_leptons->emplace_back(*event, n);
-          lepton_candidates->emplace_back(tuple_leptons->back(),tuple_leptons->back().iso());
+        }
+        for(size_t n = 0; n < tuple_leptons->size(); ++n){
+          lepton_candidates->emplace_back(tuple_leptons->at(n),tuple_leptons->at(n).iso());
         }
         for(size_t n = 0; n < tuple_leptons->size(); ++n) {
           auto tuple_lepton = tuple_leptons->at(n);
@@ -132,7 +142,9 @@ namespace analysis {
         tuple_jets = std::make_shared<std::vector<ntuple::TupleJet>>();
         for(size_t n = 0; n < event->jets_p4.size(); ++n) {
           tuple_jets->emplace_back(*event, n);
-          jet_candidates->emplace_back(tuple_jets->back());
+        }
+        for(size_t n = 0; n < tuple_jets->size(); ++n) {
+          jet_candidates->emplace_back(tuple_jets->at(n));
         }
 
         if(jecUncertainties->JetUncertainties_withTotal().count(uncertainty_source)){

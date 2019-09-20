@@ -21,10 +21,10 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     auto muons = CollectSignalMuons();
     cut(muons.size() > 1, "muons");
 
-    selection.other_electrons = CollectVetoElectrons();
+    selection.other_electrons = CollectVetoElectrons(false,{});
     selection.electronVeto = selection.other_electrons.size();
 
-    auto other_tight_electrons = CollectVetoElectrons(true);
+    auto other_tight_electrons = CollectVetoElectrons(true,{});
     cut(other_tight_electrons.empty(), "tightElectronVeto");
 
     static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects;
@@ -74,7 +74,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
         selection.triggerResults.push_back(triggerResults);
     }
 
-    selection.higgses_pair_indexes.push_back(selected_higgs_index);
+    selection.higgses_pair_indexes.push_back({0,1});
 
     selection.other_muons = CollectVetoMuons(false,{ &selected_higgs.GetFirstDaughter(),
         &selected_higgs.GetSecondDaughter() });
