@@ -72,8 +72,8 @@ public:
             n_tot_events += n_events;
         }
 
-        size_t n_total = n_tot_events, n_processed_events = 0;
-        progressReporter.SetTotalNumberOfEvents(n_total);
+        size_t n_processed_events = 0;
+        progressReporter.SetTotalNumberOfEvents(n_tot_events);
         for(unsigned c = 0; c < channels.size(); ++c){
             std::cout << "Channel: " << channels.at(c) << std::endl;
             CacheTuple cache(channels.at(c), outputFile.get(), false);

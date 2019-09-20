@@ -29,8 +29,7 @@ classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const ntuple::TupleLepton&
     }
     if(lepton.leg_type() == analysis::LegType::tau){
         const auto& momentum = lepton.p4();
-        double minVisMass = classic_svFit::electronMass;
-        double maxVisMass = classic_svFit::tauLeptonMass;
+        double minVisMass, maxVisMass;
         if ( lepton.decayMode() == -1 ) {
           minVisMass = classic_svFit::chargedPionMass;
           maxVisMass = 1.5;
