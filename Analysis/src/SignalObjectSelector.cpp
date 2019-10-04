@@ -345,7 +345,9 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             analysis::DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
             if(!PassEcalNoiceVetoJets(event_candidate.GetJets().at(n).GetMomentum(), period, jet_pu_id)) continue;
-            if(!jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
+            if(event_candidate.GetJets().at(n).GetMomentum().Pt() < 50 ){
+                if(!jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
+            }
 //            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n) : event_candidate.GetJets().at(n).GetMomentum().Pt();
