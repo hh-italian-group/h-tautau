@@ -207,6 +207,12 @@ using Point3D = analysis::Point3D_Float;
     /* Skimmer Variables */\
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
+    /* Gen Study Variables */\
+    VAR(Int_t, sample_type)  \
+    VAR(Int_t, sample_year) \
+    VAR(Int_t, mass_point)  \
+    VAR(Int_t, spin)  \
+    VAR(Int_t, node)  \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
