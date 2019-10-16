@@ -9,27 +9,26 @@ namespace analysis {
 
     double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt)
     {
-        //for 2016 and 2018 DM 11 is temporary
-        //DM 5&6 temporary 1+/-0 no shift no unc
+        //put no shift and 2% of unc for missing DM
         static const std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor = {
           { analysis::Period::Run2016, { {0, PhysicalValue(-0.6,1.0)},
                                          {1, PhysicalValue(-0.5,0.9)},
-                                         {5, PhysicalValue(1,0)},
-                                         {6, PhysicalValue(1,0)},
+                                         {5, PhysicalValue(0.0,2.0)},
+                                         {6, PhysicalValue(0.0,2.0)},
                                          {10, PhysicalValue(0.0,1.1)},
-                                         {11, PhysicalValue(0.0,1.1)}    }},
+                                         {11, PhysicalValue(0.0,2.0)}    }},
           { analysis::Period::Run2017, { {0, PhysicalValue(0.7,0.8)},
                                          {1, PhysicalValue(-0.2,0.8)},
-                                         {5, PhysicalValue(1,0)},
-                                         {6, PhysicalValue(1,0)},
+                                         {5, PhysicalValue(0.0,2.0)},
+                                         {6, PhysicalValue(0.0,2.0)},
                                          {10, PhysicalValue(0.1,0.9)},
                                          {11, PhysicalValue(-0.1,1.0)}} },
          { analysis::Period::Run2018, { {0, PhysicalValue(-1.3,1.1)},
                                         {1, PhysicalValue(-0.5,0.9)},
-                                        {5, PhysicalValue(1,0)},
-                                        {6, PhysicalValue(1,0)},
+                                        {5, PhysicalValue(0.0,2.0)},
+                                        {6, PhysicalValue(0.0,2.0)},
                                         {10, PhysicalValue(-1.2,0.8)},
-                                        {11, PhysicalValue(-1.2,0.8)}} }
+                                        {11, PhysicalValue(0.0,2.0)}} }
         };
 
         double correction_factor;
