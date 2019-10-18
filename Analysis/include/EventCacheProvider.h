@@ -50,6 +50,48 @@ public:
         }
     }
 
+    template<typename Event>
+    void FillEvent(Event& event) const
+    {
+        event.SVfit_Higgs_index.clear();
+        event.SVfit_is_valid.clear();
+        event.SVfit_p4.clear();
+        event.SVfit_p4_error.clear();
+        event.SVfit_mt.clear();
+        event.SVfit_mt_error.clear();
+        event.SVfit_unc_source.clear();
+        event.SVfit_unc_scale.clear();
+        for(const auto& iter_sv : SVFit_map){
+            const sv_fit_ana::FitResults& SVFit_results = iter_sv.second;
+            event.SVfit_Higgs_index.push_back(ntuple::LegPairToIndex(iter_sv.first.htt_pair));
+            event.SVfit_is_valid.push_back(SVFit_results.has_valid_momentum);
+            event.SVfit_p4.push_back(static_cast<ntuple::LorentzVectorM>(SVFit_results.momentum));
+            event.SVfit_p4_error.push_back(static_cast<ntuple::LorentzVectorM>(SVFit_results.momentum_error));
+            event.SVfit_mt.push_back(static_cast<Float_t>(SVFit_results.transverseMass));
+            event.SVfit_mt_error.push_back(static_cast<Float_t>(SVFit_results.transverseMass_error));
+            event.SVfit_unc_source.push_back(static_cast<Int_t>(iter_sv.first.unc_source));
+            event.SVfit_unc_scale.push_back(static_cast<Int_t>(iter_sv.first.unc_scale));
+        }
+
+        event.kinFit_Higgs_index.clear();
+        event.kinFit_jetPairId.clear();
+        event.kinFit_m.clear();
+        event.kinFit_chi2.clear();
+        event.kinFit_convergence.clear();
+        event.kinFit_unc_source.clear();
+        event.kinFit_unc_scale.clear();
+        for(const auto& iter_kf : kinFit_map){
+            const kin_fit::FitResults& kinFit_results = iter_kf.second;
+            event.kinFit_Higgs_index.push_back(static_cast<size_t>(ntuple::LegPairToIndex(iter_kf.first.htt_pair)));
+            event.kinFit_jetPairId.push_back(static_cast<size_t>(ntuple::LegPairToIndex(iter_kf.first.hbb_pair)));
+            event.kinFit_m.push_back(static_cast<Float_t>(kinFit_results.mass));
+            event.kinFit_chi2.push_back(static_cast<Float_t>(kinFit_results.chi2));
+            event.kinFit_convergence.push_back(kinFit_results.convergence);
+            event.kinFit_unc_source.push_back(static_cast<Int_t>(iter_kf.first.unc_source));
+            event.kinFit_unc_scale.push_back(static_cast<Int_t>(iter_kf.first.unc_scale));
+        }
+    }
+
     bool TryGetKinFit(kin_fit::FitResults& kinfit_result, const LegPair& htt_pair, const LegPair& hbb_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
     bool TryGetSVFit(sv_fit_ana::FitResults& svfit_result, const LegPair& htt_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
