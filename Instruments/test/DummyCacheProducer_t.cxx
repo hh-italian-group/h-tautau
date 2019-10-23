@@ -124,12 +124,11 @@ private:
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
                         if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
 
-                        std::cout << "event.jets_p4.size(): " << event.jets_p4.size() << std::endl;
                         for(unsigned n = 0; n < event.jets_p4.size(); ++n){
                             cacheTuple().jet_hh_score_index.push_back(n);
                             cacheTuple().jet_hh_score_unc_scale.push_back(variation);
                             cacheTuple().jet_hh_score_unc_source.push_back(static_cast<Int_t>(unc_sources.at(source)));
-                            cacheTuple().jet_hh_score_index.push_back(1.0);
+                            cacheTuple().jet_hh_score_value.push_back(1.0);
                         }
 
                     }

@@ -48,7 +48,7 @@ public:
                                                     event.SVfit_mt_error.at(n));
             SVFit_map[SVFitKey] = SVFit_results;
         }
-        std::cout << "event.jet_hh_score_index.size(): " << event.jet_hh_score_index.size() << std::endl;
+
         for(unsigned n = 0; n < event.jet_hh_score_index.size(); ++n){
             JetScoreKey jetScoreKey(event.jet_hh_score_index.at(n),
                               static_cast<UncertaintySource>(event.jet_hh_score_unc_source.at(n)),
