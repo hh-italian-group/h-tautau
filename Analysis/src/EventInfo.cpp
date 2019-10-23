@@ -115,10 +115,13 @@ JetOrdering EventInfoBase::GetJetOrdering() const {return jet_ordering; }
 JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool applyPu,
                                                        bool passBtag, JetOrdering jet_ordering,
                                                        const std::set<size_t>& jet_to_exclude_indexes,
-                                                       double low_eta_cut)
+                                                       double low_eta_cut,
+                                                       analysis::UncertaintySource unc_source,
+                                                       analysis::UncertaintyScale unc_scale)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
+    bool base_ordering = jet_ordering != analysis::JetOrdering::HHJetTag;
     const JetCollection& all_jets = GetJets();
     const ntuple::Event& event = event_candidate.GetEvent();
     JetCollection selected_jets;
@@ -132,9 +135,9 @@ JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool appl
         if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && !jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
         if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
-        if(passBtag && !bTagger.Pass(event,n,DiscriminatorWP::Medium)) continue;
+        if(passBtag && !bTagger.Pass(event,n,unc_source,unc_scale,DiscriminatorWP::Medium)) continue;
 
-        jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(event,n));
+        jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(event,n,unc_source,unc_scale,base_ordering));
     }
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
     for(size_t h = 0; h < jets_ordered.size(); ++h){
@@ -339,7 +342,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
     EventCandidate event_candidate(event,uncertainty_source,scale,period);
     boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event_candidate);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
-    SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate,period,jet_ordering,*selected_higgs_index);
+    SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate,period,jet_ordering,*selected_higgs_index,uncertainty_source,scale);
     return EventInfoBase(std::move(event_candidate),summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
 
 }

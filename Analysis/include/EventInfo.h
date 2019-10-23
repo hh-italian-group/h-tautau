@@ -98,7 +98,9 @@ public:
                              bool applyPu = false, bool passBtag = false,
                              JetOrdering jet_ordering = JetOrdering::DeepCSV,
                              const std::set<size_t>& jet_to_exclude_indexes = {},
-                             double low_eta_cut = 0);
+                             double low_eta_cut = 0,
+                             analysis::UncertaintySource unc_source = analysis::UncertaintySource::None,
+                             analysis::UncertaintyScale unc_scale = analysis::UncertaintyScale::Central);
 
     double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
     const FatJetCollection& GetFatJets();

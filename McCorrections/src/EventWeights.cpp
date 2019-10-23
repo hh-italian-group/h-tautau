@@ -57,6 +57,10 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                         FullName("2017/btag/BTagEfficiency_deep_Flavour_pu_id_full.root"), FullName("2017/btag/DeepFlavour_94XSF_V1_B_F.csv"),
                         period, jet_ordering, btag_wp);
+            else if(jet_ordering == JetOrdering::HHJetTag)
+                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                        FullName("2017/btag/BTagEfficiency_deep_Flavour_pu_id_full.root"), FullName("2017/btag/DeepFlavour_94XSF_V1_B_F.csv"),
+                        period, jet_ordering, btag_wp);
             else
                throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
         }
