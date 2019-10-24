@@ -15,7 +15,7 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
     static const std::map<Period, std::map<JetOrdering, std::map<DiscriminatorWP, double>>> working_points = {
         {Period::Run2018, {
             {JetOrdering::DeepCSV, {
-                {DiscriminatorWP::Loose, cuts::btag_2018::DeeCSVL},{DiscriminatorWP::Medium, cuts::btag_2018::DeepCSVM},
+                {DiscriminatorWP::Loose, cuts::btag_2018::DeepCSVL},{DiscriminatorWP::Medium, cuts::btag_2018::DeepCSVM},
                 {DiscriminatorWP::Tight, cuts::btag_2018::DeepCSVT}
             }},
             {JetOrdering::DeepFlavour, {
