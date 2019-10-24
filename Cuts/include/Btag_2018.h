@@ -7,9 +7,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace cuts {
 namespace btag_2018 { 
-    constexpr double deepCSVv2L = 0.1241; // >
-    constexpr double deepCSVv2M = 0.4184; // >
-    constexpr double deepCSVv2T = 0.7527; // >
+    constexpr double DeepCSVL = 0.1241; // >
+    constexpr double DeepCSVM = 0.4184; // >
+    constexpr double DeepCSVT = 0.7527; // >
 
     constexpr double deepFlavourL = 0.0494; // >
     constexpr double deepFlavourM = 0.2770; // >

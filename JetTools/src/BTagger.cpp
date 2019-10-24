@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/Cuts/include/Btag_2017.h"
 #include "h-tautau/Cuts/include/Btag_2016.h"
+#include "h-tautau/Cuts/include/Btag_2018.h"
 
 namespace analysis {
 
@@ -14,8 +15,8 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
     static const std::map<Period, std::map<JetOrdering, std::map<DiscriminatorWP, double>>> working_points = {
         {Period::Run2018, {
             {JetOrdering::DeepCSV, {
-                {DiscriminatorWP::Loose, cuts::btag_2018::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2018::deepCSVv2M},
-                {DiscriminatorWP::Tight, cuts::btag_2018::deepCSVv2T}
+                {DiscriminatorWP::Loose, cuts::btag_2018::DeeCSVL},{DiscriminatorWP::Medium, cuts::btag_2018::DeepCSVM},
+                {DiscriminatorWP::Tight, cuts::btag_2018::DeepCSVT}
             }},
             {JetOrdering::DeepFlavour, {
                 {DiscriminatorWP::Loose, cuts::btag_2018::deepFlavourL},
@@ -51,8 +52,8 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
                 {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}
             }},
              {JetOrdering::DeepCSV, {
-                 {DiscriminatorWP::Loose, cuts::btag_2016::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2016::deepCSVv2M},
-                 {DiscriminatorWP::Tight, cuts::btag_2016::deepCSVv2T}
+                 {DiscriminatorWP::Loose, cuts::btag_2016::DeepCSVL},{DiscriminatorWP::Medium, cuts::btag_2016::DeepCSVM},
+                 {DiscriminatorWP::Tight, cuts::btag_2016::DeepCSVT}
              }},
              {JetOrdering::DeepFlavour, {
                  {DiscriminatorWP::Loose, cuts::btag_2016::deepFlavourL},
