@@ -25,9 +25,9 @@ public:
 
     double BTag(const ntuple::Event& event, size_t jet_index,
         analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale,
-        bool base_ordering) const;
+        bool use_base_ordering) const;
     double BTag(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_source,
-        analysis::UncertaintyScale unc_scale) const;
+        analysis::UncertaintyScale unc_scale, bool use_base_ordering) const;
     bool Pass(const ntuple::Event& event, size_t jet_index,
         analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale,
         DiscriminatorWP wp = DiscriminatorWP::Medium) const;

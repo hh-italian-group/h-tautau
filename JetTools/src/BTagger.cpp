@@ -54,10 +54,10 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
 }
 
 double BTagger::BTag(const ntuple::Event& event, size_t jet_index,
-    analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale, bool base_ordering) const
+    analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale, bool use_base_ordering) const
 {
     double tag = 0;
-    if(base_ordering){
+    if(use_base_ordering){
         if(ordering==JetOrdering::Pt) tag = event.jets_p4.at(jet_index).Pt();
         else if(ordering==JetOrdering::DeepCSV) tag = event.jets_deepCsv_BvsAll.at(jet_index);
         else if (ordering==JetOrdering::CSV) tag = event.jets_csv.at(jet_index);
@@ -69,7 +69,7 @@ double BTagger::BTag(const ntuple::Event& event, size_t jet_index,
             if(event.jet_hh_score_index.at(n) != jet_index) continue;
             if(event.jet_hh_score_unc_source.at(n) != static_cast<int>(unc_source)) continue;
             if(event.jet_hh_score_unc_scale.at(n) != static_cast<int>(unc_scale)) continue;
-            tag = event.jet_hh_score_value.at(n);
+            return event.jet_hh_score_value.at(n);
         }
     }
     else
@@ -78,15 +78,19 @@ double BTagger::BTag(const ntuple::Event& event, size_t jet_index,
 }
 
 double BTagger::BTag(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_source,
-    analysis::UncertaintyScale unc_scale) const
+    analysis::UncertaintyScale unc_scale, bool use_base_ordering) const
 {
-    if(ordering==JetOrdering::Pt) return jet.p4().Pt();
-    else if(ordering==JetOrdering::DeepCSV) return jet.deepcsv();
-    else if(ordering==JetOrdering::CSV) return jet.csv();
-    else if(ordering==JetOrdering::DeepFlavour) return jet.deepFlavour();
+    double tag = 0;
+    if(use_base_ordering){
+        if(ordering==JetOrdering::Pt) tag = jet.p4().Pt();
+        else if(ordering==JetOrdering::DeepCSV) tag = jet.deepcsv();
+        else if(ordering==JetOrdering::CSV) tag = jet.csv();
+        else if(ordering==JetOrdering::DeepFlavour) tag = jet.deepFlavour();
+    }
     else if(ordering==JetOrdering::HHJetTag) return jet.hh_tag(unc_source,unc_scale);
     else
         throw exception("Jet Ordering %1% is not supported") % ordering;
+    return tag;
 }
 
 bool BTagger::Pass(const ntuple::Event& event, size_t jet_index,
@@ -102,7 +106,7 @@ bool BTagger::Pass(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_
 {
     if(!cut->count(wp))
         throw exception("Working point %1% is not supported.") %wp;
-    else return BTag(jet,unc_source,unc_scale) > cut->at(wp);
+    else return BTag(jet,unc_source,unc_scale,true) > cut->at(wp);
 }
 
 double BTagger::PtCut() const

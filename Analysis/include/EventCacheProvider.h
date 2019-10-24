@@ -145,8 +145,6 @@ public:
 
         bool operator<(const JetScoreKey& other) const;
 
-        virtual ~JetScoreKey(){} // virtual destructor
-        JetScoreKey( const JetScoreKey & ) = default;
     };
 
 

@@ -107,15 +107,13 @@ TupleObject::DiscriminatorResult TupleJet::deepFlavour() const
 TupleObject::RealNumber TupleJet::hh_tag(analysis::UncertaintySource unc_source,
                                          analysis::UncertaintyScale unc_scale) const
 {
-    float tag = 0;
-    std::cout << "event.jet_hh_score_value.size(): " << event->jet_hh_score_value.size() << std::endl;
     for(unsigned n = 0; n < event->jet_hh_score_value.size(); ++n){
         if(event->jet_hh_score_index.at(n) != jet_id) continue;
         if(event->jet_hh_score_unc_source.at(n) != static_cast<int>(unc_source)) continue;
         if(event->jet_hh_score_unc_scale.at(n) != static_cast<int>(unc_scale)) continue;
-        tag = event->jet_hh_score_value.at(n);
+        return event->jet_hh_score_value.at(n);
     }
-    return tag;
+    throw analysis::exception("HH tag not found for TupleObjects.");
 }
 TupleObject::Integer TupleJet::partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
 TupleObject::Integer TupleJet::hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
