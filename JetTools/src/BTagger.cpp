@@ -12,6 +12,20 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
     period(_period), ordering(_ordering)
 {
     static const std::map<Period, std::map<JetOrdering, std::map<DiscriminatorWP, double>>> working_points = {
+        {Period::Run2018, {
+            {JetOrdering::DeepCSV, {
+                {DiscriminatorWP::Loose, cuts::btag_2018::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2018::deepCSVv2M},
+                {DiscriminatorWP::Tight, cuts::btag_2018::deepCSVv2T}
+            }},
+            {JetOrdering::DeepFlavour, {
+                {DiscriminatorWP::Loose, cuts::btag_2018::deepFlavourL},
+                {DiscriminatorWP::Medium, cuts::btag_2018::deepFlavourM},
+                {DiscriminatorWP::Tight, cuts::btag_2018::deepFlavourT}
+            }},
+            {JetOrdering::Pt, {
+                {DiscriminatorWP::Medium, cuts::btag_2018::pt}
+            }}
+        }},
         {Period::Run2017, {
             {JetOrdering::DeepCSV, {
                 {DiscriminatorWP::Loose, cuts::btag_2017::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2017::deepCSVv2M},
@@ -36,6 +50,15 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
                 {DiscriminatorWP::Medium, cuts::btag_2016::CSVv2M},
                 {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}
             }},
+             {JetOrdering::DeepCSV, {
+                 {DiscriminatorWP::Loose, cuts::btag_2016::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2016::deepCSVv2M},
+                 {DiscriminatorWP::Tight, cuts::btag_2016::deepCSVv2T}
+             }},
+             {JetOrdering::DeepFlavour, {
+                 {DiscriminatorWP::Loose, cuts::btag_2016::deepFlavourL},
+                 {DiscriminatorWP::Medium, cuts::btag_2016::deepFlavourM},
+                 {DiscriminatorWP::Tight, cuts::btag_2016::deepFlavourT}
+             }},
             {JetOrdering::Pt, {
                 {DiscriminatorWP::Medium, cuts::btag_2016::pt}
             }}
