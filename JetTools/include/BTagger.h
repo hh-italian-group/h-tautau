@@ -40,6 +40,7 @@ public:
 private:
     Period period;
     JetOrdering ordering;
+    JetOrdering base_ordering;
     const std::map<DiscriminatorWP,double>* cut;
 };
 
