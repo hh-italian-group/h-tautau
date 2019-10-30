@@ -133,7 +133,7 @@ JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool appl
         analysis::DiscriminatorIdResults jet_pu_id = jet->GetPuId();
         if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id )) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
-        if(applyPu && !(jet.GetMomentum().pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto && jet_pu_id.Passed(analysis::DiscriminatorWP::Loose))) continue;
+        if(applyPu && jet.GetMomentum().pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto && !(jet_pu_id.Passed(analysis::DiscriminatorWP::Loose))) continue;
         if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
         if(passBtag && !bTagger.Pass(event,n,unc_source,unc_scale,DiscriminatorWP::Medium)) continue;
 
