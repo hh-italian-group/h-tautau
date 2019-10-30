@@ -167,6 +167,11 @@ using Point3D = analysis::Point3D_Float;
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
     VAR(std::vector<Int_t>, kinFit_unc_source) /* kinFit */ \
     VAR(std::vector<Int_t>, kinFit_unc_scale) /* kinFit */ \
+    /* Jet score Variables */ \
+    VAR(std::vector<size_t>, jet_hh_score_index) /* jet score indexes */ \
+    VAR(std::vector<Int_t>, jet_hh_score_unc_scale) /* jet score scale */ \
+    VAR(std::vector<Int_t>, jet_hh_score_unc_source) /* jet score source */ \
+    VAR(std::vector<Float_t>, jet_hh_score_value) /* jet score value */ \
     /* Generator level information */\
     VAR(UInt_t, lhe_n_partons) \
     VAR(UInt_t, lhe_n_c_partons) \

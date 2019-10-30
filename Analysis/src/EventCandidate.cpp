@@ -43,9 +43,11 @@ namespace analysis {
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
             tuple_fatJets = std::make_shared<std::vector<ntuple::TupleFatJet>>();
-            for(size_t n = 0; n < event->fatJets_p4.size(); ++n) {
-                tuple_fatJets->emplace_back(*event, n);
-                fatJets->emplace_back(tuple_fatJets->back());
+            for(size_t n = 0; n < event->fatJets_p4.size(); ++n){
+              tuple_fatJets->emplace_back(*event, n);
+            }
+            for(size_t n = 0; n < tuple_fatJets->size(); ++n){
+              fatJets->emplace_back(tuple_fatJets->at(n));
             }
         }
         return *fatJets;

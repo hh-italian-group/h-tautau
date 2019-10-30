@@ -57,4 +57,17 @@ namespace analysis {
         return unc_scale < other.unc_scale;
     }
 
+    EventCacheProvider::JetScoreKey::JetScoreKey() : jet_index(0),
+            unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
+
+    EventCacheProvider::JetScoreKey::JetScoreKey(size_t _jet_index,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
+            jet_index(_jet_index), unc_source(_unc_source), unc_scale(_unc_scale) { }
+
+    bool EventCacheProvider::JetScoreKey::JetScoreKey::operator<(const JetScoreKey& other) const
+    {
+        if(jet_index != other.jet_index) return jet_index < other.jet_index;
+        if(unc_source != other.unc_source) return unc_source < other.unc_source;
+        return unc_scale < other.unc_scale;
+    }
+
 } // namespace analysis

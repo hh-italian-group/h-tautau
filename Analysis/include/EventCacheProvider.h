@@ -48,6 +48,13 @@ public:
                                                     event.SVfit_mt_error.at(n));
             SVFit_map[SVFitKey] = SVFit_results;
         }
+
+        for(unsigned n = 0; n < event.jet_hh_score_index.size(); ++n){
+            JetScoreKey jetScoreKey(event.jet_hh_score_index.at(n),
+                              static_cast<UncertaintySource>(event.jet_hh_score_unc_source.at(n)),
+                              static_cast<UncertaintyScale>(event.jet_hh_score_unc_scale.at(n)));
+            jetScore_map[jetScoreKey] = event.jet_hh_score_value.at(n);
+        }
     }
 
     template<typename Event>
@@ -90,6 +97,17 @@ public:
             event.kinFit_unc_source.push_back(static_cast<Int_t>(iter_kf.first.unc_source));
             event.kinFit_unc_scale.push_back(static_cast<Int_t>(iter_kf.first.unc_scale));
         }
+
+        event.jet_hh_score_index.clear();
+        event.jet_hh_score_unc_scale.clear();
+        event.jet_hh_score_unc_source.clear();
+        event.jet_hh_score_value.clear();
+        for(const auto& iter_jet : jetScore_map){
+            event.jet_hh_score_index.push_back(iter_jet.first.jet_index);
+            event.jet_hh_score_unc_scale.push_back(static_cast<Int_t>(iter_jet.first.unc_scale));
+            event.jet_hh_score_unc_source.push_back(static_cast<Int_t>(iter_jet.first.unc_source));
+            event.jet_hh_score_value.push_back(iter_jet.second);
+        }
     }
 
     bool TryGetKinFit(kin_fit::FitResults& kinfit_result, const LegPair& htt_pair, const LegPair& hbb_pair, UncertaintySource unc_source, UncertaintyScale unc_scale);
@@ -117,11 +135,24 @@ public:
         bool operator<(const KinFitKey& other) const;
     };
 
+    struct JetScoreKey{
+        size_t jet_index;
+        UncertaintySource unc_source;
+        UncertaintyScale unc_scale;
+
+        JetScoreKey();
+        JetScoreKey(size_t _jet_index,UncertaintySource _unc_source,UncertaintyScale _unc_scale);
+
+        bool operator<(const JetScoreKey& other) const;
+
+    };
+
 
 
 private:
     std::map<KinFitKey,kin_fit::FitResults> kinFit_map;
     std::map<SVFitKey,sv_fit_ana::FitResults> SVFit_map;
+    std::map<JetScoreKey,float> jetScore_map;
 
 };
 

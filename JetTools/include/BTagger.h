@@ -9,23 +9,30 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV, DeepFlavour };
+enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV, DeepFlavour, HHJetTag };
 ENUM_NAMES(JetOrdering) = {
     { JetOrdering::NoOrdering, "NoOrdering" },
     { JetOrdering::Pt, "Pt" },
     { JetOrdering::CSV, "CSV" },
     { JetOrdering::DeepCSV, "DeepCSV" },
     { JetOrdering::DeepFlavour, "DeepFlavour" },
+    { JetOrdering::HHJetTag, "HHJetTag" },
 };
 
 struct BTagger {
 public:
     BTagger(Period _period, JetOrdering _ordering);
 
-    double BTag(const ntuple::Event& event, size_t jet_index) const;
-    double BTag(const ntuple::TupleJet& jet) const;
-    bool Pass(const ntuple::Event& event, size_t jet_index, DiscriminatorWP wp = DiscriminatorWP::Medium) const;
-    bool Pass(const ntuple::TupleJet& jet, DiscriminatorWP wp = DiscriminatorWP::Medium) const;
+    double BTag(const ntuple::Event& event, size_t jet_index,
+        analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale,
+        bool use_base_ordering) const;
+    double BTag(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_source,
+        analysis::UncertaintyScale unc_scale, bool use_base_ordering) const;
+    bool Pass(const ntuple::Event& event, size_t jet_index,
+        analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale,
+        DiscriminatorWP wp = DiscriminatorWP::Medium) const;
+    bool Pass(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_source,
+        analysis::UncertaintyScale unc_scale, DiscriminatorWP wp = DiscriminatorWP::Medium) const;
 
     double PtCut() const;
     double EtaCut() const;
@@ -33,6 +40,7 @@ public:
 private:
     Period period;
     JetOrdering ordering;
+    JetOrdering base_ordering;
     const std::map<DiscriminatorWP,double>* cut;
 };
 

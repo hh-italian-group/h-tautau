@@ -104,6 +104,17 @@ TupleObject::DiscriminatorResult TupleJet::deepFlavour() const
     return event->jets_deepFlavour_b.at(jet_id) + event->jets_deepFlavour_bb.at(jet_id)
            + event->jets_deepFlavour_lepb.at(jet_id);
 }
+TupleObject::RealNumber TupleJet::hh_tag(analysis::UncertaintySource unc_source,
+                                         analysis::UncertaintyScale unc_scale) const
+{
+    for(unsigned n = 0; n < event->jet_hh_score_value.size(); ++n){
+        if(event->jet_hh_score_index.at(n) != jet_id) continue;
+        if(event->jet_hh_score_unc_source.at(n) != static_cast<int>(unc_source)) continue;
+        if(event->jet_hh_score_unc_scale.at(n) != static_cast<int>(unc_scale)) continue;
+        return event->jet_hh_score_value.at(n);
+    }
+    throw analysis::exception("HH tag not found for TupleObjects.");
+}
 TupleObject::Integer TupleJet::partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
 TupleObject::Integer TupleJet::hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
 TupleObject::RealNumber TupleJet::rawf() const { return event->jets_rawf.at(jet_id); }

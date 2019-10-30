@@ -120,7 +120,9 @@ public:
     static SelectedSignalJets SelectSignalJets(EventCandidate& event_candidate,
                                                const analysis::Period& period,
                                                analysis::JetOrdering jet_ordering,
-                                               size_t selected_higgs_index);
+                                               size_t selected_higgs_index,
+                                               analysis::UncertaintySource unc_source,
+                                               analysis::UncertaintyScale unc_scale);
 
      template<typename LorentzVector>
      static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, DiscriminatorIdResults jets_pu_id)

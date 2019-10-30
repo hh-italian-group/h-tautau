@@ -323,9 +323,12 @@ bool SignalObjectSelector::SelectedSignalJets::isSelectedVBFjet(size_t n) const
 SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(EventCandidate& event_candidate,
                                                                   const analysis::Period& period,
                                                                   analysis::JetOrdering jet_ordering,
-                                                                  size_t selected_higgs_index)
+                                                                  size_t selected_higgs_index,
+                                                                  UncertaintySource uncertainty_source,
+                                                                  UncertaintyScale scale)
 {
     BTagger bTagger(period, jet_ordering);
+    bool base_ordering = jet_ordering != JetOrdering::HHJetTag;
     const double bjet_pt_cut = bTagger.PtCut();
     const double bjet_eta_cut = bTagger.EtaCut();
 
@@ -345,10 +348,10 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             analysis::DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
             if(!PassEcalNoiceVetoJets(event_candidate.GetJets().at(n).GetMomentum(), period, jet_pu_id)) continue;
-            if(!jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
+            if(!(event_candidate.GetJets().at(n).GetMomentum().pt() < 50 && jet_pu_id.Passed(analysis::DiscriminatorWP::Loose))) continue;
 //            if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
-            const double tag = useBTag ? bTagger.BTag(event,n) : event_candidate.GetJets().at(n).GetMomentum().Pt();
+            const double tag = useBTag ? bTagger.BTag(event,n,uncertainty_source,scale,base_ordering) : event_candidate.GetJets().at(n).GetMomentum().Pt();
             jet_info_vector.emplace_back(event_candidate.GetJets().at(n).GetMomentum(),n,tag);
         }
         return jet_info_vector;
@@ -362,7 +365,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
     }
 
     if(bjets_ordered.size() >= 2){
-        if(bTagger.Pass(event,bjets_ordered.at(1).index)){
+        if(bTagger.Pass(event,bjets_ordered.at(1).index,uncertainty_source,scale) || jet_ordering == analysis::JetOrdering::HHJetTag){
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
         }
     }
@@ -388,6 +391,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
 
 
     if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
+
 
     auto jet_info_vector_new = CreateJetInfo(true);
     auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);

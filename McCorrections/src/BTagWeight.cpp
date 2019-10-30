@@ -115,7 +115,7 @@ double BTagWeight::GetEx(EventInfoBase& eventInfo, UncertaintyScale unc) const
         JetInfo jetInfo(eventInfo, jetIndex);
         if(std::abs(jetInfo.eta) >= bTagger.EtaCut()) continue;
         GetReader(jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
-        jetInfo.bTagOutcome = bTagger.Pass(event, jetIndex);
+        jetInfo.bTagOutcome = bTagger.Pass(event, jetIndex,eventInfo.GetEventCandidate().GetUncSource(),eventInfo.GetEventCandidate().GetScale());
         jetInfos.push_back(jetInfo);
     }
 
