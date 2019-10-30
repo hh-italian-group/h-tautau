@@ -63,7 +63,7 @@ double BTagger::BTag(const ntuple::Event& event, size_t jet_index,
     else if(sel_ordering==JetOrdering::DeepFlavour) return (event.jets_deepFlavour_b.at(jet_index) +
             event.jets_deepFlavour_bb.at(jet_index) + event.jets_deepFlavour_lepb.at(jet_index));
     else if(sel_ordering==JetOrdering::HHJetTag) {
-        if (event.jets_p4.at(jet_index).Pt() < BTagger::PtCut() || std::abs(event.jets_p4.at(jet_index).eta()) > BTagger::EtaCut()) return -1;
+        if (event.jets_p4.at(jet_index).Pt() < PtCut() || std::abs(event.jets_p4.at(jet_index).eta()) > EtaCut()) return -1;
         for(unsigned n = 0; n < event.jet_hh_score_value.size(); ++n){
             if(event.jet_hh_score_index.at(n) != jet_index) continue;
             if(event.jet_hh_score_unc_source.at(n) != static_cast<int>(unc_source)) continue;
@@ -83,7 +83,7 @@ double BTagger::BTag(const ntuple::TupleJet& jet, analysis::UncertaintySource un
     else if (sel_ordering==JetOrdering::CSV) return jet.csv();
     else if(sel_ordering==JetOrdering::DeepFlavour) return jet.deepFlavour();
     else if(sel_ordering==JetOrdering::HHJetTag) {
-        if (jet.p4().Pt() < BTagger::PtCut() || jet.p4().eta() > BTagger::EtaCut()) return -1;
+        if (jet.p4().Pt() < PtCut() || jet.p4().eta() > EtaCut()) return -1;
         return jet.hh_tag(unc_source,unc_scale);
     }
     else
