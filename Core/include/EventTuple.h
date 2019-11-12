@@ -167,6 +167,11 @@ using Point3D = analysis::Point3D_Float;
     VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
     VAR(std::vector<Int_t>, kinFit_unc_source) /* kinFit */ \
     VAR(std::vector<Int_t>, kinFit_unc_scale) /* kinFit */ \
+    /* Jet score Variables */ \
+    VAR(std::vector<size_t>, jet_hh_score_index) /* jet score indexes */ \
+    VAR(std::vector<Int_t>, jet_hh_score_unc_scale) /* jet score scale */ \
+    VAR(std::vector<Int_t>, jet_hh_score_unc_source) /* jet score source */ \
+    VAR(std::vector<Float_t>, jet_hh_score_value) /* jet score value */ \
     /* Generator level information */\
     VAR(UInt_t, lhe_n_partons) \
     VAR(UInt_t, lhe_n_c_partons) \
@@ -207,6 +212,12 @@ using Point3D = analysis::Point3D_Float;
     /* Skimmer Variables */\
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
+    /* Gen Study Variables */\
+    VAR(Int_t, sample_type)  \
+    VAR(Int_t, sample_year) \
+    VAR(Int_t, mass_point)  \
+    VAR(Int_t, spin)  \
+    VAR(Int_t, node)  \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

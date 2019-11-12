@@ -43,9 +43,11 @@ namespace analysis {
         if(!fatJets) {
             fatJets = std::shared_ptr<FatJetCollection>(new FatJetCollection());
             tuple_fatJets = std::make_shared<std::vector<ntuple::TupleFatJet>>();
-            for(size_t n = 0; n < event->fatJets_p4.size(); ++n) {
-                tuple_fatJets->emplace_back(*event, n);
-                fatJets->emplace_back(tuple_fatJets->back());
+            for(size_t n = 0; n < event->fatJets_p4.size(); ++n){
+              tuple_fatJets->emplace_back(*event, n);
+            }
+            for(size_t n = 0; n < tuple_fatJets->size(); ++n){
+              fatJets->emplace_back(tuple_fatJets->at(n));
             }
         }
         return *fatJets;
@@ -105,16 +107,16 @@ namespace analysis {
               double sf = GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale,tuple_lepton.p4().pt());
 
 
-              if(tuple_lepton.decayMode() == 0){
-                  double shifted_pt = lepton_p4.pt() * sf;
-                  corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());
-              }
-              else{
-                  corrected_lepton_p4 = lepton_p4 * sf;
-              }
+              // if(tuple_lepton.decayMode() == 0){
+              //     double shifted_pt = lepton_p4.pt() * sf;
+              //     corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());
+              // }
+              // else{
+              corrected_lepton_p4 = lepton_p4 * sf;
+              // }
 
               shifted_met_px += tuple_lepton.p4().px() - corrected_lepton_p4.px();
-              shifted_met_py += tuple_lepton.p4().px() - corrected_lepton_p4.px();
+              shifted_met_py += tuple_lepton.p4().py() - corrected_lepton_p4.py();
 
           }
           lepton_candidates->at(n).SetMomentum(corrected_lepton_p4);
