@@ -1,6 +1,8 @@
 /*! b-jet selection recommended by b-tag POG.
-If not specified otherwise, all definitions are taken from the b-tag POG 80X recommendation TWiki:
+If not specified otherwise, CSV definitions are taken from the b-tag POG 80X recommendation TWiki:
 https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco.
+DeepCSV and DeepFlavour definitions are taken from the b-tag 2016 Legacy recommendation Twiki:
+https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once

@@ -1,6 +1,6 @@
 /*! b-jet selection recommended by b-tag POG.
-If not specified otherwise, all definitions are taken from the b-tag POG 94X recommendation TWiki:
-https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X.
+If not specified otherwise, all definitions are taken from the b-tag POG 102X recommendation TWiki:
+https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
