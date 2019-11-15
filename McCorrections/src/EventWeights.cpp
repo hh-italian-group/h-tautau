@@ -96,6 +96,46 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
         providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
     }
 
+    else if(period == Period::Run2018) {
+        if(mode.empty() || mode.count(WeightType::PileUp))
+            providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
+                        FullName("2017/DataPileupHistogram_200bin.root"),
+                        FullName("2017/pu_mc_distr_per_sample.root"),
+                        FullName("2017/pileup_groups.txt"), 130, 0);
+        if(mode.empty() || mode.count(WeightType::BTag)){
+            if(jet_ordering == JetOrdering::DeepCSV)
+                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                        FullName("2018/btag/b_eff_HH_DeepCSV_2018.root"), FullName("2018/btag/DeepCSV_102XSF_WP_V1.csv"),
+                        period, jet_ordering, btag_wp);
+            else if(jet_ordering == JetOrdering::DeepFlavour)
+                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                        FullName("2018/btag/b_eff_HH_DeepFlavour_2018.root"), FullName("2017/btag/DeepJet_102XSF_WP_V1.csv"),
+                        period, jet_ordering, btag_wp);
+            else
+               throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
+        }
+        if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
+            providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+                        FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
+                        FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
+                        FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
+                        FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
+                        FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
+                        FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
+                        FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
+                        FullName("2017/Tau/tauTariggerEfficiencies.root"),
+                        period, DiscriminatorWP::Medium,applyTauId);
+                        // POG SFs
+                        // FullName("2017/Electron/EleIdSFPOG.root"),
+                        // FullName("2017/Electron/EleIsoSFPOG.root"),
+                        // FullName("2017/Muon/MuonIdSFPOG.root"),
+                        // FullName("2017/Muon/MuonIsoSFPOG.root"),
+                        // FullName("2017/Muon/MuonTriggerSFPOG.root"),
+                        // FullName("Tau/fitresults_tt_moriond2017.json"),
+    if(mode.empty() || mode.count(WeightType::TopPt))
+        providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
+    }
+
     else {
         throw exception("Period %1% is not supported.") % period;
     }
