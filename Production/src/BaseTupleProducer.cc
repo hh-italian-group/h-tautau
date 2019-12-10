@@ -968,6 +968,8 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
             eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
         }
+        else
+            throw analysis::exception("period not allowd.");
 
         if(!jet->hasSubjets(subjets_collection)) continue;
         const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
