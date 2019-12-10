@@ -6,13 +6,16 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #pragma once
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "AnalysisTools/Core/include/PhysicalValue.h"
+#include "h-tautau/Core/include/TauIdResults.h"
 #include <utility>
 #include <string>
 #include <iostream>
-
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
-
-    double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt, bool isDeepTau = true);
-
+using TauIdDiscriminator = analysis::TauIdDiscriminator;
+class TauESUncertainties{
+public:
+    static double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt,
+                                      TauIdDiscriminator tauIdDiscriminator);
+};
 } // namespace analysis

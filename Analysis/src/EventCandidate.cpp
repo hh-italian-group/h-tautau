@@ -104,7 +104,8 @@ namespace analysis {
           if(tuple_lepton.leg_type() == analysis::LegType::tau  && tuple_lepton.gen_match() == GenLeptonMatch::Tau){
 
               UncertaintyScale current_scale = uncertainty_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
-              double sf = GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale,tuple_lepton.p4().pt());
+              double sf = TauESUncertainties::GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale,
+                                                                  tuple_lepton.p4().pt(), TauIdDiscriminator::byDeepTau2017v2p1VSjet);
 
 
               // if(tuple_lepton.decayMode() == 0){
