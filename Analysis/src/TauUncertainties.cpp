@@ -10,6 +10,7 @@ namespace analysis {
     double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt)
     {
         //put no shift and 2% of unc for missing DM
+        //values taken from: https://indico.cern.ch/event/864131/contributions/3644021/attachments/1946837/3230164/Izaak_TauPOG_TauES_20191118.pdf
         static const std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor = {
           { analysis::Period::Run2016, { {0, PhysicalValue(-0.1,0.7)},
                                          {1, PhysicalValue(-0.1,0.3)},

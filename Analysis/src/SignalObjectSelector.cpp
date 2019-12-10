@@ -273,9 +273,8 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSe,deepTauDiscriminators.at(channel).first)) return false;
     if(!lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSmu,deepTauDiscriminators.at(channel).second)) return false;
-    // if(is_sync && legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
-    // if(!is_sync && legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::Medium)) return false;
-    if(legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
+    if(is_sync && legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
+    if(!is_sync && legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::Medium)) return false;
     if(legId == 2 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
     return true;
 }
