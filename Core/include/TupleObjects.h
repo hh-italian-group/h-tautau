@@ -42,6 +42,7 @@ public:
     analysis::LegType leg_type() const;
     bool passConversionVeto() const;
     bool passEleIso(DiscriminatorWP wp) const;
+    bool passMuonId(DiscriminatorWP wp) const;
 
     bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;
     bool PassedOldDecayMode() const;

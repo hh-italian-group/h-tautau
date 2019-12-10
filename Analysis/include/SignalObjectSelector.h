@@ -100,8 +100,8 @@ public:
 
     SignalObjectSelector(SignalMode _mode);
 
-    bool PassLeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId) const;
-    boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate) const;
+    bool PassLeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId, bool is_sync = false) const;
+    boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate, bool is_sync = false) const;
     bool PassLeptonVetoSelection(const ntuple::Event& event) const;
     bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
 
@@ -137,9 +137,9 @@ public:
      }
 
 private:
-    bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync) const;
+    bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync = false) const;
     bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
-    bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const;
+    bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId,  bool is_sync = false) const;
     bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const;
     bool PassSkimmer_LeptonSelection(const LepCandidate& lepton) const;
     bool PassTauPOG_Skimmer_LeptonSelection(const LepCandidate& lepton) const;
