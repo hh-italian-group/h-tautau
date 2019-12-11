@@ -8,7 +8,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
     double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale,
-                                                   double pt, TauIdDiscriminator tauIdDiscriminator)
+                                                   double pt, TauIdDiscriminator tauIdDiscriminator, double eta,
+                                                   DiscriminatorWP wp)
     {
         //put no shift and 2% of unc for missing DM
         //values taken from: https://indico.cern.ch/event/864131/contributions/3644021/attachments/1946837/3230164/Izaak_TauPOG_TauES_20191118.pdf
@@ -55,7 +56,7 @@ namespace analysis {
         };
         // Values taken from: https://indico.cern.ch/event/865792/contributions/3659828/attachments/1954858/3246751/ETauFR-update2Dec.pdf#page=40
         // For eta < 1.448
-        static const std::map<DiscriminatorWP, double> deep_tau_vs_e_energy_scale_eta_low = {
+        static const std::map<DiscriminatorWP, PhysicalValue> deep_tau_vs_e_energy_scale_eta_low = {
           { DiscriminatorWP::VVLoose,  PhysicalValue(1.028,0.003) },
           { DiscriminatorWP::VLoose,  PhysicalValue(1.040,0.003) },
           { DiscriminatorWP::VLoose,  PhysicalValue(1.048,0.005) },
@@ -66,7 +67,7 @@ namespace analysis {
         };
 
         // For eta > 1.558
-        static const std::map<DiscriminatorWP, double> deep_tau_vs_e_energy_scale_eta_low = {
+        static const std::map<DiscriminatorWP, PhysicalValue> deep_tau_vs_e_energy_scale_eta_high = {
           { DiscriminatorWP::VVLoose,  PhysicalValue(0.998,0.003) },
           { DiscriminatorWP::VLoose,  PhysicalValue(0.995,0.005) },
           { DiscriminatorWP::VLoose,  PhysicalValue(1.000,0.015) },
@@ -81,19 +82,32 @@ namespace analysis {
         if(pt > 400)
             correction_factor = 1 + static_cast<int>(scale) * 0.03;
         else{
+            std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor;
             if(tauIdDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSjet)
-                auto tau_correction_factor = tau_correction_factor_deep_tau;
+                tau_correction_factor = tau_correction_factor_deep_tau;
             else if(tauIdDiscriminator == TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017)
                 auto tau_correction_factor = tau_correction_factor_mva;
             else
                 throw analysis::exception("TauIdDiscriminator: '%1%' not allowed.") % tauIdDiscriminator;
 
             if(!tau_correction_factor.count(period))
-                throw exception("Period not found in tau correction map.");
+                throw exception("Period '%1%'not found in tau correction map.") %period;
             if(!tau_correction_factor.at(period).count(decayMode))
                 throw exception("Decay mode not found in tau correction map.");
             PhysicalValue tau_correction = tau_correction_factor.at(period).at(decayMode);
-            correction_factor = 1 + ((tau_correction.GetValue() + static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
+
+            PhysicalValue e_fake_rate_correction;
+            if(std::abs(eta) < 1.448)
+                e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_low.at(wp);
+            else if (std::abs(eta) > 1.558)
+                e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_high.at(wp);
+
+            auto tau_final_correction = (tau_correction.GetValue() +
+                                         static_cast<int>(scale) * tau_correction.GetStatisticalError())/100;
+            auto e_fake_rate_final_correction = (e_fake_rate_correction.GetValue() +
+                                                 static_cast<int>(scale) * e_fake_rate_correction.GetStatisticalError())/100;
+
+            correction_factor = 1 + (tau_final_correction + e_fake_rate_final_correction);
             //double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
         }
         return correction_factor;

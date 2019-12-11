@@ -105,7 +105,9 @@ namespace analysis {
 
               UncertaintyScale current_scale = uncertainty_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
               double sf = TauESUncertainties::GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale,
-                                                                  tuple_lepton.p4().pt(), TauIdDiscriminator::byDeepTau2017v2p1VSjet);
+                                                                  tuple_lepton.p4().pt(),
+                                                                  TauIdDiscriminator::byDeepTau2017v2p1VSjet,
+                                                                  tuple_lepton.p4().eta(), DiscriminatorWP::VLoose );
 
 
               // if(tuple_lepton.decayMode() == 0){

@@ -16,6 +16,6 @@ using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
     static double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt,
-                                      TauIdDiscriminator tauIdDiscriminator);
+                                      TauIdDiscriminator tauIdDiscriminator, double eta, DiscriminatorWP wp);
 };
 } // namespace analysis
