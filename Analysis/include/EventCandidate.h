@@ -25,7 +25,7 @@ public:
 
     EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
                    UncertaintyScale _scale, Period _period, TauIdDiscriminator _tau_id_discriminator,
-                   TauIdDiscriminator _ele_id_discriminator, DiscriminatorWP _wp);
+                   TauIdDiscriminator _ele_id_discriminator, DiscriminatorWP _tauVSeWP);
 
     EventCandidate(const EventCandidate& ) = default; //copy constructor
     EventCandidate(EventCandidate&& ) = default; // move constructor
@@ -61,7 +61,7 @@ private:
     static std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
     TauIdDiscriminator tau_id_discriminator;
     TauIdDiscriminator ele_id_discriminator;
-    DiscriminatorWP wp;
+    DiscriminatorWP tauVSeWP;
 };
 
 } // namespace analysis

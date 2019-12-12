@@ -17,7 +17,14 @@ using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
     static double GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
-                                      UncertaintyScale scale, double pt, LegType legType, TauIdDiscriminator tauIdDiscriminator,
-                                      TauIdDiscriminator tauVSeDiscriminator, double eta, DiscriminatorWP wp);
+                                      UncertaintySource unc_source, UncertaintyScale scale, double pt,
+                                      TauIdDiscriminator tauVSjetDiscriminator, TauIdDiscriminator tauVSeDiscriminator,
+                                      double eta, DiscriminatorWP tauVSeWP);
+
+    static double GetCorrectionFactorTrueTau(analysis::Period period, int decayMode, UncertaintyScale current_scale,
+                                             double pt, TauIdDiscriminator tauVSjetDiscriminator);
+
+    static double GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
+                                                  TauIdDiscriminator tauVSeDiscriminator, DiscriminatorWP tauVSeWP);
 };
 } // namespace analysis
