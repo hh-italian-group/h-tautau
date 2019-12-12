@@ -69,7 +69,7 @@ public:
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
             const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
             map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
-            n_tot_events += n_events;
+            n_tot_events += static_cast<size_t>(n_events);
         }
 
         size_t n_processed_events = 0;
@@ -117,8 +117,8 @@ private:
                         cacheTuple().run = event.run;
                         cacheTuple().lumi = event.lumi;
                         cacheTuple().evt = event.evt;
-                        const SignalObjectSelector& signalObjectSelector = signalObjectSelectors.at(selector);
-                        JetOrdering jet_ordering = vector_jet_ordering.at(ordering);
+                        // const SignalObjectSelector& signalObjectSelector = signalObjectSelectors.at(selector);
+                        // JetOrdering jet_ordering = vector_jet_ordering.at(ordering);
                         UncertaintySource unc_source = unc_sources.at(source);
                         UncertaintyScale scale = static_cast<UncertaintyScale>(variation);
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;

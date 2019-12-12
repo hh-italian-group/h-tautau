@@ -69,7 +69,7 @@ public:
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
             const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
             map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
-            n_tot_events += n_events;
+            n_tot_events += static_cast<size_t>(n_events);
         }
 
         size_t n_processed_events = 0;

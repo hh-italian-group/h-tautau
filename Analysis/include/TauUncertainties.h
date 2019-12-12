@@ -10,12 +10,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <utility>
 #include <string>
 #include <iostream>
+#include <optional>
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
-    static double GetCorrectionFactor(analysis::Period period, int decayMode, UncertaintyScale scale, double pt,
-                                      TauIdDiscriminator tauIdDiscriminator, double eta, DiscriminatorWP wp);
+    static double GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
+                                      UncertaintyScale scale, double pt, LegType legType, TauIdDiscriminator tauIdDiscriminator,
+                                      TauIdDiscriminator tauVSeDiscriminator, double eta, DiscriminatorWP wp);
 };
 } // namespace analysis

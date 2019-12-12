@@ -6,8 +6,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
     EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-    UncertaintyScale _scale, analysis::Period _period) : event(&_event), uncertainty_source(_uncertainty_source),
-    scale(_scale), period(_period) {}
+    UncertaintyScale _scale, analysis::Period _period, TauIdDiscriminator _tau_id_discriminator,
+    TauIdDiscriminator _e_id_discriminator, DiscriminatorWP _wp) : event(&_event),
+    uncertainty_source(_uncertainty_source), scale(_scale), period(_period), tau_id_discriminator(_tau_id_discriminator),
+    ele_id_discriminator(_e_id_discriminator), wp(_wp)  {}
 
     void EventCandidate::InitializeJecUncertainty(Period period, const std::string& working_path)
     {
@@ -101,15 +103,12 @@ namespace analysis {
           auto tuple_lepton = tuple_leptons->at(n);
           LorentzVectorM lepton_p4(tuple_lepton.p4());
           LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
-          if(tuple_lepton.leg_type() == analysis::LegType::tau  && tuple_lepton.gen_match() == GenLeptonMatch::Tau){
-
+          if(tuple_lepton.leg_type() == analysis::LegType::tau){
               UncertaintyScale current_scale = uncertainty_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
-              double sf = TauESUncertainties::GetCorrectionFactor(period,tuple_lepton.decayMode(),current_scale,
-                                                                  tuple_lepton.p4().pt(),
-                                                                  TauIdDiscriminator::byDeepTau2017v2p1VSjet,
-                                                                  tuple_lepton.p4().eta(), DiscriminatorWP::VLoose );
-
-
+              double sf = TauESUncertainties::GetCorrectionFactor(period,tuple_lepton.decayMode(),tuple_lepton.gen_match(),current_scale,
+                                                                  tuple_lepton.p4().pt(),tuple_lepton.leg_type(),
+                                                                  tau_id_discriminator, ele_id_discriminator, tuple_lepton.p4().eta(),
+                                                                  wp);
               // if(tuple_lepton.decayMode() == 0){
               //     double shifted_pt = lepton_p4.pt() * sf;
               //     corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());
