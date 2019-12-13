@@ -78,11 +78,9 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
                                     {11, PhysicalValue(0.0,2.0)}} }
     };
 
-    double correction_factor = 0;
     PhysicalValue tau_correction = PhysicalValue(0.0,0.0);
-
     if(pt > 400)
-        correction_factor = 1 + static_cast<int>(current_scale) * 0.03;
+        tau_correction = PhysicalValue(0., 3.);
     else {
         const std::map<analysis::Period, std::map<int, PhysicalValue>>* tau_correction_factor = nullptr;
 
@@ -105,8 +103,7 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
     auto tau_final_correction = (tau_correction.GetValue() +
                                  static_cast<int>(current_scale) * tau_correction.GetStatisticalError())/100;
 
-    correction_factor = 1 + tau_final_correction;
-    return correction_factor;
+    return 1 + tau_final_correction;
 }
 
 double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
