@@ -35,7 +35,7 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
     //values taken from: https://indico.cern.ch/event/864131/contributions/3644021/attachments/1946837/3230164/Izaak_TauPOG_TauES_20191118.pdf
 
     // Corrections for DeepTau
-    static std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor_deep_tau = {
+    const static std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor_deep_tau = {
       { analysis::Period::Run2016, { {0, PhysicalValue(-0.1,0.7)},
                                      {1, PhysicalValue(-0.1,0.3)},
                                      {5, PhysicalValue(0.0,2.0)},
@@ -57,7 +57,7 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
     };
 
     // Corrections for MVA
-    static std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor_mva = {
+    const static std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor_mva = {
       { analysis::Period::Run2016, { {0, PhysicalValue(-0.6,1.0)},
                                      {1, PhysicalValue(-0.5,0.9)},
                                      {5, PhysicalValue(0.0,2.0)},
@@ -84,7 +84,7 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
     if(pt > 400)
         correction_factor = 1 + static_cast<int>(current_scale) * 0.03;
     else {
-        std::map<analysis::Period, std::map<int, PhysicalValue>>* tau_correction_factor = nullptr;
+        const std::map<analysis::Period, std::map<int, PhysicalValue>>* tau_correction_factor = nullptr;
 
         if(tauVSjetDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSjet)
             tau_correction_factor = &tau_correction_factor_deep_tau;
@@ -98,7 +98,7 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
         if(!tau_correction_factor->at(period).count(decayMode))
             throw exception("Decay mode not found in tau correction map.");
 
-        PhysicalValue& tau_correction = tau_correction_factor->at(period).at(decayMode);
+        tau_correction = tau_correction_factor->at(period).at(decayMode);
 
         //double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
     }
@@ -176,10 +176,20 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
     PhysicalValue e_fake_rate_correction = PhysicalValue(0.0,0.0);
 
     if(tauVSeDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSe){
-        if(std::abs(eta) < 1.448)
-            e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_low.at(period).at(tauVSeWP);
-        else if (std::abs(eta) > 1.558)
-            e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_high.at(period).at(tauVSeWP);
+
+        if(std::abs(eta) < 1.448){
+            if(deep_tau_vs_e_energy_scale_eta_low.at(period).count(tauVSeWP))
+                e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_low.at(period).at(tauVSeWP);
+            else
+                throw exception ("tau vs e wp (low eta map): '%1%' now allowed") %tauVSeWP ;
+        }
+        else if (std::abs(eta) > 1.558){
+            if(deep_tau_vs_e_energy_scale_eta_high.at(period).count(tauVSeWP))
+                e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_high.at(period).at(tauVSeWP);
+            else
+                throw exception ("tau vs e wp (high eta map): '%1%' now allowed") %tauVSeWP ;
+        }
+
     }
 
     auto e_fake_rate_final_correction = (e_fake_rate_correction.GetValue() +

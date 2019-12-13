@@ -254,10 +254,8 @@ bool SignalObjectSelector::PassTauPOG_LeptonSelection(const LepCandidate& lepton
     if(!(lepton.GetMomentum().pt() > pt_map.at(channel))) return false;
     if((mode == SignalMode::TauPOG_deepTauVsJet || mode == SignalMode::TauPOG_deepTauVsJet_full) && (lepton->decayMode() == 5 || lepton->decayMode() == 6)) return false;
     if((mode == SignalMode::TauPOG_default) && !(lepton->PassedOldDecayMode())) return false;
-    TauIdDiscriminator eleDiscriminator = e_id.first;
-    TauIdDiscriminator muonDiscriminator = mu_id.first;
-    if(!lepton->Passed(eleDiscriminator,e_id.second)) return false;
-    if(!lepton->Passed(muonDiscriminator,mu_id.second)) return false;
+    if(!lepton->Passed(e_id.first,e_id.second)) return false;
+    if(!lepton->Passed(mu_id.first,mu_id.second)) return false;
     return true;
 }
 
