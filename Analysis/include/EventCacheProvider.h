@@ -90,7 +90,7 @@ public:
         for(const auto& iter_kf : kinFit_map){
             const kin_fit::FitResults& kinFit_results = iter_kf.second;
             event.kinFit_Higgs_index.push_back(static_cast<size_t>(ntuple::LegPairToIndex(iter_kf.first.htt_pair)));
-            event.kinFit_jetPairId.push_back(static_cast<size_t>(ntuple::LegPairToIndex(iter_kf.first.hbb_pair)));
+            event.kinFit_jetPairId.push_back(static_cast<UInt_t>(ntuple::LegPairToIndex(iter_kf.first.hbb_pair)));
             event.kinFit_m.push_back(static_cast<Float_t>(kinFit_results.mass));
             event.kinFit_chi2.push_back(static_cast<Float_t>(kinFit_results.chi2));
             event.kinFit_convergence.push_back(kinFit_results.convergence);

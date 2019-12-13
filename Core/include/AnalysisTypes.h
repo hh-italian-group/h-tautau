@@ -55,7 +55,8 @@ enum class UncertaintySource { None = 0, TauES = 1, Total = 2, TopPt = 3, Absolu
      RelativePtBB = 22, RelativePtEC1 = 23, RelativePtEC2 = 24, RelativePtHF = 25, RelativeBal = 26,
      RelativeFSR = 27, PileUpDataMC = 28, PileUpPtRef = 29, PileUpPtBB = 30, PileUpPtEC1 = 31, PileUpPtEC2 = 32,
      PileUpPtHF = 33, SubTotalPileUp = 34, SubTotalRelative = 35, SubTotalPt = 36, SubTotalScale = 37,
-     SubTotalAbsolute = 38, SubTotalMC = 39, TotalNoFlavor = 40, TotalNoTime = 41, TotalNoFlavorNoTime = 42};
+     SubTotalAbsolute = 38, SubTotalMC = 39, TotalNoFlavor = 40, TotalNoTime = 41, TotalNoFlavorNoTime = 42,
+     EleFakingTauES = 43 };
 ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::None, "None" }, { UncertaintySource::TauES, "TauES" },
     { UncertaintySource::Total, "Total" }, { UncertaintySource::TopPt, "TopPt" },
@@ -96,7 +97,8 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::SubTotalMC, "SubTotalMC" },
     { UncertaintySource::TotalNoFlavor, "TotalNoFlavor"},
     { UncertaintySource::TotalNoTime, "TotalNoTime"},
-    { UncertaintySource::TotalNoFlavorNoTime, "TotalNoFlavorNoTime"}
+    { UncertaintySource::TotalNoFlavorNoTime, "TotalNoFlavorNoTime"},
+    { UncertaintySource::EleFakingTauES, "EleFakingTauES"}
 };
 
 using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;

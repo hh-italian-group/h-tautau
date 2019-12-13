@@ -24,7 +24,8 @@ class EventCandidate {
 public:
 
     EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-    UncertaintyScale _scale, Period _period);
+                   UncertaintyScale _scale, Period _period, TauIdDiscriminator _tau_id_discriminator,
+                   TauIdDiscriminator _ele_id_discriminator, DiscriminatorWP _tauVSeWP);
 
     EventCandidate(const EventCandidate& ) = default; //copy constructor
     EventCandidate(EventCandidate&& ) = default; // move constructor
@@ -58,6 +59,9 @@ private:
     std::shared_ptr<std::vector<JetCandidate>> jet_candidates;
     std::shared_ptr<MET> met;
     static std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
+    TauIdDiscriminator tau_id_discriminator;
+    TauIdDiscriminator ele_id_discriminator;
+    DiscriminatorWP tauVSeWP;
 };
 
 } // namespace analysis

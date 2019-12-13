@@ -32,6 +32,12 @@ bool TupleLepton::passEleIso(DiscriminatorWP wp) const
     return eleIso.Passed(wp);
 }
 
+bool TupleLepton::passMuonId(DiscriminatorWP wp) const
+{
+    DiscriminatorIdResults muonId(event->lep_muonId.at(object_id));
+    return muonId.Passed(wp);
+}
+
 bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const
 {
     if(leg_type() != analysis::LegType::tau)

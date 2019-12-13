@@ -193,6 +193,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                const SummaryInfo* summaryInfo = nullptr,
                                                Period period = analysis::Period::Run2017,
                                                JetOrdering jet_ordering = JetOrdering::DeepCSV,
+                                               bool is_sync = false,
                                                UncertaintySource uncertainty_source = UncertaintySource::None,
                                                UncertaintyScale scale = UncertaintyScale::Central);
 

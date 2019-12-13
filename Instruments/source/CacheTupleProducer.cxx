@@ -69,7 +69,7 @@ public:
             auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
             const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
             map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
-            n_tot_events += n_events;
+            n_tot_events += static_cast<size_t>(n_events);
         }
 
         size_t n_processed_events = 0;
@@ -125,7 +125,9 @@ private:
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
                         if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
 
-                        boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,nullptr,run_period,jet_ordering,unc_source,scale);
+                        boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,
+                                                                                         nullptr,run_period,jet_ordering,
+                                                                                         false,unc_source,scale);
                         if(!event_info_base.is_initialized()) continue;
 
                         if(args.hasBjetPair() && !event_info_base->HasBjetPair()) continue;

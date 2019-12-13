@@ -132,12 +132,26 @@ bool BTagger::Pass(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_
 
 double BTagger::PtCut() const
 {
-    return period == analysis::Period::Run2017 ? cuts::btag_2017::pt : cuts::btag_2016::pt;
+    double pt_cut = 0;
+    if(period == analysis::Period::Run2016)
+        pt_cut = cuts::btag_2016::pt;
+    if(period == analysis::Period::Run2017)
+        pt_cut = cuts::btag_2017::pt;
+    else if(period == analysis::Period::Run2018)
+        pt_cut = cuts::btag_2018::pt;
+    return pt_cut;
 }
 
 double BTagger::EtaCut() const
 {
-    return period == analysis::Period::Run2017 ? cuts::btag_2017::eta : cuts::btag_2016::eta;
+    double eta_cut = 0;
+    if(period == analysis::Period::Run2016)
+        eta_cut = cuts::btag_2016::eta;
+    if(period == analysis::Period::Run2017)
+        eta_cut = cuts::btag_2017::eta;
+    else if(period == analysis::Period::Run2018)
+        eta_cut = cuts::btag_2018::eta;
+    return eta_cut;
 }
 
 }
