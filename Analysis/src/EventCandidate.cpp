@@ -104,18 +104,10 @@ namespace analysis {
           LorentzVectorM lepton_p4(tuple_lepton.p4());
           LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
           if(tuple_lepton.leg_type() == analysis::LegType::tau){
-              UncertaintyScale current_scale = uncertainty_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
               double sf = TauESUncertainties::GetCorrectionFactor(period, tuple_lepton.decayMode(), tuple_lepton.gen_match(),
-                                                                  uncertainty_source, current_scale,
-                                                                  tuple_lepton.p4().pt(), tau_id_discriminator,
-                                                                  ele_id_discriminator, tuple_lepton.p4().eta(),
+                                                                  uncertainty_source, scale, tuple_lepton.p4().pt(),
+                                                                  tau_id_discriminator, ele_id_discriminator, tuple_lepton.p4().eta(),
                                                                   tauVSeWP);
-
-              // static double GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
-              //                                   UncertaintySource unc_source, UncertaintyScale scale, double pt,
-              //                                   TauIdDiscriminator tauVSjetDiscriminator, TauIdDiscriminator tauVSeDiscriminator,
-              //                                   double eta, DiscriminatorWP tauVSeWP);
-
               // if(tuple_lepton.decayMode() == 0){
               //     double shifted_pt = lepton_p4.pt() * sf;
               //     corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());

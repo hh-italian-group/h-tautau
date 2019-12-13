@@ -98,7 +98,7 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
         if(!tau_correction_factor->at(period).count(decayMode))
             throw exception("Decay mode not found in tau correction map.");
 
-        PhysicalValue tau_correction = tau_correction_factor->at(period).at(decayMode);
+        PhysicalValue& tau_correction = tau_correction_factor->at(period).at(decayMode);
 
         //double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
     }
@@ -174,7 +174,6 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
         throw exception("Period '%1%'not found in tau vs ele map.") %period;
 
     PhysicalValue e_fake_rate_correction = PhysicalValue(0.0,0.0);
-    double correction_factor = 0;
 
     if(tauVSeDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSe){
         if(std::abs(eta) < 1.448)
@@ -186,8 +185,6 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
     auto e_fake_rate_final_correction = (e_fake_rate_correction.GetValue() +
                                          static_cast<int>(scale) * e_fake_rate_correction.GetStatisticalError());
 
-    correction_factor = 1 + e_fake_rate_final_correction;
-
-    return correction_factor;
+    return 1 + e_fake_rate_final_correction;
 }
 } // namespace analysis

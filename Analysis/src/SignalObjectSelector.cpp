@@ -69,13 +69,11 @@ std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSeDi
         // { {Channel::ETau, SignalMode::Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
         // { {Channel::ETau, SignalMode::TauPOG_Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
     };
-    std::pair<TauIdDiscriminator, DiscriminatorWP> disc_wp;
-    for(const auto& tau_disc_map : tauVSeDiscriminators){
-        auto channel_mode = tau_disc_map.first;
-        if(channel_mode.first == channel && channel_mode.second == mode)
-            disc_wp = tau_disc_map.second;
-    }
-    return disc_wp;
+
+    auto disc_wp = tauVSeDiscriminators.find({channel, mode});
+    if(disc_wp == tauVSeDiscriminators.end())
+        throw exception("Channel: %1% and mode: %2% not found in the tauVSeDiscriminators map") % channel % mode;
+    return disc_wp->second;
 }
 
 std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSmuDiscriminator(analysis::Channel channel) const
@@ -105,13 +103,10 @@ std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSmuD
         // { {Channel::ETau, SignalMode::Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
         // { {Channel::ETau, SignalMode::TauPOG_Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
     };
-    std::pair<TauIdDiscriminator, DiscriminatorWP> disc_wp;
-    for(const auto& tau_disc_map : tauVSmuDiscriminators){
-        auto channel_mode = tau_disc_map.first;
-        if(channel_mode.first == channel && channel_mode.second == mode)
-            disc_wp = tau_disc_map.second;
-    }
-    return disc_wp;
+    auto disc_wp = tauVSmuDiscriminators.find({channel, mode});
+    if(disc_wp == tauVSmuDiscriminators.end())
+        throw exception("Channel: %1% and mode: %2% not found in the tauVSmuDiscriminators map") % channel % mode;
+    return disc_wp->second;
 }
 
 bool SignalObjectSelector::PassLeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId, bool is_sync) const
@@ -261,10 +256,8 @@ bool SignalObjectSelector::PassTauPOG_LeptonSelection(const LepCandidate& lepton
     if((mode == SignalMode::TauPOG_default) && !(lepton->PassedOldDecayMode())) return false;
     TauIdDiscriminator eleDiscriminator = e_id.first;
     TauIdDiscriminator muonDiscriminator = mu_id.first;
-    DiscriminatorWP eleWP = e_id.second;
-    DiscriminatorWP muonWP = mu_id.second;
-    if(!lepton->Passed(eleDiscriminator,eleWP)) return false;
-    if(!lepton->Passed(muonDiscriminator,muonWP)) return false;
+    if(!lepton->Passed(eleDiscriminator,e_id.second)) return false;
+    if(!lepton->Passed(muonDiscriminator,mu_id.second)) return false;
     return true;
 }
 
@@ -403,7 +396,6 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
             analysis::DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
             if(!PassEcalNoiceVetoJets(event_candidate.GetJets().at(n).GetMomentum(), period, jet_pu_id)) continue;
             if(event_candidate.GetJets().at(n).GetMomentum().pt() < 50 && !jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
-            // if(useBTag && (event.jets_pu_id.at(n) & (1 << 2)) == 0) continue;
 
             const double tag = useBTag ? bTagger.BTag(event,n,uncertainty_source,scale,base_ordering) : event_candidate.GetJets().at(n).GetMomentum().Pt();
             jet_info_vector.emplace_back(event_candidate.GetJets().at(n).GetMomentum(),n,tag);

@@ -10,7 +10,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <utility>
 #include <string>
 #include <iostream>
-#include <optional>
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 using TauIdDiscriminator = analysis::TauIdDiscriminator;
