@@ -10,8 +10,7 @@ namespace analysis {
 double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source, UncertaintyScale scale, double pt,
                                                TauIdDiscriminator tauVSjetDiscriminator,
-                                               TauIdDiscriminator tauVSeDiscriminator, double eta,
-                                               DiscriminatorWP tauVSeWP)
+                                               TauIdDiscriminator tauVSeDiscriminator, double eta)
 {
     if(genLeptonMatch == GenLeptonMatch::Tau) {
         UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
@@ -20,7 +19,7 @@ double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int deca
     else if(genLeptonMatch == GenLeptonMatch::Electron || genLeptonMatch == GenLeptonMatch::TauElectron) {
         UncertaintyScale current_scale = unc_source == UncertaintySource::EleFakingTauES
                                        ? scale : UncertaintyScale::Central;
-        return GetCorrectionFactorEleFakingTau(period, current_scale, eta, tauVSeDiscriminator, tauVSeWP);
+        return GetCorrectionFactorEleFakingTau(period, current_scale, eta, tauVSeDiscriminator, decayMode);
     }
     else
         return 1.;
@@ -107,90 +106,78 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
 }
 
 double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
-                                                           TauIdDiscriminator tauVSeDiscriminator,
-                                                           DiscriminatorWP tauVSeWP)
+                                                           TauIdDiscriminator tauVSeDiscriminator, int decayMode)
 {
-    // Values taken from: https://indico.cern.ch/event/865792/contributions/3659828/attachments/1954858/3246751/ETauFR-update2Dec.pdf#page=40
+    // Values taken from: https://indico.cern.ch/event/868279/contributions/3665970/attachments/1959265/3264468/FES_9Dec_explained.pdf
     // For eta < 1.448
-    static const std::map<analysis::Period, std::map<DiscriminatorWP, PhysicalValue>> deep_tau_vs_e_energy_scale_eta_low = {
-      { analysis::Period::Run2016, { { DiscriminatorWP::VVVLoose,  PhysicalValue(0.0,0.0)},
-                                     { DiscriminatorWP::VVLoose,  PhysicalValue(0.020,0.003)},
-                                     { DiscriminatorWP::VLoose,  PhysicalValue(0.030,0.003) },
-                                     { DiscriminatorWP::Loose,  PhysicalValue(0.033,0.005) },
-                                     { DiscriminatorWP::Medium,  PhysicalValue(0.020,0.015) },
-                                     { DiscriminatorWP::Tight,  PhysicalValue(0.06,0.04) },
-                                     { DiscriminatorWP::VTight,  PhysicalValue(0.10,0.06) },
-                                     { DiscriminatorWP::VVTight,  PhysicalValue(0.03,0.10)}} },
-      { analysis::Period::Run2017, { { DiscriminatorWP::VVVLoose,  PhysicalValue(0.0,0.0)},
-                                     { DiscriminatorWP::VVLoose,  PhysicalValue(0.025,0.003)},
-                                     { DiscriminatorWP::VLoose,  PhysicalValue(0.035,0.003) },
-                                     { DiscriminatorWP::Loose,  PhysicalValue(0.038,0.008) },
-                                     { DiscriminatorWP::Medium,  PhysicalValue(0.015,0.018) },
-                                     { DiscriminatorWP::Tight,  PhysicalValue(0.04,0.05) },
-                                     { DiscriminatorWP::VTight,  PhysicalValue(0.04,0.09) },
-                                     { DiscriminatorWP::VVTight,  PhysicalValue(0.07,0.19)}} },
-      { analysis::Period::Run2018, { { DiscriminatorWP::VVVLoose,  PhysicalValue(0.0,0.0)},
-                                     { DiscriminatorWP::VVLoose,  PhysicalValue(0.028,0.003)},
-                                     { DiscriminatorWP::VLoose,  PhysicalValue(0.040,0.003) },
-                                     { DiscriminatorWP::Loose,  PhysicalValue(0.048,0.005) },
-                                     { DiscriminatorWP::Medium,  PhysicalValue(0.035,0.008) },
-                                     { DiscriminatorWP::Tight,  PhysicalValue(0.04,0.03) },
-                                     { DiscriminatorWP::VTight,  PhysicalValue(0.05,0.03) },
-                                     { DiscriminatorWP::VVTight,  PhysicalValue(0.06,0.06)}} }
+    static const std::map<analysis::Period, std::map<int, analysis::StVariable>> deep_tau_vs_e_energy_scale_barrel = {
+      { analysis::Period::Run2016, { {0,  StVariable(0.881, 0.070, 0.066)},
+                                     {1,  StVariable(1.295, 0.114, 0.12)},
+                                     {5,  StVariable(0.0, 0.0, 0.0)},
+                                     {6,  StVariable(0.0, 0.0, 0.0)},
+                                     {10, StVariable(0.0, 0.0, 0.0)},
+                                     {11, StVariable(0.0, 0.0, 0.0)}    }},
+      { analysis::Period::Run2017, { {0,  StVariable(1.116, 0.086, 0.075)},
+                                     {1,  StVariable(1.215, 0.084, 0.091)},
+                                     {5,  StVariable(0.0, 0.0, 0.0)},
+                                     {6,  StVariable(0.0, 0.0, 0.0)},
+                                     {10, StVariable(0.0, 0.0, 0.0)},
+                                     {11, StVariable(0.0, 0.0, 0.0)}    }},
+      { analysis::Period::Run2018, { {0,  StVariable(1.412, 0.089, 0.087)},
+                                     {1,  StVariable(1.437, 0.083, 0.087)},
+                                     {5,  StVariable(0.0, 0.0, 0.0)},
+                                     {6,  StVariable(0.0, 0.0, 0.0)},
+                                     {10, StVariable(0.0, 0.0, 0.0)},
+                                     {11, StVariable(0.0, 0.0, 0.0)}    }}
     };
 
     // For eta > 1.558
-    static const std::map<analysis::Period, std::map<DiscriminatorWP, PhysicalValue>> deep_tau_vs_e_energy_scale_eta_high = {
-        { analysis::Period::Run2016, { { DiscriminatorWP::VVVLoose,  PhysicalValue(0.0,0.0)},
-                                       { DiscriminatorWP::VVLoose,  PhysicalValue(0.010,0.003)},
-                                       { DiscriminatorWP::VLoose,  PhysicalValue(0.023,0.008) },
-                                       { DiscriminatorWP::Loose,  PhysicalValue(0.043,0.018) },
-                                       { DiscriminatorWP::Medium,  PhysicalValue(0.07,0.04) },
-                                       { DiscriminatorWP::Tight,  PhysicalValue(0.10,0.018) },
-                                       { DiscriminatorWP::VTight,  PhysicalValue(0.12,0.07) },
-                                       { DiscriminatorWP::VVTight,  PhysicalValue(0.11,0.10)}} },
-        { analysis::Period::Run2017, { { DiscriminatorWP::VVVLoose,  PhysicalValue(0.0,0.0)},
-                                       { DiscriminatorWP::VVLoose,  PhysicalValue(0.008,0.003)},
-                                       { DiscriminatorWP::VLoose,  PhysicalValue(0.018,0.008) },
-                                       { DiscriminatorWP::Loose,  PhysicalValue(0.03,0.02) },
-                                       { DiscriminatorWP::Medium,  PhysicalValue(0.04,0.04) },
-                                       { DiscriminatorWP::Tight,  PhysicalValue(0.11,0.06) },
-                                       { DiscriminatorWP::VTight,  PhysicalValue(0.12,0.14) },
-                                       { DiscriminatorWP::VVTight,  PhysicalValue(0.08,0.18)}} },
-        { analysis::Period::Run2018, { { DiscriminatorWP::VVVLoose,  PhysicalValue(0.0,0.0)},
-                                       { DiscriminatorWP::VVLoose,  PhysicalValue(0.998,0.003)},
-                                       { DiscriminatorWP::VLoose,  PhysicalValue(0.995,0.005) },
-                                       { DiscriminatorWP::Loose,  PhysicalValue(0.0,0.015) },
-                                       { DiscriminatorWP::Medium,  PhysicalValue(0.02,0.03) },
-                                       { DiscriminatorWP::Tight,  PhysicalValue(0.03,0.06) },
-                                       { DiscriminatorWP::VTight,  PhysicalValue(0.15,0.08) },
-                                       { DiscriminatorWP::VVTight,  PhysicalValue(0.05,0.21)}} }
-      };
+    static const std::map<analysis::Period, std::map<int, analysis::StVariable>> deep_tau_vs_e_energy_scale_endcap = {
+      { analysis::Period::Run2016, { {0,  StVariable(0.902, 0.181, 0.192)},
+                                     {1,  StVariable(0.749, 0.165, 0.17)},
+                                     {5,  StVariable(0.0, 0.0, 0.0)},
+                                     {6,  StVariable(0.0, 0.0, 0.0)},
+                                     {10, StVariable(0.0, 0.0, 0.0)},
+                                     {11, StVariable(0.0, 0.0, 0.0)}    }},
+      { analysis::Period::Run2017, { {0,  StVariable(0.989, 0.145, 0.137)},
+                                     {1,  StVariable(0.752, 0.141, 0.139)},
+                                     {5,  StVariable(0.0, 0.0, 0.0)},
+                                     {6,  StVariable(0.0, 0.0, 0.0)},
+                                     {10, StVariable(0.0, 0.0, 0.0)},
+                                     {11, StVariable(0.0, 0.0, 0.0)}    }},
+      { analysis::Period::Run2018, { {0,  StVariable(0.815, 0.106, 0.1)},
+                                     {1,  StVariable(0.62, 0.151, 0.156)},
+                                     {5,  StVariable(0.0, 0.0, 0.0)},
+                                     {6,  StVariable(0.0, 0.0, 0.0)},
+                                     {10, StVariable(0.0, 0.0, 0.0)},
+                                     {11, StVariable(0.0, 0.0, 0.0)}    }}
+    };
 
-    if(!deep_tau_vs_e_energy_scale_eta_high.count(period) || !deep_tau_vs_e_energy_scale_eta_low.count(period) )
+    if(!deep_tau_vs_e_energy_scale_endcap.count(period) || !deep_tau_vs_e_energy_scale_barrel.count(period) )
         throw exception("Period '%1%'not found in tau vs ele map.") %period;
 
-    PhysicalValue e_fake_rate_correction = PhysicalValue(0.0,0.0);
+    StVariable e_fake_rate_correction = StVariable(0.0, 0.0, 0.0);
 
     if(tauVSeDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSe){
 
-        if(std::abs(eta) < 1.448){
-            if(deep_tau_vs_e_energy_scale_eta_low.at(period).count(tauVSeWP))
-                e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_low.at(period).at(tauVSeWP);
+        if(std::abs(eta) < 1.460){
+            if(deep_tau_vs_e_energy_scale_barrel.at(period).count(decayMode))
+                e_fake_rate_correction = deep_tau_vs_e_energy_scale_barrel.at(period).at(decayMode);
             else
-                throw exception ("tau vs e wp (low eta map): '%1%' now allowed") %tauVSeWP ;
+                throw exception ("Decay mode for the fake e->tau (barrel): '%1%' now allowed") %decayMode ;
         }
         else if (std::abs(eta) > 1.558){
-            if(deep_tau_vs_e_energy_scale_eta_high.at(period).count(tauVSeWP))
-                e_fake_rate_correction = deep_tau_vs_e_energy_scale_eta_high.at(period).at(tauVSeWP);
+            if(deep_tau_vs_e_energy_scale_endcap.at(period).count(decayMode))
+                e_fake_rate_correction = deep_tau_vs_e_energy_scale_endcap.at(period).at(decayMode);
             else
-                throw exception ("tau vs e wp (high eta map): '%1%' now allowed") %tauVSeWP ;
+                throw exception ("Decay mode for the fake e->tau (endcap): '%1%' now allowed") %decayMode ;
         }
 
     }
-
-    auto e_fake_rate_final_correction = (e_fake_rate_correction.GetValue() +
-                                         static_cast<int>(scale) * e_fake_rate_correction.GetStatisticalError());
+    auto error = e_fake_rate_correction.decimals_to_print() > 0 ? e_fake_rate_correction.decimals_to_print() :
+                                                                (-1) * (e_fake_rate_correction.decimals_to_print());
+    auto e_fake_rate_final_correction = (e_fake_rate_correction.precision() +
+                                         static_cast<int>(scale) * error) / 100;
 
     return 1 + e_fake_rate_final_correction;
 }

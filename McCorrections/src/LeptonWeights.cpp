@@ -70,7 +70,7 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
         tauTriggerWeight =  std::make_shared<TauTriggerWeight2016>(tauTriggerInput);
         tauIdWeight = std::make_shared<TauIdWeight2016>();
     }
-    else if(period == Period::Run2017){
+    else if(period == Period::Run2017 || period == Period::Run2018){
         tauTriggerWeight =  std::make_shared<TauTriggerWeight2017>(tauTriggerInput, tauTriggerInputOld,  boost::algorithm::to_lower_copy(ToString(_tau_iso_wp)));
         tauIdWeight = std::make_shared<TauIdWeight2017>();
     }

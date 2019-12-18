@@ -7,9 +7,9 @@ namespace analysis {
 
     EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
     UncertaintyScale _scale, analysis::Period _period, TauIdDiscriminator _tau_id_discriminator,
-    TauIdDiscriminator _e_id_discriminator, DiscriminatorWP _tauVSeWP) : event(&_event),
+    TauIdDiscriminator _e_id_discriminator) : event(&_event),
     uncertainty_source(_uncertainty_source), scale(_scale), period(_period), tau_id_discriminator(_tau_id_discriminator),
-    ele_id_discriminator(_e_id_discriminator), tauVSeWP(_tauVSeWP)  {}
+    ele_id_discriminator(_e_id_discriminator)  {}
 
     void EventCandidate::InitializeJecUncertainty(Period period, const std::string& working_path)
     {
@@ -106,8 +106,8 @@ namespace analysis {
           if(tuple_lepton.leg_type() == analysis::LegType::tau){
               double sf = TauESUncertainties::GetCorrectionFactor(period, tuple_lepton.decayMode(), tuple_lepton.gen_match(),
                                                                   uncertainty_source, scale, tuple_lepton.p4().pt(),
-                                                                  tau_id_discriminator, ele_id_discriminator, tuple_lepton.p4().eta(),
-                                                                  tauVSeWP);
+                                                                  tau_id_discriminator, ele_id_discriminator,
+                                                                  tuple_lepton.p4().eta());
               // if(tuple_lepton.decayMode() == 0){
               //     double shifted_pt = lepton_p4.pt() * sf;
               //     corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());

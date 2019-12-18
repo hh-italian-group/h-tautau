@@ -25,7 +25,7 @@ public:
 
     EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
                    UncertaintyScale _scale, Period _period, TauIdDiscriminator _tau_id_discriminator,
-                   TauIdDiscriminator _ele_id_discriminator, DiscriminatorWP _tauVSeWP);
+                   TauIdDiscriminator _ele_id_discriminator);
 
     EventCandidate(const EventCandidate& ) = default; //copy constructor
     EventCandidate(EventCandidate&& ) = default; // move constructor
