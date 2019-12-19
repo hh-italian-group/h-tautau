@@ -23,7 +23,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
                         FullName("2016/Pileup_Data2016.root"),
                         FullName("2016/pu_mc_distr_per_sample_100_100_2016.root"),
-                        FullName("2016/pileup_groups_2016.txt"), 130, 0);
+                        FullName("2016/pileup_groups_2016.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                         FullLeptonName("Electron/Run2016BtoH/Electron_IdIso_IsoLt0p15_eff.root"),
@@ -55,7 +55,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
                         FullName("2017/Pileup_Data2017.root"),
                         FullName("2017/pu_mc_distr_per_sample_100_100_2017.root"),
-                        FullName("2017/pileup_groups_v2.txt"), 130, 0);
+                        FullName("2017/pileup_groups.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(jet_ordering == JetOrdering::DeepCSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -98,7 +98,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
                         FullName("2018/Pileup_Data2018.root"),
                         FullName("2018/pu_mc_distr_per_sample_100_100_2018.root"),
-                        FullName("2018/pileup_groups_2018.txt"), 130, 0);
+                        FullName("2018/pileup_groups_2018.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(jet_ordering == JetOrdering::DeepCSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -108,7 +108,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
                         FullName("2018/btag/b_eff_HH_DeepFlavour_2018.root"), FullName("2018/btag/DeepJet_102XSF_WP_V1.csv"),
                         period, jet_ordering, btag_wp);
-        }
+        } //Temporary fix, needs to be updated
         else if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                         FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),

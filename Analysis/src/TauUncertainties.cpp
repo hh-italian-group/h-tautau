@@ -108,23 +108,26 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, i
 double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
                                                            TauIdDiscriminator tauVSeDiscriminator, int decayMode)
 {
-    // Values taken from: https://indico.cern.ch/event/868279/contributions/3665970/attachments/1959265/3264468/FES_9Dec_explained.pdf
+    // Values taken from: https://indico.cern.ch/event/868279/contributions/3665970/attachments/1959265/3266335/FES_9Dec_explained.pdf#page=29
     // For eta < 1.448
     static const std::map<analysis::Period, std::map<int, analysis::StVariable>> deep_tau_vs_e_energy_scale_barrel = {
-      { analysis::Period::Run2016, { {0,  StVariable(0.881, 0.070, 0.066)},
-                                     {1,  StVariable(1.295, 0.114, 0.12)},
+      { analysis::Period::Run2016, { {0,  StVariable(0.679, 0.806, 0.982)},
+                                     {1,  StVariable(3.389, 1.168, 2.475)},
+                                     {2,  StVariable(0.0, 0.0, 0.0)},
                                      {5,  StVariable(0.0, 0.0, 0.0)},
                                      {6,  StVariable(0.0, 0.0, 0.0)},
                                      {10, StVariable(0.0, 0.0, 0.0)},
                                      {11, StVariable(0.0, 0.0, 0.0)}    }},
-      { analysis::Period::Run2017, { {0,  StVariable(1.116, 0.086, 0.075)},
-                                     {1,  StVariable(1.215, 0.084, 0.091)},
+      { analysis::Period::Run2017, { {0,  StVariable(0.911, 1.343, 0.882)},
+                                     {1,  StVariable(1.154, 2.162, 0.973)},
+                                     {2,  StVariable(0.0, 0.0, 0.0)},
                                      {5,  StVariable(0.0, 0.0, 0.0)},
                                      {6,  StVariable(0.0, 0.0, 0.0)},
                                      {10, StVariable(0.0, 0.0, 0.0)},
                                      {11, StVariable(0.0, 0.0, 0.0)}    }},
-      { analysis::Period::Run2018, { {0,  StVariable(1.412, 0.089, 0.087)},
-                                     {1,  StVariable(1.437, 0.083, 0.087)},
+      { analysis::Period::Run2018, { {0,  StVariable(1.362, 0.904, 0.474)},
+                                     {1,  StVariable(1.945, 1.226, 1.598)},
+                                     {2,  StVariable(0.0, 0.0, 0.0)},
                                      {5,  StVariable(0.0, 0.0, 0.0)},
                                      {6,  StVariable(0.0, 0.0, 0.0)},
                                      {10, StVariable(0.0, 0.0, 0.0)},
@@ -133,20 +136,23 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
 
     // For eta > 1.558
     static const std::map<analysis::Period, std::map<int, analysis::StVariable>> deep_tau_vs_e_energy_scale_endcap = {
-      { analysis::Period::Run2016, { {0,  StVariable(0.902, 0.181, 0.192)},
-                                     {1,  StVariable(0.749, 0.165, 0.17)},
+      { analysis::Period::Run2016, { {0,  StVariable(-3.5, 1.808, 1.102)},
+                                     {1,  StVariable(5.0, 5.694, 6.57)},
+                                     {2,  StVariable(0.0, 0.0, 0.0)},
                                      {5,  StVariable(0.0, 0.0, 0.0)},
                                      {6,  StVariable(0.0, 0.0, 0.0)},
                                      {10, StVariable(0.0, 0.0, 0.0)},
                                      {11, StVariable(0.0, 0.0, 0.0)}    }},
-      { analysis::Period::Run2017, { {0,  StVariable(0.989, 0.145, 0.137)},
-                                     {1,  StVariable(0.752, 0.141, 0.139)},
+      { analysis::Period::Run2017, { {0,  StVariable(-2.604, 2.249, 1.43)},
+                                     {1,  StVariable(1.5, 4.969, 6.461)},
+                                     {2,  StVariable(0.0, 0.0, 0.0)},
                                      {5,  StVariable(0.0, 0.0, 0.0)},
                                      {6,  StVariable(0.0, 0.0, 0.0)},
                                      {10, StVariable(0.0, 0.0, 0.0)},
                                      {11, StVariable(0.0, 0.0, 0.0)}    }},
-      { analysis::Period::Run2018, { {0,  StVariable(0.815, 0.106, 0.1)},
-                                     {1,  StVariable(0.62, 0.151, 0.156)},
+      { analysis::Period::Run2018, { {0,  StVariable(-3.097, 3.404, 1.25)},
+                                     {1,  StVariable(-1.85, 3.772, 5.742)},
+                                     {2,  StVariable(0.0, 0.0, 0.0)},
                                      {5,  StVariable(0.0, 0.0, 0.0)},
                                      {6,  StVariable(0.0, 0.0, 0.0)},
                                      {10, StVariable(0.0, 0.0, 0.0)},
@@ -174,9 +180,8 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
         }
 
     }
-    auto error = e_fake_rate_correction.decimals_to_print() > 0 ? e_fake_rate_correction.decimals_to_print() :
-                                                                (-1) * (e_fake_rate_correction.decimals_to_print());
-    auto e_fake_rate_final_correction = (e_fake_rate_correction.precision() +
+    auto error = static_cast<int>(scale) > 0 ? e_fake_rate_correction.error_up : e_fake_rate_correction.error_low;
+    auto e_fake_rate_final_correction = (e_fake_rate_correction.value +
                                          static_cast<int>(scale) * error) / 100;
 
     return 1 + e_fake_rate_final_correction;
