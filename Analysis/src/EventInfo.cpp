@@ -140,10 +140,13 @@ JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool appl
         jet_info_vector.emplace_back(jet.GetMomentum(),n,bTagger.BTag(event,n,unc_source,unc_scale,base_ordering));
     }
     auto jets_ordered = jet_ordering::OrderJets(jet_info_vector,true,pt_cut,eta_cut);
+    size_t n = 0;
     for(size_t h = 0; h < jets_ordered.size(); ++h){
         const JetCandidate& jet = all_jets.at(jets_ordered.at(h).index);
         selected_jets.push_back(jet);
+        ++n;
     }
+    // std::cout << "Selected jets=" << n << '\n';
     return selected_jets;
 }
 
