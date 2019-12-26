@@ -293,6 +293,7 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
     Lock lock(*mutex);
     using FatJet = ntuple::TupleFatJet;
     using SubJet = ntuple::TupleSubJet;
+    if(period == Period::Run2018) return nullptr;
     if(!HasBjetPair()) return nullptr;
     for(const FatJetCandidate& fatJet : GetFatJets()) {
         if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
@@ -343,7 +344,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
 {
     const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator();
     const std::pair<TauIdDiscriminator, DiscriminatorWP> ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
-    EventCandidate event_candidate(event,uncertainty_source,scale,period, tau_id_discriminator, ele_id.first, ele_id.second);
+    EventCandidate event_candidate(event,uncertainty_source,scale,period, tau_id_discriminator, ele_id.first);
     boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
     SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate,period,jet_ordering,*selected_higgs_index,uncertainty_source,scale);

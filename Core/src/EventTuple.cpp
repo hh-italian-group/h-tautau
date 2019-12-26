@@ -33,7 +33,9 @@ std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory
                              "weight_tau_id", "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy",
                              "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs",
                              "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt", "isData", "file_desc_id",
-                             "split_id" } },
+                             "split_id", "jet_hh_score_index", "jet_hh_score_unc_scale", "jet_hh_score_unc_source",
+                             "jet_hh_score_value", "sample_type", "sample_year", "mass_point", "spin", "node"
+                          } },
         { TreeState::Skimmed, { } }
     };
 

@@ -20,8 +20,8 @@ namespace analysis {
 class PileUpCalcData : public root_ext::AnalyzerData {
 public:
     using AnalyzerData::AnalyzerData;
-    TH1D_ENTRY(n_pu_mc, 200, 0, 200)
-    TH1D_ENTRY(n_pu_mc_norm, 200, 0, 200)
+    TH1D_ENTRY(n_pu_mc, 100, 0, 100)
+    TH1D_ENTRY(n_pu_mc_norm, 100, 0, 100)
 };
 
 
@@ -36,6 +36,7 @@ public:
     void Run()
     {
         for(const auto& file_name : args.MC_input_files()){
+            if(file_name.find("Embedding") != std::string::npos) continue;
             auto inputFile = root_ext::OpenRootFile(file_name);
             std::cout << "File opened: " << file_name << std::endl;
             auto input_file = GetFileNameWithoutPath(file_name);
