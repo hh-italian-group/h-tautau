@@ -291,11 +291,12 @@ double EventInfoBase::GetMT2()
     return *mt2;
 }
 
-const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double deltaR_subjet_cut)
+const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double deltaR_subjet_cut, Period period)
 {
     Lock lock(*mutex);
     using FatJet = ntuple::TupleFatJet;
     using SubJet = ntuple::TupleSubJet;
+    if(period == Period::Run2018) return nullptr;
     if(!HasBjetPair()) return nullptr;
     for(const FatJetCandidate& fatJet : GetFatJets()) {
         if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
