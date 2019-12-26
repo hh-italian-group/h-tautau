@@ -117,7 +117,7 @@ public:
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET);
     double GetMT2();
-    const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut, Period period = Period::Run2017);
+    const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut);
     void SetMvaScore(double _mva_score);
     double GetMvaScore() const;
 
