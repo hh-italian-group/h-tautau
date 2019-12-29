@@ -26,12 +26,12 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullName("2016/pileup_groups_2016.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                        FullLeptonName("Electron/Run2016BtoH/Electron_IdIso_IsoLt0p15_eff.root"),
-                        FullLeptonName("Electron/Run2016BtoH/Electron_Ele25WPTight_eff.root"),
+                        FullLeptonName("Electron/Run2016_legacy/Electron_Run2016_legacy_IdIso.root"),
+                        FullLeptonName("Electron/Run2016_legacy/Electron_Run2016_legacy_Ele25.root"),
                         "",
-                        FullLeptonName("Muon/Run2016BtoH/Muon_IdIso_IsoLt0p2_2016BtoH_eff_update1407.root"),
-                        FullLeptonName("Muon/Run2016BtoH/Muon_Mu22OR_eta2p1_eff.root"), "",
-                        FullName("2016/Tau/fitresults_tt_moriond2017.json"), "",period, DiscriminatorWP::Medium,applyTauId);
+                        FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IdIso.root"),
+                        FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"), "",
+                        FullName("2016/Tau/fitresults_tt_moriond2017.json"), "",period, DiscriminatorWP::Medium, applyTauId);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(jet_ordering == JetOrdering::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -115,13 +115,13 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                        FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
-                        FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
-                        FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
-                        FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
-                        FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
-                        FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
-                        FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
+                        FullLeptonName("Electron/Run2018/Electron_Run2018_IdIso.root"),
+                        FullLeptonName("Electron/Run2018/Electron_Run2018_Ele32orEle35.root"),
+                        "",
+                        FullLeptonName("Muon/Run2018/Muon_Run2018_IdIso.root"),
+                        FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu24orIsoMu27.root"),
+                        "",
+                        "TauAnalysisTools/TauTriggerSFs/data/2018_tauTriggerEff_DeepTau2017v2p1.root",
                         FullName("2017/Tau/tauTariggerEfficiencies.root"),
                         period, DiscriminatorWP::Medium,false);
     }
