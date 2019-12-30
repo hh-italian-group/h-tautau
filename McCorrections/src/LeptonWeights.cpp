@@ -66,18 +66,18 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
     muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
     tau_iso_wp(_tau_iso_wp), applyTauId(_applyTauId)
 {
-    if(period == Period::Run2016)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", "Tight", true);
-    else if(period == Period::Run2017)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", "Tight", true);
-    else if(period == Period::Run2018)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", "Tight", true);
-    else
-        throw exception("Period %1% is not supported.") % period;
-
     std::ostringstream wp_;
     wp_ << tau_iso_wp;
     std::string wp = wp_.str();
+
+    if(period == Period::Run2016)
+        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", wp, true);
+    else if(period == Period::Run2017)
+        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", wp, true);
+    else if(period == Period::Run2018)
+        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", wp, true);
+    else
+        throw exception("Period %1% is not supported.") % period;
 
     tauTriggerWeight_eTau =  std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "etau", wp);
     tauTriggerWeight_muTau =  std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "mutau", wp);
