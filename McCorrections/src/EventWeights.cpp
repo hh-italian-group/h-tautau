@@ -31,7 +31,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         "",
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IdIso.root"),
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"), "",
-                        FullName("2016/Tau/fitresults_tt_moriond2017.json"), "",period, DiscriminatorWP::Medium, applyTauId);
+                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),period, DiscriminatorWP::Medium, applyTauId);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(jet_ordering == JetOrdering::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -80,16 +80,8 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
                         FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
                         FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
-                        FullName("2017/Tau/tauTriggerEfficiencies2017_New.root"),
-                        FullName("2017/Tau/tauTariggerEfficiencies.root"),
+                        FullTriggerName("2017_tauTriggerEff_DeepTau2017v2p1.root"),
                         period, DiscriminatorWP::Medium,applyTauId);
-                        // POG SFs
-                        // FullName("2017/Electron/EleIdSFPOG.root"),
-                        // FullName("2017/Electron/EleIsoSFPOG.root"),
-                        // FullName("2017/Muon/MuonIdSFPOG.root"),
-                        // FullName("2017/Muon/MuonIsoSFPOG.root"),
-                        // FullName("2017/Muon/MuonTriggerSFPOG.root"),
-                        // FullName("Tau/fitresults_tt_moriond2017.json"),
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
     }
@@ -121,8 +113,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IdIso.root"),
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu24orIsoMu27.root"),
                         "",
-                        "TauAnalysisTools/TauTriggerSFs/data/2018_tauTriggerEff_DeepTau2017v2p1.root",
-                        FullName("2017/Tau/tauTariggerEfficiencies.root"),
+                        FullTriggerName("2018_tauTriggerEff_DeepTau2017v2p1.root"),
                         period, DiscriminatorWP::Medium,false);
     }
     else {
@@ -192,6 +183,13 @@ std::string EventWeights::FullLeptonName(const std::string& fileName)
     static const std::string path = "HTT-utilities/LepEffInterface/data";
     return FullName(fileName, path);
 }
+
+std::string EventWeights::FullTriggerName(const std::string& fileName)
+{
+    static const std::string path = "TauAnalysisTools/TauTriggerSFs/data/";
+    return FullName(fileName, path);
+}
+
 
 } // namespace mc_corrections
 } // namespace analysis

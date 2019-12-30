@@ -6,6 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "TauAnalysisTools/TauTriggerSFs/interface/SFProvider.h"
+#include "TauPOG/TauIDSFs/interface/TauIDSFTool.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "WeightProvider.h"
 #include "TauTriggerSFs2017.h"
@@ -145,7 +146,7 @@ public:
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                   const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                  const std::string_view& tauTriggerInput, const std::string& tauTriggerInputOld, Period period, DiscriminatorWP _tau_iso_wp,
+                  const std::string_view& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp,
                   bool _applyTauId);
 
     double GetIdIsoWeight(EventInfoBase& eventInfo) const;
@@ -159,11 +160,10 @@ private:
 
 private:
     detail::LeptonScaleFactors electronSF, muonSF;
-    std::shared_ptr<TauIdWeight> tauIdWeight;
-    // std::shared_ptr<TauTriggerWeight> tauTriggerWeight;
     std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_eTau;
     std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_muTau;
     std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_tauTau;
+    std::shared_ptr<TauIDSFTool> tauIdWeight;
     DiscriminatorWP tau_iso_wp;
     bool applyTauId;
 };

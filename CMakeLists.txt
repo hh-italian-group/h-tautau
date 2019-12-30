@@ -16,6 +16,10 @@ file(GLOB_RECURSE TauAnalysisTool_SRC "${CMSSW_BASE_SRC}/TauAnalysisTools/*.cc")
 add_library(TauAnalysisTools STATIC ${TauAnalysisTool_SRC})
 set_source_files_properties(${TauAnalysisTool_SRC} PROPERTIES COMPILE_FLAGS "-w")
 
+file(GLOB_RECURSE TauPOG_SRC "${CMSSW_BASE_SRC}/TauPOG/*.cc")
+add_library(TauPOG STATIC ${TauPOG_SRC})
+set_source_files_properties(${TauPOG_SRC} PROPERTIES COMPILE_FLAGS "-w")
+
 file(GLOB_RECURSE HH_KINFIT2_SRC "${CMSSW_BASE_SRC}/HHKinFit2/*.cpp")
 add_library(HHKinFit2 STATIC ${HH_KINFIT2_SRC})
 target_include_directories(HHKinFit2 PRIVATE "${CMSSW_BASE_SRC}/HHKinFit2/HHKinFit2/interface")
@@ -29,7 +33,7 @@ set_source_files_properties(${SVFIT_SRC} PROPERTIES COMPILE_FLAGS "-w")
 add_library(h-tautau STATIC ${SOURCE_LIST})
 
 foreach(exe_name ${EXE_LIST})
-    target_link_libraries("${exe_name}" h-tautau AnalysisTools HTT-utilities SVfit HHKinFit2 TauAnalysisTools)
+    target_link_libraries("${exe_name}" h-tautau AnalysisTools HTT-utilities SVfit HHKinFit2 TauAnalysisTools TauPOG)
 endforeach()
 
 set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)

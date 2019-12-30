@@ -21,6 +21,8 @@ double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int deca
                                        ? scale : UncertaintyScale::Central;
         return GetCorrectionFactorEleFakingTau(period, current_scale, eta, tauVSeDiscriminator, decayMode);
     }
+    else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon)
+        return GetCorrectionFactorTrueMuon(period, decayMode);
     else
         return 1.;
 }
@@ -191,5 +193,44 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
                                          static_cast<int>(scale) * error) / 100;
 
     return 1 + e_fake_rate_final_correction;
+}
+
+double TauESUncertainties::GetCorrectionFactorTrueMuon(analysis::Period period, int decayMode)
+{
+
+    //values taken from: https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorkingLegacyRun2#mu_tau_ES
+    static const std::map<analysis::Period, std::map<int, float>> mu_correction_factor = {
+      { analysis::Period::Run2016, { {0, 0},
+                                     {1,  -0.5},
+                                     {2,  -0.5},
+                                     {5,  0},
+                                     {6,  0},
+                                     {10, 0},
+                                     {11, 0 }}},
+      { analysis::Period::Run2017, { {0, -0.2},
+                                     {1,  -0.8},
+                                     {2,  -0.8},
+                                     {5,  0},
+                                     {6,  0},
+                                     {10, 0},
+                                     {11, 0 }}},
+      { analysis::Period::Run2018, { {0, -0.2},
+                                     {1,  -1.0},
+                                     {2,  -1.0},
+                                     {5,  0},
+                                     {6,  0},
+                                     {10, 0},
+                                     {11, 0 }}}
+    };
+
+    if(!mu_correction_factor.count(period))
+        throw exception("Period '%1%'not found in tau correction map.") %period;
+    if(!mu_correction_factor.at(period).count(decayMode))
+        throw exception("Decay mode: '%1%' not found in tau correction map.") %decayMode;
+
+    const float mu_correction = mu_correction_factor.at(period).at(decayMode);
+
+    return 1 + mu_correction;
+
 }
 } // namespace analysis

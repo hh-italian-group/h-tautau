@@ -24,6 +24,8 @@ public:
     static double GetCorrectionFactorTrueTau(analysis::Period period, int decayMode, UncertaintyScale current_scale,
                                              double pt, TauIdDiscriminator tauVSjetDiscriminator);
 
+    static double GetCorrectionFactorTrueMuon(analysis::Period period, int decayMode);
+
     static double GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
                                                   TauIdDiscriminator tauVSeDiscriminator, int decayMode);
 };
