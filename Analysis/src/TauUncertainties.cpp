@@ -22,7 +22,7 @@ double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int deca
         return GetCorrectionFactorEleFakingTau(period, current_scale, eta, tauVSeDiscriminator, decayMode);
     }
     else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon)
-        return GetCorrectionFactorTrueMuon(period, decayMode);
+        return GetCorrectionFactorMuonFakingTau(period, decayMode);
     else
         return 1.;
 }
@@ -195,7 +195,7 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period peri
     return 1 + e_fake_rate_final_correction;
 }
 
-double TauESUncertainties::GetCorrectionFactorTrueMuon(analysis::Period period, int decayMode)
+double TauESUncertainties::GetCorrectionFactorMuonFakingTau(analysis::Period period, int decayMode)
 {
 
     //values taken from: https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorkingLegacyRun2#mu_tau_ES

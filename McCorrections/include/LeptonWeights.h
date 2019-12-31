@@ -146,7 +146,7 @@ public:
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                   const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                  const std::string_view& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp,
+                  const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp,
                   bool _applyTauId);
 
     double GetIdIsoWeight(EventInfoBase& eventInfo) const;
