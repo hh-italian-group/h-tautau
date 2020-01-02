@@ -113,7 +113,7 @@ double LeptonWeights::GetTriggerWeight(EventInfoBase& eventInfo) const
     const double eff_data = GetTriggerEfficiency(eventInfo, true);
     const double eff_mc = GetTriggerEfficiency(eventInfo, false);
     if(eff_mc == 0) {
-        if(round(eff_data) != 0)
+        if(event.lep_decayMode.at(0) >= 0 && eff_data != 0)
             throw exception("Undefined trigger SF for event:%1%. eff mc = 0 & eff data= %2%") % EventIdentifier(event) % eff_data;
         return 0;
     }
