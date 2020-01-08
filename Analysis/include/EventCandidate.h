@@ -61,7 +61,6 @@ private:
     static std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
     TauIdDiscriminator tau_id_discriminator;
     TauIdDiscriminator ele_id_discriminator;
-    DiscriminatorWP tauVSeWP;
 };
 
 } // namespace analysis

@@ -95,7 +95,7 @@ if [ $MODE = "prod" ] ; then
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
     #Add DeepTau code from Tau POG repository (note "-u" option preventing checkout of unnecessary stuff)
     #run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2
-    # Update DeepTau code and store DeepTauIDs in nanoAOD by a checkout from Tau POG repository 
+    # Update DeepTau code and store DeepTauIDs in nanoAOD by a checkout from Tau POG repository
     run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2p1_nanoAOD
     #Add 2017v2 training file
     #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_core.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
@@ -125,10 +125,12 @@ run_cmd git clone git@github.com:hh-italian-group/HHKinFit2.git HHKinFit2/HHKinF
 run_cmd git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-utilities
 run_cmd git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
+# Tau ID and Trigger SFs
+run_cmd git clone git@github.com:hh-italian-group/TauIDSFs.git
+run_cmd git clone -b run2_SFs git@github.com:cms-tau-pog/TauTriggerSFs.git
+
 # Recoil Corrections
-if [ $MODE = "prod" ] ; then
-    run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
-fi
+run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
 
 # Install analysis packages
 declare -A ANA_PACKAGES
