@@ -38,6 +38,7 @@ protected:
     static std::string FullName(const std::string& fileName, const std::string& path);
     static std::string FullName(const std::string& fileName);
     static std::string FullLeptonName(const std::string& fileName);
+    static std::string FullTriggerName(const std::string& fileName);
 
 protected:
     ProviderMap providers;
