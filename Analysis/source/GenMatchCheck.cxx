@@ -62,7 +62,7 @@ public:
 
             boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),args.period(), jet_ordering);
             if(!event.is_initialized()) continue;
-            if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
+            // if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;
             if((*event)->extraelec_veto || (*event)->extramuon_veto) continue;
 

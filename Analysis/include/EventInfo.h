@@ -158,11 +158,6 @@ public:
 
     const JetCollection& GetJets();
     const MET& GetMET();
-    EventEnergyScale GetEnergyScale() const;
-
-
-
-
 
 protected:
     EventCandidate event_candidate;

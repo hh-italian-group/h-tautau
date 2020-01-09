@@ -400,7 +400,6 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
         }
         return jet_info_vector;
     };
-
     auto jet_info_vector = CreateJetInfo(true);
     auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
     selected_signal_jets.n_bjets = bjets_ordered.size();
@@ -433,9 +432,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
         }
     }
 
-
     if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
-
 
     auto jet_info_vector_new = CreateJetInfo(true);
     auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
@@ -446,6 +443,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
         if (bjets_ordered.size() >= 2)
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
     }
+
     return selected_signal_jets;
 }
 

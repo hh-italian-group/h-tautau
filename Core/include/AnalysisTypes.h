@@ -35,14 +35,6 @@ inline const ChannelLegTypes GetChannelLegTypes(Channel channel)
     return iter->second;
 }
 
-enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, TopPtUp = 5, TopPtDown = 6 };
-ENUM_NAMES(EventEnergyScale) = {
-    { EventEnergyScale::Central, "Central" },
-    { EventEnergyScale::TauUp, "TauUp" }, { EventEnergyScale::TauDown, "TauDown" },
-    { EventEnergyScale::JetUp, "JetUp" }, { EventEnergyScale::JetDown, "JetDown" },
-    { EventEnergyScale::TopPtUp, "TopPtUp" }, { EventEnergyScale::TopPtDown, "TopPtDown" },
-};
-
 enum class UncertaintyScale { Central = 0, Up = 1, Down = -1 };
 ENUM_NAMES(UncertaintyScale) = {
     { UncertaintyScale::Central, "Central" }, { UncertaintyScale::Up, "Up" }, { UncertaintyScale::Down, "Down" }
@@ -101,7 +93,8 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::EleFakingTauES, "EleFakingTauES"}
 };
 
-using EventEnergyScaleSet = EnumNameMap<EventEnergyScale>::EnumEntrySet;
+const std::set<UncertaintyScale>& GetAllUncertaintyScales();
+const std::set<UncertaintyScale>& GetActiveUncertaintyScales(UncertaintySource unc_source);
 
 enum class DiscriminatorWP { VVVLoose = 0, VVLoose = 1, VLoose = 2, Loose = 3, Medium = 4, Tight = 5,
                              VTight = 6, VVTight = 7, VVVTight = 8 };

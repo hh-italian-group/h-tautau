@@ -327,11 +327,6 @@ double EventInfoBase::GetMvaScore() const { return mva_score; }
 const JetCollection& EventInfoBase::GetJets() { return GetEventCandidate().GetJets(); }
 const MET& EventInfoBase::GetMET() { return GetEventCandidate().GetMET(); }
 
-EventEnergyScale EventInfoBase::GetEnergyScale() const
-{
-    return EventEnergyScale::Central;
-}
-
 boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo,
@@ -339,19 +334,19 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                JetOrdering jet_ordering,
                                                bool is_sync,
                                                UncertaintySource uncertainty_source,
-                                               UncertaintyScale scale
-                                            )
+                                               UncertaintyScale scale)
 {
     const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator();
-    const std::pair<TauIdDiscriminator, DiscriminatorWP> ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
-    EventCandidate event_candidate(event,uncertainty_source,scale,period, tau_id_discriminator, ele_id.first);
-    boost::optional<size_t> selected_higgs_index = signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
+    const auto ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
+    EventCandidate event_candidate(event, uncertainty_source, scale, period, tau_id_discriminator, ele_id.first);
+    boost::optional<size_t> selected_higgs_index =
+            signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
-    SignalObjectSelector::SelectedSignalJets selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate,period,jet_ordering,*selected_higgs_index,uncertainty_source,scale);
-    return EventInfoBase(std::move(event_candidate),summaryInfo,*selected_higgs_index,selected_signal_jets,period,jet_ordering);
-
+    auto selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate, period, jet_ordering,
+                                                                       *selected_higgs_index, uncertainty_source,
+                                                                       scale);
+    return EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index, selected_signal_jets, period,
+                         jet_ordering);
 }
-
-
 
 } // namespace analysis
