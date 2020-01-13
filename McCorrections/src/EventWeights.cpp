@@ -16,7 +16,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-EventWeights::EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, bool applyTauId, const WeightingMode& mode)
+EventWeights::EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, const WeightingMode& mode)
 {
     if(period == Period::Run2016) {
         if(mode.empty() || mode.count(WeightType::PileUp))
@@ -31,7 +31,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         "",
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IdIso.root"),
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"), "",
-                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),period, DiscriminatorWP::Medium, applyTauId);
+                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),period, DiscriminatorWP::Medium);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(jet_ordering == JetOrdering::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -81,7 +81,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
                         FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
                         FullTriggerName("2017_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium,applyTauId);
+                        period, DiscriminatorWP::Medium);
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
     }
@@ -114,7 +114,7 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu24orIsoMu27.root"),
                         "",
                         FullTriggerName("2018_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium,false);
+                        period, DiscriminatorWP::Medium);
     }
     else {
         throw exception("Period %1% is not supported (EventWeights).") % period;
