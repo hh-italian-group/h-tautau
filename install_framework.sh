@@ -126,8 +126,8 @@ run_cmd git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-ut
 run_cmd git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
 # Tau ID and Trigger SFs
-run_cmd git clone git@github.com:hh-italian-group/TauIDSFs.git
-run_cmd git clone -b run2_SFs git@github.com:cms-tau-pog/TauTriggerSFs.git
+run_cmd git clone git@github.com:hh-italian-group/TauIDSFs.git TauPOG/TauIDSFs
+run_cmd git clone -b run2_SFs git@github.com:cms-tau-pog/TauTriggerSFs.git TauAnalysisTools/TauTriggerSFs
 
 # Recoil Corrections
 run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
@@ -135,8 +135,8 @@ run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities
 # Install analysis packages
 declare -A ANA_PACKAGES
 ANA_PACKAGES=( ["AnalysisTools"]="prod:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod:prod_v5 ana:ana_v4 ana_osx:ana_v4" \
-               ["hh-bbtautau"]="prod:ana_v5 ana:ana_v4 ana_osx:ana_v4" )
+               ["h-tautau"]="prod:prod_v5 ana:prod_v5 ana_osx:prod_v5" \
+               ["hh-bbtautau"]="prod:ana_v5 ana:ana_v5 ana_osx:ana_v5" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do
