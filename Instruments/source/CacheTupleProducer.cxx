@@ -66,15 +66,22 @@ public:
         size_t n_tot_events = 0;
         std::map<std::string,std::pair<std::shared_ptr<ntuple::EventTuple>,Long64_t>> map_event;
         for(unsigned c = 0; c < channels.size(); ++c){
-            auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
-            const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
-            map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
-            n_tot_events += static_cast<size_t>(n_events);
+            try {
+                auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
+                const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
+                map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
+                n_tot_events += static_cast<size_t>(n_events);
+            } catch(std::runtime_error) {
+            }
         }
 
         size_t n_processed_events = 0;
         progressReporter.SetTotalNumberOfEvents(n_tot_events);
         for(unsigned c = 0; c < channels.size(); ++c){
+            if(!map_event.count(channels.at(c))) {
+                std::cout << "Channel: " << channels.at(c) << " not found." << std::endl;
+                continue;
+            }
             std::cout << "Channel: " << channels.at(c) << std::endl;
             CacheTuple cache(channels.at(c), outputFile.get(), false);
             auto& originalTuple = *map_event.at(channels.at(c)).first;

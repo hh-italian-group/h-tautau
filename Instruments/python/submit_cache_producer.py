@@ -75,25 +75,40 @@ for f in os.listdir(args.input):
             job.central_output_file = os.path.join(job.central_output_dir, job.input_basename)
             jobs.append(job)
 
+n_central = 0
+n_transfered = 0
+n_failed = 0
+n_submitted = 0
+n_running = 0
 for job in jobs:
     if os.path.exists(job.central_output_file):
         print('{}: already in the central storage'.format(job.name))
+        n_central += 1
     elif os.path.isdir(job.output):
         job_successfully_ended = False
+        job_failed = False
         log_file = os.path.join(job.output, 'run_job.log')
         if os.path.isfile(job.output_file) and os.path.isfile(log_file):
             with open(log_file, 'r') as f:
                 last_line = f.readlines()[-1]
             if re.match('^Job successfully ended at.*', last_line):
                 job_successfully_ended = True
+            elif re.match('^Job failed at.*', last_line):
+                job_failed = True
         if job_successfully_ended:
             print('{}: successfully ended'.format(job.name))
             os.chmod(job.output_file, 0660)
             makedirs(job.central_output_dir, 0770)
             shutil.move(job.output_file, job.central_output_file)
             print('{}: transfered into the central storage'.format(job.name))
+            n_central += 1
+            n_transfered += 1
+        elif job_failed:
+            print('{}: failed.'.format(job.name))
+            n_failed += 1
         else:
             print('{}: submitted, but not ended yet'.format(job.name))
+            n_running += 1
     else:
         print('Submitting "{}"...'.format(job.name))
         submit_cmd = './AnalysisTools/Run/submit_job.sh {} {} {} {}'.format(args.queue, job.name, job.output,
@@ -107,3 +122,8 @@ for job in jobs:
         result = subprocess.call([submit_cmd], shell=True)
         if result != 0:
             raise RuntimeError("Failed to submit job {}".format(job.name))
+        n_submitted += 1
+
+print('\nJOB SUMMARY\n\t{} in the central storage, out of which {} are newly transfered' \
+      '\n\t{} newly submitted\n\t{} submitted, but not ended yet\n\t{} failed' \
+      .format(n_central, n_transfered, n_submitted, n_running, n_failed))
