@@ -66,11 +66,11 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
     tau_iso_wp(_tau_iso_wp)
 {
     if(period == Period::Run2016)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), true);
+        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
     else if(period == Period::Run2017)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), true);
+        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
     else if(period == Period::Run2018)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), true);
+        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
     else
         throw exception("Period %1% is not supported.") % period;
 
