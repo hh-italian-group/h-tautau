@@ -25,6 +25,8 @@ struct Arguments {
     OPT_ARG(bool, runSVFit, true);
     OPT_ARG(bool, runKinFit, true);
     OPT_ARG(Long64_t, max_events_per_tree, std::numeric_limits<Long64_t>::max());
+    OPT_ARG(Long64_t, begin_entry_index, 0);
+    OPT_ARG(Long64_t, end_entry_index, std::numeric_limits<Long64_t>::max());
     OPT_ARG(std::string, working_path, "./");
 };
 
@@ -54,7 +56,6 @@ public:
         cacheSummary().numberOfOriginalEvents = 0;
         cacheSummary().numberOfTimesSVFit = 0;
         cacheSummary().numberOfTimesKinFit = 0;
-
     }
 
     void Run()
@@ -68,8 +69,10 @@ public:
         for(unsigned c = 0; c < channels.size(); ++c){
             try {
                 auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
-                const Long64_t n_events = std::min(args.max_events_per_tree(),originalTuple->GetEntries());
-                map_event[channels.at(c)] = std::make_pair(originalTuple,n_events);
+                Long64_t n_entries = std::min(originalTuple->GetEntries(), args.end_entry_index())
+                                     - args.begin_entry_index();
+                Long64_t n_events = std::min(args.max_events_per_tree(), n_entries);
+                map_event[channels.at(c)] = std::make_pair(originalTuple, n_events);
                 n_tot_events += static_cast<size_t>(n_events);
             } catch(std::runtime_error) {
             }
@@ -85,16 +88,23 @@ public:
             std::cout << "Channel: " << channels.at(c) << std::endl;
             CacheTuple cache(channels.at(c), outputFile.get(), false);
             auto& originalTuple = *map_event.at(channels.at(c)).first;
-            const Long64_t n_entries = map_event.at(channels.at(c)).second;
-            for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
-                originalTuple.GetEntry(current_entry);
-                if(static_cast<Channel>(originalTuple().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
-                    originalTuple().first_daughter_indexes = {0};
-                    originalTuple().second_daughter_indexes = {1};
+            const Long64_t n_entries = originalTuple.GetEntries();
+            Long64_t n_processed_events_channel = 0;
+            for(Long64_t current_entry = 0; current_entry < n_entries
+                    && n_processed_events_channel < args.max_events_per_tree(); ++current_entry) {
+                if(current_entry >= args.begin_entry_index() && current_entry < args.end_entry_index()) {
+                    originalTuple.GetEntry(current_entry);
+                    if(static_cast<Channel>(originalTuple().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
+                        originalTuple().first_daughter_indexes = {0};
+                        originalTuple().second_daughter_indexes = {1};
+                    }
+                    FillCacheTuple(cache, originalTuple.data());
+                    ++n_processed_events_channel;
+                    ++n_processed_events;
                 }
-                FillCacheTuple(cache, originalTuple.data());
                 cache.Fill();
-                if(++n_processed_events % 100 == 0) progressReporter.Report(n_processed_events,false);
+                if(n_processed_events % 100 == 0) progressReporter.Report(n_processed_events, false);
+
             }
             progressReporter.Report(n_processed_events, true);
             cache.Write();
@@ -104,10 +114,6 @@ public:
             cacheSummary.Write();
         }
         progressReporter.Report(n_tot_events,true);
-
-
-
-
     }
 
 private:
