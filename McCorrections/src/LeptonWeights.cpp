@@ -66,11 +66,11 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
     tau_iso_wp(_tau_iso_wp)
 {
     if(period == Period::Run2016)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), true);
+        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
     else if(period == Period::Run2017)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), true);
+        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
     else if(period == Period::Run2018)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), true);
+        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
     else
         throw exception("Period %1% is not supported.") % period;
 
@@ -85,20 +85,20 @@ double LeptonWeights::GetIdIsoWeight(EventInfoBase& eventInfo) const
     const ntuple::Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
     if(channel == Channel::ETau) {
-        double tau_weight = tauIdWeight->getSFvsDM(eventInfo.GetLeg(2).GetMomentum().pt(),
-                                                   eventInfo.GetLeg(2)->decayMode());
+        double tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
+                                                   static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
         return electronSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tau_weight;
     }
     else if(channel == Channel::MuTau) {
-        double tau_weight = tauIdWeight->getSFvsDM(eventInfo.GetLeg(2).GetMomentum().pt(),
-                                                   eventInfo.GetLeg(2)->decayMode());
+        double tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
+                                                   static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
         return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tau_weight;
     }
     else if(channel == Channel::TauTau) {
-        double tau_weight = tauIdWeight->getSFvsDM(eventInfo.GetLeg(1).GetMomentum().pt(),
-                                                   eventInfo.GetLeg(1)->decayMode())
-                          * tauIdWeight->getSFvsDM(eventInfo.GetLeg(2).GetMomentum().pt(),
-                                                   eventInfo.GetLeg(2)->decayMode());
+        double tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(1).GetMomentum().pt(),
+                                                   static_cast<int>(eventInfo.GetLeg(1)->gen_match()))
+                          * tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
+                                                   static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
         return tau_weight;
     }
     else if(channel == Channel::MuMu)
