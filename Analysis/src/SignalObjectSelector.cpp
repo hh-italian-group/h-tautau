@@ -65,7 +65,8 @@ std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSeDi
         { {Channel::TauTau, SignalMode::HH_legacy}, {TauIdDiscriminator::againstElectronMVA6, DiscriminatorWP::VLoose} },
         { {Channel::ETau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::VVVLoose} },
         { {Channel::MuTau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::VVVLoose} },
-        { {Channel::TauTau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::VVVLoose} }
+        { {Channel::TauTau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::VVVLoose} },
+        { {Channel::MuMu, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::VVVLoose} }
         // { {Channel::ETau, SignalMode::Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
         // { {Channel::ETau, SignalMode::TauPOG_Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
     };
@@ -99,7 +100,8 @@ std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSmuD
         { {Channel::TauTau, SignalMode::HH_legacy}, {TauIdDiscriminator::againstMuon3, DiscriminatorWP::Loose} },
         { {Channel::ETau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSmu, DiscriminatorWP::VLoose} },
         { {Channel::MuTau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSmu, DiscriminatorWP::VLoose} },
-        { {Channel::TauTau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSmu, DiscriminatorWP::VLoose} }
+        { {Channel::TauTau, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSmu, DiscriminatorWP::VLoose} },
+        { {Channel::MuMu, SignalMode::HH}, {TauIdDiscriminator::byDeepTau2017v2p1VSmu, DiscriminatorWP::VLoose} }
         // { {Channel::ETau, SignalMode::Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
         // { {Channel::ETau, SignalMode::TauPOG_Skimmer}, {TauIdDiscriminator::byDeepTau2017v2p1VSe, DiscriminatorWP::Tight} },
     };
