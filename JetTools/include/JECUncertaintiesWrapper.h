@@ -25,7 +25,10 @@ public:
     static const std::set<UncertaintySource>& JetFullUncertainties();
     static const std::set<UncertaintySource>& JetReducedUncertainties();
 
-    JECUncertaintiesWrapper(const std::string& uncertainties_source, bool is_full, Period& period);
+    JECUncertaintiesWrapper(const std::string& uncertainties_source, bool is_full, analysis::Period& period);
+
+    const std::string ReturnJecName(UncertaintySource unc_source, bool is_full, analysis::Period& period);
+    static bool IsJetUncertainties(UncertaintySource unc_source);
 
     template<typename JetCollection, typename LorentzVector1 = analysis::LorentzVector,
              typename LorentzVector2 = analysis::LorentzVector>

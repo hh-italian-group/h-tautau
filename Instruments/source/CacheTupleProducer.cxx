@@ -43,7 +43,7 @@ public:
                 cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period())),
                 progressReporter(10, std::cout)
     {
-        EventCandidate::InitializeJecUncertainties(run_period,args.working_path());
+        EventCandidate::InitializeJecUncertainties(run_period,false,args.working_path());
 
         auto signalModes = SplitValueListT<analysis::SignalMode>(args.selections(),false,",");
         for(unsigned n = 0; n < signalModes.size(); ++n){
