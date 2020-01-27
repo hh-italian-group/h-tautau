@@ -15,7 +15,7 @@ TauIdDiscriminator _e_id_discriminator) :
 
 void EventCandidate::InitializeJecUncertainties(Period period, bool is_full, const std::string& working_path)
 {
-    std::map<analysis::Period,std::string> file_uncertainty_sources = {
+    static const std::map<analysis::Period,std::string> file_uncertainty_sources = {
         { analysis::Period::Run2016,
           "h-tautau/McCorrections/data/2016/JES/Summer16_23Sep2016V4_MC_UncertaintySources_AK4PFchs.txt" },
         { analysis::Period::Run2017,
@@ -24,7 +24,7 @@ void EventCandidate::InitializeJecUncertainties(Period period, bool is_full, con
           "h-tautau/McCorrections/data/2018/JES/Autumn18_V8_MC_UncertaintySources_AK4PFchs.txt" }
     };
 
-    std::map<analysis::Period,std::string> file_reduced_uncertainty_sources = {
+    static const std::map<analysis::Period,std::string> file_reduced_uncertainty_sources = {
         { analysis::Period::Run2016,
           "h-tautau/McCorrections/data/2016/JES/Regrouped_Summer16_07Aug2017_V11_MC_UncertaintySources_AK4PFchs.txt" },
         { analysis::Period::Run2017,

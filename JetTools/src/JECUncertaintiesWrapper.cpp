@@ -97,14 +97,12 @@ const std::string JECUncertaintiesWrapper::ReturnJecName(UncertaintySource unc_s
             std::string period_name = analysis::ToString(period);
             std::string run_string = "Run";
             std::string period_string = period_name.erase(0,run_string.size());
-            std::cout << "period_string: " << period_string <<std::endl;
             new_string = partial_string.replace(found,year.length(),period_string);
         }
         else{
             new_string = partial_string;
         }
     }
-    std::cout << "new_string: " << new_string << std::endl;
     return new_string;
 }
 
@@ -123,11 +121,10 @@ JECUncertaintiesWrapper::JECUncertaintiesWrapper(const std::string& uncertaintie
         return jetUncertainties;
      };
 
-    static const std::set<UncertaintySource> jetUncertaintiesTotal = createUncSet(is_full);
+    const std::set<UncertaintySource> jetUncertaintiesTotal = createUncSet(is_full);
 
     for (const auto jet_unc : jetUncertaintiesTotal) {
         std::string full_name = JECUncertaintiesWrapper::ReturnJecName(jet_unc,is_full,period);
-        std::cout << "Full name: " << full_name << std::endl;
         JetCorrectorParameters p(uncertainties_source, full_name);
         auto unc = std::make_shared<JetCorrectionUncertainty>(p);
         uncertainty_map[jet_unc] = unc;
