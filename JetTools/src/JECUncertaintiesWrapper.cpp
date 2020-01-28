@@ -5,68 +5,126 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace jec {
 
-const std::set<UncertaintySource>& JECUncertaintiesWrapper::JetUncertainties()
+const std::set<UncertaintySource>& JECUncertaintiesWrapper::JetFullUncertainties()
 {
     static const std::set<UncertaintySource> jetUncertainties = {
-        UncertaintySource::AbsoluteStat,
-        UncertaintySource::AbsoluteScale,
-        UncertaintySource::AbsoluteMPFBias,
-        UncertaintySource::AbsoluteFlavMap,
-        UncertaintySource::Fragmentation,
-        UncertaintySource::SinglePionECAL,
-        UncertaintySource::SinglePionHCAL,
-        UncertaintySource::FlavorQCD,
-        UncertaintySource::FlavorZJet,
-        UncertaintySource::FlavorPhotonJet,
-        UncertaintySource::FlavorPureGluon,
-        UncertaintySource::FlavorPureQuark,
-        UncertaintySource::FlavorPureCharm,
-        UncertaintySource::FlavorPureBottom,
-        UncertaintySource::TimePtEta,
-        UncertaintySource::RelativeJEREC1,
-        UncertaintySource::RelativeJEREC2,
-        UncertaintySource::RelativeJERHF,
-        UncertaintySource::RelativePtBB,
-        UncertaintySource::RelativePtEC1,
-        UncertaintySource::RelativePtEC2,
-        UncertaintySource::RelativePtHF,
-        UncertaintySource::RelativeBal,
-        UncertaintySource::RelativeFSR,
-        UncertaintySource::PileUpDataMC,
-        UncertaintySource::PileUpPtRef,
-        UncertaintySource::PileUpPtBB,
-        UncertaintySource::PileUpPtEC1,
-        UncertaintySource::PileUpPtEC2,
-        UncertaintySource::PileUpPtHF,
-        UncertaintySource::SubTotalPileUp,
-        UncertaintySource::SubTotalRelative,
-        UncertaintySource::SubTotalPt,
-        UncertaintySource::SubTotalScale,
-        UncertaintySource::SubTotalAbsolute,
-        UncertaintySource::SubTotalMC,
-        UncertaintySource::TotalNoFlavor,
-        UncertaintySource::TotalNoTime,
-        UncertaintySource::TotalNoFlavorNoTime
+        UncertaintySource::JetFull_AbsoluteStat,
+        UncertaintySource::JetFull_AbsoluteScale,
+        UncertaintySource::JetFull_AbsoluteMPFBias,
+        UncertaintySource::JetFull_AbsoluteFlavMap,
+        UncertaintySource::JetFull_Fragmentation,
+        UncertaintySource::JetFull_SinglePionECAL,
+        UncertaintySource::JetFull_SinglePionHCAL,
+        UncertaintySource::JetFull_FlavorQCD,
+        UncertaintySource::JetFull_FlavorZJet,
+        UncertaintySource::JetFull_FlavorPhotonJet,
+        UncertaintySource::JetFull_FlavorPureGluon,
+        UncertaintySource::JetFull_FlavorPureQuark,
+        UncertaintySource::JetFull_FlavorPureCharm,
+        UncertaintySource::JetFull_FlavorPureBottom,
+        UncertaintySource::JetFull_TimePtEta,
+        UncertaintySource::JetFull_RelativeJEREC1,
+        UncertaintySource::JetFull_RelativeJEREC2,
+        UncertaintySource::JetFull_RelativeJERHF,
+        UncertaintySource::JetFull_RelativePtBB,
+        UncertaintySource::JetFull_RelativePtEC1,
+        UncertaintySource::JetFull_RelativePtEC2,
+        UncertaintySource::JetFull_RelativePtHF,
+        UncertaintySource::JetFull_RelativeBal,
+        UncertaintySource::JetFull_RelativeFSR,
+        UncertaintySource::JetFull_PileUpDataMC,
+        UncertaintySource::JetFull_PileUpPtRef,
+        UncertaintySource::JetFull_PileUpPtBB,
+        UncertaintySource::JetFull_PileUpPtEC1,
+        UncertaintySource::JetFull_PileUpPtEC2,
+        UncertaintySource::JetFull_PileUpPtHF,
+        UncertaintySource::JetFull_SubTotalPileUp,
+        UncertaintySource::JetFull_SubTotalRelative,
+        UncertaintySource::JetFull_SubTotalPt,
+        UncertaintySource::JetFull_SubTotalScale,
+        UncertaintySource::JetFull_SubTotalAbsolute,
+        UncertaintySource::JetFull_SubTotalMC,
+        UncertaintySource::JetFull_TotalNoFlavor,
+        UncertaintySource::JetFull_TotalNoTime,
+        UncertaintySource::JetFull_TotalNoFlavorNoTime
     };
     return jetUncertainties;
 }
 
-const std::set<UncertaintySource>& JECUncertaintiesWrapper::JetUncertainties_withTotal()
+const std::set<UncertaintySource>& JECUncertaintiesWrapper::JetReducedUncertainties()
 {
-    auto createUncSet = []() {
-        std::set<UncertaintySource> jetUncertainties = JetUncertainties();
-        jetUncertainties.insert(UncertaintySource::Total);
+    static const std::set<UncertaintySource> jetUncertainties = {
+        UncertaintySource::JetReduced_Absolute,
+        UncertaintySource::JetReduced_Absolute_year,
+        UncertaintySource::JetReduced_BBEC1,
+        UncertaintySource::JetReduced_BBEC1_year,
+        UncertaintySource::JetReduced_EC2,
+        UncertaintySource::JetReduced_EC2_year,
+        UncertaintySource::JetReduced_FlavorQCD,
+        UncertaintySource::JetReduced_HF,
+        UncertaintySource::JetReduced_HF_year,
+        UncertaintySource::JetReduced_RelativeBal,
+        UncertaintySource::JetReduced_RelativeSample_year
+    };
+    return jetUncertainties;
+}
+
+bool JECUncertaintiesWrapper::IsJetUncertainties(UncertaintySource unc_source)
+{
+    if(JECUncertaintiesWrapper::JetReducedUncertainties().count(unc_source) ||
+       JECUncertaintiesWrapper::JetFullUncertainties().count(unc_source) ||
+       unc_source == UncertaintySource::JetFull_Total ||
+       unc_source == UncertaintySource::JetReduced_Total)
+        return true;
+    return false;
+}
+
+const std::string JECUncertaintiesWrapper::ReturnJecName(UncertaintySource unc_source, bool is_full, analysis::Period& period)
+{
+    std::string new_string;
+    if(is_full){
+        std::string full_name = analysis::ToString(unc_source);
+        std::string jet_string = "JetFull_";
+        new_string = full_name.erase(0,jet_string.size() - 1);
+    }
+    else{
+        std::string full_name = analysis::ToString(unc_source);
+        std::string jet_string = "JetReduced_";
+        std::string partial_string = full_name.erase(0,jet_string.size());
+        std::string year = "year";
+        size_t found = partial_string.find(year);
+        if(found != std::string::npos){
+            std::string period_name = analysis::ToString(period);
+            std::string run_string = "Run";
+            std::string period_string = period_name.erase(0,run_string.size());
+            new_string = partial_string.replace(found,year.length(),period_string);
+        }
+        else{
+            new_string = partial_string;
+        }
+    }
+    return new_string;
+}
+
+JECUncertaintiesWrapper::JECUncertaintiesWrapper(const std::string& uncertainties_source, bool is_full, analysis::Period& period)
+{
+    auto createUncSet = [](bool is_full) {
+        std::set<UncertaintySource> jetUncertainties;
+        if(is_full){
+            jetUncertainties = JECUncertaintiesWrapper::JetFullUncertainties();
+            jetUncertainties.insert(UncertaintySource::JetFull_Total);
+        }
+        else{
+            jetUncertainties = JECUncertaintiesWrapper::JetReducedUncertainties();
+            jetUncertainties.insert(UncertaintySource::JetReduced_Total);
+        }
         return jetUncertainties;
      };
 
-    static const std::set<UncertaintySource> jetUncertaintiesTotal = createUncSet();
-    return jetUncertaintiesTotal;
-}
+    const std::set<UncertaintySource> jetUncertaintiesTotal = createUncSet(is_full);
 
-JECUncertaintiesWrapper::JECUncertaintiesWrapper(const std::string& uncertainties_source)
-{
-    for (const auto jet_unc : JetUncertainties_withTotal()) {
-        std::string full_name = analysis::ToString(jet_unc);
+    for (const auto jet_unc : jetUncertaintiesTotal) {
+        std::string full_name = JECUncertaintiesWrapper::ReturnJecName(jet_unc,is_full,period);
         JetCorrectorParameters p(uncertainties_source, full_name);
         auto unc = std::make_shared<JetCorrectionUncertainty>(p);
         uncertainty_map[jet_unc] = unc;
