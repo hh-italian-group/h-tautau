@@ -7,4 +7,6 @@
 <use name="h-tautau/Core"/>
 <use name="h-tautau/JetTools"/>
 <use name="h-tautau/Instruments"/>
+<use name="TauPOG/TauIDSFs"/>
+<use name="TauAnalysisTools/TauTriggerSFs"/>
 <export> <lib name="1"/> </export>
