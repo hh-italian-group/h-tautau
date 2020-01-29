@@ -35,6 +35,9 @@
 <use name="AnalysisTools/Core"/>
 <use name="h-tautau/Core"/>
 <use name="h-tautau/Analysis"/>
+<use name="TauPOG/TauIDSFs"/>
+<use name="TauAnalysisTools/TauTriggerSFs"/>
+
 <export>
     <lib   name="1"/>
 </export>

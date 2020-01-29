@@ -869,7 +869,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
-    eventTuple().eventEnergyScale = static_cast<int>(EventEnergyScale::Central);
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
