@@ -13,9 +13,9 @@ TauIdDiscriminator _e_id_discriminator) :
 {
 }
 
-void EventCandidate::InitializeJecUncertainties(Period period, const std::string& working_path)
+void EventCandidate::InitializeJecUncertainties(Period period, bool is_full, const std::string& working_path)
 {
-    std::map<analysis::Period,std::string> file_uncertainty_sources = {
+    static const std::map<analysis::Period,std::string> file_uncertainty_sources = {
         { analysis::Period::Run2016,
           "h-tautau/McCorrections/data/2016/JES/Summer16_23Sep2016V4_MC_UncertaintySources_AK4PFchs.txt" },
         { analysis::Period::Run2017,
@@ -23,10 +23,29 @@ void EventCandidate::InitializeJecUncertainties(Period period, const std::string
         { analysis::Period::Run2018,
           "h-tautau/McCorrections/data/2018/JES/Autumn18_V8_MC_UncertaintySources_AK4PFchs.txt" }
     };
-    if(!file_uncertainty_sources.count(period))
-        throw exception("Period not found in file uncertainty source.");
-    std::string full_path_source = tools::FullPath({working_path, file_uncertainty_sources.at(period)});
-    jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(full_path_source);
+
+    static const std::map<analysis::Period,std::string> file_reduced_uncertainty_sources = {
+        { analysis::Period::Run2016,
+          "h-tautau/McCorrections/data/2016/JES/Regrouped_Summer16_07Aug2017_V11_MC_UncertaintySources_AK4PFchs.txt" },
+        { analysis::Period::Run2017,
+          "h-tautau/McCorrections/data/2017/JES/Regrouped_Fall17_17Nov2017_V32_MC_UncertaintySources_AK4PFchs.txt" },
+        { analysis::Period::Run2018,
+          "h-tautau/McCorrections/data/2018/JES/Regrouped_Autumn18_V19_MC_UncertaintySources_AK4PFchs.txt" }
+    };
+
+    std::string full_path_source;
+    if(is_full){
+        if(!file_uncertainty_sources.count(period))
+            throw exception("Period not found in file uncertainty source.");
+        full_path_source = tools::FullPath({working_path, file_uncertainty_sources.at(period)});
+    }
+    else{
+        if(!file_reduced_uncertainty_sources.count(period))
+            throw exception("Period not found in file reduced uncertainty source.");
+        full_path_source = tools::FullPath({working_path, file_reduced_uncertainty_sources.at(period)});
+    }
+
+    jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(full_path_source,is_full,period);
 }
 
 const jec::JECUncertaintiesWrapper& EventCandidate::GetJecUncertainties()
@@ -67,7 +86,7 @@ const MET& EventCandidate::GetMET()
 {
     if(!met) {
         CreateLeptons();
-        if(jec::JECUncertaintiesWrapper::JetUncertainties_withTotal().count(uncertainty_source))
+        if(jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source))
             CreateJets();
     }
     return *met;
@@ -149,7 +168,7 @@ void EventCandidate::CreateJets()
         tuple_jets->emplace_back(*event, n);
     for(size_t n = 0; n < tuple_jets->size(); ++n)
         jet_candidates->emplace_back(tuple_jets->at(n));
-    if(jec::JECUncertaintiesWrapper::JetUncertainties_withTotal().count(uncertainty_source)) {
+    if(jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source)) {
         const auto& other_jets_p4 = event->other_jets_p4;
         auto shifted_met_p4(met->GetMomentum());
         *jet_candidates = GetJecUncertainties().ApplyShift(*jet_candidates, uncertainty_source, scale, &other_jets_p4,
