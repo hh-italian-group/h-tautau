@@ -61,10 +61,10 @@ enum class UncertaintySource { None = 0, TauES = 1, JetFull_Total = 2, TopPt = 3
      TauTriggerUnc = 93, EleTriggerUnc = 94, MuonTriggerUnc = 95,
      TauES_DM0 = 96, TauES_DM1 = 97, TauES_DM10 = 98, TauES_DM11 = 99, TauVSjetSF_DM0 = 100, TauVSjetSF_DM1 = 101,
      TauVSjetSF_3prong = 102, TauVSjetSF_pt20to25 = 103, TauVSjetSF_pt25to30 = 104, TauVSjetSF_pt30to35 = 105,
-     TauVSjetSF_pt35to40 = 106, TauVSjetSF_ptgt40 = 107, EfakingTauES_DM0 = 108, EfakingTauES_DM1 =109, EfakingTauES_3prong = 110,
+     TauVSjetSF_pt35to40 = 106, TauVSjetSF_ptgt40 = 107, EleFakingTauES_DM0 = 108, EleFakingTauES_DM1 =109, EleFakingTauES_3prong = 110,
      TauVSeSF_barrel = 111, TauVSeSF_endcap = 112, MuFakingTauES_DM0 = 113, MuFakingTauES_DM1 = 114,
      MuFakingTauES_3prong = 115, TauVSmuSF_etaLt0p4 = 116, TauVSmuSF_eta0p4to0p8 = 117, TauVSmuSF_eta0p8to1p2 = 118,
-     TauVSmuSF_eta1p2to1p7 = 119, TauVSmuSF_etaGt1p7 = 120 };
+     TauVSmuSF_eta1p2to1p7 = 119, TauVSmuSF_etaGt1p7 = 120, MuFakingTauES = 121 };
 ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::None, "None" }, { UncertaintySource::TauES, "TauES" },
     { UncertaintySource::JetFull_Total, "JetFull_Total" }, { UncertaintySource::TopPt, "TopPt" },
@@ -171,9 +171,9 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::TauVSjetSF_pt30to35, "TauVSjetSF_pt30to35"},
     { UncertaintySource::TauVSjetSF_pt35to40, "TauVSjetSF_pt35to40"},
     { UncertaintySource::TauVSjetSF_ptgt40, "TauVSjetSF_ptgt40"},
-    { UncertaintySource::EfakingTauES_DM0, "EfakingTauES_DM0"},
-    { UncertaintySource::EfakingTauES_DM1, "EfakingTauES_DM1"},
-    { UncertaintySource::EfakingTauES_3prong, "EfakingTauES_3prong"},
+    { UncertaintySource::EleFakingTauES_DM0, "EleFakingTauES_DM0"},
+    { UncertaintySource::EleFakingTauES_DM1, "EleFakingTauES_DM1"},
+    { UncertaintySource::EleFakingTauES_3prong, "EleFakingTauES_3prong"},
     { UncertaintySource::TauVSeSF_barrel, "TauVSeSF_barrel"},
     { UncertaintySource::TauVSeSF_endcap, "TauVSeSF_endcap"},
     { UncertaintySource::MuFakingTauES_DM0, "MuFakingTauES_DM0"},
@@ -183,7 +183,8 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::TauVSmuSF_eta0p4to0p8, "TauVSmuSF_eta0p4to0p8"},
     { UncertaintySource::TauVSmuSF_eta0p8to1p2, "TauVSmuSF_eta0p8to1p2"},
     { UncertaintySource::TauVSmuSF_eta1p2to1p7, "TauVSmuSF_eta1p2to1p7"},
-    { UncertaintySource::TauVSmuSF_etaGt1p7, "TauVSmuSF_etaGt1p7"}
+    { UncertaintySource::TauVSmuSF_etaGt1p7, "TauVSmuSF_etaGt1p7"},
+    { UncertaintySource::MuFakingTauES, "MuFakingTauES"}
 
 };
 
