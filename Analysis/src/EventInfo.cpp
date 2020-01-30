@@ -271,7 +271,9 @@ LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
     Lock lock(*mutex);
     if(useSVfit && addMET)
         throw exception("Can't add MET and with SVfit applied.");
-    LorentzVector p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum();
+    LorentzVector p4 (0,0,0,0);
+    if(useSVfit && GetSVFitResults().has_valid_momentum)
+        p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum() ;
     if(addMET)
         p4 += event_candidate.GetMET().GetMomentum();
     return p4;
@@ -293,28 +295,71 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
     Lock lock(*mutex);
     using FatJet = ntuple::TupleFatJet;
     using SubJet = ntuple::TupleSubJet;
-    if(period == Period::Run2018) return nullptr;
+
     if(!HasBjetPair()) return nullptr;
     for(const FatJetCandidate& fatJet : GetFatJets()) {
-        if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
-        if(fatJet->subJets().size() < 2) continue;
-        std::vector<SubJet> subJets = fatJet->subJets();
-        std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
-            return j1.p4().Pt() > j2.p4().Pt(); });
-        std::vector<double> deltaR;
-        for(size_t n = 0; n < 2; ++n) {
-            for(size_t k = 0; k < 2; ++k) {
-                const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
-                                                               GetHiggsBB().GetDaughterMomentums().at(k));
-                deltaR.push_back(dR);
+        if(period != Period::Run2018){
+            if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
+            if(fatJet->subJets().size() < 2) continue;
+            std::vector<SubJet> subJets = fatJet->subJets();
+            std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
+                return j1.p4().Pt() > j2.p4().Pt(); });
+            std::vector<double> deltaR;
+            for(size_t n = 0; n < 2; ++n) {
+                for(size_t k = 0; k < 2; ++k) {
+                    const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
+                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
+                    deltaR.push_back(dR);
+                }
             }
+            if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
+                    || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
+                return &fatJet;
         }
-        if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
-                || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
-            return &fatJet;
+        else{
+            if(fatJet->p4().M() < mass_cut) continue;
+            std::vector<double> deltaR;
+            for(size_t n = 0; n < 2; ++n) {
+                for(size_t k = 0; k < 2; ++k) {
+                    const auto dR = ROOT::Math::VectorUtil::DeltaR(fatJet->p4(),
+                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
+                    deltaR.push_back(dR);
+                }
+            }
+            if(deltaR.at(0) < deltaR_subjet_cut || (deltaR.at(1) < deltaR_subjet_cut))
+                return &fatJet;
+        }
     }
     return nullptr;
 }
+
+// const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double deltaR_subjet_cut)
+// {
+//     Lock lock(*mutex);
+//     using FatJet = ntuple::TupleFatJet;
+//     using SubJet = ntuple::TupleSubJet;
+//     if(period == Period::Run2018) return nullptr;
+//     if(!HasBjetPair()) return nullptr;
+//     for(const FatJetCandidate& fatJet : GetFatJets()) {
+//         if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
+//         if(fatJet->subJets().size() < 2) continue;
+//         std::vector<SubJet> subJets = fatJet->subJets();
+//         std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
+//             return j1.p4().Pt() > j2.p4().Pt(); });
+//         std::vector<double> deltaR;
+//         for(size_t n = 0; n < 2; ++n) {
+//             for(size_t k = 0; k < 2; ++k) {
+//                 const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
+//                                                                GetHiggsBB().GetDaughterMomentums().at(k));
+//                 deltaR.push_back(dR);
+//             }
+//         }
+//         if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
+//                 || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
+//             return &fatJet;
+//     }
+//     return nullptr;
+// }
 
 void EventInfoBase::SetMvaScore(double _mva_score)
 {
