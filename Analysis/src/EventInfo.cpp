@@ -252,7 +252,7 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
         bool gotSVFit = eventCacheProvider.TryGetSVFit(*svfit_results,selected_htt_pair,
                                         event_candidate.GetUncSource(),event_candidate.GetScale());
         if(!allow_calc && !gotSVFit)
-            throw exception("Not allowed to calculate SVFit.");
+            throw exception("Not allowed to calculate SVFit."); //Mettere info del es etc...
         else if(!gotSVFit){
             const auto& svfitProducer = GetSVFitProducer();
             const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
