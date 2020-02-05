@@ -252,7 +252,7 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
         bool gotSVFit = eventCacheProvider.TryGetSVFit(*svfit_results,selected_htt_pair,
                                         event_candidate.GetUncSource(),event_candidate.GetScale());
         if(!allow_calc && !gotSVFit)
-            throw exception("Not allowed to calculate SVFit."); 
+            throw exception("Not allowed to calculate SVFit.");
         else if(!gotSVFit){
             const auto& svfitProducer = GetSVFitProducer();
             const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
@@ -272,7 +272,7 @@ LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
     if(useSVfit && addMET)
         throw exception("Can't add MET and with SVfit applied.");
     LorentzVector p4 (0,0,0,0);
-    if(useSVfit && GetSVFitResults().has_valid_momentum)
+    if(GetSVFitResults().has_valid_momentum)
         p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum() ;
     if(addMET)
         p4 += event_candidate.GetMET().GetMomentum();
@@ -319,12 +319,9 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
         else{
             if(fatJet->p4().M() < mass_cut) continue;
             std::vector<double> deltaR;
-            for(size_t n = 0; n < 2; ++n) {
                 for(size_t k = 0; k < 2; ++k) {
-                    const auto dR = ROOT::Math::VectorUtil::DeltaR(fatJet->p4(),
-                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
+                    const auto dR = ROOT::Math::VectorUtil::DeltaR(fatJet->p4(), GetHiggsBB().GetDaughterMomentums().at(k));
                     deltaR.push_back(dR);
-                }
             }
             if(deltaR.at(0) < deltaR_subjet_cut || (deltaR.at(1) < deltaR_subjet_cut))
                 return &fatJet;

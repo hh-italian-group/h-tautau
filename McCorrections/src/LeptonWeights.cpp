@@ -200,13 +200,20 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
                 static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                     "HLT_IsoMu27_v", "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1_v" };
 
+
                 if(period == Period::Run2016 &&
+                    eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2016) &&
+                    (eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_2016)
+                    || eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_eta2p1_2016)))
+                    prescaled_weight = 1;
+
+                else if(period == Period::Run2016 &&
                     !(eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2016) ||
                         eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_2016))
                     && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_eta2p1_2016))
                     prescaled_weight = prescaled_weight_IsoMu22_eta2p1_2016;
 
-                if(period == Period::Run2016 &&
+                else if(period == Period::Run2016 &&
                     !(eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2016) ||
                         eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_eta2p1_2016))
                     && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_2016))
@@ -231,6 +238,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
     }
 
     else if(channel == Channel::MuMu){
+        //muMu for period Run2016 prescales should also be applied if all single mu triggers are used.
         static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
             "HLT_IsoMu27_v"};
         if(period == Period::Run2017
