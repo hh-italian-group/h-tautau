@@ -122,9 +122,9 @@ double LeptonWeights::GetTriggerWeight(EventInfoBase& eventInfo) const
 }
 
 
-double LeptonWeights::Get(EventInfoBase& eventInfo/*, std::pair<TauIdDiscriminator, DiscriminatorWP> disc_wp*/) const
+double LeptonWeights::Get(EventInfoBase& eventInfo) const
 {
-    return GetIdIsoWeight(eventInfo/*, disc_wp*/) * GetTriggerWeight(eventInfo);
+    return GetIdIsoWeight(eventInfo) * GetTriggerWeight(eventInfo);
 }
 
 double LeptonWeights::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -138,7 +138,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
     const Channel channel = static_cast<Channel>(event.channelId);
     double prescaled_weight = 1;
 
-    //values calculated using brilcalc
+    //values calculated using brilcalc (https://docs.google.com/spreadsheets/d/1vlca_ap3Ppc62BzjjMcyRNAwUvNhulIU/edit#gid=1424643624)
     //2016
     static const std::vector<std::string> triggerPaths_Prescaled_IsoMu22_2016 = {"HLT_IsoMu22_v", "HLT_IsoMu22_v"};
     static const std::vector<std::string> triggerPaths_Prescaled_IsoMu22_eta2p1_2016 = {"HLT_IsoMu22_eta2p1_v", "HLT_IsoTkMu22_eta2p1_v"};
@@ -238,7 +238,6 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
                 && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau_2017))
             prescaled_weight = prescaled_weight_muTau_2017;
         return  prescaled_weight * muonSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
-                // * muonSF.GetTriggerEff(event.p4_2, isData);
     }
 
 
@@ -262,19 +261,6 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
 
     throw exception ("channel not allowed");
 }
-
-// double GetTauWeight(EventInfoBase& eventInfo, DiscriminatorWP wp) const
-// {
-//     double tau_weight = 1;
-//     if(eventInfo.GetLeg(2)->gen_match()) == GenLeptonMatch::Tau)
-//         tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
-//                                                static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
-//     else
-//         tau_weight = tauIdWeight->getSFvsEta(eventInfo.GetLeg(2).GetMomentum().eta(),
-//                                              static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
-//
-//     return tau_weight;
-// }
 
 } // namespace mc_corrections
 } // namespace analysis

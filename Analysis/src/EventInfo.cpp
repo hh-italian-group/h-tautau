@@ -252,7 +252,7 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
         bool gotSVFit = eventCacheProvider.TryGetSVFit(*svfit_results,selected_htt_pair,
                                         event_candidate.GetUncSource(),event_candidate.GetScale());
         if(!allow_calc && !gotSVFit)
-            throw exception("Not allowed to calculate SVFit."); //Mettere info del es etc...
+            throw exception("Not allowed to calculate SVFit."); 
         else if(!gotSVFit){
             const auto& svfitProducer = GetSVFitProducer();
             const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
@@ -332,34 +332,6 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
     }
     return nullptr;
 }
-
-// const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double deltaR_subjet_cut)
-// {
-//     Lock lock(*mutex);
-//     using FatJet = ntuple::TupleFatJet;
-//     using SubJet = ntuple::TupleSubJet;
-//     if(period == Period::Run2018) return nullptr;
-//     if(!HasBjetPair()) return nullptr;
-//     for(const FatJetCandidate& fatJet : GetFatJets()) {
-//         if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
-//         if(fatJet->subJets().size() < 2) continue;
-//         std::vector<SubJet> subJets = fatJet->subJets();
-//         std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
-//             return j1.p4().Pt() > j2.p4().Pt(); });
-//         std::vector<double> deltaR;
-//         for(size_t n = 0; n < 2; ++n) {
-//             for(size_t k = 0; k < 2; ++k) {
-//                 const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
-//                                                                GetHiggsBB().GetDaughterMomentums().at(k));
-//                 deltaR.push_back(dR);
-//             }
-//         }
-//         if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
-//                 || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
-//             return &fatJet;
-//     }
-//     return nullptr;
-// }
 
 void EventInfoBase::SetMvaScore(double _mva_score)
 {
