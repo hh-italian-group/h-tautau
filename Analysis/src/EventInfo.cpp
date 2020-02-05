@@ -272,7 +272,6 @@ LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
     if(useSVfit && addMET)
         throw exception("Can't add MET and with SVfit applied.");
     LorentzVector p4 (0,0,0,0);
-    if(GetSVFitResults().has_valid_momentum)
         p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum() ;
     if(addMET)
         p4 += event_candidate.GetMET().GetMomentum();
