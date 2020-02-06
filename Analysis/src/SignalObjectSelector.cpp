@@ -186,10 +186,10 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
             if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
                 if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu)
                     throw analysis::exception("First leg type is not a muon in mutau channel.");
-                if(ROOT::Math::VectorUtil::DeltaR2(event.lep_gen_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
+                if(ROOT::Math::VectorUtil::DeltaR(event.lep_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
             }
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
-            if(muonId.Passed(DiscriminatorWP::Medium)) return false;
+            if(muonId.Passed(DiscriminatorWP::Medium) && event.other_lepton_iso.at(n) < 0.3) return false;
         }
     }
     return true;

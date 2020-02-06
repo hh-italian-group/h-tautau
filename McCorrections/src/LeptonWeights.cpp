@@ -137,11 +137,20 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
     const Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
     double prescaled_weight = 1;
-    static const std::vector<std::string> triggerPaths_Prescaled_eTau = {"HLT_Ele32_WPTight_Gsf_v"};
-    static const std::vector<std::string> triggerPaths_Prescaled_muTau = {"HLT_IsoMu24_v"};
-    //Values to be review
-    static constexpr double prescaled_weight_eTau = 0.9534869;
-    static constexpr double prescaled_weight_muTau = 0.947434;
+
+    //values calculated using brilcalc (https://docs.google.com/spreadsheets/d/1vlca_ap3Ppc62BzjjMcyRNAwUvNhulIU/edit#gid=1424643624)
+    //2016
+    static const std::vector<std::string> triggerPaths_Prescaled_IsoMu22_2016 = {"HLT_IsoMu22_v", "HLT_IsoMu22_v"};
+    static const std::vector<std::string> triggerPaths_Prescaled_IsoMu22_eta2p1_2016 = {"HLT_IsoMu22_eta2p1_v", "HLT_IsoTkMu22_eta2p1_v"};
+    static constexpr double prescaled_weight_IsoMu22_2016 = 0.7952219705;
+    static constexpr double prescaled_weight_IsoMu22_eta2p1_2016 = 0.9237823527;
+
+    //2017
+    static const std::vector<std::string> triggerPaths_Prescaled_eTau_2017 = {"HLT_Ele32_WPTight_Gsf_v"};
+    static const std::vector<std::string> triggerPaths_Prescaled_muTau_2017 = {"HLT_IsoMu24_v"};
+    static constexpr double prescaled_weight_eTau_2017 = 0.6530857451;
+    static constexpr double prescaled_weight_muTau_2017 = 0.9161390096;
+
     if(channel == Channel::ETau) {
         if(electronSF.HasCrossTriggers() && std::abs(eventInfo.GetLeg(2).GetMomentum().eta()) < 2.1){
             const double ele_single_eff = electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
@@ -154,21 +163,21 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
                 tauTriggerWeight_eTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
                                                                           eventInfo.GetLeg(2)->decayMode());
 
-            static const std::vector<std::string> triggerPaths_unPrescaled = {
+            static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                 "HLT_Ele35_WPTight_Gsf_v", "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1_v" };
-            if(period == Period::Run2017
-                    && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled)
-                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau))
-                prescaled_weight = prescaled_weight_eTau;
+
+            if(period == Period::Run2017 && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
+                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau_2017))
+                prescaled_weight = prescaled_weight_eTau_2017;
             return prescaled_weight * std::min(ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff, 1.);
         }
         else {
-            static const std::vector<std::string> triggerPaths_unPrescaled = {
+            static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                 "HLT_Ele35_WPTight_Gsf_v"};
             if(period == Period::Run2017
-                    && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled)
-                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau))
-                prescaled_weight = prescaled_weight_eTau;
+                    && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
+                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau_2017))
+                prescaled_weight = prescaled_weight_eTau_2017;
             return electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
         }
 
@@ -185,35 +194,50 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
                     tauTriggerWeight_muTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
                                                             eventInfo.GetLeg(2)->decayMode());
 
-                static const std::vector<std::string> triggerPaths_unPrescaled = {
+                static const std::vector<std::string> triggerPaths_unPrescaled_2016 = {
+                        "HLT_IsoMu19_eta2p1_LooseIsoPFTau20_v", "HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1_v" };
+
+                static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                     "HLT_IsoMu27_v", "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1_v" };
-                if(period == Period::Run2017
-                        && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled)
-                        && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau))
-                    prescaled_weight = prescaled_weight_muTau;
+
+                if(period == Period::Run2016 &&
+                    !(eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2016))
+                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_eta2p1_2016))
+                    prescaled_weight = prescaled_weight_IsoMu22_eta2p1_2016;
+
+                else if(period == Period::Run2016 &&
+                    !(eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2016) ||
+                        eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_eta2p1_2016))
+                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_IsoMu22_2016))
+                    prescaled_weight = prescaled_weight_IsoMu22_2016;
+
+                if(period == Period::Run2017 && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
+                        && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau_2017))
+                    prescaled_weight = prescaled_weight_muTau_2017;
+
                 return prescaled_weight * std::min(muon_single_eff * (1 - tau_eff) + muon_cross_eff * tau_eff, 1.);
         }
         else{
-            static const std::vector<std::string> triggerPaths_unPrescaled = {
+            static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                 "HLT_IsoMu27_v"};
             if(period == Period::Run2017
-                    && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled)
-                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau))
-                prescaled_weight = prescaled_weight_muTau;
+                    && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
+                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau_2017))
+                prescaled_weight = prescaled_weight_muTau_2017;
             return prescaled_weight * muonSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
         }
 
     }
 
     else if(channel == Channel::MuMu){
-        static const std::vector<std::string> triggerPaths_unPrescaled = {
+        //muMu for period Run2016 prescales should also be applied if all single mu triggers are used.
+        static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
             "HLT_IsoMu27_v"};
         if(period == Period::Run2017
-                && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled)
-                && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau))
-            prescaled_weight = prescaled_weight_muTau;
+                && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
+                && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_muTau_2017))
+            prescaled_weight = prescaled_weight_muTau_2017;
         return  prescaled_weight * muonSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
-                // * muonSF.GetTriggerEff(event.p4_2, isData);
     }
 
 
