@@ -104,10 +104,12 @@ public:
     boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate, bool is_sync = false) const;
     bool PassLeptonVetoSelection(const ntuple::Event& event) const;
     bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
-    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSjetDiscriminator() const;
+    std::map<SignalMode, std::pair<TauIdDiscriminator, DiscriminatorWP>> GetTauVSjetDiscriminator() const;
     std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSeDiscriminator(analysis::Channel) const;
     std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSmuDiscriminator(analysis::Channel) const;
-    std::pair<DiscriminatorWP, DiscriminatorWP> GetTauVSjetSidebandWPRange() const;
+    std::map<SignalMode, std::pair<DiscriminatorWP, DiscriminatorWP>>  GetTauVSjetSidebandWPRange() const;
+
+    SignalMode GetSignalMode() const { return mode; }
 
     struct SelectedSignalJets{
         LegPair selectedBjetPair;
@@ -153,7 +155,6 @@ private:
 private:
     SignalMode mode;
     double DR2_leptons;
-    TauIdDiscriminator discriminator;
 };
 
 } // namespace analysis
