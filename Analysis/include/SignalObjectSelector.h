@@ -104,9 +104,10 @@ public:
     boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate, bool is_sync = false) const;
     bool PassLeptonVetoSelection(const ntuple::Event& event) const;
     bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
-    TauIdDiscriminator GetTauVSjetDiscriminator() const;
+    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSjetDiscriminator() const;
     std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSeDiscriminator(analysis::Channel) const;
     std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSmuDiscriminator(analysis::Channel) const;
+    std::pair<DiscriminatorWP, DiscriminatorWP> GetTauVSjetSidebandWPRange() const;
 
     struct SelectedSignalJets{
         LegPair selectedBjetPair;

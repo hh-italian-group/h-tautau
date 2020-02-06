@@ -38,10 +38,20 @@ SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
         throw analysis::exception("Signal Mode for SignalObjectSelector constructor not supported");
 }
 
-TauIdDiscriminator SignalObjectSelector::GetTauVSjetDiscriminator() const
+std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSjetDiscriminator() const
 {
-    return discriminator;
+    static const std::pair<TauIdDiscriminator, DiscriminatorWP> tauVSjetDiscriminator =
+        { TauIdDiscriminator::byDeepTau2017v2p1VSjet, DiscriminatorWP::Medium };
+    return tauVSjetDiscriminator;
 }
+
+std::pair<DiscriminatorWP, DiscriminatorWP> SignalObjectSelector::GetTauVSjetSidebandWPRange() const
+{
+    static const std::pair<DiscriminatorWP, DiscriminatorWP> tauVSjetWps =
+        { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium };
+    return tauVSjetWps;
+}
+
 std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSeDiscriminator(analysis::Channel channel) const
 {
     static const std::map<std::pair<Channel, SignalMode>, std::pair<TauIdDiscriminator, DiscriminatorWP>> tauVSeDiscriminators = {
@@ -318,9 +328,9 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
     if(!lepton->Passed(mu_id.first, mu_id.second)) return false;
-    if(is_sync && legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
-    if(!is_sync && legId == 1 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::Medium)) return false;
-    if(legId == 2 && !lepton->Passed(TauIdDiscriminator::byDeepTau2017v2p1VSjet,DiscriminatorWP::VVVLoose)) return false;
+    if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first, DiscriminatorWP::VVVLoose)) return false;
+    if(!is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first, DiscriminatorWP::Medium)) return false;
+    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first, DiscriminatorWP::VVVLoose)) return false;
     return true;
 }
 
