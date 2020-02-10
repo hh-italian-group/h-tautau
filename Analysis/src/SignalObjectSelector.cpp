@@ -8,9 +8,11 @@ namespace analysis {
 
 SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
 {
+    if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
+        DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
 }
 
-std::map<SignalMode, std::pair<TauIdDiscriminator, DiscriminatorWP>> SignalObjectSelector::GetTauVSjetDiscriminator() const
+std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSjetDiscriminator() const
 {
     static const std::map<SignalMode, std::pair<TauIdDiscriminator, DiscriminatorWP>> tauVSjetDiscriminator = {
         { SignalMode::HTT, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, DiscriminatorWP::Medium } },
@@ -23,23 +25,23 @@ std::map<SignalMode, std::pair<TauIdDiscriminator, DiscriminatorWP>> SignalObjec
         { SignalMode::Skimmer, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, DiscriminatorWP::Medium } },
         { SignalMode::TauPOG_Skimmer, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, DiscriminatorWP::Medium } }
     };
-    return tauVSjetDiscriminator;
+    return tauVSjetDiscriminator.at(mode);
 }
 
-std::map<SignalMode, std::pair<DiscriminatorWP, DiscriminatorWP>> SignalObjectSelector::GetTauVSjetSidebandWPRange() const
+std::pair<DiscriminatorWP, DiscriminatorWP> SignalObjectSelector::GetTauVSjetSidebandWPRange() const
 {
     static const std::map<SignalMode, std::pair<DiscriminatorWP, DiscriminatorWP>> tauVSjetWps = {
-        { SignalMode::HH, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
-        { SignalMode::HTT_sync, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
-        { SignalMode::TauPOG_default, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
+        { SignalMode::HTT, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } },
+        { SignalMode::HTT_sync, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } },
+        { SignalMode::TauPOG_default, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } },
         { SignalMode::TauPOG_deepTauVsJet, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
         { SignalMode::TauPOG_deepTauVsJet_full, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
-        { SignalMode::HH_legacy, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
+        { SignalMode::HH_legacy, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } },
         { SignalMode::HH, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
-        { SignalMode::Skimmer, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } },
-        { SignalMode::TauPOG_Skimmer, { DiscriminatorWP::VVVLoose, DiscriminatorWP::Medium } }
+        { SignalMode::Skimmer, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } },
+        { SignalMode::TauPOG_Skimmer, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } }
     };
-    return tauVSjetWps;
+    return tauVSjetWps.at(mode);
 }
 
 std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSeDiscriminator(analysis::Channel channel) const
@@ -159,7 +161,7 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
                 are_identical = false;
                 auto& h1_leg = event_candidate.GetLeptons().at(h1_leg_id);
                 auto& h2_leg = event_candidate.GetLeptons().at(h2_leg_id);
-                const int iso_cmp = h1_leg->CompareIsolations(*h2_leg, GetTauVSjetDiscriminator().at(mode).first);
+                const int iso_cmp = h1_leg->CompareIsolations(*h2_leg, GetTauVSjetDiscriminator().first);
                 if(iso_cmp != 0) return iso_cmp == 1;
                 if(h1_leg.GetMomentum().pt() != h2_leg.GetMomentum().pt())
                     return h1_leg.GetMomentum().pt() > h2_leg.GetMomentum().pt();
@@ -231,7 +233,7 @@ bool SignalObjectSelector::PassHTT_LeptonSelection(const LepCandidate& lepton, C
     if(!(lepton->PassedOldDecayMode())) return false;
     if(!is_sync && !lepton->Passed(e_id.first, e_id.second)) return false;
     if(!is_sync && !lepton->Passed(mu_id.first, mu_id.second)) return false;
-    if(!lepton->Passed(GetTauVSjetDiscriminator().at(mode).first,GetTauVSjetDiscriminator().at(mode).second)) return false;
+    if(!lepton->Passed(GetTauVSjetDiscriminator().first,GetTauVSjetDiscriminator().second)) return false;
     return true;
 }
 
@@ -285,10 +287,10 @@ bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lep
     if(!(lepton->PassedOldDecayMode())) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
     if(!lepton->Passed(mu_id.first, mu_id.second)) return false;
-    if(legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().at(mode).first,
-                                     GetTauVSjetDiscriminator().at(mode).second)) return false;
-    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().at(mode).first,
-                                     GetTauVSjetDiscriminator().at(mode).second)) return false;
+    if(legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
+                                     GetTauVSjetDiscriminator().second)) return false;
+    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,
+                                     GetTauVSjetSidebandWPRange().first)) return false;
     return true;
 }
 
@@ -321,11 +323,11 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
     if(!lepton->Passed(mu_id.first, mu_id.second)) return false;
-    if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().at(mode).first, DiscriminatorWP::VVVLoose)) return false;
-    if(!is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().at(mode).first,
-                                                 GetTauVSjetDiscriminator().at(mode).second)) return false;
-    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().at(mode).first,
-                                     GetTauVSjetSidebandWPRange().at(mode).second)) return false;
+    if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first, DiscriminatorWP::VVVLoose)) return false;
+    if(!is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
+                                                 GetTauVSjetDiscriminator().second)) return false;
+    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,
+                                     GetTauVSjetSidebandWPRange().first)) return false;
     return true;
 }
 
@@ -334,8 +336,8 @@ bool SignalObjectSelector::PassSkimmer_LeptonSelection(const LepCandidate& lepto
     if(lepton->leg_type() == LegType::e || lepton->leg_type() == LegType::mu) return true;
     if(!(lepton->leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
     if(!(lepton->PassedOldDecayMode())) return false;
-    if(!lepton->Passed(GetTauVSjetDiscriminator().at(mode).first,
-                       GetTauVSjetDiscriminator().at(mode).second)) return false;
+    if(!lepton->Passed(GetTauVSjetDiscriminator().first,
+                       GetTauVSjetSidebandWPRange().first)) return false;
     return true;
 }
 
