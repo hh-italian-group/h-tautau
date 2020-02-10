@@ -97,11 +97,11 @@ unc_sources = args.unc_sources.split(',')
 long_jobs = {}
 if args.long_jobs is not None and os.path.exists(args.long_jobs):
     with open(args.long_jobs, 'r') as f:
-        for line in f.readlines():
+        for line_number, line in enumerate(f.readlines()):
             if len(line) == 0 or line[0] == '#': continue
-            split_line = [ s for s in line.split(' ') if len(s) > 0 ]
+            split_line = [ s.strip() for s in line.split(' ') if len(s.strip()) > 0 ]
             if len(split_line) != 2:
-                raise RuntimeError("Invalid format in long_jobs file.")
+                raise RuntimeError("Invalid format in long_jobs file in line {}.".format(line_number + 1))
             long_jobs[split_line[0]] = int(split_line[1])
 
 jobs = []
