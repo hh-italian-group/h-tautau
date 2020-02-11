@@ -9,7 +9,21 @@ namespace analysis {
 SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
 {
     if(mode == SignalMode::HTT || mode == SignalMode::HTT_sync)
-        DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
+	DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
+    else if(mode == SignalMode::TauPOG_default)
+    	DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
+    else if(mode == SignalMode::TauPOG_deepTauVsJet || mode == SignalMode::TauPOG_deepTauVsJet_full)
+	   DR2_leptons = std::pow(cuts::H_tautau_2016::DeltaR_betweenSignalObjects, 2);
+    else if(mode == SignalMode::HH_legacy)
+    	DR2_leptons = std::pow(cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects, 2);
+    else if(mode == SignalMode::HH)
+    	 DR2_leptons = std::pow(cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects, 2);
+    else if(mode == SignalMode::Skimmer || mode == SignalMode::TauPOG_Skimmer){
+        double DR = std::min(cuts::H_tautau_2016::DeltaR_betweenSignalObjects,cuts::hh_bbtautau_2017::DeltaR_betweenSignalObjects);
+        DR2_leptons = std::pow(DR, 2);
+    }
+    else
+        throw analysis::exception("Signal Mode for SignalObjectSelector constructor not supported");
 }
 
 std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSjetDiscriminator() const
@@ -25,6 +39,9 @@ std::pair<TauIdDiscriminator, DiscriminatorWP> SignalObjectSelector::GetTauVSjet
         { SignalMode::Skimmer, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, DiscriminatorWP::Medium } },
         { SignalMode::TauPOG_Skimmer, { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017, DiscriminatorWP::Medium } }
     };
+
+    if(!tauVSjetDiscriminator.count(mode))
+        throw exception("Mode'%1%' isn't found at the tauVSjetDiscriminator map") % mode;
     return tauVSjetDiscriminator.at(mode);
 }
 
@@ -41,6 +58,9 @@ std::pair<DiscriminatorWP, DiscriminatorWP> SignalObjectSelector::GetTauVSjetSid
         { SignalMode::Skimmer, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } },
         { SignalMode::TauPOG_Skimmer, { DiscriminatorWP::VVLoose, DiscriminatorWP::Medium } }
     };
+
+    if(!tauVSjetWps.count(mode))
+        throw exception("Mode'%1%' isn't found at the tauVSjetWps map") % mode;
     return tauVSjetWps.at(mode);
 }
 
