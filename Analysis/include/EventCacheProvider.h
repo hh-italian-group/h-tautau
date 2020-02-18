@@ -60,6 +60,7 @@ public:
     template<typename Event>
     void FillEvent(Event& event) const
     {
+        using LorentzVectorM = typename decltype(event.SVfit_p4)::value_type;
         event.SVfit_Higgs_index.clear();
         event.SVfit_is_valid.clear();
         event.SVfit_p4.clear();
@@ -72,8 +73,8 @@ public:
             const sv_fit_ana::FitResults& SVFit_results = iter_sv.second;
             event.SVfit_Higgs_index.push_back(ntuple::LegPairToIndex(iter_sv.first.htt_pair));
             event.SVfit_is_valid.push_back(SVFit_results.has_valid_momentum);
-            event.SVfit_p4.push_back(static_cast<ntuple::LorentzVectorM>(SVFit_results.momentum));
-            event.SVfit_p4_error.push_back(static_cast<ntuple::LorentzVectorM>(SVFit_results.momentum_error));
+            event.SVfit_p4.push_back(LorentzVectorM(SVFit_results.momentum));
+            event.SVfit_p4_error.push_back(LorentzVectorM(SVFit_results.momentum_error));
             event.SVfit_mt.push_back(static_cast<Float_t>(SVFit_results.transverseMass));
             event.SVfit_mt_error.push_back(static_cast<Float_t>(SVFit_results.transverseMass_error));
             event.SVfit_unc_source.push_back(static_cast<Int_t>(iter_sv.first.unc_source));
