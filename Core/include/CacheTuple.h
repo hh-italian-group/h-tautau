@@ -6,7 +6,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/SmartTree.h"
 #include "AnalysisTools/Core/include/AnalysisMath.h"
 
+namespace cache_tuple {
 using LorentzVectorM = analysis::LorentzVectorM;
+}
 
 #define CACHE_DATA() \
     VAR(UInt_t, run) /* run */ \
