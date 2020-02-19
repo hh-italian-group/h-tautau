@@ -6,9 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/RootExt.h"
 #include "AnalysisTools/Run/include/program_main.h"
 #include "h-tautau/Core/include/CacheTuple.h"
-#include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Analysis/include/EventCacheProvider.h"
-#include "h-tautau/Core/include/SummaryTuple.h"
 
 struct Arguments {
     REQ_ARG(std::vector<std::string>, inputs);
@@ -21,8 +19,7 @@ namespace analysis {
 class CacheMerger {
 public:
     CacheMerger(const Arguments& _args): args(_args), output(root_ext::CreateRootFile(args.outputFile())),
-                                         output_summary(ntuple::CreateSummaryTuple("summary", output.get(),
-                                                        false, ntuple::TreeState::Skimmed)) {}
+                                         output_summary("summary", output.get(), false) {}
 
     void Run()
     {
@@ -33,19 +30,10 @@ public:
         }
 
         std::vector<std::shared_ptr<cache_tuple::CacheTuple>> cacheTuples;
-        std::vector<std::shared_ptr<ntuple::SummaryTuple>> cacheTuplesSummary;
-
         for (size_t n = 0; n < all_cache.size(); ++n){
             auto cacheFile = all_cache.at(n);
-            try {
-                auto cacheTuple = std::make_shared<cache_tuple::CacheTuple>(args.channel(), cacheFile.get(), true);
-                cacheTuples.push_back(cacheTuple);
-                cacheTuplesSummary.push_back(CreateSummaryTuple("summary", cacheFile.get(), true, ntuple::TreeState::Full));
-            } catch(std::exception&) {
-                std::cerr << "WARNING: tree  << treeName" << " not found in file '"
-                          << cacheFile << "'." << std::endl;
-                cacheTuples.push_back(nullptr);
-            }
+            auto cacheTuple = std::make_shared<cache_tuple::CacheTuple>(args.channel(), cacheFile.get(), true);
+            cacheTuples.push_back(cacheTuple);
         }
         cache_tuple::CacheTuple cache_out(args.channel(), output.get(), false);
 
@@ -64,17 +52,19 @@ public:
                  const cache_tuple::CacheEvent& cache_event = cacheTuples.at(i)->data();
                  eventCacheProvider.AddEvent(cache_event);
 
-                 for(const ntuple::ProdSummary& summary : *cacheTuplesSummary.at(i)) {
-                    (*output_summary)() = summary;
-                    output_summary->Fill();
-                }
-
             }
             eventCacheProvider.FillEvent(cache_out());
             cache_out.Fill();
          }
          cache_out.Write();
-         output_summary->Write();
+
+         auto cache_tuple_summary = std::make_shared<cache_ntuple::CacheSummaryTuple>("summary", all_cache.at(0).get(),
+                                                                                     true);
+         for(const auto& summary : *cache_tuple_summary) {
+            output_summary() = summary;
+            output_summary.Fill();
+        }
+         output_summary.Write();
          if(n_entries != cache_out.GetEntries())
             throw exception ("The cache merged output ntuple has '%1%' events, while the input as '%2%'.")
                              %cache_out.GetEntries() %n_entries;
@@ -83,7 +73,7 @@ public:
 private:
     Arguments args;
     std::shared_ptr<TFile> output;
-    std::shared_ptr<ntuple::SummaryTuple> output_summary;
+    cache_ntuple::CacheSummaryTuple output_summary;
 
 
 };

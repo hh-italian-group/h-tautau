@@ -15,11 +15,6 @@ using MetCovMatrix = analysis::SquareMatrix<2>;
 using Point3D = analysis::Point3D_Float;
 }
 
-namespace cache_tuple {
-using LorentzVectorM = analysis::LorentzVectorM;
-}
-
-
 #define LVAR(type, name) VAR(std::vector<type>, lep_##name)
 #define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 #define TAU_ID(name, pattern, has_raw, wp_list) VAR(std::vector<uint16_t>, name) VAR(std::vector<Float_t>, name##raw)
