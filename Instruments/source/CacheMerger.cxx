@@ -69,8 +69,6 @@ public:
          progressReporter.Report(static_cast<size_t>(n_entries), true);
          cache_out.Write();
 
-         progressReporter.Report(static_cast<size_t>(n_entries),true);
-
          for (size_t i = 0; i < all_cache_tuple_summary.size(); ++i){
             auto cache_tuple_summary = all_cache_tuple_summary.at(i);
             for(const auto& summary : *cache_tuple_summary) {
@@ -79,7 +77,7 @@ public:
             }
         }
          output_summary.Write();
-         
+
          if(n_entries != cache_out.GetEntries())
             throw exception ("The cache merged output ntuple has '%1%' events, while the input as '%2%'.")
                              %cache_out.GetEntries() %n_entries;
