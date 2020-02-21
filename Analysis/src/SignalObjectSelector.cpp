@@ -377,6 +377,10 @@ SignalObjectSelector::SelectedSignalJets::SelectedSignalJets() : selectedBjetPai
 
 bool SignalObjectSelector::SelectedSignalJets::HasBjetPair(size_t njets) const
 {
+    std::cout << "Nutella" << "\n";
+    std::cout << "njets=" << njets << "\n";
+    std::cout << "selectedBjetPair.first=" << selectedBjetPair.first << "\n";
+    std::cout << "selectedBjetPair.second=" << selectedBjetPair.second << "\n";
     return selectedBjetPair.first < njets && selectedBjetPair.second < njets;
 }
 
@@ -439,6 +443,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
 
     if(bjets_ordered.size() >= 2){
         if(bTagger.Pass(event,bjets_ordered.at(1).index,uncertainty_source,scale) || jet_ordering == analysis::JetOrdering::HHJetTag){
+            std::cout << "bjets_ordered.at(1).index=" << bjets_ordered.at(1).index << "\n";
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
         }
     }
