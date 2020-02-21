@@ -87,6 +87,8 @@ public:
             }
             std::cout << "Channel: " << channels.at(c) << std::endl;
             CacheTuple cache(channels.at(c), outputFile.get(), false);
+            cache.SetAutoFlush(1000);
+            cache.SetMaxVirtualSize(10000000);
             auto& originalTuple = *map_event.at(channels.at(c)).first;
             const Long64_t n_entries = originalTuple.GetEntries();
             Long64_t n_processed_events_channel = 0;
