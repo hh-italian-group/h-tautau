@@ -10,9 +10,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/ProgressReporter.h"
 
 struct Arguments {
-    REQ_ARG(std::vector<std::string>, inputs);
-    REQ_ARG(std::string, outputFile);
     REQ_ARG(std::string, channel);
+    REQ_ARG(std::string, outputFile);
+    REQ_ARG(std::vector<std::string>, inputs);
 };
 
 namespace analysis {
@@ -41,6 +41,8 @@ public:
             cacheTuples.push_back(cacheTuple);
         }
         cache_tuple::CacheTuple cache_out(args.channel(), output.get(), false);
+        cache_out.SetAutoFlush(1000);
+        cache_out.SetMaxVirtualSize(10000000);
 
         const Long64_t n_entries = cacheTuples.at(0)->GetEntries();
 
