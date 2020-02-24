@@ -350,18 +350,15 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                UncertaintySource uncertainty_source,
                                                UncertaintyScale scale)
 {
-    std::cout << "a" << "\n";
     const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator().first;
     const auto ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
     EventCandidate event_candidate(event, uncertainty_source, scale, period, tau_id_discriminator, ele_id.first);
-    std::cout << "b" << "\n";
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
     auto selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate, period, jet_ordering,
                                                                        *selected_higgs_index, uncertainty_source,
                                                                        scale);
-    std::cout << "c" << "\n";
     return EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index, selected_signal_jets, period,
                          jet_ordering);
 }

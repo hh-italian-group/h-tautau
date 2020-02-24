@@ -377,10 +377,6 @@ SignalObjectSelector::SelectedSignalJets::SelectedSignalJets() : selectedBjetPai
 
 bool SignalObjectSelector::SelectedSignalJets::HasBjetPair(size_t njets) const
 {
-    std::cout << "Nutella" << "\n";
-    std::cout << "njets=" << njets << "\n";
-    std::cout << "selectedBjetPair.first=" << selectedBjetPair.first << "\n";
-    std::cout << "selectedBjetPair.second=" << selectedBjetPair.second << "\n";
     return selectedBjetPair.first < njets && selectedBjetPair.second < njets;
 }
 
@@ -413,7 +409,6 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
 
     SelectedSignalJets selected_signal_jets;
     const ntuple::Event& event = event_candidate.GetEvent();
-
     const auto CreateJetInfo = [&](bool useBTag) -> auto {
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < event_candidate.GetJets().size(); ++n) {
@@ -428,7 +423,6 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
             analysis::DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
             if(!PassEcalNoiceVetoJets(event_candidate.GetJets().at(n).GetMomentum(), period, jet_pu_id)) continue;
             if(event_candidate.GetJets().at(n).GetMomentum().pt() < 50 && !jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
-
             const double tag = useBTag ? bTagger.BTag(event,n,uncertainty_source,scale,base_ordering) : event_candidate.GetJets().at(n).GetMomentum().Pt();
             jet_info_vector.emplace_back(event_candidate.GetJets().at(n).GetMomentum(),n,tag);
         }
@@ -443,7 +437,6 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
 
     if(bjets_ordered.size() >= 2){
         if(bTagger.Pass(event,bjets_ordered.at(1).index,uncertainty_source,scale) || jet_ordering == analysis::JetOrdering::HHJetTag){
-            std::cout << "bjets_ordered.at(1).index=" << bjets_ordered.at(1).index << "\n";
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
         }
     }
