@@ -525,14 +525,14 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eventTuple().other_lepton_iso.push_back(electron.GetIsolation());
         eventTuple().other_lepton_elePassConversionVeto.push_back(electron->passConversionVeto());
         analysis::DiscriminatorIdResults eleId_iso;
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") > 0.5);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") > 0.5);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V2-wpLoose") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V2-wp90") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V2-wp80") > 0.5);
         eventTuple().other_lepton_eleId_iso.push_back(eleId_iso.GetResultBits());
         analysis::DiscriminatorIdResults eleId_noIso;
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") > 0.5);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") > 0.5);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V2-wpLoose") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V2-wp90") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V2-wp80") > 0.5);
         eventTuple().other_lepton_eleId_noIso.push_back(eleId_noIso.GetResultBits());
         eventTuple().other_lepton_muonId.push_back(0);
         if(isMC) {
