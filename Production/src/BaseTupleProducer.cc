@@ -938,7 +938,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple.get<std::vector<ULong64_t>>(br_name).push_back(match_bits.at(n));
         }
     }
-
     for(const auto jet_cand : jets){
         const auto pat_jet = &(*jet_cand);
         if(selected_jets.count(pat_jet)) continue;
@@ -946,29 +945,15 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
     }
 
-
-
-
     for(const JetCandidate& jet : fatJets) {
         eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(jet.GetMomentum()));
-
         std::string subjets_collection;
-        if(period == Period::Run2016) {
-            subjets_collection = "SoftDrop";
-            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
-            eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
-            eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
-            eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
-        } else if(period == Period::Run2017 ||period == Period::Run2018 ) {
-            subjets_collection = "SoftDropPuppi";
-            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
-            eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
-            eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
-            eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
-            eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
-        }
-        else
-            throw analysis::exception("FillEventTuple: fill fatJets for period %1% is not implemented") % period;
+        subjets_collection = "SoftDropPuppi";
+        eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
+        eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
+        eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
+        eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
+        eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
 
         if(!jet->hasSubjets(subjets_collection)) continue;
         const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;

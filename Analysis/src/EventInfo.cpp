@@ -298,7 +298,7 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
 
     if(!HasBjetPair()) return nullptr;
     for(const FatJetCandidate& fatJet : GetFatJets()) {
-        if(period != Period::Run2018){
+        if(period == Period::Run2017){
             if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
             if(fatJet->subJets().size() < 2) continue;
             std::vector<SubJet> subJets = fatJet->subJets();

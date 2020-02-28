@@ -323,6 +323,6 @@ protected:
     template<typename Candidate>
     static float GetUserFloat(const Candidate& obj, const std::string& name)
     {
-        return obj->hasUserFloat(name) ? obj->userFloat(name) : ntuple::DefaultFillValue<float>();
+        return obj->userFloat(name);
     }
 };
