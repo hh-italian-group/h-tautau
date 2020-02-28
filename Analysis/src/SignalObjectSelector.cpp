@@ -201,7 +201,7 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
     for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::e){
           analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
-          if(eleId_iso.Passed(DiscriminatorWP::Tight)) return false;
+          if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
             const Channel channel = static_cast<Channel>(event.channelId);
@@ -211,7 +211,7 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
                 if(ROOT::Math::VectorUtil::DeltaR(event.lep_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
             }
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
-            if(muonId.Passed(DiscriminatorWP::Tight) && event.other_lepton_iso.at(n) < 0.3) return false;
+            if(muonId.Passed(DiscriminatorWP::Medium) && event.other_lepton_iso.at(n) < 0.3) return false;
         }
     }
     return true;

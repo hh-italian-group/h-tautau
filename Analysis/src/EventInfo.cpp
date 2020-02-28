@@ -266,14 +266,14 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
     return *svfit_results;
 }
 
-LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
+LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET, bool allow_calc)
 {
     Lock lock(*mutex);
     if(useSVfit && addMET)
         throw exception("Can't add MET and with SVfit applied.");
     LorentzVector p4 (0,0,0,0);
-    if(!useSVfit || (useSVfit && GetSVFitResults().has_valid_momentum))
-        p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum();
+    if(!useSVfit || (useSVfit && GetSVFitResults(allow_calc).has_valid_momentum))
+        p4 = GetHiggsTTMomentum(useSVfit, allow_calc) + GetHiggsBB().GetMomentum();
     if(addMET)
         p4 += event_candidate.GetMET().GetMomentum();
     return p4;
