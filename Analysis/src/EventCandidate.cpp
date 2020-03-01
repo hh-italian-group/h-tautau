@@ -117,6 +117,14 @@ void EventCandidate::CreateLeptons()
         met = std::shared_ptr<MET>(new MET(*tuple_met, tuple_met->cov()));
     }
 
+    static const std::map<analysis::Period, std::vector<std::string>> file_tes = {
+        { analysis::Period::Run2016, { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2016Legacy.root",
+                                       "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2016Legacy_ptgt100.root" } },
+        { analysis::Period::Run2017, { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2017ReReco.root",
+                                       "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2017ReReco_ptgt100.root" } },
+        { analysis::Period::Run2018, { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2018ReReco.root",
+                                      "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2018ReReco_ptgt100.root" } }
+    };
     lepton_candidates = std::make_shared<LepCollection>();
     tuple_leptons = std::make_shared<std::vector<ntuple::TupleLepton>>();
     for(size_t n = 0; n < event->lep_p4.size(); ++n)
@@ -130,8 +138,10 @@ void EventCandidate::CreateLeptons()
       if(tuple_lepton.leg_type() == analysis::LegType::tau){
           double sf = TauESUncertainties::GetCorrectionFactor(period, tuple_lepton.decayMode(), tuple_lepton.gen_match(),
                                                               uncertainty_source, scale, tuple_lepton.p4().pt(),
-                                                              tau_id_discriminator, ele_id_discriminator,
-                                                              tuple_lepton.p4().eta());
+                                                              ele_id_discriminator,
+                                                              tuple_lepton.p4().eta(), file_tes.at(period).at(0),
+                                                              file_tes.at(period).at(1));
+
           // if(tuple_lepton.decayMode() == 0){
           //     double shifted_pt = lepton_p4.pt() * sf;
           //     corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());

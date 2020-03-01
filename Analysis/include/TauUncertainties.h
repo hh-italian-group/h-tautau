@@ -11,6 +11,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <string>
 #include <iostream>
 #include "AnalysisTools/Core/include/TextIO.h"
+#include "AnalysisTools/Run/include/program_main.h"
+#include "AnalysisTools/Core/include/RootExt.h"
+
+
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 using TauIdDiscriminator = analysis::TauIdDiscriminator;
@@ -18,11 +22,13 @@ class TauESUncertainties{
 public:
     static double GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
                                       UncertaintySource unc_source, UncertaintyScale scale, double pt,
-                                      TauIdDiscriminator tauVSjetDiscriminator, TauIdDiscriminator tauVSeDiscriminator,
-                                      double eta);
+                                      TauIdDiscriminator tauVSeDiscriminator,
+                                      double eta, std::string file_low_pt, std::string file_high_pt);
 
-    static double GetCorrectionFactorTrueTau(analysis::Period period, int decayMode, UncertaintyScale current_scale,
-                                             double pt, TauIdDiscriminator tauVSjetDiscriminator);
+    static double GetCorrectionFactorTrueTau(double pt, int decayMode, std::string file_low_pt,
+                                             std::string file_high_pt, UncertaintyScale scale,
+                                             GenLeptonMatch genLeptonMatch = GenLeptonMatch::Tau,
+                                             UncertaintySource unc_source = UncertaintySource::None);
 
     static double GetCorrectionFactorMuonFakingTau(analysis::Period period, int decayMode);
 

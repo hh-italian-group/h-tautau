@@ -9,12 +9,14 @@ namespace analysis {
 
 double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source, UncertaintyScale scale, double pt,
-                                               TauIdDiscriminator tauVSjetDiscriminator,
-                                               TauIdDiscriminator tauVSeDiscriminator, double eta)
+                                               TauIdDiscriminator tauVSeDiscriminator, double eta,
+                                               std::string file_tes_low_pt, std::string file_tes_high_pt)
 {
     if(genLeptonMatch == GenLeptonMatch::Tau) {
         UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
-        return GetCorrectionFactorTrueTau(period, decayMode, current_scale, pt, tauVSjetDiscriminator);
+        return GetCorrectionFactorTrueTau(pt, decayMode, file_tes_low_pt, file_tes_high_pt, current_scale,
+                                                      genLeptonMatch, unc_source);
+
     }
     else if(genLeptonMatch == GenLeptonMatch::Electron || genLeptonMatch == GenLeptonMatch::TauElectron) {
         UncertaintyScale current_scale = unc_source == UncertaintySource::EleFakingTauES
@@ -28,89 +30,38 @@ double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int deca
 }
 
 
-double TauESUncertainties::GetCorrectionFactorTrueTau(analysis::Period period, int decayMode,
-                                                      UncertaintyScale current_scale, double pt,
-                                                      TauIdDiscriminator tauVSjetDiscriminator)
+double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode,
+                                                      std::string file_low_pt, std::string file_high_pt,
+                                                      UncertaintyScale scale, GenLeptonMatch genLeptonMatch,
+                                                      UncertaintySource unc_source)
 {
-    //put no shift and 2% of unc for missing DM
-    //values taken from: https://indico.cern.ch/event/864131/contributions/3644021/attachments/1946837/3230164/Izaak_TauPOG_TauES_20191118.pdf
+    auto low_pt = root_ext::OpenRootFile(file_low_pt);
+    auto hist_low_pt = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*low_pt, "tes"));
 
-    // Corrections for DeepTau
-    const static std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor_deep_tau = {
-      { analysis::Period::Run2016, { {0, PhysicalValue(-0.1,0.7)},
-                                     {1, PhysicalValue(-0.1,0.3)},
-                                     {2, PhysicalValue(0.0,2.0)},
-                                     {5, PhysicalValue(0.0,2.0)},
-                                     {6, PhysicalValue(0.0,2.0)},
-                                     {10, PhysicalValue(0.0,0.4)},
-                                     {11, PhysicalValue(2.6,0.6)}    }},
-      { analysis::Period::Run2017, { {0, PhysicalValue(-0.7,0.7)},
-                                     {1, PhysicalValue(-1.1,0.3)},
-                                     {2, PhysicalValue(0.0,2.0)},
-                                     {5, PhysicalValue(0.0,2.0)},
-                                     {6, PhysicalValue(0.0,2.0)},
-                                     {10, PhysicalValue(0.5,0.5)},
-                                     {11, PhysicalValue(1.7,0.6)}} },
-     { analysis::Period::Run2018,  { {0, PhysicalValue(-1.6,0.8)},
-                                     {1, PhysicalValue(0.8,0.3)},
-                                     {2, PhysicalValue(0.0,2.0)},
-                                     {5, PhysicalValue(0.0,2.0)},
-                                     {6, PhysicalValue(0.0,2.0)},
-                                     {10, PhysicalValue(-0.9,0.4)},
-                                     {11, PhysicalValue(1.3,1.0)}} }
-    };
+    auto high_pt = root_ext::OpenRootFile(file_high_pt);
+    auto hist_high_pt = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*high_pt, "tes"));
 
-    // Corrections for MVA
-    const static std::map<analysis::Period, std::map<int, PhysicalValue>> tau_correction_factor_mva = {
-      { analysis::Period::Run2016, { {0, PhysicalValue(-0.6,1.0)},
-                                     {1, PhysicalValue(-0.5,0.9)},
-                                     {2, PhysicalValue(0.0,2.0)},
-                                     {5, PhysicalValue(0.0,2.0)},
-                                     {6, PhysicalValue(0.0,2.0)},
-                                     {10, PhysicalValue(0.0,1.1)},
-                                     {11, PhysicalValue(0.0,2.0)}    }},
-      { analysis::Period::Run2017, { {0, PhysicalValue(0.7,0.8)},
-                                     {1, PhysicalValue(-0.2,0.8)},
-                                     {2, PhysicalValue(0.0,2.0)},
-                                     {5, PhysicalValue(0.0,2.0)},
-                                     {6, PhysicalValue(0.0,2.0)},
-                                     {10, PhysicalValue(0.1,0.9)},
-                                     {11, PhysicalValue(-0.1,1.0)}} },
-     { analysis::Period::Run2018, { {0, PhysicalValue(-1.3,1.1)},
-                                    {1, PhysicalValue(-0.5,0.9)},
-                                    {2, PhysicalValue(0.0,2.0)},
-                                    {5, PhysicalValue(0.0,2.0)},
-                                    {6, PhysicalValue(0.0,2.0)},
-                                    {10, PhysicalValue(-1.2,0.8)},
-                                    {11, PhysicalValue(0.0,2.0)}} }
-    };
+    std::vector<int> dms = {0, 1, 10, 11};
+    if(genLeptonMatch == GenLeptonMatch::Tau && (std::find(dms.begin(), dms.end(), decayMode) != dms.end())){
+        if(pt < 100){
+            Int_t bin = hist_low_pt->GetXaxis()->FindBin(decayMode);
+            double tes  = hist_low_pt->GetBinContent(bin);
+            double tes_error = hist_low_pt->GetBinError(bin);
 
-    PhysicalValue tau_correction = PhysicalValue(0.0,0.0);
-    if(pt > 400)
-        tau_correction = PhysicalValue(0., 3.);
-    else {
-        const std::map<analysis::Period, std::map<int, PhysicalValue>>* tau_correction_factor = nullptr;
+            double tau_final_correction = tes + static_cast<int>(scale) * tes_error;
+            return tau_final_correction;
+        }
+        else {
+            Int_t bin = hist_high_pt->GetXaxis()->FindBin(decayMode);
+            double tes  = hist_high_pt->GetBinContent(bin);
+            double tes_error = hist_high_pt->GetBinError(bin);
 
-        if(tauVSjetDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSjet)
-            tau_correction_factor = &tau_correction_factor_deep_tau;
-        else if(tauVSjetDiscriminator == TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017)
-            tau_correction_factor = &tau_correction_factor_mva;
-        else
-            throw analysis::exception("TauIdDiscriminator: '%1%' not allowed.") % tauVSjetDiscriminator;
-
-        if(!tau_correction_factor->count(period))
-            throw exception("Period '%1%'not found in tau correction map.") %period;
-        if(!tau_correction_factor->at(period).count(decayMode))
-            throw exception("Decay mode: '%1%' not found in tau correction map.") %decayMode;
-
-        tau_correction = tau_correction_factor->at(period).at(decayMode);
-
-        //double uncertainty = 1 + ((static_cast<int>(scale) * tau_correction.GetStatisticalError())/100);
+            UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
+            double tau_final_correction = tes + static_cast<int>(current_scale) * tes_error;
+            return tau_final_correction;
+        }
     }
-    auto tau_final_correction = (tau_correction.GetValue() +
-                                 static_cast<int>(current_scale) * tau_correction.GetStatisticalError())/100;
-
-    return 1 + tau_final_correction;
+    return 1.;
 }
 
 double TauESUncertainties::GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
