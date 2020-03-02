@@ -52,7 +52,7 @@ struct SelectionResultsBase {
     static constexpr size_t NumberOfLegs = 2;
     using TauCandidate = LeptonCandidate<pat::Tau>;
     using TauCandidateVector = std::vector<TauCandidate>;
-    using JetCandidate = Candidate<pat::Jet>;
+    using JetCandidate = Candidate<pat::Jet, edm::Ptr<pat::Jet>>;
     using JetCandidateVector = std::vector<JetCandidate>;
     using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
     using MuonCandidate = analysis::LeptonCandidate<pat::Muon>;
