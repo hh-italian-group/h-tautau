@@ -55,6 +55,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     topGenEvent_token(mayConsume<TtGenEvent>(iConfig.getParameter<edm::InputTag>("topGenEvent"))),
     genParticles_token(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
     genJets_token(mayConsume<edm::View<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
+    rho_token(consumes<double>(iConfig.getParameter<edm::InputTag>("rho"))),
+    updatedPileupJetIdDiscr_token(consumes<edm::ValueMap<float>>(iConfig.getParameter<edm::InputTag>("updatedPileupJetIdDiscr"))),
+    updatedPileupJetId_token(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("updatedPileupJetId"))),
     period(analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(
                        iConfig.getParameter<std::string>("period"))),
     isMC(iConfig.getParameter<bool>("isMC")),
@@ -88,16 +91,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     root_ext::HistogramFactory<TH1D>::LoadConfig(
             edm::FileInPath("h-tautau/Production/data/histograms.cfg").fullPath());
 
-    // if(period == analysis::Period::Run2016){
-    //     badPFMuonFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"));
-    //     badChCandidateFilter_token = consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandidateFilter"));
-    // }
 
-    m_rho_token = consumes<double>(iConfig.getParameter<edm::InputTag>("rho"));
 
     if(runSVfit)
-//        svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer(
-//            edm::FileInPath("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root").fullPath()));
         svfitProducer = std::shared_ptr<analysis::sv_fit::FitProducer>(new analysis::sv_fit::FitProducer());
 
     if(applyRecoilCorr)
@@ -156,7 +152,9 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
         if(saveGenTopInfo)
             iEvent.getByToken(topGenEvent_token, topGenEvent);
     }
-    iEvent.getByToken(m_rho_token, rho);
+    iEvent.getByToken(rho_token, rho);
+    iEvent.getByToken(updatedPileupJetIdDiscr_token, updatedPileupJetIdDiscr);
+    iEvent.getByToken(updatedPileupJetId_token, updatedPileupJetId);
 
     iSetup.get<JetCorrectionsRecord>().get("AK4PFchs", jetCorParColl);
     jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty((*jetCorParColl)["Uncertainty"]));
@@ -169,30 +167,28 @@ void BaseTupleProducer::InitializeCandidateCollections()
     electrons.clear();
     for(size_t n = 0; n < pat_electrons->size(); ++n) {
         const edm::Ptr<pat::Electron> ele_ptr(pat_electrons, n);
-        electrons.push_back(ElectronCandidate(ele_ptr, Isolation(*ele_ptr)));
+        electrons.emplace_back(ele_ptr, Isolation(*ele_ptr));
     }
 
     muons.clear();
     for(const auto& muon : *pat_muons)
-        muons.push_back(MuonCandidate(muon, Isolation(muon)));
+        muons.emplace_back(muon, Isolation(muon));
 
     met = std::shared_ptr<MET>(new MET((*pfMETs)[0], (*pfMETs)[0].getSignificanceMatrix()));
 
     taus.clear();
-    for(const auto& tau : *pat_taus) {
-        TauCandidate tauCandidate(tau,0);
-        taus.push_back(tauCandidate);
-    }
+    for(const auto& tau : *pat_taus)
+        taus.emplace_back(tau, 0);
 
     jets.clear();
-    for(const auto& jet : *pat_jets) {
-        JetCandidate jetCandidate(jet);
-        jets.push_back(jetCandidate);
+    for(size_t n = 0; n < pat_jets->size(); ++n) {
+        const edm::Ptr<pat::Jet> jet_ptr(pat_jets, n);
+        jets.emplace_back(jet_ptr);
     }
 
     fatJets.clear();
     for(const auto& jet : * pat_fatJets)
-        fatJets.push_back(JetCandidate(jet));
+        fatJets.emplace_back(jet);
 }
 
 const double BaseTupleProducer::Isolation(const pat::Electron& electron)
@@ -615,21 +611,9 @@ void BaseTupleProducer::FillMetFilters(analysis::Period period)
     setResult(Filter::ee_badSC_noise, "Flag_eeBadScFilter");
     setResult(Filter::badMuon, "Flag_BadPFMuonFilter");
 
-    // if(period == analysis::Period::Run2016){
-    //     edm::Handle<bool> badPFMuon;
-    //     edmEvent->getByToken(badPFMuonFilter_token, badPFMuon);
-    //     filters.SetResult(Filter::badMuon, *badPFMuon);
-    //
-    //     edm::Handle<bool> badChCandidate;
-    //     edmEvent->getByToken(badChCandidateFilter_token, badChCandidate);
-    //     filters.SetResult(Filter::badChargedHadron,*badChCandidate);
-    // }
-
     if(period == analysis::Period::Run2017 || period == analysis::Period::Run2018){
-        //setResult(Filter::badChargedHadron, "Flag_BadChargedCandidateFilter");
         setResult(Filter::ecalBadCalib, "ecalBadCalibReducedMINIAODFilter");
     }
-
 
     eventTuple().metFilters = filters.FilterResults();
 }
@@ -917,11 +901,23 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().jets_deepFlavour_uds.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probuds"));
         eventTuple().jets_deepFlavour_g.push_back(jet->bDiscriminator("pfDeepFlavourJetTags:probg"));
         eventTuple().jets_rawf.push_back((jet->correctedJet("Uncorrected").pt() ) / p4.Pt());
+
         analysis::DiscriminatorIdResults jet_pu_id;
         jet_pu_id.SetResult(analysis::DiscriminatorWP::Loose,jet->userInt("pileupJetId:fullId") & (1 << 2));
         jet_pu_id.SetResult(analysis::DiscriminatorWP::Medium,jet->userInt("pileupJetId:fullId") & (1 << 1));
         jet_pu_id.SetResult(analysis::DiscriminatorWP::Tight,jet->userInt("pileupJetId:fullId") & (1 << 0));
         eventTuple().jets_pu_id.push_back(jet_pu_id.GetResultBits());
+        eventTuple().jets_pu_id_raw.push_back(jet->userFloat("pileupJetId:fullDiscriminant"));
+
+        analysis::DiscriminatorIdResults jet_pu_id_upd;
+        const int jet_pu_id_upd_int = (*updatedPileupJetId)[jet.getPtr()];
+        jet_pu_id_upd.SetResult(analysis::DiscriminatorWP::Loose, jet_pu_id_upd_int & (1 << 2));
+        jet_pu_id_upd.SetResult(analysis::DiscriminatorWP::Medium, jet_pu_id_upd_int & (1 << 1));
+        jet_pu_id_upd.SetResult(analysis::DiscriminatorWP::Tight, jet_pu_id_upd_int & (1 << 0));
+        eventTuple().jets_pu_id_upd.push_back(jet_pu_id_upd.GetResultBits());
+        eventTuple().jets_pu_id_upd_raw.push_back((*updatedPileupJetIdDiscr)[jet.getPtr()]);
+
+
         eventTuple().jets_hadronFlavour.push_back(jet->hadronFlavour());
         // Jet resolution
         JME::JetParameters parameters;

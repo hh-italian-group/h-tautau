@@ -178,17 +178,8 @@ if period == 'Run2018':
 
 ### MET filters for 2016 and MET recipe for 2016
 if period == 'Run2016':
-    #process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
-    #process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
-    #process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
-
-    #process.load('RecoMET.METFilters.BadChargedCandidateFilter_cfi')
-    #process.BadChargedCandidateFilter.muons = cms.InputTag("slimmedMuons")
-    #process.BadChargedCandidateFilter.PFCandidates = cms.InputTag("packedPFCandidates")
-
     from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
     runMetCorAndUncFromMiniAOD(process, isData = isData or options.isEmbedded)
-
     MetInputTag = cms.InputTag('slimmedMETs', '', processName)
 
 customMetFilters = cms.PSet()
@@ -252,6 +243,19 @@ tauIdEmbedder = tauIdConfig.TauIDEmbedder(
 tauIdEmbedder.runTauID()
 tauSrc_InputTag = cms.InputTag('slimmedTausNewID')
 
+jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
+objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
+
+# Update pileup jet ID following recommendations from https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetID
+from RecoJets.JetProducers.PileupJetID_cfi import pileupJetId, _chsalgos_81x, _chsalgos_94x, _chsalgos_102x
+pu_jet_id_wp = { 'Run2016': _chsalgos_81x, 'Run2017': _chsalgos_94x, 'Run2018': _chsalgos_102x}
+process.updatedPileupJetId = pileupJetId.clone(
+    jets = jetSrc_InputTag,
+    inputIsCorrected = True,
+    applyJec = False,
+    vertexes = cms.InputTag("offlineSlimmedPrimaryVertices"),
+    algos = cms.VPSet(pu_jet_id_wp[period]),
+)
 
 ### Top gen level info
 process.topGenSequence = cms.Sequence()
@@ -270,10 +274,6 @@ else:
     channels = re.split(',', options.anaChannels)
 
 ### Tuple production sequence
-
-
-jetSrc_InputTag                  = cms.InputTag('selectedUpdatedPatJetsNewDFTraining')
-objects_InputTag                 = cms.InputTag('slimmedPatTrigger')
 
 if period == 'Run2016' and options.isEmbedded :
     objects_InputTag             = cms.InputTag('selectedPatTrigger')
@@ -340,11 +340,9 @@ for channel in channels:
         isEmbedded              = cms.bool(options.isEmbedded),
         rho                     = cms.InputTag('fixedGridRhoAll'),
         customMetFilters        = customMetFilters,
+        updatedPileupJetIdDiscr = cms.InputTag('updatedPileupJetId', 'fullDiscriminant'),
+        updatedPileupJetId      = cms.InputTag('updatedPileupJetId', 'fullId'),
     ))
-
-    if period == 'Run2016':
-        getattr(process, producerName).badPFMuonFilter = cms.InputTag('BadPFMuonFilter')
-        getattr(process, producerName).badChCandidateFilter = cms.InputTag('BadChargedCandidateFilter')
 
     process.tupleProductionSequence += getattr(process, producerName)
 
@@ -353,11 +351,10 @@ if period == 'Run2016':
         process.egmGsfElectronIDSequence *
         process.egammaPostRecoSeq *
         process.jecSequence *
+        process.updatedPileupJetId *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
         process.fullPatMetSequence *
-        #process.BadPFMuonFilter *
-        #process.BadChargedCandidateFilter *
         process.topGenSequence *
         process.tupleProductionSequence
     )
@@ -367,6 +364,7 @@ if period == 'Run2017':
         process.egmGsfElectronIDSequence *
         process.egammaPostRecoSeq *
         process.jecSequence *
+        process.updatedPileupJetId *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
         process.fullPatMetSequenceModifiedMET *
@@ -380,6 +378,7 @@ if period == 'Run2018':
         process.egmGsfElectronIDSequence *
         process.egammaPostRecoSeq *
         process.jecSequence *
+        process.updatedPileupJetId *
         process.rerunMvaIsolationSequence *
         getattr(process, updatedTauName) *
         process.ecalBadCalibReducedMINIAODFilter *
