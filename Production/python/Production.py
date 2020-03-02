@@ -238,6 +238,22 @@ if period == 'Run2017':
 if period == 'Run2018':
     MetInputTag = cms.InputTag('slimmedMETs')
 
+
+# Reweighting recipe to emulate Level 1 ECAL prefiring from https://twiki.cern.ch/twiki/bin/viewauth/CMS/L1ECALPrefiringWeightRecipe
+if period == 'Run2016' or period == 'Run2017':
+    from PhysicsTools.PatUtils.l1ECALPrefiringWeightProducer_cfi import l1ECALPrefiringWeightProducer
+    if period == 'Run2016':
+        process.prefiringweight = l1ECALPrefiringWeightProducer.clone(DataEra = cms.string("2016BtoH"),
+                                                                      UseJetEMPt = cms.bool(False),
+                                                                      PrefiringRateSystematicUncty = cms.double(0.2),
+                                                                      SkipWarnings = False)
+    elif period == 'Run2017':
+        process.prefiringweight = l1ECALPrefiringWeightProducer.clone(DataEra = cms.string("2017BtoF"),
+                                                                      UseJetEMPt = cms.bool(False),
+                                                                      PrefiringRateSystematicUncty = cms.double(0.2),
+                                                                      SkipWarnings = False)
+
+
 # Update electron ID following recommendations from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 ele_era = { 'Run2016': '2016-Legacy', 'Run2017': '2017-Nov17ReReco', 'Run2018': '2018-Prompt'}
@@ -359,7 +375,8 @@ if period == 'Run2016':
         #process.BadPFMuonFilter *
         #process.BadChargedCandidateFilter *
         process.topGenSequence *
-        process.tupleProductionSequence
+        process.tupleProductionSequence *
+        process.prefiringweight
     )
 
 if period == 'Run2017':
@@ -372,7 +389,8 @@ if period == 'Run2017':
         process.fullPatMetSequenceModifiedMET *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *
-        process.tupleProductionSequence
+        process.tupleProductionSequence *
+        process.prefiringweight 
     )
 
 if period == 'Run2018':

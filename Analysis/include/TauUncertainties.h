@@ -20,6 +20,7 @@ namespace analysis {
 using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
+    // TauESUncertainties(std::string file_low_pt, std::string file_high_pt);
     static double GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
                                       UncertaintySource unc_source, UncertaintyScale scale, double pt,
                                       TauIdDiscriminator tauVSeDiscriminator,
@@ -34,5 +35,9 @@ public:
 
     static double GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
                                                   TauIdDiscriminator tauVSeDiscriminator, int decayMode);
+
+private:
+    std::shared_ptr<TH1F> hist_tes_pt_low;
+    std::shared_ptr<TH1F> hist_tes_pt_high;
 };
 } // namespace analysis

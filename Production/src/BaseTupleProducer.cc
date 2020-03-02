@@ -55,6 +55,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     topGenEvent_token(mayConsume<TtGenEvent>(iConfig.getParameter<edm::InputTag>("topGenEvent"))),
     genParticles_token(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
     genJets_token(mayConsume<edm::View<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
+    // prefweight_token(consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProb"))),
+    // prefweightup_token(consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProbUp"))),
+    // prefweightdown_token(consumes< double >(edm::InputTag("prefiringweight:nonPrefiringProbDown"))),
     period(analysis::EnumNameMap<analysis::Period>::GetDefault().Parse(
                        iConfig.getParameter<std::string>("period"))),
     isMC(iConfig.getParameter<bool>("isMC")),

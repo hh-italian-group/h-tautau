@@ -7,6 +7,11 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 
+// TauESUncertainties::TauESUncertainties(std::string file_tes_low_pt, std::string file_tes_high_pt)
+// {
+//
+// }
+
 double TauESUncertainties::GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source, UncertaintyScale scale, double pt,
                                                TauIdDiscriminator tauVSeDiscriminator, double eta,
@@ -35,31 +40,31 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode,
                                                       UncertaintyScale scale, GenLeptonMatch genLeptonMatch,
                                                       UncertaintySource unc_source)
 {
-    auto low_pt = root_ext::OpenRootFile(file_low_pt);
-    auto hist_low_pt = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*low_pt, "tes"));
+    static auto low_pt = root_ext::OpenRootFile(file_low_pt);
+    static auto hist_low_pt = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*low_pt, "tes"));
 
-    auto high_pt = root_ext::OpenRootFile(file_high_pt);
-    auto hist_high_pt = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*high_pt, "tes"));
+    static auto high_pt = root_ext::OpenRootFile(file_high_pt);
+    static auto hist_high_pt = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*high_pt, "tes"));
 
     std::vector<int> dms = {0, 1, 10, 11};
     if(genLeptonMatch == GenLeptonMatch::Tau && (std::find(dms.begin(), dms.end(), decayMode) != dms.end())){
-        if(pt < 100){
+        // if(pt < 100){
             Int_t bin = hist_low_pt->GetXaxis()->FindBin(decayMode);
             double tes  = hist_low_pt->GetBinContent(bin);
             double tes_error = hist_low_pt->GetBinError(bin);
 
             double tau_final_correction = tes + static_cast<int>(scale) * tes_error;
             return tau_final_correction;
-        }
-        else {
-            Int_t bin = hist_high_pt->GetXaxis()->FindBin(decayMode);
-            double tes  = hist_high_pt->GetBinContent(bin);
-            double tes_error = hist_high_pt->GetBinError(bin);
-
-            UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
-            double tau_final_correction = tes + static_cast<int>(current_scale) * tes_error;
-            return tau_final_correction;
-        }
+        // }
+        // else {
+        //     Int_t bin = hist_high_pt->GetXaxis()->FindBin(decayMode);
+        //     double tes  = hist_high_pt->GetBinContent(bin);
+        //     double tes_error = hist_high_pt->GetBinError(bin);
+        //
+        //     UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
+        //     double tau_final_correction = tes + static_cast<int>(current_scale) * tes_error;
+        //     return tau_final_correction;
+        // }
     }
     return 1.;
 }

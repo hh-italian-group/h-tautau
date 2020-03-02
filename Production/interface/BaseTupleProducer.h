@@ -149,6 +149,9 @@ private:
     edm::EDGetTokenT<bool> badPFMuonFilter_token, badChCandidateFilter_token;
     edm::EDGetTokenT<double> m_rho_token;
     std::map<std::string, edm::EDGetTokenT<bool>> customMetFilters_token;
+    // edm::EDGetTokenT<double> prefweight_token;
+    // edm::EDGetTokenT<double> prefweightup_token;
+    // edm::EDGetTokenT<double> prefweightdown_token;
 
 protected:
     const analysis::Period period;
