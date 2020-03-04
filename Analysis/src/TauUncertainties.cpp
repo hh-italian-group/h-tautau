@@ -32,13 +32,13 @@ double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch gen
                                        ? scale : UncertaintyScale::Central;
         return GetCorrectionFactorEleFakingTau(current_scale, eta, genLeptonMatch, tauVSeDiscriminator, decayMode);
     }
+    else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon){
+        UncertaintyScale current_scale = unc_source == UncertaintySource::MuFakingTauES
+                                       ? scale : UncertaintyScale::Central;
+        return GetCorrectionFactorMuonFakingTau(current_scale);
+    }
     else
         return 1.;
-    // else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon){
-    //     // UncertaintyScale current_scale = unc_source == UncertaintySource::MuonFakingTauES
-    //     //                                ? scale : UncertaintyScale::Central;
-    //     // return GetCorrectionFactorMuonFakingTau(current_scale);
-    // }
 
 }
 
@@ -98,6 +98,6 @@ double TauESUncertainties::GetCorrectionFactorEleFakingTau(UncertaintyScale scal
 
 double TauESUncertainties::GetCorrectionFactorMuonFakingTau(UncertaintyScale scale)
 {
-    return 1.;// + static_cast<int>(scale) * 0.01;
+    return 1. + static_cast<int>(scale) * 0.01;
 }
 } // namespace analysis
