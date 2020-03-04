@@ -63,7 +63,6 @@ private:
     std::shared_ptr<MET> met;
     static std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
     static std::shared_ptr<TauESUncertainties> tauESUncertainties;
-    int x;
 };
 
 } // namespace analysis

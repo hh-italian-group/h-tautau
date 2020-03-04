@@ -29,7 +29,7 @@ public:
     double GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale,
                                       GenLeptonMatch genLeptonMatch = GenLeptonMatch::Tau);
 
-    double GetCorrectionFactorMuonFakingTau(/*analysis::Period period, int decayMode*/);
+    double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale);
 
     double GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch, TauIdDiscriminator tauVSeDiscriminator,
                                            int decayMode);
