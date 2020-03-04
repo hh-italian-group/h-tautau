@@ -80,8 +80,7 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
     if(!file_ele_faking_tau.count(period))
         throw exception("Period not found in files for electron faking tau.");
 
-    tauESUncertainties = std::make_shared<TauESUncertainties>(period,
-                                                              file_tes.at(period).at(tau_id_discriminator).at(0),
+    tauESUncertainties = std::make_shared<TauESUncertainties>(file_tes.at(period).at(tau_id_discriminator).at(0),
                                                               file_tes.at(period).at(tau_id_discriminator).at(1),
                                                               ele_id_wp, file_ele_faking_tau.at(period));
 

@@ -298,24 +298,24 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
 
     if(!HasBjetPair()) return nullptr;
     for(const FatJetCandidate& fatJet : GetFatJets()) {
-        if(period == Period::Run2017){
-            if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
-            if(fatJet->subJets().size() < 2) continue;
-            std::vector<SubJet> subJets = fatJet->subJets();
-            std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
-                return j1.p4().Pt() > j2.p4().Pt(); });
-            std::vector<double> deltaR;
-            for(size_t n = 0; n < 2; ++n) {
-                for(size_t k = 0; k < 2; ++k) {
-                    const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
-                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
-                    deltaR.push_back(dR);
-                }
+        // if(period == Period::Run2017){
+        if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
+        if(fatJet->subJets().size() < 2) continue;
+        std::vector<SubJet> subJets = fatJet->subJets();
+        std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
+            return j1.p4().Pt() > j2.p4().Pt(); });
+        std::vector<double> deltaR;
+        for(size_t n = 0; n < 2; ++n) {
+            for(size_t k = 0; k < 2; ++k) {
+                const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
+                                                               GetHiggsBB().GetDaughterMomentums().at(k));
+                deltaR.push_back(dR);
             }
-            if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
-                    || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
-                return &fatJet;
         }
+        if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
+                || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
+            return &fatJet;
+        // }
         // else{
         //     if(fatJet->p4().M() < mass_cut) continue;
         //     std::vector<double> deltaR;
@@ -350,7 +350,6 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                UncertaintySource uncertainty_source,
                                                UncertaintyScale scale)
 {
-    const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator().first;
     EventCandidate event_candidate(event, uncertainty_source, scale, period);
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);

@@ -7,10 +7,10 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 //https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
 
-TauESUncertainties::TauESUncertainties(analysis::Period _period, std::string file_tes_low_pt, std::string file_tes_high_pt,
+TauESUncertainties::TauESUncertainties(std::string file_tes_low_pt, std::string file_tes_high_pt,
                                        DiscriminatorWP _ele_id_wp, std::string files_ele_faking_tau):
-    period(_period), ele_id_wp(_ele_id_wp),
-    file_low(root_ext::OpenRootFile(file_tes_low_pt)), hist_tes_pt_low(root_ext::ReadObject<TH1F>(*file_low, "tes")),
+    ele_id_wp(_ele_id_wp), file_low(root_ext::OpenRootFile(file_tes_low_pt)),
+    hist_tes_pt_low(root_ext::ReadObject<TH1F>(*file_low, "tes")),
     file_high(root_ext::OpenRootFile(file_tes_high_pt)), hist_tes_pt_high(root_ext::ReadObject<TH1F>(*file_high, "tes")),
     file_ele_faking_tau(root_ext::OpenRootFile(files_ele_faking_tau)),
     hist_ele_faking_tau(root_ext::ReadObject<TH1F>(*file_ele_faking_tau, ToString(ele_id_wp)))
@@ -41,7 +41,6 @@ double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch gen
         return 1.;
 
 }
-
 
 double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale,
                                                       GenLeptonMatch genLeptonMatch)
