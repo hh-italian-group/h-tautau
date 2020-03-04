@@ -77,9 +77,6 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, 
 double TauESUncertainties::GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch,
                                                            TauIdDiscriminator tauVSeDiscriminator, int decayMode)
 {
-
-
-    StVariable e_fake_rate_correction = StVariable(0.0, 0.0, 0.0);
     std::vector<int> dms = {0, 1, 10, 11};
     if((genLeptonMatch == GenLeptonMatch::Electron ||genLeptonMatch == GenLeptonMatch::TauElectron) &&
         tauVSeDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSe &&

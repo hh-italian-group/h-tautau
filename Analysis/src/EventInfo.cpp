@@ -351,7 +351,6 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                UncertaintyScale scale)
 {
     const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator().first;
-    const auto ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
     EventCandidate event_candidate(event, uncertainty_source, scale, period);
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
