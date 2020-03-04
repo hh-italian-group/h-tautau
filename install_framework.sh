@@ -3,8 +3,8 @@
 # This file is part of https://github.com/hh-italian-group/h-tautau.
 
 declare -A INSTALL_MODES
-INSTALL_MODES=( ["prod"]="CMSSW_10_2_16 _amd64_gcc700" \
-                ["ana"]="CMSSW_10_2_16 _amd64_gcc700" \
+INSTALL_MODES=( ["prod"]="CMSSW_10_2_20 _amd64_gcc700" \
+                ["ana"]="CMSSW_10_2_20 _amd64_gcc700" \
                 ["ana_osx"]="bbtautau None")
 DEFAULT_N_JOBS=4
 
@@ -74,49 +74,21 @@ fi
 
 if [ $MODE = "prod" ] ; then
     run_cmd git cms-init
-
-    # Electron MVA identification
-#git cms-merge-topic guitargeek:ElectronID_MVA2017_940pre3
-#scram b -j 8
-
-    # Add the area containing the MVA weights (from cms-data, to appear in “external”).
-    # Note: the “external” area appears after “scram build” is run at least once, as above
-#cd $CMSSW_BASE/external/$SCRAM_ARCH
-#git clone https://github.com/lsoffi/RecoEgamma-PhotonIdentification.git data/RecoEgamma/PhotonIdentification/data
-#cd data/RecoEgamma/PhotonIdentification/data
-#git checkout CMSSW_9_4_0_pre3_TnP
-#cd $CMSSW_BASE/external/$SCRAM_ARCH
-#git clone https://github.com/lsoffi/RecoEgamma-ElectronIdentification.git data/RecoEgamma/ElectronIdentification/data
-#    cd data/RecoEgamma/ElectronIdentification/data
-#    git checkout CMSSW_9_4_0_pre3_TnP
-    # Go back to the src/
     run_cmd git cms-addpkg RecoMET/METFilters
     #run_cmd git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
-    #Add DeepTau code from Tau POG repository (note "-u" option preventing checkout of unnecessary stuff)
-    #run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2
-    # Update DeepTau code and store DeepTauIDs in nanoAOD by a checkout from Tau POG repository
-    run_cmd git cms-merge-topic -u cms-tau-pog:CMSSW_10_2_X_tau-pog_DeepTau2017v2p1_nanoAOD
-    #Add 2017v2 training file
-    #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_core.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
-    #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_inner.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
-    #run_cmd wget https://github.com/cms-tau-pog/RecoTauTag-TrainingFiles/raw/DeepTau2017v2/DeepTauId/deepTau_2017v2p6_e6_outer.pb -P RecoTauTag/TrainingFiles/data/DeepTauId
-    #cd $CMSSW_BASE/src
+	
+	# Update PileupJetID
+	run_cmd git cms-addpkg  RecoJets/JetProducers
+	run_cmd git clone -b 94X_weights_DYJets_inc_v2 git@github.com:cms-jet/PUjetID.git PUJetIDweights/
+	run_cmd cp PUJetIDweights/weights/pileupJetId_{94,102}X_Eta* $CMSSW_BASE/src/RecoJets/JetProducers/data/
+	run_cmd rm -rf PUJetIDweights/
+	run_cmd git cms-merge-topic alefisico:PUID_102X
 fi
 
-# old SVfit packages
-#git clone git@github.com:hh-italian-group/SVfit_standalone.git TauAnalysis/SVfitStandalone
-#cd TauAnalysis/SVfitStandalone
-#git checkout hh_italian
-#cd ../..
-
 # new SVfit packages
-run_cmd git clone git@github.com:hh-italian-group/ClassicSVfit.git TauAnalysis/ClassicSVfit
-cd TauAnalysis/ClassicSVfit
-run_cmd git checkout hh-italian
-cd ../..
+run_cmd git clone -b hh-italian git@github.com:hh-italian-group/ClassicSVfit.git TauAnalysis/ClassicSVfit
 run_cmd git clone git@github.com:hh-italian-group/SVfitTF.git TauAnalysis/SVfitTF
-
 
 # HHKinFit2 packages
 run_cmd git clone git@github.com:hh-italian-group/HHKinFit2.git HHKinFit2/HHKinFit2
@@ -126,7 +98,7 @@ run_cmd git clone git@github.com:hh-italian-group/LeptonEff-interface.git HTT-ut
 run_cmd git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-utilities/LepEffInterface/data
 
 # Tau ID and Trigger SFs
-run_cmd git clone git@github.com:hh-italian-group/TauIDSFs.git TauPOG/TauIDSFs
+run_cmd git clone git@github.com:cms-tau-pog/TauIDSFs.git TauPOG/TauIDSFs
 run_cmd git clone -b run2_SFs git@github.com:cms-tau-pog/TauTriggerSFs.git TauAnalysisTools/TauTriggerSFs
 
 # Recoil Corrections

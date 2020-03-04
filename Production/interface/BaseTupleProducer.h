@@ -114,10 +114,10 @@ private:
 
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
-    using ElectronCandidate = analysis::LeptonCandidate<pat::Electron, edm::Ptr<pat::Electron>>;
-    using MuonCandidate = analysis::LeptonCandidate<pat::Muon>;
-    using TauCandidate = analysis::LeptonCandidate<pat::Tau>;
-    using JetCandidate = analysis::Candidate<pat::Jet>;
+    using ElectronCandidate = analysis::SelectionResultsBase::ElectronCandidate;
+    using MuonCandidate = analysis::SelectionResultsBase::MuonCandidate;
+    using TauCandidate = analysis::SelectionResultsBase::TauCandidate;
+    using JetCandidate = analysis::SelectionResultsBase::JetCandidate;
     using MET = analysis::MissingET<pat::MET>;
     using MetCovMatrix = MET::CovMatrix;
     using SelectionManager = analysis::SelectionManager;
@@ -146,19 +146,19 @@ private:
     edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
     edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticles_token;
     edm::EDGetTokenT<edm::View<reco::GenJet>> genJets_token;
-    edm::EDGetTokenT<bool> badPFMuonFilter_token, badChCandidateFilter_token;
-    edm::EDGetTokenT<double> m_rho_token;
+    edm::EDGetTokenT<double> rho_token;
     std::map<std::string, edm::EDGetTokenT<bool>> customMetFilters_token;
     // edm::EDGetTokenT<double> prefweight_token;
     // edm::EDGetTokenT<double> prefweightup_token;
     // edm::EDGetTokenT<double> prefweightdown_token;
+    edm::EDGetTokenT<edm::ValueMap<float>> updatedPileupJetIdDiscr_token;
+    edm::EDGetTokenT<edm::ValueMap<int>> updatedPileupJetId_token;
 
 protected:
     const analysis::Period period;
     const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
-    //std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
@@ -195,7 +195,8 @@ protected:
     edm::Ptr<reco::Vertex> primaryVertex;
     edm::Handle<std::vector<reco::GenParticle>> genParticles;
     edm::Handle<edm::View<reco::GenJet>> genJets;
-    edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions;
+    edm::Handle<edm::ValueMap<float>> updatedPileupJetIdDiscr;
+    edm::Handle<edm::ValueMap<int>> updatedPileupJetId;
 
 private:
     void InitializeAODCollections(const edm::Event& iEvent, const edm::EventSetup& iSetup);
