@@ -205,11 +205,11 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
             const Channel channel = static_cast<Channel>(event.channelId);
-            if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
-                if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu)
-                    throw analysis::exception("First leg type is not a muon in mutau channel.");
-                if(ROOT::Math::VectorUtil::DeltaR(event.lep_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
-            }
+            // if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
+            //     if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu)
+            //         throw analysis::exception("First leg type is not a muon in mutau channel.");
+            //     if(ROOT::Math::VectorUtil::DeltaR(event.lep_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
+            // }
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
             if(muonId.Passed(DiscriminatorWP::Medium) && event.other_lepton_iso.at(n) < 0.3) return false;
         }
@@ -327,7 +327,7 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
      auto mu_id = GetTauVSmuDiscriminator(channel);
 
     if(lepton->leg_type() == LegType::e) {
-        if(!lepton->passConversionVeto()) return false;
+        // if(!lepton->passConversionVeto()) return false;
         if(!lepton->passEleIso(DiscriminatorWP::Tight)) return false;
         return true;
     }

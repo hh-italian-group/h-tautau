@@ -316,16 +316,16 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
                     || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
                 return &fatJet;
         }
-        else{
-            if(fatJet->p4().M() < mass_cut) continue;
-            std::vector<double> deltaR;
-                for(size_t k = 0; k < 2; ++k) {
-                    const auto dR = ROOT::Math::VectorUtil::DeltaR(fatJet->p4(), GetHiggsBB().GetDaughterMomentums().at(k));
-                    deltaR.push_back(dR);
-            }
-            if(deltaR.at(0) < deltaR_subjet_cut || (deltaR.at(1) < deltaR_subjet_cut))
-                return &fatJet;
-        }
+        // else{
+        //     if(fatJet->p4().M() < mass_cut) continue;
+        //     std::vector<double> deltaR;
+        //         for(size_t k = 0; k < 2; ++k) {
+        //             const auto dR = ROOT::Math::VectorUtil::DeltaR(fatJet->p4(), GetHiggsBB().GetDaughterMomentums().at(k));
+        //             deltaR.push_back(dR);
+        //     }
+        //     if(deltaR.at(0) < deltaR_subjet_cut || (deltaR.at(1) < deltaR_subjet_cut))
+        //         return &fatJet;
+        // }
     }
     return nullptr;
 }
@@ -352,7 +352,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
 {
     const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator().first;
     const auto ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
-    EventCandidate event_candidate(event, uncertainty_source, scale, period, tau_id_discriminator, ele_id.first);
+    EventCandidate event_candidate(event, uncertainty_source, scale, period);
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();

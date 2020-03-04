@@ -43,12 +43,16 @@ public:
                 cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period())),
                 progressReporter(10, std::cout)
     {
-        EventCandidate::InitializeJecUncertainties(run_period,false,args.working_path());
-
         auto signalModes = SplitValueListT<analysis::SignalMode>(args.selections(),false,",");
         for(unsigned n = 0; n < signalModes.size(); ++n){
             signalObjectSelectors.emplace_back(signalModes.at(n));
         }
+
+        EventCandidate::InitializeUncertainties(run_period,args.working_path(),
+                                                signalObjectSelectors.at(0).GetTauVSjetDiscriminator().first,
+                                                signalObjectSelectors.at(0).GetTauVSeDiscriminator(channels.at(0).first,
+                                                signalObjectSelectors.at(0).GetTauVSeDiscriminator(channels.at(0).second));
+
         unc_sources = SplitValueListT<analysis::UncertaintySource>(args.unc_sources(),false,",");
         vector_jet_ordering = SplitValueListT<JetOrdering>(args.jet_orderings(),false,",");
         channels = SplitValueList(args.channels(),false,",");
@@ -87,8 +91,6 @@ public:
             }
             std::cout << "Channel: " << channels.at(c) << std::endl;
             CacheTuple cache(channels.at(c), outputFile.get(), false);
-            cache.SetAutoFlush(1000);
-            cache.SetMaxVirtualSize(10000000);
             auto& originalTuple = *map_event.at(channels.at(c)).first;
             const Long64_t n_entries = originalTuple.GetEntries();
             Long64_t n_processed_events_channel = 0;
