@@ -107,8 +107,8 @@ run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities
 # Install analysis packages
 declare -A ANA_PACKAGES
 ANA_PACKAGES=( ["AnalysisTools"]="prod:master ana:master ana_osx:master" \
-               ["h-tautau"]="prod:prod_v5 ana:prod_v5 ana_osx:prod_v5" \
-               ["hh-bbtautau"]="prod:ana_v5 ana:ana_v5 ana_osx:ana_v5" )
+               ["h-tautau"]="prod:master ana:master ana_osx:master" \
+               ["hh-bbtautau"]="prod:master ana:master ana_osx:master" )
 GITHUB_USER=$(git config user.github)
 
 for pkg in "${!ANA_PACKAGES[@]}" ; do
