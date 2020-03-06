@@ -97,6 +97,30 @@ inline bool CompareIsolations<pat::Muon>(double iso_1, double iso_2) { return is
 template<>
 inline bool CompareIsolations<pat::Tau>(double iso_1, double iso_2) { return iso_1 > iso_2; }
 }
+
+template<typename LeptonCandidate>
+bool LeptonComparitor(const LeptonCandidate& l1, const LeptonCandidate& l2)
+{
+    return l1.IsMoreIsolated(l2);
+}
+
+template<>
+inline bool LeptonComparitor(const SelectionResultsBase::ElectronCandidate& l1,
+                             const SelectionResultsBase::ElectronCandidate& l2)
+{
+    static const std::vector<std::string> iso_wp_list = {
+        "mvaEleID-Fall17-iso-V2-wp80", "mvaEleID-Fall17-iso-V2-wp90"
+    };
+    for(const std::string& wp_name : iso_wp_list) {
+        const bool l1_pass = l1->electronID(wp_name) > 0.5;
+        const bool l2_pass = l2->electronID(wp_name) > 0.5;
+        if(l1_pass && !l2_pass) return true;
+        if(!l1_pass && l2_pass) return false;
+        if(l1_pass && l2_pass) break;
+    }
+    return l1.IsMoreIsolated(l2);
+}
+
 }
 
 class TupleStore {
@@ -110,7 +134,6 @@ private:
   static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
 
 };
-
 
 class BaseTupleProducer : public edm::EDAnalyzer {
 public:
@@ -314,12 +337,6 @@ protected:
         GetAnaData().N_objects(suffix).Fill(selected.size(), weight);
 
         return selected;
-    }
-
-    template<typename LeptonCandidate>
-    static bool LeptonComparitor(const LeptonCandidate& l1, const LeptonCandidate& l2)
-    {
-        return l1.IsMoreIsolated(l2);
     }
 
     template<typename Candidate>

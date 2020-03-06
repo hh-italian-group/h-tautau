@@ -21,7 +21,7 @@ void TupleProducer_muTau::ProcessEvent(Cutter& cut)
     auto muons = CollectSignalMuons();
     cut(muons.size(), "muons");
 
-    std::sort(muons.begin(),muons.end(),&LeptonComparitor<MuonCandidate>);
+    std::sort(muons.begin(),muons.end(),&analysis::LeptonComparitor<MuonCandidate>);
     selection.muons.push_back(muons.at(0));
     selection.other_muons = CollectVetoMuons(false,{&muons.at(0)});
     selection.muonVeto = selection.other_muons.size();
