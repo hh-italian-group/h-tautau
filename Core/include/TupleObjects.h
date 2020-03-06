@@ -64,6 +64,7 @@ public:
     const LorentzVectorE& p4() const;
     bool PassPuId(DiscriminatorWP wp) const;
     analysis::DiscriminatorIdResults GetPuId() const;
+    Float_t GetPuIdRaw() const;
     DiscriminatorResult csv() const;
     DiscriminatorResult deepcsv() const;
     DiscriminatorResult deepFlavour() const;

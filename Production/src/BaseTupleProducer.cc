@@ -55,9 +55,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     topGenEvent_token(mayConsume<TtGenEvent>(iConfig.getParameter<edm::InputTag>("topGenEvent"))),
     genParticles_token(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
     genJets_token(mayConsume<edm::View<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
-    // prefweight_token(consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProb"))),
-    // prefweightup_token(consumes<double>(edm::InputTag("prefiringweight:nonPrefiringProbUp"))),
-    // prefweightdown_token(consumes< double >(edm::InputTag("prefiringweight:nonPrefiringProbDown"))),
+    prefweight_token(mayConsume<double>(edm::InputTag("prefiringweight:nonPrefiringProb"))),
+    prefweightup_token(mayConsume<double>(edm::InputTag("prefiringweight:nonPrefiringProbUp"))),
+    prefweightdown_token(mayConsume<double>(edm::InputTag("prefiringweight:nonPrefiringProbDown"))),
     rho_token(consumes<double>(iConfig.getParameter<edm::InputTag>("rho"))),
     updatedPileupJetIdDiscr_token(consumes<edm::ValueMap<float>>(iConfig.getParameter<edm::InputTag>("updatedPileupJetIdDiscr"))),
     updatedPileupJetId_token(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("updatedPileupJetId"))),
@@ -76,6 +76,7 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
     isEmbedded(iConfig.getParameter<bool>("isEmbedded")),
+    isData(iConfig.getParameter<bool>("isData")),
     //eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
     eventTuple(TupleStore::GetTuple()),
     //eventTuple(*eventTuple_ptr),
@@ -145,6 +146,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(jetsMiniAOD_token, pat_jets);
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(PUInfo_token, PUInfo);
+
     if(isMC) {
         if(!isEmbedded)
           iEvent.getByToken(genMETAOD_token, genMET);
@@ -635,7 +637,8 @@ std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectVeto
         bool isTightSelection, const std::vector<const ElectronCandidate*>& signalElectrons)
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons, isTightSelection);
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons,
+                                         isTightSelection);
     return CollectObjects("vetoElectrons", base_selector, electrons);
 }
 
@@ -669,6 +672,7 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
                                            bool isTightSelection) const
 {
     using namespace cuts::H_tautau_2016::electronVeto;
+
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
@@ -705,7 +709,8 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     cut(muon_dz < dz, "dz", muon_dz);
     double iso_cut = isTightSelection ? tightIso : pfRelIso04;
     cut(muon.GetIsolation() < iso_cut, "iso", muon.GetIsolation());
-    bool passMuonId = isTightSelection ? muon->isTightMuon(*primaryVertex) : muon->isLooseMuon();
+    bool passMuonId = isTightSelection ? (muon->isTightMuon(*primaryVertex) && muon->isMediumMuon()) :
+                                         (muon->isLooseMuon() || muon->isTightMuon(*primaryVertex));
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;
@@ -851,6 +856,7 @@ void BaseTupleProducer::FillHiggsDaughtersIndexes(const analysis::SelectionResul
 
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
+    std::lock_guard<ntuple::EventTuple::Mutex> lock(eventTuple.GetMutex());
     using namespace analysis;
 
     eventTuple().run  = edmEvent->id().run();
@@ -863,6 +869,24 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
     eventTuple().rho = *rho;
 
+    if(period == analysis::Period::Run2016 && period == analysis::Period::Run2017){
+        edm::Handle<double> _theprefweight;
+        edmEvent->getByToken(prefweight_token, _theprefweight);
+        eventTuple().theprefiringweight = (*_theprefweight);
+
+        edm::Handle<double> _theprefweightup;
+        edmEvent->getByToken(prefweightup_token, _theprefweightup);
+        eventTuple().theprefiringweightup = (*_theprefweightup);
+
+        edm::Handle<double> _theprefweightdown;
+        edmEvent->getByToken(prefweightdown_token, _theprefweightdown);
+        eventTuple().theprefiringweightdown = (*_theprefweightdown);
+    }
+    // else {
+    //     eventTuple().theprefweight.push_back(ntuple::DefaultFillValue<UInt_t>());
+    //     eventTuple().theprefweight.push_back(ntuple::DefaultFillValue<UInt_t>());
+    //     eventTuple().theprefweight.push_back(ntuple::DefaultFillValue<UInt_t>());
+    // }
     // HTT candidate
     for(const auto& result : selection.svfitResult){
         eventTuple().SVfit_Higgs_index.push_back(result.first);

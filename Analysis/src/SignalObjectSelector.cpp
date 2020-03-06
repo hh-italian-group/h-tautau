@@ -169,6 +169,7 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
         if(!PassLeptonSelection(second_leg,channel,2, is_sync)) continue;
         higgs_candidates.push_back(n);
     }
+    // std::cout << "higgs_candidates=" << higgs_candidates.size() << "\n";
     const auto Comparitor = [&](size_t h1, size_t h2) -> bool
     {
         bool are_identical = true;
@@ -204,7 +205,7 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
           if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
-            const Channel channel = static_cast<Channel>(event.channelId);
+            // const Channel channel = static_cast<Channel>(event.channelId);
             // if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
             //     if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu)
             //         throw analysis::exception("First leg type is not a muon in mutau channel.");

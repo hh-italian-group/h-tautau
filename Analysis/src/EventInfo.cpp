@@ -131,7 +131,7 @@ JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool appl
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         analysis::DiscriminatorIdResults jet_pu_id = jet->GetPuId();
-        if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id )) continue;
+        if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id)) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && jet.GetMomentum().pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto && !(jet_pu_id.Passed(analysis::DiscriminatorWP::Loose))) continue;
         if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
@@ -350,13 +350,19 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                UncertaintySource uncertainty_source,
                                                UncertaintyScale scale)
 {
-    EventCandidate event_candidate(event, uncertainty_source, scale, period);
+    // std::cout << "a" << "\n";
+    EventCandidate event_candidate(event, uncertainty_source, scale);
+    // std::cout << "b" << "\n";
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
+    // std::cout << "c" << "\n";
+    // if(!selected_higgs_index.is_initialized()) std::cout << "Nutells" << "\n";
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
+    // std::cout << "d" << "\n";
     auto selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate, period, jet_ordering,
                                                                        *selected_higgs_index, uncertainty_source,
                                                                        scale);
+   // std::cout << "e" << "\n";
     return EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index, selected_signal_jets, period,
                          jet_ordering);
 }

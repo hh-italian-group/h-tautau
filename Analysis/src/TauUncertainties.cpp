@@ -8,19 +8,20 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
 TauESUncertainties::TauESUncertainties(std::string file_tes_low_pt, std::string file_tes_high_pt,
-                                       DiscriminatorWP _ele_id_wp, std::string files_ele_faking_tau):
-    ele_id_wp(_ele_id_wp), file_low(root_ext::OpenRootFile(file_tes_low_pt)),
+                                       std::string files_ele_faking_tau, TauIdDiscriminator _tau_vs_e_discr):
+    file_low(root_ext::OpenRootFile(file_tes_low_pt)),
     hist_tes_pt_low(root_ext::ReadObject<TH1F>(*file_low, "tes")),
     file_high(root_ext::OpenRootFile(file_tes_high_pt)), hist_tes_pt_high(root_ext::ReadObject<TH1F>(*file_high, "tes")),
     file_ele_faking_tau(root_ext::OpenRootFile(files_ele_faking_tau)),
-    hist_ele_faking_tau(root_ext::ReadObject<TH1F>(*file_ele_faking_tau, ToString(ele_id_wp)))
+    hist_ele_faking_tau(root_ext::ReadObject<TGraphAsymmErrors>(*file_ele_faking_tau, "fes")),
+    tau_vs_e_discr(_tau_vs_e_discr)
 
 {
 }
 
 double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source, UncertaintyScale scale, double pt,
-                                               TauIdDiscriminator tauVSeDiscriminator, double eta)
+                                               double eta) const
 {
     if(genLeptonMatch == GenLeptonMatch::Tau) {
         UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
@@ -30,7 +31,7 @@ double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch gen
     else if(genLeptonMatch == GenLeptonMatch::Electron || genLeptonMatch == GenLeptonMatch::TauElectron) {
         UncertaintyScale current_scale = unc_source == UncertaintySource::EleFakingTauES
                                        ? scale : UncertaintyScale::Central;
-        return GetCorrectionFactorEleFakingTau(current_scale, eta, genLeptonMatch, tauVSeDiscriminator, decayMode);
+        return GetCorrectionFactorEleFakingTau(current_scale, eta, genLeptonMatch, tau_vs_e_discr, decayMode);
     }
     else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon){
         UncertaintyScale current_scale = unc_source == UncertaintySource::MuFakingTauES
@@ -43,7 +44,7 @@ double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch gen
 }
 
 double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale,
-                                                      GenLeptonMatch genLeptonMatch)
+                                                      GenLeptonMatch genLeptonMatch) const
 {
     std::vector<int> dms = {0, 1, 10, 11};
     const float pt_low  = 34;  // average pT in Z -> tautau measurement (incl. in DM)
@@ -73,26 +74,48 @@ double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, 
     return 1.;
 }
 
-double TauESUncertainties::GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch,
-                                                           TauIdDiscriminator tauVSeDiscriminator, int decayMode)
+double TauESUncertainties::GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta,
+                                                           GenLeptonMatch genLeptonMatch,
+                                                           TauIdDiscriminator tauVSeDiscriminator, int decayMode) const
 {
-    std::vector<int> dms = {0, 1, 10, 11};
+    std::vector<int> dms = {0, 1};
+    std::vector<std::string> regions = {"barrel", "endcap"};
+    std::map<std::pair<int, std::string>, double> fes;
+    std::map<std::pair<int, std::string>, std::pair<double, double>> fes_error;
+
+    Int_t i = 0;
+    for(const auto& region: regions){
+        for(const auto& dm: dms){
+            double y = hist_ele_faking_tau->GetY()[i];
+            double y_error_up = hist_ele_faking_tau->GetErrorYhigh(i);
+            double y_error_low = hist_ele_faking_tau->GetErrorYlow(i);
+            fes[std::make_pair(dm, region)] = y;
+            fes_error[std::make_pair(dm, region)] = std::make_pair(y_error_low, y_error_up);
+            ++i;
+        }
+    }
+
     if((genLeptonMatch == GenLeptonMatch::Electron ||genLeptonMatch == GenLeptonMatch::TauElectron) &&
         tauVSeDiscriminator == TauIdDiscriminator::byDeepTau2017v2p1VSe &&
         (std::find(dms.begin(), dms.end(), decayMode) != dms.end())){
 
-        Int_t bin = hist_ele_faking_tau->GetXaxis()->FindBin(eta);
-        double e_fake_rate_correction  = hist_ele_faking_tau->GetBinContent(bin);
-        double error_fes = hist_ele_faking_tau->GetBinError(bin);
+        std::string reg = "";
+        if(std::abs(eta) < 1.5)
+            reg = "barrel";
+        else
+            reg = "endcap";
 
-        auto e_fake_rate_final_correction = e_fake_rate_correction + static_cast<int>(scale) * error_fes;
+        auto errors = fes_error[std::make_pair(decayMode, reg)];
+        auto error_fes  = static_cast<int>(scale) > 0 ? errors.second : errors.first;
+        auto fes_value = fes[std::make_pair(decayMode, reg)];
+
+        auto e_fake_rate_final_correction = fes_value + static_cast<int>(scale) * error_fes;
         return e_fake_rate_final_correction;
     }
-
     return 1.;
 }
 
-double TauESUncertainties::GetCorrectionFactorMuonFakingTau(UncertaintyScale scale)
+double TauESUncertainties::GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const
 {
     return 1. + static_cast<int>(scale) * 0.01;
 }

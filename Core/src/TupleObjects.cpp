@@ -95,8 +95,13 @@ TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id)
 const LorentzVectorE& TupleJet::p4() const { return event->jets_p4.at(jet_id); }
 analysis::DiscriminatorIdResults TupleJet::GetPuId() const
 {
-    analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id.at(jet_id));
+    analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id_upd.at(jet_id));
     return jet_pu_id;
+}
+
+Float_t TupleJet::GetPuIdRaw() const
+{
+    return event->jets_pu_id_upd_raw.at(jet_id);
 }
 
 bool TupleJet::PassPuId(DiscriminatorWP wp) const {

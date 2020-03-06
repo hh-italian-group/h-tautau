@@ -146,11 +146,11 @@ private:
     edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
     edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticles_token;
     edm::EDGetTokenT<edm::View<reco::GenJet>> genJets_token;
+    edm::EDGetTokenT<double> prefweight_token;
+    edm::EDGetTokenT<double> prefweightup_token;
+    edm::EDGetTokenT<double> prefweightdown_token;
     edm::EDGetTokenT<double> rho_token;
     std::map<std::string, edm::EDGetTokenT<bool>> customMetFilters_token;
-    // edm::EDGetTokenT<double> prefweight_token;
-    // edm::EDGetTokenT<double> prefweightup_token;
-    // edm::EDGetTokenT<double> prefweightdown_token;
     edm::EDGetTokenT<edm::ValueMap<float>> updatedPileupJetIdDiscr_token;
     edm::EDGetTokenT<edm::ValueMap<int>> updatedPileupJetId_token;
 
@@ -158,7 +158,7 @@ protected:
     const analysis::Period period;
     const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
-    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
+    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded, isData;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;

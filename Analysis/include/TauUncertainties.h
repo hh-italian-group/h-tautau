@@ -10,6 +10,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include <utility>
 #include <string>
 #include <iostream>
+#include "TGraphAsymmErrors.h"
 #include "AnalysisTools/Core/include/TextIO.h"
 #include "AnalysisTools/Run/include/program_main.h"
 #include "AnalysisTools/Core/include/RootExt.h"
@@ -20,27 +21,26 @@ namespace analysis {
 using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
-    TauESUncertainties(std::string file_low_pt, std::string file_high_pt,
-                       DiscriminatorWP _ele_id_wp, std::string files_ele_faking_tau);
+    TauESUncertainties(std::string file_low_pt, std::string file_high_pt, std::string files_ele_faking_tau,
+                       TauIdDiscriminator _tau_vs_e_discr);
     double GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
-                               UncertaintySource unc_source, UncertaintyScale scale, double pt,
-                               TauIdDiscriminator tauVSeDiscriminator, double eta);
+                               UncertaintySource unc_source, UncertaintyScale scale, double pt, double eta) const;
 
     double GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale,
-                                      GenLeptonMatch genLeptonMatch = GenLeptonMatch::Tau);
+                                      GenLeptonMatch genLeptonMatch = GenLeptonMatch::Tau) const ;
 
-    double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale);
+    double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const;
 
-    double GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch, TauIdDiscriminator tauVSeDiscriminator,
-                                           int decayMode);
+    double GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch,
+                                           TauIdDiscriminator tauVSeDiscriminator, int decayMode) const;
 
 private:
-    DiscriminatorWP ele_id_wp;
     std::shared_ptr<TFile> file_low;
     std::shared_ptr<TH1F> hist_tes_pt_low;
     std::shared_ptr<TFile> file_high;
     std::shared_ptr<TH1F> hist_tes_pt_high;
     std::shared_ptr<TFile> file_ele_faking_tau;
-    std::shared_ptr<TH1F> hist_ele_faking_tau;
+    std::shared_ptr<TGraphAsymmErrors> hist_ele_faking_tau;
+    TauIdDiscriminator tau_vs_e_discr;
 };
 } // namespace analysis

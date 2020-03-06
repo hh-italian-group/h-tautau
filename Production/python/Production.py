@@ -340,6 +340,7 @@ for channel in channels:
         genJets                 = genJets_inputTag,
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData or options.isEmbedded),
+        isData                  = cms.bool(isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),
@@ -372,8 +373,8 @@ if period == 'Run2016':
         getattr(process, updatedTauName) *
         process.fullPatMetSequence *
         process.topGenSequence *
-        process.tupleProductionSequence *
-        process.prefiringweight
+        process.prefiringweight *
+        process.tupleProductionSequence
     )
 
 if period == 'Run2017':
@@ -387,8 +388,8 @@ if period == 'Run2017':
         process.fullPatMetSequenceModifiedMET *
         process.ecalBadCalibReducedMINIAODFilter *
         process.topGenSequence *
-        process.tupleProductionSequence *
-        process.prefiringweight 
+        process.prefiringweight*
+        process.tupleProductionSequence
     )
 
 if period == 'Run2018':

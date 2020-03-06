@@ -6,14 +6,14 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
 EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-UncertaintyScale _scale, analysis::Period _period) :
-    event(&_event), uncertainty_source(_uncertainty_source), scale(_scale), period(_period)
+UncertaintyScale _scale) :
+    event(&_event), uncertainty_source(_uncertainty_source), scale(_scale)
 {
 }
 
 void EventCandidate::InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
                                              TauIdDiscriminator tau_id_discriminator,
-                                             TauIdDiscriminator ele_id_discriminator, DiscriminatorWP ele_id_wp)
+                                             TauIdDiscriminator ele_id_discriminator)
 {
     static const std::map<analysis::Period,std::string> file_uncertainty_sources = {
         { analysis::Period::Run2016,
@@ -72,18 +72,16 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
         throw exception("Period not found in files for TauES.");
 
     const std::map<analysis::Period, std::string> file_ele_faking_tau = {
-        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauID_SF_eta_DeepTau2017v2p1VSe_2016Legacy.root" },
-        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauID_SF_eta_DeepTau2017v2p1VSe_2017Legacy.root" },
-        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauID_SF_eta_DeepTau2017v2p1VSe_2018Legacy.root" },
+        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2016Legacy.root" },
+        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2017ReReco.root" },
+        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2018ReReco.root" },
     };
-
     if(!file_ele_faking_tau.count(period))
         throw exception("Period not found in files for electron faking tau.");
 
     tauESUncertainties = std::make_shared<TauESUncertainties>(file_tes.at(period).at(tau_id_discriminator).at(0),
                                                               file_tes.at(period).at(tau_id_discriminator).at(1),
-                                                              ele_id_wp, file_ele_faking_tau.at(period));
-
+                                                              file_ele_faking_tau.at(period), ele_id_discriminator );
 }
 
 const jec::JECUncertaintiesWrapper& EventCandidate::GetJecUncertainties()
@@ -173,10 +171,15 @@ void EventCandidate::CreateLeptons()
       auto tuple_lepton = tuple_leptons->at(n);
       LorentzVectorM lepton_p4(tuple_lepton.p4());
       LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
-      if(tuple_lepton.leg_type() == analysis::LegType::tau){
+
+      if(tuple_lepton.leg_type() == analysis::LegType::tau && !(event->isData) ){
           double sf = tauESUncertainties->GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
                                                               uncertainty_source, scale, tuple_lepton.p4().pt(),
-                                                              TauIdDiscriminator::byDeepTau2017v2p1VSe,tuple_lepton.p4().eta());
+                                                              tuple_lepton.p4().eta());
+
+          // double sf = GetTauESUncertainties().GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
+          //                                                     uncertainty_source, scale, tuple_lepton.p4().pt(),
+          //                                                     tuple_lepton.p4().eta());
 
           // if(tuple_lepton.decayMode() == 0){
           //     double shifted_pt = lepton_p4.pt() * sf;

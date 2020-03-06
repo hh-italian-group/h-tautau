@@ -24,7 +24,7 @@ class EventCandidate {
 public:
 
     EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-                   UncertaintyScale _scale, Period _period);
+                   UncertaintyScale _scale);
 
     EventCandidate(const EventCandidate& ) = default; //copy constructor
     EventCandidate(EventCandidate&& ) = default; // move constructor
@@ -33,7 +33,8 @@ public:
 
     static void InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
                                         TauIdDiscriminator tau_id_discriminator,
-                                        TauIdDiscriminator ele_id_discriminator, DiscriminatorWP ele_id_wp);
+                                        TauIdDiscriminator ele_id_discriminator);
+                                        
     static const jec::JECUncertaintiesWrapper& GetJecUncertainties();
     const TauESUncertainties& GetTauESUncertainties();
 
@@ -52,7 +53,6 @@ private:
     const ntuple::Event* event;
     UncertaintySource uncertainty_source;
     UncertaintyScale scale;
-    analysis::Period period;
     std::shared_ptr<std::vector<ntuple::TupleLepton>> tuple_leptons;
     std::shared_ptr<std::vector<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<std::vector<ntuple::TupleFatJet>> tuple_fatJets;

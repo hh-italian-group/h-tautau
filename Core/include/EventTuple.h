@@ -221,6 +221,10 @@ using Point3D = analysis::Point3D_Float;
     VAR(Int_t, mass_point)  \
     VAR(Int_t, spin)  \
     VAR(Int_t, node)  \
+    /* prefiring weight variables */ \
+    VAR(double, theprefiringweight) \
+    VAR(double, theprefiringweightup) \
+    VAR(double, theprefiringweightdown) 
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
