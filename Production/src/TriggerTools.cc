@@ -282,17 +282,16 @@ bool TriggerTools::GetTriggerResult(CMSSW_Process process, const std::string& na
 
 bool TriggerTools::TryGetAnyTriggerResult(const std::string& name, bool& result) const
 {
-    static constexpr bool duplicate_control = false;
     static const auto& all_processes = __CMSSW_Process_names<>::names.GetEnumEntries();
     std::map<CMSSW_Process, bool> results;
     for(const auto& process : all_processes) {
         if(TryGetTriggerResult(process, name, result)) {
-            if(!duplicate_control)
+            if(!debug)
                 return true;
             results[process] = result;
         }
     }
-    if(!duplicate_control || results.empty())
+    if(!debug || results.empty())
         return false;
     if(results.size() > 1) {
         for(const auto& entry : results)
