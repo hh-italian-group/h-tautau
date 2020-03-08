@@ -282,12 +282,24 @@ bool TriggerTools::GetTriggerResult(CMSSW_Process process, const std::string& na
 
 bool TriggerTools::TryGetAnyTriggerResult(const std::string& name, bool& result) const
 {
+    static constexpr bool duplicate_control = false;
     static const auto& all_processes = __CMSSW_Process_names<>::names.GetEnumEntries();
-    for(auto process : all_processes) {
-        if(TryGetTriggerResult(process, name, result))
-            return true;
+    std::map<CMSSW_Process, bool> results;
+    for(const auto& process : all_processes) {
+        if(TryGetTriggerResult(process, name, result)) {
+            if(!duplicate_control)
+                return true;
+            results[process] = result;
+        }
     }
-    return false;
+    if(!duplicate_control || results.empty())
+        return false;
+    if(results.size() > 1) {
+        for(const auto& entry : results)
+            std::cout << entry.first << ": " << entry.second << std::endl;
+        throw analysis::exception("Multiple trigger results for '%1%'.") % name;
+    }
+    return true;
 }
 
 bool TriggerTools::GetAnyTriggerResult(const std::string& name) const
