@@ -58,6 +58,8 @@ namespace trigger_tools {
 
 namespace analysis {
 
+bool TriggerTools::debug = false;
+
 TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
@@ -145,9 +147,14 @@ void TriggerTools::Initialize(const edm::Event &_iEvent, bool isData)
                 jetTriggerObjects.SetJetFilterMatchBit(filter_index, jet_index, true);
             }
         } else {
+            if(debug)
+                std::cout << "Trigger object " << LorentzVectorToString(triggerObject.polarP4()) << '\n';
             for(const auto& path : paths) {
                 size_t index;
-                if(!triggerDescriptors->FindPatternMatch(path,index)) continue;
+                const bool pattern_match_found = triggerDescriptors->FindPatternMatch(path,index);
+                if(debug)
+                    std::cout << '\t' << path << " found: " << pattern_match_found << '\n';
+                if(!pattern_match_found) continue;
                 const auto& descriptor = triggerDescriptors->at(index);
                 for(unsigned n = 0; n < descriptor.lepton_legs.size(); ++n){
                     const TriggerDescriptorCollection::Leg& leg = descriptor.lepton_legs.at(n);
@@ -156,8 +163,12 @@ void TriggerTools::Initialize(const edm::Event &_iEvent, bool isData)
                         filter_toPass = *leg.legacy_filters;
                     else
                         filter_toPass = leg.filters;
-                    if(!hasExpectedType(leg.type, unpackedTriggerObject)
-                        || !passFilters(unpackedTriggerObject,filter_toPass)) continue;
+                    const bool has_expected_type = hasExpectedType(leg.type, unpackedTriggerObject);
+                    const bool pass_filters = passFilters(unpackedTriggerObject,filter_toPass);
+                    if(debug)
+                        std::cout << "\t\t leg=" << n << ", has_expected_type=" << has_expected_type
+                                  << ", pass_filters=" << pass_filters << '\n';
+                    if(!has_expected_type || !pass_filters) continue;
                     pathTriggerObjects.at(index).at(n).insert(&triggerObject);
                 }
             }
@@ -194,7 +205,7 @@ TriggerTools::VectorTriggerObjectSet TriggerTools::FindMatchingTriggerObjects(
             if(ROOT::Math::VectorUtil::DeltaR2(triggerObject->polarP4(), candidateMomentum) >= deltaR2) continue;
             if(leg.eta.is_initialized() && std::abs(candidateMomentum.Eta()) >= leg.eta ) continue;
             //if(candidateMomentum.Pt() <= leg.pt + deltaPt_map.at(leg.type)) continue;
-            const double deltaR2_l1 = std::pow(0.5, 2);
+            static const double deltaR2_l1 = std::pow(0.5, 2);
             bool found_l1_match = false;
             if(leg.applyL1match){
                 const BXVector<l1t::Tau>& l1taus_elements = *l1Taus.product();
@@ -272,11 +283,22 @@ bool TriggerTools::GetTriggerResult(CMSSW_Process process, const std::string& na
 bool TriggerTools::TryGetAnyTriggerResult(const std::string& name, bool& result) const
 {
     static const auto& all_processes = __CMSSW_Process_names<>::names.GetEnumEntries();
-    for(auto process : all_processes) {
-        if(TryGetTriggerResult(process, name, result))
-            return true;
+    std::map<CMSSW_Process, bool> results;
+    for(const auto& process : all_processes) {
+        if(TryGetTriggerResult(process, name, result)) {
+            if(!debug)
+                return true;
+            results[process] = result;
+        }
     }
-    return false;
+    if(!debug || results.empty())
+        return false;
+    if(results.size() > 1) {
+        for(const auto& entry : results)
+            std::cout << entry.first << ": " << entry.second << std::endl;
+        throw analysis::exception("Multiple trigger results for '%1%'.") % name;
+    }
+    return true;
 }
 
 bool TriggerTools::GetAnyTriggerResult(const std::string& name) const

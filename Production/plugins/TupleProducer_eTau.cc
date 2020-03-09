@@ -21,7 +21,7 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     auto electrons = CollectSignalElectrons();
     cut(electrons.size(), "electrons");
 
-    std::sort(electrons.begin(),electrons.end(),&LeptonComparitor<ElectronCandidate>);
+    std::sort(electrons.begin(),electrons.end(),&analysis::LeptonComparitor<ElectronCandidate>);
     selection.electrons.push_back(electrons.at(0));
     selection.other_electrons = CollectVetoElectrons(false,{&electrons.at(0)});
     selection.electronVeto = selection.other_electrons.size();
