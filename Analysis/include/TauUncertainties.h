@@ -2,6 +2,13 @@
 If not specified otherwise, all definitions are taken from the TauID for 13 TeV TWiki:
 https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
+// #pragma once
+// #include "h-tautau/Core/include/AnalysisTypes.h"
+// #include "AnalysisTools/Core/include/PhysicalValue.h"
+// #include "h-tautau/Core/include/TauIdResults.h"
+// #include "TGraphAsymmErrors.h"
+// #include "AnalysisTools/Core/include/RootExt.h"
+// #include <string>
 
 #pragma once
 #include "h-tautau/Core/include/AnalysisTypes.h"
