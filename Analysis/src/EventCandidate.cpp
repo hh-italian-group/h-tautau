@@ -172,7 +172,7 @@ void EventCandidate::CreateLeptons()
       LorentzVectorM lepton_p4(tuple_lepton.p4());
       LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
 
-      if(tuple_lepton.leg_type() == analysis::LegType::tau && !(event->isData) ){
+      if(!event->isData && tuple_lepton.leg_type() == analysis::LegType::tau){
           double sf = tauESUncertainties->GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
                                                               uncertainty_source, scale, tuple_lepton.p4().pt(),
                                                               tuple_lepton.p4().eta());
@@ -217,7 +217,7 @@ void EventCandidate::CreateJets()
         tuple_jets->emplace_back(*event, n);
     for(size_t n = 0; n < tuple_jets->size(); ++n)
         jet_candidates->emplace_back(tuple_jets->at(n));
-    if(jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source)) {
+    if(!event->isData && jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source)) {
         const auto& other_jets_p4 = event->other_jets_p4;
         auto shifted_met_p4(met->GetMomentum());
         *jet_candidates = GetJecUncertainties().ApplyShift(*jet_candidates, uncertainty_source, scale, &other_jets_p4,

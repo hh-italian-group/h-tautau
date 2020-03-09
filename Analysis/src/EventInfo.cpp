@@ -348,23 +348,35 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                JetOrdering jet_ordering,
                                                bool is_sync,
                                                UncertaintySource uncertainty_source,
-                                               UncertaintyScale scale)
+                                               UncertaintyScale scale,
+                                               bool debug)
 {
-    // std::cout << "a" << "\n";
+    if(debug)
+        std::cout << "Creating event candidate... ";
     EventCandidate event_candidate(event, uncertainty_source, scale);
-    // std::cout << "b" << "\n";
+    if(debug)
+        std::cout << "done\nSelecting higgs->tautau candidate...\n";
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
-    // std::cout << "c" << "\n";
-    // if(!selected_higgs_index.is_initialized()) std::cout << "Nutells" << "\n";
+    if(debug) {
+        if(selected_higgs_index.is_initialized())
+            std::cout << "Higgs->tautau candidate number " << *selected_higgs_index << " is selected.\n";
+        else
+            std::cout << "Higgs->tautau candidate is not selected.\n";
+    }
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
-    // std::cout << "d" << "\n";
+    if(debug)
+        std::cout << "Selecting signal jets... ";
     auto selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate, period, jet_ordering,
                                                                        *selected_higgs_index, uncertainty_source,
                                                                        scale);
-   // std::cout << "e" << "\n";
-    return EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index, selected_signal_jets, period,
-                         jet_ordering);
+    if(debug)
+        std::cout << "done\nCreating EventInfo...";
+    auto eventInfo = EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index,
+                                   selected_signal_jets, period, jet_ordering);
+    if(debug)
+        std::cout << "done\n";
+    return eventInfo;
 }
 
 } // namespace analysis

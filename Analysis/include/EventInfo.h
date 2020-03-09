@@ -190,6 +190,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                JetOrdering jet_ordering = JetOrdering::DeepCSV,
                                                bool is_sync = false,
                                                UncertaintySource uncertainty_source = UncertaintySource::None,
-                                               UncertaintyScale scale = UncertaintyScale::Central);
+                                               UncertaintyScale scale = UncertaintyScale::Central,
+                                               bool debug = false);
 
 } // namespace analysis

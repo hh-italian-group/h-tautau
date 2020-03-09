@@ -9,32 +9,46 @@ namespace ntuple {
 
 TupleObject::TupleObject(const ntuple::Event& _event) : event(&_event) {}
 
+void TupleObject::CheckIndexRange(size_t index, size_t size, std::string_view obj_name, std::string_view branch_name)
+{
+    if(index >= size)
+        throw analysis::exception("%1% index = %2% is out of range to index %3%, which has the size = %4%.")
+                % obj_name % index % branch_name % size;
+}
+
 TupleLepton::TupleLepton(const ntuple::Event& _event, size_t _object_id)
     : TupleObject(_event), object_id(_object_id)
 {
-    if(object_id >= event->lep_p4.size())
-        throw analysis::exception("Invalid object id = %1%.") % object_id;
 }
 
-const LorentzVectorM& TupleLepton::p4() const { return event->lep_p4.at(object_id); }
-TupleObject::Integer TupleLepton::charge() const { return event->lep_q.at(object_id); }
-TupleObject::RealNumber TupleLepton::dxy() const { return event->lep_dxy.at(object_id); }
-TupleObject::RealNumber TupleLepton::dz() const { return event->lep_dz.at(object_id); }
-TupleObject::RealNumber TupleLepton::iso() const { return event->lep_iso.at(object_id); }
-analysis::GenLeptonMatch TupleLepton::gen_match() const { return analysis::GenLeptonMatch(event->lep_gen_match.at(object_id)); }
-const LorentzVectorM& TupleLepton::gen_p4() const { return event->lep_gen_p4.at(object_id); }
-TupleObject::Integer TupleLepton::decayMode() const { return event->lep_decayMode.at(object_id); }
-analysis::LegType TupleLepton::leg_type() const { return analysis::LegType(event->lep_type.at(object_id)); }
-bool TupleLepton::passConversionVeto() const {return event->lep_elePassConversionVeto.at(object_id);}
+const LorentzVectorM& TupleLepton::p4() const { return CheckAndGetRef(event->lep_p4, "lep_p4"); }
+TupleObject::Integer TupleLepton::charge() const { return CheckAndGet(event->lep_q, "lep_q"); }
+TupleObject::RealNumber TupleLepton::dxy() const { return CheckAndGet(event->lep_dxy, "lep_dxy"); }
+TupleObject::RealNumber TupleLepton::dz() const { return CheckAndGet(event->lep_dz, "lep_dz"); }
+TupleObject::RealNumber TupleLepton::iso() const { return CheckAndGet(event->lep_iso, "lep_iso"); }
+analysis::GenLeptonMatch TupleLepton::gen_match() const
+{
+    return analysis::GenLeptonMatch(CheckAndGet(event->lep_gen_match, "lep_gen_match"));
+}
+const LorentzVectorM& TupleLepton::gen_p4() const { return CheckAndGetRef(event->lep_gen_p4, "lep_gen_p4"); }
+TupleObject::Integer TupleLepton::decayMode() const { return CheckAndGet(event->lep_decayMode, "lep_decayMode"); }
+analysis::LegType TupleLepton::leg_type() const
+{
+    return analysis::LegType(CheckAndGet(event->lep_type, "lep_type"));
+}
+bool TupleLepton::passConversionVeto() const
+{
+    return CheckAndGet(event->lep_elePassConversionVeto, "lep_elePassConversionVeto");
+}
 bool TupleLepton::passEleIso(DiscriminatorWP wp) const
 {
-    DiscriminatorIdResults eleIso(event->lep_eleId_iso.at(object_id));
+    DiscriminatorIdResults eleIso(CheckAndGet(event->lep_eleId_iso, "lep_eleId_iso"));
     return eleIso.Passed(wp);
 }
 
 bool TupleLepton::passMuonId(DiscriminatorWP wp) const
 {
-    DiscriminatorIdResults muonId(event->lep_muonId.at(object_id));
+    DiscriminatorIdResults muonId(CheckAndGet(event->lep_muonId, "lep_muonId"));
     return muonId.Passed(wp);
 }
 
@@ -44,7 +58,8 @@ bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discri
         throw analysis::exception("LegType is not a tau in Passed for %1%") % analysis::EventIdentifier(*event);
     uint16_t discriminator_value = std::numeric_limits<uint16_t>::max();
     #define TAU_ID(name, pattern, has_raw, wp_list) \
-        if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) discriminator_value = event->name.at(object_id);
+        if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) \
+            discriminator_value = CheckAndGet(event->name, #name);
     TAU_IDS()
     #undef TAU_ID
     if(discriminator_value == std::numeric_limits<uint16_t>::max())
@@ -54,15 +69,22 @@ bool TupleLepton::Passed(analysis::TauIdDiscriminator tauIdDiscriminator, Discri
 
 }
 
-bool TupleLepton::PassedOldDecayMode() const { return event->lep_oldDecayModeFinding.at(object_id); }
-bool TupleLepton::PassedNewDecayMode() const { return event->lep_newDecayModeFinding.at(object_id); }
+bool TupleLepton::PassedOldDecayMode() const
+{
+    return CheckAndGet(event->lep_oldDecayModeFinding, "lep_oldDecayModeFinding");
+}
+bool TupleLepton::PassedNewDecayMode() const
+{
+    return CheckAndGet(event->lep_newDecayModeFinding, "lep_newDecayModeFinding");
+}
 
 TupleObject::DiscriminatorResult TupleLepton::GetRawValue(analysis::TauIdDiscriminator tauIdDiscriminator) const
 {
     if(leg_type() != analysis::LegType::tau)
         throw analysis::exception("LegType is not a tau in Get Raw for %1%") % analysis::EventIdentifier(*event);
     #define TAU_ID(name, pattern, has_raw, wp_list) \
-        if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) return event->name##raw.at(object_id);
+        if(tauIdDiscriminator == analysis::TauIdDiscriminator::name) \
+            return CheckAndGet(event->name##raw, #name"raw");
     TAU_IDS()
     #undef TAU_ID
     throw analysis::exception("TauId Raw value not found.");
@@ -85,40 +107,38 @@ int TupleLepton::CompareIsolations(const TupleLepton& other, analysis::TauIdDisc
     throw analysis::exception("Isolation comparison for the leg type '%1%' is not supported.") % leg_type();
 }
 
-TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id)
-    : TupleObject(_event), jet_id(_jet_id)
-{
-    if(jet_id >= event->jets_p4.size())
-        throw analysis::exception("Jet id = %1% is out of range.") % jet_id;
-}
-
-const LorentzVectorE& TupleJet::p4() const { return event->jets_p4.at(jet_id); }
+TupleJet::TupleJet(const ntuple::Event& _event, size_t _jet_id) : TupleObject(_event), jet_id(_jet_id) {}
+const LorentzVectorE& TupleJet::p4() const { return CheckAndGetRef(event->jets_p4, "jet_p4"); }
 analysis::DiscriminatorIdResults TupleJet::GetPuId() const
 {
-    analysis::DiscriminatorIdResults jet_pu_id(event->jets_pu_id_upd.at(jet_id));
-    return jet_pu_id;
+    return analysis::DiscriminatorIdResults(CheckAndGet(event->jets_pu_id_upd, "jets_pu_id_upd"));
 }
 
-Float_t TupleJet::GetPuIdRaw() const
-{
-    return event->jets_pu_id_upd_raw.at(jet_id);
-}
+Float_t TupleJet::GetPuIdRaw() const { return CheckAndGet(event->jets_pu_id_upd_raw, "jets_pu_id_upd_raw"); }
 
 bool TupleJet::PassPuId(DiscriminatorWP wp) const {
-    analysis::DiscriminatorIdResults jet_pu_id = GetPuId();
+    const analysis::DiscriminatorIdResults jet_pu_id = GetPuId();
     return jet_pu_id.Passed(wp);
 }
-TupleObject::DiscriminatorResult TupleJet::csv() const { return event->jets_csv.at(jet_id); }
-TupleObject::DiscriminatorResult TupleJet::deepcsv() const { return event->jets_deepCsv_BvsAll.at(jet_id); }
+TupleObject::DiscriminatorResult TupleJet::csv() const { return CheckAndGet(event->jets_csv, "jets_csv"); }
+TupleObject::DiscriminatorResult TupleJet::deepcsv() const
+{
+    return CheckAndGet(event->jets_deepCsv_BvsAll, "jets_deepCsv_BvsAll");
+}
 TupleObject::DiscriminatorResult TupleJet::deepFlavour() const
 {
-    return event->jets_deepFlavour_b.at(jet_id) + event->jets_deepFlavour_bb.at(jet_id)
-           + event->jets_deepFlavour_lepb.at(jet_id);
+    return CheckAndGet(event->jets_deepFlavour_b, "jets_deepFlavour_b")
+         + CheckAndGet(event->jets_deepFlavour_bb, "jets_deepFlavour_bb")
+         + CheckAndGet(event->jets_deepFlavour_lepb, "jets_deepFlavour_lepb");
 }
 TupleObject::RealNumber TupleJet::hh_tag(analysis::UncertaintySource unc_source,
                                          analysis::UncertaintyScale unc_scale) const
 {
-    for(unsigned n = 0; n < event->jet_hh_score_value.size(); ++n){
+    const size_t N = event->jet_hh_score_value.size();
+    if(event->jet_hh_score_index.size() != N || event->jet_hh_score_unc_source.size() != N
+            || event->jet_hh_score_unc_scale.size() != N)
+        throw analysis::exception("Inconsistent jet_hh_score branches size.");
+    for(size_t n = 0; n < N; ++n) {
         if(event->jet_hh_score_index.at(n) != jet_id) continue;
         if(event->jet_hh_score_unc_source.at(n) != static_cast<int>(unc_source)) continue;
         if(event->jet_hh_score_unc_scale.at(n) != static_cast<int>(unc_scale)) continue;
@@ -126,58 +146,58 @@ TupleObject::RealNumber TupleJet::hh_tag(analysis::UncertaintySource unc_source,
     }
     throw analysis::exception("HH tag not found for TupleObjects.");
 }
-TupleObject::Integer TupleJet::partonFlavour() const { return event->jets_partonFlavour.at(jet_id); }
-TupleObject::Integer TupleJet::hadronFlavour() const { return event->jets_hadronFlavour.at(jet_id); }
-TupleObject::RealNumber TupleJet::rawf() const { return event->jets_rawf.at(jet_id); }
-TupleObject::RealNumber TupleJet::resolution() const { return event->jets_resolution.at(jet_id); }
+TupleObject::Integer TupleJet::partonFlavour() const
+{
+    return CheckAndGet(event->jets_partonFlavour, "jets_partonFlavour");
+}
+TupleObject::Integer TupleJet::hadronFlavour() const
+{
+    return CheckAndGet(event->jets_hadronFlavour, "jets_hadronFlavour");
+}
+TupleObject::RealNumber TupleJet::rawf() const { return CheckAndGet(event->jets_rawf, "jets_rawf"); }
+TupleObject::RealNumber TupleJet::resolution() const { return CheckAndGet(event->jets_resolution, "jets_resolution"); }
 size_t TupleJet::jet_index() const { return jet_id; }
 
 TupleJet::FilterBits TupleJet::triggerFilterMatch() const
 {
     analysis::TriggerDescriptorCollection::RootBitsContainer match_bits = {{
-        event->jets_triggerFilterMatch_0.at(jet_id),
-        event->jets_triggerFilterMatch_1.at(jet_id),
-        event->jets_triggerFilterMatch_2.at(jet_id),
-        event->jets_triggerFilterMatch_3.at(jet_id),
+        CheckAndGet(event->jets_triggerFilterMatch_0, "jets_triggerFilterMatch_0"),
+        CheckAndGet(event->jets_triggerFilterMatch_1, "jets_triggerFilterMatch_1"),
+        CheckAndGet(event->jets_triggerFilterMatch_2, "jets_triggerFilterMatch_2"),
+        CheckAndGet(event->jets_triggerFilterMatch_3, "jets_triggerFilterMatch_3"),
     }};
     return analysis::TriggerDescriptorCollection::ConvertFromRootRepresentation(match_bits);
 }
 
-TupleSubJet::TupleSubJet(const ntuple::Event& _event, size_t _jet_id)
-    : TupleObject(_event), jet_id(_jet_id)
+TupleSubJet::TupleSubJet(const ntuple::Event& _event, size_t _jet_id) : TupleObject(_event), jet_id(_jet_id) {}
+const LorentzVectorE& TupleSubJet::p4() const
 {
-    if(jet_id >= event->subJets_p4.size())
-        throw analysis::exception("Fat sub-jet id = %1% is out of range.") % jet_id;
+    return CheckAndGetRef(jet_id, event->subJets_p4, "sub-jet", "subJets_p4");
 }
-
-const LorentzVectorE& TupleSubJet::p4() const { return event->subJets_p4.at(jet_id); }
 
 TupleFatJet::TupleFatJet(const ntuple::Event& _event, size_t _jet_id)
     : TupleObject(_event), jet_id(_jet_id)
 {
-    if(jet_id >= event->fatJets_p4.size())
-        throw analysis::exception("Fat jet id = %1% is out of range.") % jet_id;
-
-    for(size_t n = 0; n < event->subJets_p4.size(); ++n) {
+    for(size_t n = 0; n < event->subJets_parentIndex.size(); ++n) {
         if(event->subJets_parentIndex.at(n) == jet_id)
-            sub_jets.push_back(TupleSubJet(_event, n));
+            sub_jets.emplace_back(_event, n);
     }
 }
 
-const LorentzVectorE& TupleFatJet::p4() const { return event->fatJets_p4.at(jet_id); }
+const LorentzVectorE& TupleFatJet::p4() const { return CheckAndGetRef(event->fatJets_p4, "fatJets_p4"); }
 
 float TupleFatJet::m(MassType massType) const
 {
-    if(massType == MassType::SoftDrop) return event->fatJets_m_softDrop.at(jet_id);
+    if(massType == MassType::SoftDrop) return CheckAndGet(event->fatJets_m_softDrop, "fatJets_m_softDrop");
     throw analysis::exception("Unsupported fat jet mass type");
 }
 
 TupleObject::DiscriminatorResult TupleFatJet::jettiness(size_t tau_index) const
 {
-    if(tau_index == 1) return event->fatJets_jettiness_tau1.at(jet_id);
-    if(tau_index == 2) return event->fatJets_jettiness_tau2.at(jet_id);
-    if(tau_index == 3) return event->fatJets_jettiness_tau3.at(jet_id);
-    if(tau_index == 4) return event->fatJets_jettiness_tau4.at(jet_id);
+    if(tau_index == 1) return CheckAndGet(event->fatJets_jettiness_tau1, "fatJets_jettiness_tau1");
+    if(tau_index == 2) return CheckAndGet(event->fatJets_jettiness_tau2, "fatJets_jettiness_tau1");
+    if(tau_index == 3) return CheckAndGet(event->fatJets_jettiness_tau3, "fatJets_jettiness_tau1");
+    if(tau_index == 4) return CheckAndGet(event->fatJets_jettiness_tau4, "fatJets_jettiness_tau1");
     throw analysis::exception("Unsupported tau index = %1% for fat jet subjettiness.") % tau_index;
 }
 
@@ -192,17 +212,8 @@ TupleMet::TupleMet(const ntuple::Event& _event, MetType _met_type)
 }
 
 TupleMet::MetType TupleMet::type() const { return met_type; }
-
-const LorentzVectorM& TupleMet::p4() const
-{
-    return event->pfMET_p4;
-}
-
-const TupleMet::CovMatrix& TupleMet::cov() const
-{
-    return event->pfMET_cov;
-}
-
+const LorentzVectorM& TupleMet::p4() const { return event->pfMET_p4; }
+const TupleMet::CovMatrix& TupleMet::cov() const { return event->pfMET_cov; }
 TupleObject::RealNumber TupleMet::pt() const { return p4().pt(); }
 TupleObject::RealNumber TupleMet::phi() const { return p4().phi(); }
 

@@ -153,9 +153,6 @@ bool SignalObjectSelector::PassLeptonSelection(const LepCandidate& lepton, Chann
 boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandidate& event_candidate, bool is_sync) const
 {
     const ntuple::Event& event = event_candidate.GetEvent();
-    // std::vector<ntuple::TupleLepton> lepton_candidates;
-    // for(size_t n = 0; n < event.lep_p4.size(); ++n)
-    //     lepton_candidates.emplace_back(event, n);
     std::vector<size_t> higgs_candidates;
     for(size_t n = 0; n < event.first_daughter_indexes.size(); ++n){
         if(event.first_daughter_indexes.at(n) >=event_candidate.GetLeptons().size() ||
@@ -169,7 +166,6 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(EventCandid
         if(!PassLeptonSelection(second_leg,channel,2, is_sync)) continue;
         higgs_candidates.push_back(n);
     }
-    // std::cout << "higgs_candidates=" << higgs_candidates.size() << "\n";
     const auto Comparitor = [&](size_t h1, size_t h2) -> bool
     {
         bool are_identical = true;
@@ -205,12 +201,6 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
           if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
-            // const Channel channel = static_cast<Channel>(event.channelId);
-            // if(channel == Channel::MuTau){ //this is a temporary fix because of an error in the production code for vetoMuons
-            //     if(static_cast<LegType>(event.lep_type.at(0)) != LegType::mu)
-            //         throw analysis::exception("First leg type is not a muon in mutau channel.");
-            //     if(ROOT::Math::VectorUtil::DeltaR(event.lep_p4.at(0), event.other_lepton_p4.at(n)) <= 0.1) continue;
-            // }
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
             if(muonId.Passed(DiscriminatorWP::Medium) && event.other_lepton_iso.at(n) < 0.3) return false;
         }
@@ -319,9 +309,9 @@ bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lep
 bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId, bool is_sync) const
 {
     static const std::map<Channel,double> pt_map =
-        { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
-          {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::pt},
-          {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::pt}
+        { { Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
+          { Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::pt},
+          { Channel::TauTau, cuts::hh_bbtautau_2017::TauTau::tauID::pt },
       };
 
      auto e_id = GetTauVSeDiscriminator(channel);
@@ -413,37 +403,47 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
     const auto CreateJetInfo = [&](bool useBTag) -> auto {
         std::vector<analysis::jet_ordering::JetInfo<LorentzVector>> jet_info_vector;
         for(size_t n = 0; n < event_candidate.GetJets().size(); ++n) {
+            if(selected_higgs_index >= event.first_daughter_indexes.size())
+                throw exception("selected_higgs_index is out of range to index first_daughter_indexes branch.");
             const size_t first_leg_id = event.first_daughter_indexes.at(selected_higgs_index);
+            if(first_leg_id >= event_candidate.GetLeptons().size())
+                throw exception("first_leg_id is out of range.");
             const auto& first_leg = event_candidate.GetLeptons().at(first_leg_id).GetMomentum();
-            if(ROOT::Math::VectorUtil::DeltaR(first_leg, event_candidate.GetJets().at(n).GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            if(ROOT::Math::VectorUtil::DeltaR(first_leg, event_candidate.GetJets().at(n).GetMomentum()) <=
+                    cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            if(selected_higgs_index >= event.second_daughter_indexes.size())
+                throw exception("selected_higgs_index is out of range to index second_daughter_indexes branch.");
             const size_t second_leg_id = event.second_daughter_indexes.at(selected_higgs_index);
+            if(second_leg_id >= event_candidate.GetLeptons().size())
+                throw exception("second_leg_id is out of range.");
             const auto& second_leg = event_candidate.GetLeptons().at(second_leg_id).GetMomentum();
-            if(ROOT::Math::VectorUtil::DeltaR(second_leg, event_candidate.GetJets().at(n).GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
+            if(ROOT::Math::VectorUtil::DeltaR(second_leg, event_candidate.GetJets().at(n).GetMomentum()) <=
+                    cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
             if(selected_signal_jets.isSelectedBjet(n)) continue;
             if(selected_signal_jets.isSelectedVBFjet(n)) continue;
             analysis::DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
             if(!PassEcalNoiceVetoJets(event_candidate.GetJets().at(n).GetMomentum(), period, jet_pu_id)) continue;
             if(event_candidate.GetJets().at(n).GetMomentum().pt() < 50 && !jet_pu_id.Passed(analysis::DiscriminatorWP::Loose)) continue;
-            const double tag = useBTag ? bTagger.BTag(event,n,uncertainty_source,scale,base_ordering) : event_candidate.GetJets().at(n).GetMomentum().Pt();
+            const double tag = useBTag ? bTagger.BTag(event, n, uncertainty_source, scale, base_ordering) : event_candidate.GetJets().at(n).GetMomentum().Pt();
             jet_info_vector.emplace_back(event_candidate.GetJets().at(n).GetMomentum(),n,tag);
         }
         return jet_info_vector;
     };
     auto jet_info_vector = CreateJetInfo(true);
-    auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector,true,bjet_pt_cut,bjet_eta_cut);
+    auto bjets_ordered = jet_ordering::OrderJets(jet_info_vector, true, bjet_pt_cut, bjet_eta_cut);
     selected_signal_jets.n_bjets = bjets_ordered.size();
     if(bjets_ordered.size() >= 1){
         selected_signal_jets.selectedBjetPair.first = bjets_ordered.at(0).index;
     }
 
     if(bjets_ordered.size() >= 2){
-        if(bTagger.Pass(event,bjets_ordered.at(1).index,uncertainty_source,scale) || jet_ordering == analysis::JetOrdering::HHJetTag){
+        if(bTagger.Pass(event, bjets_ordered.at(1).index, uncertainty_source, scale)
+                || jet_ordering == analysis::JetOrdering::HHJetTag) {
             selected_signal_jets.selectedBjetPair.second = bjets_ordered.at(1).index;
         }
     }
-
     auto jet_info_vector_vbf = CreateJetInfo(false);
-    auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf,true,
+    auto vbf_jets_ordered = jet_ordering::OrderJets(jet_info_vector_vbf, true,
                                                     cuts::hh_bbtautau_2017::jetID::vbf_pt_cut,
                                                     cuts::hh_bbtautau_2017::jetID::vbf_eta_cut);
 
@@ -464,7 +464,7 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
     if(selected_signal_jets.HasBjetPair(event.jets_p4.size())) return selected_signal_jets;
 
     auto jet_info_vector_new = CreateJetInfo(true);
-    auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new,true,bjet_pt_cut,bjet_eta_cut);
+    auto new_bjets_ordered = jet_ordering::OrderJets(jet_info_vector_new, true, bjet_pt_cut, bjet_eta_cut);
     if(new_bjets_ordered.size() >= 1)
         selected_signal_jets.selectedBjetPair.second = new_bjets_ordered.at(0).index;
     else{
