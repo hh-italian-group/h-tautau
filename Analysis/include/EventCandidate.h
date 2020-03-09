@@ -32,9 +32,8 @@ public:
     EventCandidate& operator= ( const EventCandidate& ) = default; //assignment
 
     static void InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
-                                        TauIdDiscriminator tau_id_discriminator,
-                                        TauIdDiscriminator ele_id_discriminator);
-                                        
+                                        TauIdDiscriminator tau_id_discriminator);
+
     static const jec::JECUncertaintiesWrapper& GetJecUncertainties();
     const TauESUncertainties& GetTauESUncertainties();
 

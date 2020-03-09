@@ -28,8 +28,10 @@ namespace analysis {
 using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
-    TauESUncertainties(std::string file_low_pt, std::string file_high_pt, std::string files_ele_faking_tau,
-                       TauIdDiscriminator _tau_vs_e_discr);
+    TauESUncertainties(std::string file_low_pt, std::string file_high_pt, std::string files_ele_faking_tau);
+
+    static std::shared_ptr<TH1F> LoadWeight(const std::string& weight_file_name);
+
     double GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
                                UncertaintySource unc_source, UncertaintyScale scale, double pt, double eta) const;
 
@@ -39,15 +41,15 @@ public:
     double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const;
 
     double GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch,
-                                           TauIdDiscriminator tauVSeDiscriminator, int decayMode) const;
+                                           int decayMode) const;
 
-private:
-    std::shared_ptr<TFile> file_low;
+// private:
+//     std::shared_ptr<TFile> file_low;
     std::shared_ptr<TH1F> hist_tes_pt_low;
-    std::shared_ptr<TFile> file_high;
+//     std::shared_ptr<TFile> file_high;
     std::shared_ptr<TH1F> hist_tes_pt_high;
-    std::shared_ptr<TFile> file_ele_faking_tau;
-    std::shared_ptr<TGraphAsymmErrors> hist_ele_faking_tau;
-    TauIdDiscriminator tau_vs_e_discr;
+    std::map<analysis::Period, std::map<int, PhysicalValue>> tes_map;
+    std::map<std::pair<int, bool>, double> fes;
+    std::map<std::pair<int, bool>, std::pair<double, double>> fes_error;
 };
 } // namespace analysis

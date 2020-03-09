@@ -12,8 +12,7 @@ UncertaintyScale _scale) :
 }
 
 void EventCandidate::InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
-                                             TauIdDiscriminator tau_id_discriminator,
-                                             TauIdDiscriminator ele_id_discriminator)
+                                             TauIdDiscriminator tau_id_discriminator)
 {
     static const std::map<analysis::Period,std::string> file_uncertainty_sources = {
         { analysis::Period::Run2016,
@@ -73,15 +72,16 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
 
     const std::map<analysis::Period, std::string> file_ele_faking_tau = {
         { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2016Legacy.root" },
-        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2017ReReco.root" },
-        { analysis::Period::Run2016, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2018ReReco.root" },
+        { analysis::Period::Run2017, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2017ReReco.root" },
+        { analysis::Period::Run2018, "TauPOG/TauIDSFs/data/TauFES_eta-dm_DeepTau2017v2p1VSe_2018ReReco.root" },
     };
     if(!file_ele_faking_tau.count(period))
         throw exception("Period not found in files for electron faking tau.");
 
+    // static double pt = event->lep_p4.pt();
     tauESUncertainties = std::make_shared<TauESUncertainties>(file_tes.at(period).at(tau_id_discriminator).at(0),
                                                               file_tes.at(period).at(tau_id_discriminator).at(1),
-                                                              file_ele_faking_tau.at(period), ele_id_discriminator );
+                                                              file_ele_faking_tau.at(period));
 }
 
 const jec::JECUncertaintiesWrapper& EventCandidate::GetJecUncertainties()
@@ -173,13 +173,13 @@ void EventCandidate::CreateLeptons()
       LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
 
       if(tuple_lepton.leg_type() == analysis::LegType::tau && !(event->isData) ){
-          double sf = tauESUncertainties->GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
-                                                              uncertainty_source, scale, tuple_lepton.p4().pt(),
-                                                              tuple_lepton.p4().eta());
-
-          // double sf = GetTauESUncertainties().GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
+          // double sf = tauESUncertainties->GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
           //                                                     uncertainty_source, scale, tuple_lepton.p4().pt(),
           //                                                     tuple_lepton.p4().eta());
+
+          double sf = GetTauESUncertainties().GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
+                                                              uncertainty_source, scale, tuple_lepton.p4().pt(),
+                                                              tuple_lepton.p4().eta());
 
           // if(tuple_lepton.decayMode() == 0){
           //     double shifted_pt = lepton_p4.pt() * sf;
