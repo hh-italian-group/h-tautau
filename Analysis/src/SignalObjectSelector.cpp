@@ -314,6 +314,12 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
           { Channel::TauTau, cuts::hh_bbtautau_2017::TauTau::tauID::pt },
       };
 
+      static const std::map<Channel,double> eta_map =
+          { {Channel::ETau, 2.3} ,
+            {Channel::MuTau, 2.3},
+            {Channel::TauTau, 2.10} //definire qua per canale e anno la soglia di pt
+        };
+
      auto e_id = GetTauVSeDiscriminator(channel);
      auto mu_id = GetTauVSmuDiscriminator(channel);
 
@@ -330,6 +336,7 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     }
     if(!(lepton->leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
     if(!(lepton.GetMomentum().pt() > pt_map.at(channel))) return false;
+    if(!(std::abs(lepton.GetMomentum().eta()) < eta_map.at(channel))) return false;
     if((mode == SignalMode::HH) && !(lepton->PassedNewDecayMode())) return false;
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
@@ -337,8 +344,8 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first, DiscriminatorWP::VVVLoose)) return false;
     if(!is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
                                                  GetTauVSjetDiscriminator().second)) return false;
-    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,
-                                     GetTauVSjetSidebandWPRange().first)) return false;
+    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,GetTauVSjetSidebandWPRange().first)) return false;
+
     return true;
 }
 

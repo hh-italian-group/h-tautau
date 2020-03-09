@@ -48,9 +48,8 @@ public:
             signalObjectSelectors.emplace_back(signalModes.at(n));
         }
 
-        EventCandidate::InitializeUncertainties(run_period,args.working_path(),
-                                                signalObjectSelectors.at(0).GetTauVSjetDiscriminator().first,
-                                                signalObjectSelectors.at(0).GetTauVSeDiscriminator(channels.at(0).first);
+        EventCandidate::InitializeUncertainties(run_period, false, args.working_path(),
+                                                signalObjectSelectors.at(0).GetTauVSjetDiscriminator().first);
 
         unc_sources = SplitValueListT<analysis::UncertaintySource>(args.unc_sources(),false,",");
         vector_jet_ordering = SplitValueListT<JetOrdering>(args.jet_orderings(),false,",");
