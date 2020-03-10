@@ -321,13 +321,13 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     static const std::map<Channel,double> pt_map =
         { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
           {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::pt},
-          {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::pt} //definire qua per canale e anno la soglia di pt
+          {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::pt} 
       };
 
       static const std::map<Channel,double> eta_map =
-          { {Channel::ETau, 2.3} ,
-            {Channel::MuTau, 2.3},
-            {Channel::TauTau, 2.10} //definire qua per canale e anno la soglia di pt
+          { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::eta} ,
+            {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::eta},
+            {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::eta}
         };
 
      auto e_id = GetTauVSeDiscriminator(channel);
