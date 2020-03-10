@@ -59,7 +59,7 @@ hist_tes_pt_low(LoadWeight(file_tes_low_pt)), hist_tes_pt_high(LoadWeight(file_t
     Int_t i = 0;
 
     for (int n_bin = 0; n_bin < 2; ++n_bin){
-        for (int dm = 0; dm < dms_fes.size(); ++dm){
+        for (size_t dm = 0; dm < dms_fes.size(); ++dm){
             bool is_bin_barrel = (i == 0 || i == 1 ) ? true : false;
             double y = hist_ele_faking_tau->GetY()[i];
             double y_error_up = hist_ele_faking_tau->GetErrorYhigh(i);

@@ -57,7 +57,7 @@ namespace TauTau {
         //constexpr double pt = 45; // > to be fixed
         constexpr double pt = 20; // > tauID recommendation
                                   //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
-        constexpr double eta = 2.3; // > tauID recommendation
+        constexpr double eta = 2.1; // > tauID recommendation
                                     //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
     }
 }

@@ -48,7 +48,7 @@ public:
             signalObjectSelectors.emplace_back(signalModes.at(n));
         }
 
-        EventCandidate::InitializeUncertainties(run_period,args.working_path(),
+        EventCandidate::InitializeUncertainties(run_period, false, args.working_path(),
                                                 signalObjectSelectors.at(0).GetTauVSjetDiscriminator().first);
 
         unc_sources = SplitValueListT<analysis::UncertaintySource>(args.unc_sources(),false,",");
