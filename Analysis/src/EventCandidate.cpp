@@ -6,7 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
 EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-UncertaintyScale _scale) :
+                               UncertaintyScale _scale) :
     event(&_event), uncertainty_source(_uncertainty_source), scale(_scale)
 {
 }
@@ -51,14 +51,14 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
                                        { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2016Legacy.root",
                                          "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2016Legacy_ptgt100.root" }},
                                        { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
-                                       { "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2017ReReco.root",
-                                         "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2017ReReco_ptgt100.root" }}} },
+                                       { "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2016Legacy.root",
+                                         "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2016Legacy_ptgt100.root" }}} },
         { analysis::Period::Run2017, { { TauIdDiscriminator::byDeepTau2017v2p1VSjet,
                                        { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2017ReReco.root",
                                          "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2017ReReco_ptgt100.root" }},
                                        { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
-                                       { "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2016Legacy.root",
-                                         "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2016Legacy_ptgt100.root" }}} },
+                                       { "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2017ReReco.root",
+                                         "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2017ReReco_ptgt100.root" }}} },
         { analysis::Period::Run2018, { { TauIdDiscriminator::byDeepTau2017v2p1VSjet,
                                        { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2018ReReco.root",
                                          "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2018ReReco_ptgt100.root" }},
@@ -67,7 +67,7 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
                                          "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2018ReReco_ptgt100.root" }}} }
     };
 
-    if(!file_tes.count(period))
+    if(!file_tes.count(period) || !file_tes.at(period).count(tau_id_discriminator))
         throw exception("Period not found in files for TauES.");
 
     const std::map<analysis::Period, std::string> file_ele_faking_tau = {
@@ -78,10 +78,10 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
     if(!file_ele_faking_tau.count(period))
         throw exception("Period not found in files for electron faking tau.");
 
-    // static double pt = event->lep_p4.pt();
-    tauESUncertainties = std::make_shared<TauESUncertainties>(file_tes.at(period).at(tau_id_discriminator).at(0),
-                                                              file_tes.at(period).at(tau_id_discriminator).at(1),
-                                                              file_ele_faking_tau.at(period));
+    tauESUncertainties = std::make_shared<TauESUncertainties>(
+            tools::FullPath({ working_path, file_tes.at(period).at(tau_id_discriminator).at(0) }),
+            tools::FullPath({ working_path, file_tes.at(period).at(tau_id_discriminator).at(1) }),
+            tools::FullPath({ working_path, file_ele_faking_tau.at(period) }));
 }
 
 const jec::JECUncertaintiesWrapper& EventCandidate::GetJecUncertainties()

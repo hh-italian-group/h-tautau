@@ -213,19 +213,19 @@ using Point3D = analysis::Point3D_Float;
     /* Higgs info */ \
     VAR(std::vector<size_t>, first_daughter_indexes) /* Vector of pair of daughters of Higgses */ \
     VAR(std::vector<size_t>, second_daughter_indexes) /* Vector of pair of daughters of Higgses */ \
-    /* Skimmer Variables */\
+    /* Skimmer Variables */ \
     VAR(UInt_t, file_desc_id) /* File id in TupleSkimmer. */ \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \
-    /* Gen Study Variables */\
+    /* Gen Study Variables */ \
     VAR(Int_t, sample_type)  \
     VAR(Int_t, sample_year) \
     VAR(Int_t, mass_point)  \
     VAR(Int_t, spin)  \
     VAR(Int_t, node)  \
     /* prefiring weight variables */ \
-    VAR(double, theprefiringweight) \
-    VAR(double, theprefiringweightup) \
-    VAR(double, theprefiringweightdown)
+    VAR(double, l1_prefiring_weight) \
+    VAR(double, l1_prefiring_weight_up) \
+    VAR(double, l1_prefiring_weight_down) \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

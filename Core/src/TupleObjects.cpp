@@ -195,9 +195,9 @@ float TupleFatJet::m(MassType massType) const
 TupleObject::DiscriminatorResult TupleFatJet::jettiness(size_t tau_index) const
 {
     if(tau_index == 1) return CheckAndGet(event->fatJets_jettiness_tau1, "fatJets_jettiness_tau1");
-    if(tau_index == 2) return CheckAndGet(event->fatJets_jettiness_tau2, "fatJets_jettiness_tau1");
-    if(tau_index == 3) return CheckAndGet(event->fatJets_jettiness_tau3, "fatJets_jettiness_tau1");
-    if(tau_index == 4) return CheckAndGet(event->fatJets_jettiness_tau4, "fatJets_jettiness_tau1");
+    if(tau_index == 2) return CheckAndGet(event->fatJets_jettiness_tau2, "fatJets_jettiness_tau2");
+    if(tau_index == 3) return CheckAndGet(event->fatJets_jettiness_tau3, "fatJets_jettiness_tau3");
+    if(tau_index == 4) return CheckAndGet(event->fatJets_jettiness_tau4, "fatJets_jettiness_tau4");
     throw analysis::exception("Unsupported tau index = %1% for fat jet subjettiness.") % tau_index;
 }
 

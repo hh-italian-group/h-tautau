@@ -2,54 +2,32 @@
 If not specified otherwise, all definitions are taken from the TauID for 13 TeV TWiki:
 https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
-// #pragma once
-// #include "h-tautau/Core/include/AnalysisTypes.h"
-// #include "AnalysisTools/Core/include/PhysicalValue.h"
-// #include "h-tautau/Core/include/TauIdResults.h"
-// #include "TGraphAsymmErrors.h"
-// #include "AnalysisTools/Core/include/RootExt.h"
-// #include <string>
 
 #pragma once
+
+#include <TH1.h>
 #include "h-tautau/Core/include/AnalysisTypes.h"
-#include "AnalysisTools/Core/include/PhysicalValue.h"
-#include "h-tautau/Core/include/TauIdResults.h"
-#include <utility>
-#include <string>
-#include <iostream>
-#include "TGraphAsymmErrors.h"
-#include "AnalysisTools/Core/include/TextIO.h"
-#include "AnalysisTools/Run/include/program_main.h"
-#include "AnalysisTools/Core/include/RootExt.h"
+#include "AnalysisTools/Core/include/AnalysisMath.h"
 
-
-//https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
 namespace analysis {
-using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
-    TauESUncertainties(std::string file_low_pt, std::string file_high_pt, std::string files_ele_faking_tau);
-
-    static std::shared_ptr<TH1F> LoadWeight(const std::string& weight_file_name);
+    TauESUncertainties(const std::string& file_low_pt, const std::string& file_high_pt,
+                       const std::string& file_ele_faking_tau);
 
     double GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
                                UncertaintySource unc_source, UncertaintyScale scale, double pt, double eta) const;
-
-    double GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale,
-                                      GenLeptonMatch genLeptonMatch = GenLeptonMatch::Tau) const ;
-
+    double GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale) const;
+    double GetCorrectionFactorEleFakingTau(double eta, int decayMode, UncertaintyScale scale) const;
     double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const;
 
-    double GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta, GenLeptonMatch genLeptonMatch,
-                                           int decayMode) const;
+private:
+    static std::map<int, StVariable> LoadTauCorrections(const std::string& file_name);
+    static std::map<std::pair<int, bool>, StVariable> LoadElectronCorrections(const std::string& file_name);
+    static bool ApplyUncertaintyScale(int decayMode, GenLeptonMatch genLeptonMatch, UncertaintySource unc_source);
 
-// private:
-//     std::shared_ptr<TFile> file_low;
-    std::shared_ptr<TH1F> hist_tes_pt_low;
-//     std::shared_ptr<TFile> file_high;
-    std::shared_ptr<TH1F> hist_tes_pt_high;
-    std::map<analysis::Period, std::map<int, PhysicalValue>> tes_map;
-    std::map<std::pair<int, bool>, double> fes;
-    std::map<std::pair<int, bool>, std::pair<double, double>> fes_error;
+private:
+    std::map<int, StVariable> tes_low_pt, tes_high_pt;
+    std::map<std::pair<int, bool>, StVariable> fes;
 };
 } // namespace analysis

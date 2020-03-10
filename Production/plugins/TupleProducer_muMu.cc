@@ -111,8 +111,7 @@ void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut
     cut(muon_dxy < dxy, "dxy", muon_dxy);
     const double muon_dz = std::abs(muon->muonBestTrack()->dz(primaryVertex->position()));
     cut(muon_dz < dz, "dz", muon_dz);
-    bool passMuonId = muon->isMediumMuon();
-    cut(passMuonId, "muonID");
+    cut(muon->isMediumMuon() || muon->isTightMuon(*primaryVertex), "muonID");
 }
 
 void TupleProducer_muMu::FillEventTuple(const SelectionResultsBase& selection)

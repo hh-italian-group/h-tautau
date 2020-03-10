@@ -861,7 +861,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
-    eventTuple().isData  = (!(isMC && isEmbedded));
+    eventTuple().isData  = !(isMC || isEmbedded);
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
@@ -872,21 +872,21 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     if(period == analysis::Period::Run2016 && period == analysis::Period::Run2017){
         edm::Handle<double> _theprefweight;
         edmEvent->getByToken(prefweight_token, _theprefweight);
-        eventTuple().theprefiringweight = (*_theprefweight);
+        eventTuple().l1_prefiring_weight = *_theprefweight;
 
         edm::Handle<double> _theprefweightup;
         edmEvent->getByToken(prefweightup_token, _theprefweightup);
-        eventTuple().theprefiringweightup = (*_theprefweightup);
+        eventTuple().l1_prefiring_weight_up = *_theprefweightup;
 
         edm::Handle<double> _theprefweightdown;
         edmEvent->getByToken(prefweightdown_token, _theprefweightdown);
-        eventTuple().theprefiringweightdown = (*_theprefweightdown);
+        eventTuple().l1_prefiring_weight_down = *_theprefweightdown;
     }
-    // else {
-    //     eventTuple().theprefiringweight.push_back(1);
-    //     eventTuple().theprefiringweightup.push_back(1);
-    //     eventTuple().theprefiringweightdown.push_back(1);
-    // }
+    else {
+        eventTuple().l1_prefiring_weight = 1.f;
+        eventTuple().l1_prefiring_weight = 1.f;
+        eventTuple().l1_prefiring_weight = 1.f;
+    }
     // HTT candidate
     for(const auto& result : selection.svfitResult){
         eventTuple().SVfit_Higgs_index.push_back(result.first);
@@ -970,8 +970,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
 
     for(const JetCandidate& jet : fatJets) {
         eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(jet.GetMomentum()));
-        std::string subjets_collection;
-        subjets_collection = "SoftDropPuppi";
+        static const std::string subjets_collection = "SoftDropPuppi";
         eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
         eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
         eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));

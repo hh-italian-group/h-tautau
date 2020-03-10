@@ -2,151 +2,136 @@
 If not specified otherwise, all definitions are taken from the TauID for 13 TeV TWiki:
 https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
-#include "h-tautau/Analysis/include/TauUncertainties.h"
-// #include "TGraphAsymmErrors.h"
-// #include "AnalysisTools/Core/include/RootExt.h"
-// #include <string>
 
-//https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
+#include "h-tautau/Analysis/include/TauUncertainties.h"
+#include <TGraphAsymmErrors.h>
+#include "AnalysisTools/Core/include/RootExt.h"
+
 namespace analysis {
 
-std::shared_ptr<TH1F> TauESUncertainties::LoadWeight(const std::string& file_name)
+std::map<int, StVariable> TauESUncertainties::LoadTauCorrections(const std::string& file_name)
 {
+    static const std::vector<int> available_decay_modes = { 0, 1, 10, 11 };
     auto file = root_ext::OpenRootFile(file_name);
-    return std::shared_ptr<TH1F>(root_ext::ReadCloneObject<TH1F>(*file, "tes", "", true));
+    auto hist = std::shared_ptr<TH1F>(root_ext::ReadObject<TH1F>(*file, "tes"));
+    std::map<int, StVariable> corr_map;
+    for(int dm : available_decay_modes) {
+        const int bin = hist->GetXaxis()->FindBin(dm);
+        corr_map[dm] = StVariable(hist->GetBinContent(bin), hist->GetBinError(bin));
+    }
+    return corr_map;
 }
 
-TauESUncertainties::TauESUncertainties(std::string file_tes_low_pt, std::string file_tes_high_pt,
-                                       std::string files_ele_faking_tau):
-hist_tes_pt_low(LoadWeight(file_tes_low_pt)), hist_tes_pt_high(LoadWeight(file_tes_high_pt))
+std::map<std::pair<int, bool>, StVariable> TauESUncertainties::LoadElectronCorrections(const std::string& file_name)
 {
-
-    // auto file_low = root_ext::OpenRootFile(file_tes_low_pt);
-    // hist_tes_pt_low = root_ext::ReadCloneObject<TH1F>(*file_low, "tes");
-    // auto file_high = root_ext::OpenRootFile(file_tes_high_pt);
-    // hist_tes_pt_high = root_ext::ReadCloneObject<TH1F>(*file_high, "tes");
-
-    // std::vector<int> dms_tes = {0, 1, 10, 11};
-    // const float pt_low  = 34;  // average pT in Z -> tautau measurement (incl. in DM)
-    // const float pt_high = 170; // average pT in W* -> taunu measurement (incl. in DM)
-    // for (size_t dm = 0; dm < dms_tes.size(); ++dm){
-    //     Int_t bin = hist_tes_pt_low->GetXaxis()->FindBin(dms_tes.at(dm));
-    //     double tes  = hist_tes_pt_low->GetBinContent(bin);
-    //
-    //     double err = 0;
-    //     if(pt > pt_high){
-    //         Int_t bin_high = hist_tes_pt_high->GetXaxis()->FindBin(dms_tes.at(dm));
-    //         err = hist_tes_pt_high->GetBinError(bin_high);
-    //     }
-    //     else if(pt > pt_low){
-    //         Int_t bin_high = hist_tes_pt_high->GetXaxis()->FindBin(dms_tes.at(dm));
-    //         double err_high = hist_tes_pt_high->GetBinError(bin_high);
-    //
-    //         double err_low  = hist_tes_pt_low->GetBinError(bin);
-    //         err = err_low + (err_high - err_low)/(pt_high - pt_low)*(pt - pt_low);
-    //     }
-    //     else
-    //         err = hist_tes_pt_low->GetBinError(bin);
-    //
-    //     tes_map[dms_tes.at(dm)] = PhysicalValue(tes, err);
-    // }
-
-    auto file_ele_faking_tau = root_ext::OpenRootFile(files_ele_faking_tau);
-    auto hist_ele_faking_tau = root_ext::ReadObject<TGraphAsymmErrors>(*file_ele_faking_tau, "fes");
-
-    std::vector<int> dms_fes = {0, 1};
-
-    Int_t i = 0;
-
-    for (int n_bin = 0; n_bin < 2; ++n_bin){
-        for (size_t dm = 0; dm < dms_fes.size(); ++dm){
-            bool is_bin_barrel = (i == 0 || i == 1 ) ? true : false;
-            double y = hist_ele_faking_tau->GetY()[i];
-            double y_error_up = hist_ele_faking_tau->GetErrorYhigh(i);
-            double y_error_low = hist_ele_faking_tau->GetErrorYlow(i);
-            fes[std::make_pair(dm, is_bin_barrel)] = y;
-            fes_error[std::make_pair(dm, is_bin_barrel)] = std::make_pair(y_error_low, y_error_up);
-            ++i;
+    static const std::vector<int> available_decay_modes = { 0, 1 };
+    auto file = root_ext::OpenRootFile(file_name);
+    auto graph = std::shared_ptr<TGraphAsymmErrors>(root_ext::ReadObject<TGraphAsymmErrors>(*file, "fes"));
+    std::map<std::pair<int, bool>, StVariable> corr_map;
+    int n = 0;
+    for(size_t region_id = 0; region_id < 2; ++region_id) {
+        for(int dm : available_decay_modes) {
+            const bool is_barrel = region_id == 0;
+            corr_map[std::make_pair(dm, is_barrel)] = StVariable(graph->GetY()[n],
+                                                                graph->GetErrorYhigh(n),
+                                                                graph->GetErrorYlow(n));
+            ++n;
         }
     }
+    return corr_map;
+}
+
+bool TauESUncertainties::ApplyUncertaintyScale(int decayMode, GenLeptonMatch genLeptonMatch,
+                                               UncertaintySource unc_source)
+{
+    static const std::map<GenLeptonMatch, std::map<UncertaintySource, int>> unc_source_map = {
+        { GenLeptonMatch::Tau, { { UncertaintySource::TauES, -1 },
+            { UncertaintySource::TauES_DM0, 0 }, { UncertaintySource::TauES_DM1, 1 },
+            { UncertaintySource::TauES_DM10, 10 }, { UncertaintySource::TauES_DM11, 11 } }
+        },
+        { GenLeptonMatch::Electron, { { UncertaintySource::EleFakingTauES, -1 },
+            { UncertaintySource::EleFakingTauES_DM0, 0 }, { UncertaintySource::EleFakingTauES_DM1, 0 } }
+        },
+        { GenLeptonMatch::TauElectron, { { UncertaintySource::EleFakingTauES, -1 },
+            { UncertaintySource::EleFakingTauES_DM0, 0 }, { UncertaintySource::EleFakingTauES_DM1, 0 } }
+        },
+        { GenLeptonMatch::Muon, { { UncertaintySource::MuFakingTauES, -1 },  } },
+        { GenLeptonMatch::TauMuon, { { UncertaintySource::MuFakingTauES, -1 },  } },
+    };
+
+    const auto gen_iter = unc_source_map.find(genLeptonMatch);
+    if(gen_iter != unc_source_map.end()) {
+        const auto source_iter = gen_iter->second.find(unc_source);
+        if(source_iter != gen_iter->second.end()) {
+            return source_iter->second < 0 || decayMode == source_iter->second;
+        }
+    }
+    return false;
+}
+
+TauESUncertainties::TauESUncertainties(const std::string& file_tes_low_pt, const std::string& file_tes_high_pt,
+                                       const std::string& file_ele_faking_tau) :
+    tes_low_pt(LoadTauCorrections(file_tes_low_pt)), tes_high_pt(LoadTauCorrections(file_tes_high_pt)),
+    fes(LoadElectronCorrections(file_ele_faking_tau))
+{
 }
 
 double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source, UncertaintyScale scale, double pt,
                                                double eta) const
 {
+    const UncertaintyScale current_scale = ApplyUncertaintyScale(decayMode, genLeptonMatch, unc_source)
+                                         ? scale : UncertaintyScale::Central;
     if(genLeptonMatch == GenLeptonMatch::Tau) {
-        UncertaintyScale current_scale = unc_source == UncertaintySource::TauES ? scale : UncertaintyScale::Central;
-        return GetCorrectionFactorTrueTau(pt, decayMode, current_scale, genLeptonMatch);
+        return GetCorrectionFactorTrueTau(pt, decayMode, current_scale);
 
     }
     else if(genLeptonMatch == GenLeptonMatch::Electron || genLeptonMatch == GenLeptonMatch::TauElectron) {
-        UncertaintyScale current_scale = unc_source == UncertaintySource::EleFakingTauES
-                                       ? scale : UncertaintyScale::Central;
-                                       // return 1;
-        return GetCorrectionFactorEleFakingTau(current_scale, eta, genLeptonMatch, decayMode);
+        return GetCorrectionFactorEleFakingTau(eta, decayMode, current_scale);
     }
     else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon){
-        UncertaintyScale current_scale = unc_source == UncertaintySource::MuFakingTauES
-                                       ? scale : UncertaintyScale::Central;
         return GetCorrectionFactorMuonFakingTau(current_scale);
     }
     else
         return 1.;
-
 }
 
-double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale,
-                                                      GenLeptonMatch genLeptonMatch) const
+double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale) const
 {
-    std::vector<int> dms = {0, 1, 10, 11};
-    const float pt_low  = 34;  // average pT in Z -> tautau measurement (incl. in DM)
-    const float pt_high = 170; // average pT in W* -> taunu measurement (incl. in DM)
-    if(std::find(dms.begin(), dms.end(), decayMode) != dms.end()){
-        Int_t bin = hist_tes_pt_low->GetXaxis()->FindBin(decayMode);
-        double tes  = hist_tes_pt_low->GetBinContent(bin);
+    static constexpr double pt_low  = 34;  // average pT in Z -> tautau measurement (incl. in DM)
+    static constexpr double pt_high = 170; // average pT in W* -> taunu measurement (incl. in DM)
 
-        double err = 0;
-        if(pt > pt_high){
-            Int_t bin_high = hist_tes_pt_high->GetXaxis()->FindBin(decayMode);
-            err = hist_tes_pt_high->GetBinError(bin_high);
-        }
-        else if(pt > pt_low){
-            Int_t bin_high = hist_tes_pt_high->GetXaxis()->FindBin(decayMode);
-            double err_high = hist_tes_pt_high->GetBinError(bin_high);
-
-            double err_low  = hist_tes_pt_low->GetBinError(bin);
-            err = err_low + (err_high - err_low)/(pt_high - pt_low)*(pt - pt_low);
-        }
+    const auto low_pt_iter = tes_low_pt.find(decayMode);
+    if(low_pt_iter == tes_low_pt.end())
+        return 1.;
+    double tes = low_pt_iter->second.value;
+    const double err_low = low_pt_iter->second.error_up;
+    double err = err_low;
+    if(pt > pt_low) {
+        const double err_high = tes_high_pt.at(decayMode).error_up;
+        if(pt > pt_high)
+            err = err_high;
         else
-            err = hist_tes_pt_low->GetBinError(bin);
-
-        double tau_final_correction = tes + static_cast<int>(scale) * err; //* tes_error;
-        return tau_final_correction;
+            err = err_low + (err_high - err_low)/(pt_high - pt_low)*(pt - pt_low);
     }
-    return 1.;
+
+    return tes + static_cast<int>(scale) * err;
 }
 
-double TauESUncertainties::GetCorrectionFactorEleFakingTau(UncertaintyScale scale, double eta,
-                                                           GenLeptonMatch genLeptonMatch, int decayMode) const
+double TauESUncertainties::GetCorrectionFactorEleFakingTau(double eta, int decayMode, UncertaintyScale unc_scale) const
 {
-    // if(std::find(dms.begin(), dms.end(), decayMode) != dms.end()){
-    if(decayMode == 0 || decayMode == 1){
-        bool is_barrel = std::abs(eta) < 1.5 ? true : false;
-
-        auto errors = fes_error.at(std::make_pair(decayMode, is_barrel));
-        auto error_fes  = static_cast<int>(scale) > 0 ? errors.second : errors.first;
-        auto fes_value = fes.at(std::make_pair(decayMode, is_barrel));
-
-        auto e_fake_rate_final_correction = fes_value + static_cast<int>(scale) * error_fes;
-        return e_fake_rate_final_correction;
-    }
-    return 1.;
+    const auto iter = fes.find(std::make_pair(decayMode, std::abs(eta) < 1.5));
+    if(iter == fes.end())
+        return 1.;
+    const int scale = static_cast<int>(unc_scale);
+    const double fes_value = iter->second.value;
+    const double fes_error = scale > 0 ? iter->second.error_up : iter->second.error_low;
+    return fes_value + scale * fes_error;
 }
-
 
 double TauESUncertainties::GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const
 {
     return 1. + static_cast<int>(scale) * 0.01;
 }
+
 } // namespace analysis

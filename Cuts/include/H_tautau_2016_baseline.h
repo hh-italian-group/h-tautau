@@ -107,7 +107,7 @@ namespace ETau {
 
 namespace TauTau {
     namespace tauID {
-        constexpr double pt = 20; // >
+        constexpr double pt = 40; // >
         constexpr double eta = 2.1; // <
         constexpr double dz = 0.2; // <
         constexpr double decayModeFinding = 0.5; // >

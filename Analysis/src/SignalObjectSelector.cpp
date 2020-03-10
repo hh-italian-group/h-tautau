@@ -316,16 +316,15 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
       };
 
       static const std::map<Channel,double> eta_map =
-          { {Channel::ETau, cuts::H_tautau_2016::ETau::tauID::eta} ,
-            {Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::eta},
-            {Channel::TauTau, cuts::H_tautau_2016::TauTau::tauID::eta}
+          { { Channel::ETau, cuts::H_tautau_2016::ETau::tauID::eta },
+            { Channel::MuTau, cuts::H_tautau_2016::MuTau::tauID::eta },
+            { Channel::TauTau, cuts::hh_bbtautau_2017::TauTau::tauID::eta_sel },
         };
 
      auto e_id = GetTauVSeDiscriminator(channel);
      auto mu_id = GetTauVSmuDiscriminator(channel);
 
     if(lepton->leg_type() == LegType::e) {
-        // if(!lepton->passConversionVeto()) return false;
         if(!lepton->passEleIso(DiscriminatorWP::Tight)) return false;
         return true;
     }
@@ -342,10 +341,12 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
     if(!lepton->Passed(mu_id.first, mu_id.second)) return false;
-    if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first, DiscriminatorWP::VVVLoose)) return false;
+    if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
+                                                DiscriminatorWP::VVVLoose)) return false;
     if(!is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
                                                  GetTauVSjetDiscriminator().second)) return false;
-    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,GetTauVSjetSidebandWPRange().first)) return false;
+    if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,
+                                     GetTauVSjetSidebandWPRange().first)) return false;
 
     return true;
 }
