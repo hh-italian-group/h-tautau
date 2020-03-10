@@ -24,16 +24,18 @@ class EventCandidate {
 public:
 
     EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-                   UncertaintyScale _scale, Period _period, TauIdDiscriminator _tau_id_discriminator,
-                   TauIdDiscriminator _ele_id_discriminator);
+                   UncertaintyScale _scale);
 
     EventCandidate(const EventCandidate& ) = default; //copy constructor
     EventCandidate(EventCandidate&& ) = default; // move constructor
 
     EventCandidate& operator= ( const EventCandidate& ) = default; //assignment
 
-    static void InitializeJecUncertainties(Period period, bool is_full, const std::string& working_path);
+    static void InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
+                                        TauIdDiscriminator tau_id_discriminator);
+
     static const jec::JECUncertaintiesWrapper& GetJecUncertainties();
+    const TauESUncertainties& GetTauESUncertainties();
 
     const LepCollection& GetLeptons();
     const JetCollection& GetJets();
@@ -50,7 +52,6 @@ private:
     const ntuple::Event* event;
     UncertaintySource uncertainty_source;
     UncertaintyScale scale;
-    analysis::Period period;
     std::shared_ptr<std::vector<ntuple::TupleLepton>> tuple_leptons;
     std::shared_ptr<std::vector<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<std::vector<ntuple::TupleFatJet>> tuple_fatJets;
@@ -60,8 +61,7 @@ private:
     std::shared_ptr<std::vector<JetCandidate>> jet_candidates;
     std::shared_ptr<MET> met;
     static std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
-    TauIdDiscriminator tau_id_discriminator;
-    TauIdDiscriminator ele_id_discriminator;
+    static std::shared_ptr<TauESUncertainties> tauESUncertainties;
 };
 
 } // namespace analysis

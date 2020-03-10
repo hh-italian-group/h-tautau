@@ -131,7 +131,7 @@ JetCollection EventInfoBase::SelectJets(double pt_cut, double eta_cut, bool appl
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(1).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         if(ROOT::Math::VectorUtil::DeltaR(GetLeg(2).GetMomentum(), jet.GetMomentum()) <= cuts::H_tautau_2016::DeltaR_betweenSignalObjects) continue;
         analysis::DiscriminatorIdResults jet_pu_id = jet->GetPuId();
-        if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id )) continue;
+        if(!SignalObjectSelector::PassEcalNoiceVetoJets(jet.GetMomentum(), period, jet_pu_id)) continue;
         if(jet_to_exclude_indexes.count(n)) continue;
         if(applyPu && jet.GetMomentum().pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto && !(jet_pu_id.Passed(analysis::DiscriminatorWP::Loose))) continue;
         if(std::abs(jet.GetMomentum().eta()) < low_eta_cut) continue;
@@ -266,14 +266,14 @@ const sv_fit_ana::FitResults& EventInfoBase::GetSVFitResults(bool allow_calc)
     return *svfit_results;
 }
 
-LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET)
+LorentzVector EventInfoBase::GetResonanceMomentum(bool useSVfit, bool addMET, bool allow_calc)
 {
     Lock lock(*mutex);
     if(useSVfit && addMET)
         throw exception("Can't add MET and with SVfit applied.");
     LorentzVector p4 (0,0,0,0);
-    if(!useSVfit || (useSVfit && GetSVFitResults().has_valid_momentum))
-        p4 = GetHiggsTTMomentum(useSVfit) + GetHiggsBB().GetMomentum();
+    if(!useSVfit || (useSVfit && GetSVFitResults(allow_calc).has_valid_momentum))
+        p4 = GetHiggsTTMomentum(useSVfit, allow_calc) + GetHiggsBB().GetMomentum();
     if(addMET)
         p4 += event_candidate.GetMET().GetMomentum();
     return p4;
@@ -298,34 +298,22 @@ const FatJetCandidate* EventInfoBase::SelectFatJet(double mass_cut, double delta
 
     if(!HasBjetPair()) return nullptr;
     for(const FatJetCandidate& fatJet : GetFatJets()) {
-        if(period != Period::Run2018){
-            if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
-            if(fatJet->subJets().size() < 2) continue;
-            std::vector<SubJet> subJets = fatJet->subJets();
-            std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
-                return j1.p4().Pt() > j2.p4().Pt(); });
-            std::vector<double> deltaR;
-            for(size_t n = 0; n < 2; ++n) {
-                for(size_t k = 0; k < 2; ++k) {
-                    const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
-                                                                   GetHiggsBB().GetDaughterMomentums().at(k));
-                    deltaR.push_back(dR);
-                }
+        if(fatJet->m(FatJet::MassType::SoftDrop) < mass_cut) continue;
+        if(fatJet->subJets().size() < 2) continue;
+        std::vector<SubJet> subJets = fatJet->subJets();
+        std::sort(subJets.begin(), subJets.end(), [](const SubJet& j1, const SubJet& j2) -> bool {
+            return j1.p4().Pt() > j2.p4().Pt(); });
+        std::vector<double> deltaR;
+        for(size_t n = 0; n < 2; ++n) {
+            for(size_t k = 0; k < 2; ++k) {
+                const auto dR = ROOT::Math::VectorUtil::DeltaR(subJets.at(n).p4(),
+                                                               GetHiggsBB().GetDaughterMomentums().at(k));
+                deltaR.push_back(dR);
             }
-            if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
-                    || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
-                return &fatJet;
         }
-        else{
-            if(fatJet->p4().M() < mass_cut) continue;
-            std::vector<double> deltaR;
-                for(size_t k = 0; k < 2; ++k) {
-                    const auto dR = ROOT::Math::VectorUtil::DeltaR(fatJet->p4(), GetHiggsBB().GetDaughterMomentums().at(k));
-                    deltaR.push_back(dR);
-            }
-            if(deltaR.at(0) < deltaR_subjet_cut || (deltaR.at(1) < deltaR_subjet_cut))
-                return &fatJet;
-        }
+        if((deltaR.at(0) < deltaR_subjet_cut && deltaR.at(3) < deltaR_subjet_cut)
+                || (deltaR.at(1) < deltaR_subjet_cut && deltaR.at(2) < deltaR_subjet_cut))
+            return &fatJet;
     }
     return nullptr;
 }
@@ -348,19 +336,35 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                JetOrdering jet_ordering,
                                                bool is_sync,
                                                UncertaintySource uncertainty_source,
-                                               UncertaintyScale scale)
+                                               UncertaintyScale scale,
+                                               bool debug)
 {
-    const TauIdDiscriminator tau_id_discriminator = signalObjectSelector.GetTauVSjetDiscriminator().first;
-    const auto ele_id = signalObjectSelector.GetTauVSeDiscriminator(static_cast<Channel>(event.channelId));
-    EventCandidate event_candidate(event, uncertainty_source, scale, period, tau_id_discriminator, ele_id.first);
+    if(debug)
+        std::cout << "Creating event candidate... ";
+    EventCandidate event_candidate(event, uncertainty_source, scale);
+    if(debug)
+        std::cout << "done\nSelecting higgs->tautau candidate...\n";
     boost::optional<size_t> selected_higgs_index =
             signalObjectSelector.GetHiggsCandidateIndex(event_candidate, is_sync);
+    if(debug) {
+        if(selected_higgs_index.is_initialized())
+            std::cout << "Higgs->tautau candidate number " << *selected_higgs_index << " is selected.\n";
+        else
+            std::cout << "Higgs->tautau candidate is not selected.\n";
+    }
     if(!selected_higgs_index.is_initialized()) return boost::optional<EventInfoBase>();
+    if(debug)
+        std::cout << "Selecting signal jets... ";
     auto selected_signal_jets  = signalObjectSelector.SelectSignalJets(event_candidate, period, jet_ordering,
                                                                        *selected_higgs_index, uncertainty_source,
                                                                        scale);
-    return EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index, selected_signal_jets, period,
-                         jet_ordering);
+    if(debug)
+        std::cout << "done\nCreating EventInfo...";
+    auto eventInfo = EventInfoBase(std::move(event_candidate), summaryInfo, *selected_higgs_index,
+                                   selected_signal_jets, period, jet_ordering);
+    if(debug)
+        std::cout << "done\n";
+    return eventInfo;
 }
 
 } // namespace analysis

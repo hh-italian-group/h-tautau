@@ -37,7 +37,6 @@ namespace ETau {
 
 namespace TauTau {
     namespace tauID {
-
     }
 }
 

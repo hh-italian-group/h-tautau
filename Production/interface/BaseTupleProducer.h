@@ -169,6 +169,9 @@ private:
     edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
     edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticles_token;
     edm::EDGetTokenT<edm::View<reco::GenJet>> genJets_token;
+    edm::EDGetTokenT<double> prefweight_token;
+    edm::EDGetTokenT<double> prefweightup_token;
+    edm::EDGetTokenT<double> prefweightdown_token;
     edm::EDGetTokenT<double> rho_token;
     std::map<std::string, edm::EDGetTokenT<bool>> customMetFilters_token;
     edm::EDGetTokenT<edm::ValueMap<float>> updatedPileupJetIdDiscr_token;
@@ -179,7 +182,6 @@ protected:
     const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
-    //std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
@@ -342,6 +344,6 @@ protected:
     template<typename Candidate>
     static float GetUserFloat(const Candidate& obj, const std::string& name)
     {
-        return obj->hasUserFloat(name) ? obj->userFloat(name) : ntuple::DefaultFillValue<float>();
+        return obj->userFloat(name);
     }
 };

@@ -4,29 +4,30 @@ https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
+
+#include <TH1.h>
 #include "h-tautau/Core/include/AnalysisTypes.h"
-#include "AnalysisTools/Core/include/PhysicalValue.h"
-#include "h-tautau/Core/include/TauIdResults.h"
-#include <utility>
-#include <string>
-#include <iostream>
-#include "AnalysisTools/Core/include/TextIO.h"
-//https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation13TeV#Tau_energy_scale
+#include "AnalysisTools/Core/include/AnalysisMath.h"
+
 namespace analysis {
-using TauIdDiscriminator = analysis::TauIdDiscriminator;
 class TauESUncertainties{
 public:
-    static double GetCorrectionFactor(analysis::Period period, int decayMode, GenLeptonMatch genLeptonMatch,
-                                      UncertaintySource unc_source, UncertaintyScale scale, double pt,
-                                      TauIdDiscriminator tauVSjetDiscriminator, TauIdDiscriminator tauVSeDiscriminator,
-                                      double eta);
+    TauESUncertainties(const std::string& file_low_pt, const std::string& file_high_pt,
+                       const std::string& file_ele_faking_tau);
 
-    static double GetCorrectionFactorTrueTau(analysis::Period period, int decayMode, UncertaintyScale current_scale,
-                                             double pt, TauIdDiscriminator tauVSjetDiscriminator);
+    double GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
+                               UncertaintySource unc_source, UncertaintyScale scale, double pt, double eta) const;
+    double GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale) const;
+    double GetCorrectionFactorEleFakingTau(double eta, int decayMode, UncertaintyScale scale) const;
+    double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const;
 
-    static double GetCorrectionFactorMuonFakingTau(analysis::Period period, int decayMode);
+private:
+    static std::map<int, StVariable> LoadTauCorrections(const std::string& file_name);
+    static std::map<std::pair<int, bool>, StVariable> LoadElectronCorrections(const std::string& file_name);
+    static bool ApplyUncertaintyScale(int decayMode, GenLeptonMatch genLeptonMatch, UncertaintySource unc_source);
 
-    static double GetCorrectionFactorEleFakingTau(analysis::Period period, UncertaintyScale scale, double eta,
-                                                  TauIdDiscriminator tauVSeDiscriminator, int decayMode);
+private:
+    std::map<int, StVariable> tes_low_pt, tes_high_pt;
+    std::map<std::pair<int, bool>, StVariable> fes;
 };
 } // namespace analysis

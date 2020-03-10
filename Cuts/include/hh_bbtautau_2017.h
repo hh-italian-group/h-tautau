@@ -8,7 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace cuts {
 namespace hh_bbtautau_2017 {
 
-constexpr double DeltaR_betweenSignalObjects = 0.1; // > Decreased to not loose efficiency for high mX.
+constexpr double DeltaR_betweenSignalObjects = 0.5; // > Decreased to not loose efficiency for high mX.
 
 namespace MuTau {
     namespace muonID {
@@ -59,6 +59,7 @@ namespace TauTau {
                                   //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
         constexpr double eta = 2.3; // > tauID recommendation
                                     //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendation13TeV#Introduction_and_general_recomme
+        constexpr double eta_sel = 2.1;
     }
 }
 

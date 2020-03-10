@@ -22,17 +22,17 @@ periodDict = { 'MC_16' : 'Run2016',
              }
 
 globalTagMap = { 'MC_16' : '102X_mcRun2_asymptotic_v7',
-                 'Run2016' : '102X_dataRun2_v11',
-                 'Emb_16' : '102X_dataRun2_v11',
+                 'Run2016' : '102X_dataRun2_v12',
+                 'Emb_16' : '102X_dataRun2_v12',
                  #'Emb_16' : '80X_dataRun2_2016SeptRepro_v7',
                  'MC_17' : '102X_mc2017_realistic_v7',
-                 'Run2017' : '102X_dataRun2_v11',
-                 'Emb_17' : '102X_dataRun2_v11',
-                 'MC_18' : '102X_upgrade2018_realistic_v19',
-                 'Run2018ABC' : '102X_dataRun2_v11',
-                 'Run2018D' : '102X_dataRun2_Prompt_v14',
-                 'Emb_18ABC' : '102X_dataRun2_v11',
-                 'Emb_18D' : '102X_dataRun2_Prompt_v14'
+                 'Run2017' : '102X_dataRun2_v12',
+                 'Emb_17' : '102X_dataRun2_v12',
+                 'MC_18' : '102X_upgrade2018_realistic_v20',
+                 'Run2018ABC' : '102X_dataRun2_v12',
+                 'Run2018D' : '102X_dataRun2_Prompt_v15',
+                 'Emb_18ABC' : '102X_dataRun2_v12',
+                 'Emb_18D' : '102X_dataRun2_Prompt_v15'
                }
 
 hltPaths = {

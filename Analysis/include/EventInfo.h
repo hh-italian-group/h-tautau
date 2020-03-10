@@ -84,7 +84,6 @@ public:
     static const sv_fit_ana::FitProducer& GetSVFitProducer();
 
     // virtual const Candidate& GetLeg(size_t /*leg_id*/);
-    // virtual LorentzVector GetHiggsTTMomentum(bool /*useSVfit*/);
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
@@ -115,7 +114,7 @@ public:
     const kin_fit::FitResults& GetKinFitResults(bool allow_calc = false);
     const sv_fit_ana::FitResults& GetSVFitResults(bool allow_calc = false);
 
-    LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET);
+    LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET, bool allow_calc = false);
     double GetMT2();
     const FatJetCandidate* SelectFatJet(double mass_cut, double deltaR_subjet_cut);
     void SetMvaScore(double _mva_score);
@@ -131,13 +130,14 @@ public:
         throw exception("Invalid leg id = %1%.") % leg_id;
     }
 
-    const HiggsTTCandidate& GetHiggsTT(bool useSVfit)
+    const HiggsTTCandidate& GetHiggsTT(bool useSVfit, bool allow_calc = false)
     {
         Lock lock(*mutex);
         if(useSVfit) {
             if(!higgs_tt_sv) {
-                if(!GetSVFitResults().has_valid_momentum) throw exception("SVFit not converged");
-                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(), GetSVFitResults().momentum);
+                if(!GetSVFitResults(allow_calc).has_valid_momentum) throw exception("SVFit not converged");
+                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(),
+                                                                 GetSVFitResults(allow_calc).momentum);
             }
             return *higgs_tt_sv;
         }
@@ -146,9 +146,9 @@ public:
         return *higgs_tt;
     }
 
-    LorentzVector GetHiggsTTMomentum(bool useSVfit)
+    LorentzVector GetHiggsTTMomentum(bool useSVfit, bool allow_calc = false)
     {
-        return GetHiggsTT(useSVfit).GetMomentum();
+        return GetHiggsTT(useSVfit, allow_calc).GetMomentum();
     }
 
     EventCandidate& GetEventCandidate()
@@ -190,6 +190,7 @@ boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
                                                JetOrdering jet_ordering = JetOrdering::DeepCSV,
                                                bool is_sync = false,
                                                UncertaintySource uncertainty_source = UncertaintySource::None,
-                                               UncertaintyScale scale = UncertaintyScale::Central);
+                                               UncertaintyScale scale = UncertaintyScale::Central,
+                                               bool debug = false);
 
 } // namespace analysis

@@ -55,6 +55,9 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     topGenEvent_token(mayConsume<TtGenEvent>(iConfig.getParameter<edm::InputTag>("topGenEvent"))),
     genParticles_token(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
     genJets_token(mayConsume<edm::View<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
+    prefweight_token(mayConsume<double>(edm::InputTag("prefiringweight:nonPrefiringProb"))),
+    prefweightup_token(mayConsume<double>(edm::InputTag("prefiringweight:nonPrefiringProbUp"))),
+    prefweightdown_token(mayConsume<double>(edm::InputTag("prefiringweight:nonPrefiringProbDown"))),
     rho_token(consumes<double>(iConfig.getParameter<edm::InputTag>("rho"))),
     updatedPileupJetIdDiscr_token(consumes<edm::ValueMap<float>>(iConfig.getParameter<edm::InputTag>("updatedPileupJetIdDiscr"))),
     updatedPileupJetId_token(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("updatedPileupJetId"))),
@@ -142,6 +145,7 @@ void BaseTupleProducer::InitializeAODCollections(const edm::Event& iEvent, const
     iEvent.getByToken(jetsMiniAOD_token, pat_jets);
     iEvent.getByToken(fatJetsMiniAOD_token, pat_fatJets);
     iEvent.getByToken(PUInfo_token, PUInfo);
+
     if(isMC) {
         if(!isEmbedded)
           iEvent.getByToken(genMETAOD_token, genMET);
@@ -521,14 +525,14 @@ void BaseTupleProducer::FillOtherLeptons(const std::vector<ElectronCandidate>& o
         eventTuple().other_lepton_iso.push_back(electron.GetIsolation());
         eventTuple().other_lepton_elePassConversionVeto.push_back(electron->passConversionVeto());
         analysis::DiscriminatorIdResults eleId_iso;
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V1-wpLoose") > 0.5);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V1-wp90") > 0.5);
-        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V1-wp80") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-iso-V2-wpLoose") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-iso-V2-wp90") > 0.5);
+        eleId_iso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-iso-V2-wp80") > 0.5);
         eventTuple().other_lepton_eleId_iso.push_back(eleId_iso.GetResultBits());
         analysis::DiscriminatorIdResults eleId_noIso;
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V1-wpLoose") > 0.5);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V1-wp90") > 0.5);
-        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V1-wp80") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Loose,electron->electronID("mvaEleID-Fall17-noIso-V2-wpLoose") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Medium,electron->electronID("mvaEleID-Fall17-noIso-V2-wp90") > 0.5);
+        eleId_noIso.SetResult(analysis::DiscriminatorWP::Tight,electron->electronID("mvaEleID-Fall17-noIso-V2-wp80") > 0.5);
         eventTuple().other_lepton_eleId_noIso.push_back(eleId_noIso.GetResultBits());
         eventTuple().other_lepton_muonId.push_back(0);
         if(isMC) {
@@ -632,7 +636,8 @@ std::vector<BaseTupleProducer::ElectronCandidate> BaseTupleProducer::CollectVeto
         bool isTightSelection, const std::vector<const ElectronCandidate*>& signalElectrons)
 {
     using namespace std::placeholders;
-    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons, isTightSelection);
+    const auto base_selector = std::bind(&BaseTupleProducer::SelectVetoElectron, this, _1, _2, signalElectrons,
+                                         isTightSelection);
     return CollectObjects("vetoElectrons", base_selector, electrons);
 }
 
@@ -666,6 +671,7 @@ void BaseTupleProducer::SelectVetoElectron(const ElectronCandidate& electron, Cu
                                            bool isTightSelection) const
 {
     using namespace cuts::H_tautau_2016::electronVeto;
+
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
@@ -702,7 +708,8 @@ void BaseTupleProducer::SelectVetoMuon(const MuonCandidate& muon, Cutter& cut,
     cut(muon_dz < dz, "dz", muon_dz);
     double iso_cut = isTightSelection ? tightIso : pfRelIso04;
     cut(muon.GetIsolation() < iso_cut, "iso", muon.GetIsolation());
-    bool passMuonId = isTightSelection ? muon->isTightMuon(*primaryVertex) : muon->isLooseMuon();
+    bool passMuonId = isTightSelection ? (muon->isTightMuon(*primaryVertex) && muon->isMediumMuon()) :
+                                         (muon->isLooseMuon() || muon->isTightMuon(*primaryVertex));
     cut(passMuonId, "muonID");
     for(size_t n = 0; n < signalMuons.size(); ++n) {
         std::ostringstream ss_name;
@@ -848,11 +855,13 @@ void BaseTupleProducer::FillHiggsDaughtersIndexes(const analysis::SelectionResul
 
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
+    std::lock_guard<ntuple::EventTuple::Mutex> lock(eventTuple.GetMutex());
     using namespace analysis;
 
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
+    eventTuple().isData  = !(isMC || isEmbedded);
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
@@ -860,6 +869,24 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
     eventTuple().rho = *rho;
 
+    if(period == analysis::Period::Run2016 && period == analysis::Period::Run2017){
+        edm::Handle<double> _theprefweight;
+        edmEvent->getByToken(prefweight_token, _theprefweight);
+        eventTuple().l1_prefiring_weight = *_theprefweight;
+
+        edm::Handle<double> _theprefweightup;
+        edmEvent->getByToken(prefweightup_token, _theprefweightup);
+        eventTuple().l1_prefiring_weight_up = *_theprefweightup;
+
+        edm::Handle<double> _theprefweightdown;
+        edmEvent->getByToken(prefweightdown_token, _theprefweightdown);
+        eventTuple().l1_prefiring_weight_down = *_theprefweightdown;
+    }
+    else {
+        eventTuple().l1_prefiring_weight = 1.f;
+        eventTuple().l1_prefiring_weight = 1.f;
+        eventTuple().l1_prefiring_weight = 1.f;
+    }
     // HTT candidate
     for(const auto& result : selection.svfitResult){
         eventTuple().SVfit_Higgs_index.push_back(result.first);
@@ -934,7 +961,6 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
             eventTuple.get<std::vector<ULong64_t>>(br_name).push_back(match_bits.at(n));
         }
     }
-
     for(const auto jet_cand : jets){
         const auto pat_jet = &(*jet_cand);
         if(selected_jets.count(pat_jet)) continue;
@@ -942,29 +968,14 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().other_jets_p4.push_back(ntuple::LorentzVectorE(other_p4));
     }
 
-
-
-
     for(const JetCandidate& jet : fatJets) {
         eventTuple().fatJets_p4.push_back(ntuple::LorentzVectorE(jet.GetMomentum()));
-
-        std::string subjets_collection;
-        if(period == Period::Run2016) {
-            subjets_collection = "SoftDrop";
-            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsCHSSoftDropMass"));
-            eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8:tau1"));
-            eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8:tau2"));
-            eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8:tau3"));
-        } else if(period == Period::Run2017 ||period == Period::Run2018 ) {
-            subjets_collection = "SoftDropPuppi";
-            eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
-            eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
-            eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
-            eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
-            eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
-        }
-        else
-            throw analysis::exception("FillEventTuple: fill fatJets for period %1% is not implemented") % period;
+        static const std::string subjets_collection = "SoftDropPuppi";
+        eventTuple().fatJets_m_softDrop.push_back(GetUserFloat(jet, "ak8PFJetsPuppiSoftDropMass"));
+        eventTuple().fatJets_jettiness_tau1.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau1"));
+        eventTuple().fatJets_jettiness_tau2.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau2"));
+        eventTuple().fatJets_jettiness_tau3.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau3"));
+        eventTuple().fatJets_jettiness_tau4.push_back(GetUserFloat(jet, "NjettinessAK8Puppi:tau4"));
 
         if(!jet->hasSubjets(subjets_collection)) continue;
         const size_t parentIndex = eventTuple().fatJets_p4.size() - 1;
