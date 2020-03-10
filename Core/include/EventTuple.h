@@ -133,6 +133,7 @@ using Point3D = analysis::Point3D_Float;
     VAR(Double_t, weight_total) \
     VAR(Double_t, weight_total_withTopPt) \
     VAR(Bool_t, isData) \
+    VAR(Bool_t, isEmbedded) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -224,7 +225,7 @@ using Point3D = analysis::Point3D_Float;
     /* prefiring weight variables */ \
     VAR(double, theprefiringweight) \
     VAR(double, theprefiringweightup) \
-    VAR(double, theprefiringweightdown) 
+    VAR(double, theprefiringweightdown)
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

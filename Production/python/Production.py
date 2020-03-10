@@ -340,7 +340,6 @@ for channel in channels:
         genJets                 = genJets_inputTag,
         l1JetParticleProduct    = cms.InputTag('l1extraParticles', 'IsoTau'),
         isMC                    = cms.bool(not isData or options.isEmbedded),
-        isData                  = cms.bool(isData),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
         runSVfit                = cms.bool(options.runSVfit),

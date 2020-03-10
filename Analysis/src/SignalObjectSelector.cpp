@@ -202,7 +202,8 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
-            if(muonId.Passed(DiscriminatorWP::Medium) && event.other_lepton_iso.at(n) < 0.3) return false;
+            if((muonId.Passed(DiscriminatorWP::Medium) || muonId.Passed(DiscriminatorWP::Tight)) &&
+                event.other_lepton_iso.at(n) < 0.3) return false;
         }
     }
     return true;

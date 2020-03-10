@@ -181,7 +181,7 @@ protected:
     const analysis::Period period;
     const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
     const int nJetsRecoilCorr;
-    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded, isData;
+    const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
     std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;

@@ -76,7 +76,6 @@ BaseTupleProducer::BaseTupleProducer(const edm::ParameterSet& iConfig, analysis:
     saveGenJetInfo(iConfig.getParameter<bool>("saveGenJetInfo")),
     saveGenParticleInfo(iConfig.getParameter<bool>("saveGenParticleInfo")),
     isEmbedded(iConfig.getParameter<bool>("isEmbedded")),
-    isData(iConfig.getParameter<bool>("isData")),
     //eventTuple_ptr(ntuple::CreateEventTuple(ToString(_channel),&edm::Service<TFileService>()->file(),false,ntuple::TreeState::Full)),
     eventTuple(TupleStore::GetTuple()),
     //eventTuple(*eventTuple_ptr),
@@ -862,6 +861,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().run  = edmEvent->id().run();
     eventTuple().lumi = edmEvent->id().luminosityBlock();
     eventTuple().evt  = edmEvent->id().event();
+    eventTuple().isData  = (!(isMC && isEmbedded));
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
@@ -883,9 +883,9 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
         eventTuple().theprefiringweightdown = (*_theprefweightdown);
     }
     // else {
-    //     eventTuple().theprefweight.push_back(ntuple::DefaultFillValue<UInt_t>());
-    //     eventTuple().theprefweight.push_back(ntuple::DefaultFillValue<UInt_t>());
-    //     eventTuple().theprefweight.push_back(ntuple::DefaultFillValue<UInt_t>());
+    //     eventTuple().theprefiringweight.push_back(1);
+    //     eventTuple().theprefiringweightup.push_back(1);
+    //     eventTuple().theprefiringweightdown.push_back(1);
     // }
     // HTT candidate
     for(const auto& result : selection.svfitResult){
