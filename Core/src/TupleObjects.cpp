@@ -40,12 +40,16 @@ bool TupleLepton::passConversionVeto() const
 {
     return CheckAndGet(event->lep_elePassConversionVeto, "lep_elePassConversionVeto");
 }
-bool TupleLepton::passEleIso(DiscriminatorWP wp) const
+bool TupleLepton::passEleIsoId(DiscriminatorWP wp) const
 {
-    DiscriminatorIdResults eleIso(CheckAndGet(event->lep_eleId_iso, "lep_eleId_iso"));
-    return eleIso.Passed(wp);
+    DiscriminatorIdResults eleId(CheckAndGet(event->lep_eleId_iso, "lep_eleId_iso"));
+    return eleId.Passed(wp);
 }
-
+bool TupleLepton::passEleNoIsoId(DiscriminatorWP wp) const
+{
+    DiscriminatorIdResults eleId(CheckAndGet(event->lep_eleId_noIso, "lep_eleId_noIso"));
+    return eleId.Passed(wp);
+}
 bool TupleLepton::passMuonId(DiscriminatorWP wp) const
 {
     DiscriminatorIdResults muonId(CheckAndGet(event->lep_muonId, "lep_muonId"));

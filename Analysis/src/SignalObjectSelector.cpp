@@ -197,13 +197,18 @@ bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event) c
 {
     for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::e){
-          analysis::DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
-          if(eleId_iso.Passed(DiscriminatorWP::Medium)) return false;
+            const DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
+            const DiscriminatorIdResults eleId_noIso(event.other_lepton_eleId_noIso.at(n));
+            const float iso = event.other_lepton_iso.at(n);
+            if(eleId_iso.Passed(DiscriminatorWP::Medium)
+                    || (eleId_noIso.Passed(DiscriminatorWP::Medium)
+                        && iso < cuts::H_tautau_2016::electronVeto::pfRelIso04))
+                return false;
         }
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::mu){
             analysis::DiscriminatorIdResults muonId(event.other_lepton_muonId.at(n));
             if((muonId.Passed(DiscriminatorWP::Medium) || muonId.Passed(DiscriminatorWP::Tight)) &&
-                event.other_lepton_iso.at(n) < 0.3) return false;
+                event.other_lepton_iso.at(n) < cuts::H_tautau_2016::muonVeto::pfRelIso04) return false;
         }
     }
     return true;
@@ -306,8 +311,8 @@ bool SignalObjectSelector::PassHH_legacy_LeptonSelection(const LepCandidate& lep
     return true;
 }
 
-//to be changed
-bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId, bool is_sync) const
+bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId,
+                                                  bool is_sync) const
 {
     static const std::map<Channel,double> pt_map =
         { { Channel::ETau, cuts::H_tautau_2016::ETau::tauID::pt} ,
@@ -321,30 +326,28 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
             { Channel::TauTau, cuts::hh_bbtautau_2017::TauTau::tauID::eta_sel },
         };
 
-     auto e_id = GetTauVSeDiscriminator(channel);
-     auto mu_id = GetTauVSmuDiscriminator(channel);
-
     if(lepton->leg_type() == LegType::e) {
-        if(!lepton->passEleIso(DiscriminatorWP::Tight)) return false;
-        return true;
+        return lepton->passEleIsoId(DiscriminatorWP::Tight);
     }
     if(lepton->leg_type() == LegType::mu) {
         if(!(lepton.GetMomentum().pt() > cuts::hh_bbtautau_2017::MuTau::muonID::pt)) return false;
+        if(!lepton->passMuonId(DiscriminatorWP::Tight)) return false;
         if(legId == 1 && !(lepton->iso() < cuts::H_tautau_2016::MuTau::muonID::pfRelIso04)) return false;
-        if(legId == 1 && !lepton->passMuonId(DiscriminatorWP::Tight)) return false;
         return true;
     }
     if(!(lepton->leg_type() == LegType::tau)) throw analysis::exception("Leg Type Default Selection not supported");
+
+    const auto e_id = GetTauVSeDiscriminator(channel);
+    const auto mu_id = GetTauVSmuDiscriminator(channel);
+
     if(!(lepton.GetMomentum().pt() > pt_map.at(channel))) return false;
     if(!(std::abs(lepton.GetMomentum().eta()) < eta_map.at(channel))) return false;
-    if((mode == SignalMode::HH) && !(lepton->PassedNewDecayMode())) return false;
+    if((mode == SignalMode::HH) && !lepton->PassedNewDecayMode()) return false;
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
     if(!lepton->Passed(mu_id.first, mu_id.second)) return false;
-    if(is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
-                                                DiscriminatorWP::VVVLoose)) return false;
-    if(!is_sync && legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first,
-                                                 GetTauVSjetDiscriminator().second)) return false;
+    const DiscriminatorWP first_leg_id = is_sync ? DiscriminatorWP::VVVLoose : GetTauVSjetDiscriminator().second;
+    if(legId == 1 && !lepton->Passed(GetTauVSjetDiscriminator().first, first_leg_id)) return false;
     if(legId == 2 && !lepton->Passed(GetTauVSjetDiscriminator().first,
                                      GetTauVSjetSidebandWPRange().first)) return false;
 

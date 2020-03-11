@@ -112,8 +112,8 @@ inline bool LeptonComparitor(const SelectionResultsBase::ElectronCandidate& l1,
         "mvaEleID-Fall17-iso-V2-wp80", "mvaEleID-Fall17-iso-V2-wp90"
     };
     for(const std::string& wp_name : iso_wp_list) {
-        const bool l1_pass = l1->electronID(wp_name) > 0.5;
-        const bool l2_pass = l2->electronID(wp_name) > 0.5;
+        const bool l1_pass = l1->electronID(wp_name) > 0.5f;
+        const bool l2_pass = l2->electronID(wp_name) > 0.5f;
         if(l1_pass && !l2_pass) return true;
         if(!l1_pass && l2_pass) return false;
         if(l1_pass && l2_pass) break;
