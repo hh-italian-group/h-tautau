@@ -117,7 +117,7 @@ namespace fatJetID {
 namespace jetID {
     constexpr double eta = 5;
     constexpr double vbf_pt_cut = 30;
-    constexpr double vbf_eta_cut = 5;
+    constexpr double vbf_eta_cut = 4.7;
  //MET Recomendations. See presentation https://indico.cern.ch/event/762187/contributions/3218088/attachments/1753676/2842443/HTT_15Nov18_PileupJetID_ADow.pdf
 //and https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1865.html
     constexpr double max_pt_veto = 50;
