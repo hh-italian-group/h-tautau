@@ -54,7 +54,7 @@ LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle, std::v
 LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenParticleCollection& genParticles)
 {
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
-    static double dR2_threshold = std::pow(0.2, 2);
+    static double dR2_threshold = std::pow(0.3, 2);
 
     static const std::map<int, double> pt_thresholds = {
         { electronPdgId, 8 }, { muonPdgId, 8 }, { tauPdgId, 15 }
@@ -84,6 +84,8 @@ LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenPartic
         const double dr2 = ROOT::Math::VectorUtil::DeltaR2(p4, particle_p4);
         if(dr2 >= match_dr2) continue;
         if(particle_p4.pt() <= pt_thresholds.at(abs_pdg)) continue;
+        const double pt_ratio_thr = abs_pdg == tauPdgId ? 1. : 0.5;
+        if(std::abs(particle_p4.pt() - p4.pt()) / particle_p4.pt() >= pt_ratio_thr) continue;
 
         match_dr2 = dr2;
         result.match = genMatches.at(pair(abs_pdg, isTauProduct));

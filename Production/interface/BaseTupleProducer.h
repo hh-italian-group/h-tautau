@@ -268,7 +268,8 @@ protected:
                         bool isTightSelection) const;
 
     void SelectJet(const JetCandidate& jet, Cutter& cut) const;
-    bool PassMatchOrIsoSelection(const TauCandidate& tau) const;
+    bool PassMatchSelection(const TauCandidate& tau) const;
+    bool PassIsoSelection(const TauCandidate& tau) const;
 
     template<typename Candidate1, typename Candidate2>
     std::vector<std::pair<size_t,size_t>> FindCompatibleObjects(const std::vector<Candidate1>& objects1,
