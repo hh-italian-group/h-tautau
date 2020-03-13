@@ -741,19 +741,23 @@ void BaseTupleProducer::SelectJet(const JetCandidate& jet, Cutter& cut) const
     // }
 }
 
-bool BaseTupleProducer::PassMatchOrIsoSelection(const TauCandidate& tau) const
+bool BaseTupleProducer::PassMatchSelection(const TauCandidate& tau) const
 {
-    bool match_condition = false;
-    if(isMC){
-        const auto match = analysis::gen_truth::LeptonGenMatch(analysis::LorentzVectorM(tau.GetMomentum()), *genParticles);
-        match_condition = match.match == analysis::GenLeptonMatch::Tau;
+    if(isMC) {
+        const auto match = analysis::gen_truth::LeptonGenMatch(
+                analysis::LorentzVectorM(tau.GetMomentum()), *genParticles);
+        return match.match != analysis::GenLeptonMatch::NoMatch;
     }
-    return (tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
-        tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
-        tau->tauID("byVVVLooseDeepTau2017v2p1VSjet") > 0.5 ||
-        tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT2016") > 0.5) || match_condition;
+    return false;
 }
 
+bool BaseTupleProducer::PassIsoSelection(const TauCandidate& tau) const
+{
+    return tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
+        tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
+        tau->tauID("byVVVLooseDeepTau2017v2p1VSjet") > 0.5 ||
+        tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT2016") > 0.5;
+}
 
 void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selection)
 {
@@ -860,7 +864,6 @@ void BaseTupleProducer::FillHiggsDaughtersIndexes(const analysis::SelectionResul
 
 void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& selection)
 {
-    std::lock_guard<ntuple::EventTuple::Mutex> lock(eventTuple.GetMutex());
     using namespace analysis;
 
     eventTuple().run  = edmEvent->id().run();

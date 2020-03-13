@@ -344,6 +344,8 @@ bool SignalObjectSelector::PassHH_LeptonSelection(const LepCandidate& lepton, Ch
     if(!(std::abs(lepton.GetMomentum().eta()) < eta_map.at(channel))) return false;
     if((mode == SignalMode::HH) && !lepton->PassedNewDecayMode()) return false;
     if((mode == SignalMode::HH && (lepton->decayMode() == 5 || lepton->decayMode() == 6))) return false;
+    if(!(lepton->dz() < cuts::H_tautau_2016::TauTau::tauID::dz)) return false;
+    if(std::abs(lepton->charge()) != 1) return false;
     if(!lepton->Passed(e_id.first, e_id.second)) return false;
     if(!lepton->Passed(mu_id.first, mu_id.second)) return false;
     const DiscriminatorWP first_leg_id = is_sync ? DiscriminatorWP::VVVLoose : GetTauVSjetDiscriminator().second;

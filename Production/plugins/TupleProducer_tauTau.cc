@@ -68,19 +68,8 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tauTau::CollectSignal
 
 void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
-    using namespace cuts::H_tautau_2016::TauTau::tauID;
-
     cut(true, "gt0_cand");
-    const LorentzVector& p4 = tau.GetMomentum();
-    static constexpr double pt_cut = cuts::hh_bbtautau_2017::TauTau::tauID::pt;
-    cut(p4.Pt() > pt_cut - BaseTupleProducer::pt_shift, "pt", p4.Pt());
-    static constexpr double eta_cut = cuts::hh_bbtautau_2017::TauTau::tauID::eta;
-    cut(std::abs(p4.Eta()) < eta_cut, "eta", p4.Eta());
-    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-    cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
-    cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
-    bool iso_condition = PassMatchOrIsoSelection(tau);
-    cut(iso_condition, "iso");
+    cut(PassMatchSelection(tau) || PassIsoSelection(tau), "iso");
 }
 
 void TupleProducer_tauTau::FillEventTuple(const SelectionResultsBase& selection)

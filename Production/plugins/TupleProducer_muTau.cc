@@ -100,17 +100,8 @@ void TupleProducer_muTau::SelectSignalMuon(const MuonCandidate& muon, Cutter& cu
 
 void TupleProducer_muTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
-    using namespace cuts::H_tautau_2016::MuTau::tauID;
-
     cut(true, "gt0_cand");
-    const LorentzVector& p4 = tau.GetMomentum();
-    cut(p4.Pt() > pt - BaseTupleProducer::pt_shift , "pt", p4.Pt());
-    cut(std::abs(p4.Eta()) < eta, "eta", p4.Eta());
-    auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-    cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
-    cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
-    bool iso_condition = PassMatchOrIsoSelection(tau);
-    cut(iso_condition, "iso");
+    cut(PassMatchSelection(tau) || PassIsoSelection(tau), "iso");
 }
 
 
