@@ -753,10 +753,8 @@ bool BaseTupleProducer::PassMatchSelection(const TauCandidate& tau) const
 
 bool BaseTupleProducer::PassIsoSelection(const TauCandidate& tau) const
 {
-    return tau->tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits") > 0.5 ||
-        tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5 ||
-        tau->tauID("byVVVLooseDeepTau2017v2p1VSjet") > 0.5 ||
-        tau->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT2016") > 0.5;
+    return tau->tauID("byVVLooseIsolationMVArun2017v2DBoldDMwLT2017") > 0.5f ||
+        tau->tauID("byVVVLooseDeepTau2017v2p1VSjet") > 0.5f;
 }
 
 void BaseTupleProducer::FillElectron(const analysis::SelectionResultsBase& selection)
