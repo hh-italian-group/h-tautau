@@ -13,7 +13,7 @@ class GenEventWeight : public IWeightProvider {
 public:
     using Event = ntuple::Event;
 
-    virtual double Get(EventInfoBase& eventInfo) const override
+    virtual double Get(EventInfo& eventInfo) const override
     {
         return eventInfo->genEventWeight;
     }

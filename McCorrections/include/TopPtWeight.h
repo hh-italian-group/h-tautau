@@ -15,7 +15,7 @@ public:
 
     TopPtWeight(double p1, double p2) : _p1(p1), _p2(p2) {}
 
-    virtual double Get(EventInfoBase& eventInfo) const override
+    virtual double Get(EventInfo& eventInfo) const override
 	{
 		double topWeight = 1.;
         const auto& event = *eventInfo;

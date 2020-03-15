@@ -3,10 +3,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "../interface/TupleProducer_eTau.h"
 #include "../interface/GenTruthTools.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_Run2.h"
 
 void TupleProducer_eTau::ProcessEvent(Cutter& cut)
 {
-    using namespace cuts::H_tautau_2016::ETau;
+    using namespace cuts::hh_bbtautau_Run2::ETau;
+    using HiggsCandidate = analysis::CompositeCandidate<ElectronCandidate,TauCandidate>;
 
     SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
@@ -38,32 +40,28 @@ void TupleProducer_eTau::ProcessEvent(Cutter& cut)
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size(), "taus");
 
-    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
-    auto higgses_indexes = FindCompatibleObjects(selection.electrons, selection.taus, DeltaR_betweenSignalObjects, "H_e_tau");
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_Run2::DeltaR_Lep_Lep;
+    auto higgses_indexes = FindCompatibleObjects(selection.electrons, selection.taus, DeltaR_betweenSignalObjects,
+                                                 "H_e_tau");
     cut(higgses_indexes.size(), "ele_tau_pair");
 
     for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
-        analysis::CompositeCandidate<ElectronCandidate,TauCandidate> selected_higgs =
-            analysis::CompositeCandidate<ElectronCandidate,TauCandidate>(selection.electrons.at(daughter_index.first), selection.taus.at(daughter_index.second));
+        const HiggsCandidate selected_higgs(selection.electrons.at(daughter_index.first),
+                                            selection.taus.at(daughter_index.second));
 
         if(applyTriggerMatch){
             analysis::TriggerResults triggerResults(refTriggerResults);
             triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
-                                          cuts::H_tautau_2016::DeltaR_triggerMatch);
+                                             cuts::hh_bbtautau_Run2::DeltaR_triggerMatch);
             selection.triggerResults.push_back(triggerResults);
         }
 
         selection.higgses_pair_indexes.push_back(daughter_index);
-
-        if(runSVfit)
-            selection.svfitResult[n] = svfitProducer->Fit(selected_higgs, *met);
-
     }
 
     ApplyBaseSelection(selection);
     FillEventTuple(selection);
-
 }
 
 std::vector<BaseTupleProducer::ElectronCandidate> TupleProducer_eTau::CollectSignalElectrons()
@@ -82,19 +80,18 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_eTau::CollectSignalTa
 
 void TupleProducer_eTau::SelectSignalElectron(const ElectronCandidate& electron, Cutter& cut) const
 {
-    using namespace cuts::H_tautau_2016::ETau::electronID;
+    using namespace cuts::hh_bbtautau_Run2::ETau::electronID;
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = electron.GetMomentum();
-    static constexpr double pt_cut = cuts::hh_bbtautau_2017::ETau::electronID::pt;
-    cut(p4.pt() > pt_cut, "pt", p4.pt());
+    cut(p4.pt() > pt, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double electron_xy = std::abs(electron->gsfTrack()->dxy(primaryVertex->position()));
     cut(electron_xy < dxy, "dxy", electron_xy);
     const double electron_dz = std::abs(electron->gsfTrack()->dz(primaryVertex->position()));
     cut(electron_dz < dz, "dz", electron_dz);
-    const bool passID = electron->electronID("mvaEleID-Fall17-noIso-V2-wp90") > 0.5f ||
-                        electron->electronID("mvaEleID-Fall17-iso-V2-wp90") > 0.5f;
+    const bool passID = electron->electronID(cuts::electronID_Run2::mvaEleID_iso_Tight) > 0.5f ||
+                        electron->electronID(cuts::electronID_Run2::mvaEleID_noIso_Tight) > 0.5f;
     cut(passID, "electronId");
 }
 

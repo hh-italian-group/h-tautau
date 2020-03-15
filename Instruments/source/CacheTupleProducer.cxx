@@ -142,7 +142,7 @@ private:
                         if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
                         if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
 
-                        boost::optional<EventInfoBase> event_info_base = CreateEventInfo(event,signalObjectSelector,
+                        boost::optional<EventInfo> event_info_base = CreateEventInfo(event,signalObjectSelector,
                                                                                          nullptr,run_period,jet_ordering,
                                                                                          false,unc_source,scale);
                         if(!event_info_base.is_initialized()) continue;

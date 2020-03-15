@@ -5,27 +5,27 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include "muonID_Run2.h"
+
 namespace cuts {
-namespace H_tautau_2016 {
+namespace H_tautau_Run2 {
 
-constexpr double DeltaR_betweenSignalObjects = 0.5; // >
+constexpr double DeltaR_Lep_Lep = 0.5; // >
+constexpr double DeltaR_Lep_Jet = 0.5; // >
 constexpr double DeltaR_triggerMatch = 0.5; // <
-constexpr double mt = 50; // <
-
 
 namespace MuTau {
+    constexpr double mt = 50; // <
+
     namespace muonID {
         constexpr double pt = 20; // >
         constexpr double eta = 2.1; // <
         constexpr double dz = 0.2; // <
         constexpr double dxy = 0.045; // <
 
-        // Defined in https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Short_Term_Medium_Muon_Definitio
-        constexpr bool isMediumMuon = true; // =
+        // pass Medium muon ID
 
-        // Post-sync ntuple cuts
-
-        constexpr double pfRelIso04 = 0.15; // <
+        constexpr double pfRelIso04 = ::cuts::muonID_Run2::PFIsoTight; // <
     }
 
     namespace tauID {
@@ -59,6 +59,7 @@ namespace MuTau {
 }
 
 namespace ETau {
+    constexpr double mt = ::cuts::H_tautau_Run2::MuTau::mt; // <
     namespace electronID {
         constexpr double pt = 25; // >
         constexpr double eta = 2.1; // <
@@ -123,27 +124,6 @@ namespace TauTau {
     }
 }
 
-namespace MuMu {
-    namespace muonID {
-        constexpr double pt_leading = 23; // >
-        constexpr double pt_trailing = 10; // >
-        constexpr double eta = 2.4; // <
-        constexpr double dz = 0.2; // <
-        constexpr double dxy = 0.045; // <
-
-        // Defined in https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Short_Term_Medium_Muon_Definitio
-        constexpr bool isMediumMuon = true; // =
-
-        // Post-sync ntuple cuts
-
-        constexpr double pfRelIso04 = 0.15; // <
-        constexpr double m_vis_low = 60; // >
-        constexpr double m_vis_high = 120; // <
-    }
-
-    constexpr double DeltaR_betweenSignalObjects = 0.3; // >
-}
-
 namespace electronVeto {
     constexpr double pt = 10; // >
     constexpr double eta = 2.5; // <
@@ -151,8 +131,7 @@ namespace electronVeto {
     constexpr double dxy = 0.045; // <
     constexpr double pfRelIso04 = 0.3; // <
 
-    // Defined in https://twiki.cern.ch/twiki/bin/view/CMS/MultivariateElectronIdentificationRun2
-    constexpr bool MVApogID90effWP = true; // =
+    // pass mvaEleID_noIso_Medium AND pfRelIso04 < 0.3
 
     constexpr bool passConversionVeto = true; // =
     constexpr int missingHits = 1; // <= //removed this cut for hh analysis baseline
@@ -163,9 +142,7 @@ namespace muonVeto {
     constexpr double eta = 2.4; // <
     constexpr double dz = 0.2; // <
     constexpr double dxy = 0.045; // <
-    constexpr bool isMediumMuon = true; // = HIP safe
     constexpr double pfRelIso04 = 0.3; // <
-    constexpr double tightIso = 0.1; // <
 }
 
 namespace jetID {
@@ -180,5 +157,5 @@ namespace vertex {
     // Take the primary vertex as the first one in the vertex collection, as these have been pre-sorted.
 }
 
-} // namespace H_tautau_2016
+} // namespace H_tautau_Run2
 } // namespace cuts

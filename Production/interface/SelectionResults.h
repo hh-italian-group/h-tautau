@@ -3,6 +3,9 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "AnalysisTools/Core/include/AnalyzerData.h"
@@ -10,8 +13,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "h-tautau/Core/include/Candidate.h"
 #include "h-tautau/Core/include/TriggerResults.h"
-#include "h-tautau/Analysis/include/KinFitInterface.h"
-#include "SVfitInterface.h"
 #include "h-tautau/Production/interface/BaseTupleProducer.h"
 
 #define SELECTION_ENTRY(name) \
@@ -63,7 +64,6 @@ struct SelectionResultsBase {
     edm::EventID eventId;
 
     bool Zveto, electronVeto, muonVeto;
-    std::map<size_t,sv_fit::FitResults> svfitResult;
     JetCandidateVector jets;
     TauCandidateVector taus;
     ElectronCandidateVector electrons;

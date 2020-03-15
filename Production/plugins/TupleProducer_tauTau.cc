@@ -3,10 +3,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "../interface/TupleProducer_tauTau.h"
 #include "../interface/GenTruthTools.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_Run2.h"
 
 void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
-    using namespace cuts::H_tautau_2016::TauTau;
+    using namespace cuts::hh_bbtautau_Run2::TauTau;
+    using HiggsCandidate = analysis::CompositeCandidate<TauCandidate,TauCandidate>;
 
     SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
@@ -32,30 +34,27 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 1, "taus");
 
-    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
-    auto higgses_indexes = FindCompatibleObjects(selection.taus, selection.taus, DeltaR_betweenSignalObjects, "H_tau_tau");
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_Run2::DeltaR_Lep_Lep;
+    auto higgses_indexes = FindCompatibleObjects(selection.taus, selection.taus, DeltaR_betweenSignalObjects,
+                                                 "H_tau_tau");
     cut(higgses_indexes.size(), "tau_tau_pair");
 
     for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
-        analysis::CompositeCandidate<TauCandidate,TauCandidate> selected_higgs = analysis::CompositeCandidate<TauCandidate,TauCandidate>(selection.taus.at(daughter_index.first), selection.taus.at(daughter_index.second));
+        const HiggsCandidate selected_higgs(selection.taus.at(daughter_index.first),
+                                            selection.taus.at(daughter_index.second));
 
         if(applyTriggerMatch){
             analysis::TriggerResults triggerResults(refTriggerResults);
             triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
-                                          cuts::H_tautau_2016::DeltaR_triggerMatch);
+                                             cuts::hh_bbtautau_Run2::DeltaR_triggerMatch);
             selection.triggerResults.push_back(triggerResults);
         }
 
         selection.higgses_pair_indexes.push_back(daughter_index);
-
-        if(runSVfit)
-            selection.svfitResult[n] = svfitProducer->Fit(selected_higgs, *met);
-
     }
 
     ApplyBaseSelection(selection);
-
     FillEventTuple(selection);
 }
 

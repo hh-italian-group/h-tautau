@@ -12,9 +12,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Core/include/TupleObjects.h"
-#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
-#include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/Analysis/include/EventCandidate.h"
 #include "h-tautau/Analysis/include/EventCacheProvider.h"
@@ -48,7 +45,7 @@ private:
 
 };
 
-class EventInfoBase {
+class EventInfo {
 public:
     using Event = ntuple::Event;
     using LegPair = ntuple::LegPair;
@@ -63,15 +60,15 @@ public:
 
     Channel GetChannel() const { return static_cast<Channel>(event_candidate.GetEvent().channelId); }
 
-    EventInfoBase(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
+    EventInfo(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
                   size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
 
-    EventInfoBase(const EventInfoBase& ) = default; //copy constructor
-    virtual ~EventInfoBase(){} //destructor
+    EventInfo(const EventInfo& ) = default; //copy constructor
+    virtual ~EventInfo(){} //destructor
 
-    EventInfoBase& operator= ( const EventInfoBase& ) = default; //assignment
+    EventInfo& operator= ( const EventInfo& ) = default; //assignment
 
 
     const Event& operator*() const;
@@ -183,7 +180,7 @@ private:
 };
 
 //to be added isEmbedded flag
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
+boost::optional<EventInfo> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo = nullptr,
                                                Period period = analysis::Period::Run2017,
