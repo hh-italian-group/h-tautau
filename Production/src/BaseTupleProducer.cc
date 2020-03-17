@@ -231,9 +231,9 @@ bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period 
                           patJet.chargedEmEnergyFraction() >= 0.99)) return false;
 
         if(abs_eta > 2.7 && abs_eta <= 3.0 && (
-                                           patJet.neutralEmEnergyFraction() <= 0.01 ||
-                                           patJet.neutralEmEnergyFraction() >= 0.99 ||
-                                           patJet.neutralMultiplicity() <= 2)) return false;
+                        patJet.neutralEmEnergyFraction() <= 0.01 ||
+                        patJet.neutralHadronEnergyFraction() <= 0.98 ||
+                        patJet.neutralMultiplicity() <= 2)) return false;
 
         if(abs_eta > 3.0 && (
                          patJet.neutralEmEnergyFraction() >= 0.9 ||
