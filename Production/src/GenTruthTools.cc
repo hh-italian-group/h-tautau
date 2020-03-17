@@ -75,6 +75,7 @@ LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenPartic
         if((!particle.statusFlags().isPrompt() && !isTauProduct) /*|| !particle.statusFlags().isLastCopy()*/) continue;
 
         const int abs_pdg = std::abs(particle.pdgId());
+        if(abs_pdg == tauPdgId && !particle.statusFlags().isLastCopy()) continue;
         if(!pt_thresholds.count(abs_pdg)) continue;
 
         std::vector<const reco::GenParticle*> visible_daughters;
