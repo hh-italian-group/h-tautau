@@ -24,7 +24,7 @@ PileUpWeight::HistPtr PileUpWeight::LoadPUWeights(const std::string& pu_reweight
     return HistPtr(root_ext::ReadCloneObject<Hist>(*file, hist_name, "", true));
 }
 
-double PileUpWeight::Get(EventInfoBase& eventInfo) const
+double PileUpWeight::Get(EventInfo& eventInfo) const
 {
     return Get(eventInfo->npu);
 }
@@ -109,7 +109,7 @@ void PileUpWeightEx::LoadPUWeights(const std::string& pu_data_file_name, const s
     }
 }
 
-double PileUpWeightEx::Get(EventInfoBase& eventInfo) const
+double PileUpWeightEx::Get(EventInfo& eventInfo) const
 {
     return Get(eventInfo->npu);
 }

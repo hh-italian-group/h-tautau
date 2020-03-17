@@ -6,9 +6,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TupleObjects.h"
-#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
-#include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_Run2.h"
 #include "h-tautau/Analysis/include/MetFilters.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/Core/include/Candidate.h"
@@ -16,20 +14,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class SignalMode { HTT = 1, HTT_sync = 2, TauPOG_default = 3, TauPOG_deepTauVsJet = 4,
-                        TauPOG_deepTauVsJet_full = 5, TauPOG_dpfTau = 6, HH_legacy = 7, HH = 8,
-                        Skimmer = 9, TauPOG_Skimmer = 10 };
+enum class SignalMode { HTT, TauPOG, HH, HH_legacy };
 
 ENUM_NAMES(SignalMode) = {
     { SignalMode::HTT, "HTT" },
-    { SignalMode::HTT_sync, "HTT_sync" },
-    { SignalMode::TauPOG_default, "TauPOG_default" },
-    { SignalMode::TauPOG_deepTauVsJet, "TauPOG_deepTauVsJet" },
-    { SignalMode::TauPOG_deepTauVsJet_full, "TauPOG_deepTauVsJet_full" },
-    { SignalMode::HH_legacy, "HH_legacy" },
+    { SignalMode::TauPOG, "TauPOG" },
     { SignalMode::HH, "HH" },
-    { SignalMode::Skimmer, "Skimmer" },
-    { SignalMode::TauPOG_Skimmer, "TauPOG_Skimmer" }
+    { SignalMode::HH_legacy, "HH_legacy" },
 };
 
 namespace jet_ordering {
@@ -137,9 +128,9 @@ public:
              return true;
 
          const double abs_eta = std::abs(jet_p4.eta());
-         return !(jet_p4.pt() < cuts::hh_bbtautau_2017::jetID::max_pt_veto &&
-                     abs_eta > cuts::hh_bbtautau_2017::jetID::eta_low_veto &&
-                     abs_eta < cuts::hh_bbtautau_2017::jetID::eta_high_veto && !jets_pu_id.Passed(analysis::DiscriminatorWP::Loose));
+         return !(jet_p4.pt() < cuts::hh_bbtautau_Run2::jetID::max_pt_veto &&
+                     abs_eta > cuts::hh_bbtautau_Run2::jetID::eta_low_veto &&
+                     abs_eta < cuts::hh_bbtautau_Run2::jetID::eta_high_veto && !jets_pu_id.Passed(analysis::DiscriminatorWP::Loose));
      }
 
 private:
@@ -147,10 +138,6 @@ private:
     bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
     bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId,  bool is_sync = false) const;
     bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const;
-    bool PassSkimmer_LeptonSelection(const LepCandidate& lepton) const;
-    bool PassTauPOG_Skimmer_LeptonSelection(const LepCandidate& lepton) const;
-
-
 
 private:
     SignalMode mode;

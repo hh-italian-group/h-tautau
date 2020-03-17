@@ -77,7 +77,7 @@ if [ $MODE = "prod" ] ; then
     run_cmd git cms-addpkg RecoMET/METFilters
     #run_cmd git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X
     run_cmd git cms-merge-topic cms-egamma:EgammaPostRecoTools
-	
+
 	# Update PileupJetID
 	run_cmd git cms-addpkg  RecoJets/JetProducers
 	run_cmd git clone -b 94X_weights_DYJets_inc_v2 git@github.com:cms-jet/PUjetID.git PUJetIDweights/
@@ -102,7 +102,7 @@ run_cmd git clone git@github.com:cms-tau-pog/TauIDSFs.git TauPOG/TauIDSFs
 run_cmd git clone -b run2_SFs git@github.com:cms-tau-pog/TauTriggerSFs.git TauAnalysisTools/TauTriggerSFs
 
 # Recoil Corrections
-run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
+#run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
 
 # Install analysis packages
 declare -A ANA_PACKAGES

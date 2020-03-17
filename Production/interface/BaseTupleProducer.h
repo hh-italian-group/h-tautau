@@ -1,72 +1,25 @@
-/*! Definition of BaseTupleProducer class: the base class for all X->HH->bbTauTau and H->tautau tuple producers.
+/*! Definition of BaseTupleProducer class: the base class for all HH->bbTauTau and H->tautau tuple producers.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include <iomanip>
-#include <functional>
-#include <string>
-#include <iostream>
-
-
-//For CMSSW
-#include "FWCore/Framework/interface/ConsumesCollector.h"
-#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-
-#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
-#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
-#include "JetMETCorrections/Modules/interface/JetResolution.h"
-
-#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
-#include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/PatCandidates/interface/MET.h"
-
-#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
-//Trigger
-
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-
-#include "DataFormats/Common/interface/ValueMap.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
-#include "DataFormats/EgammaCandidates/interface/Conversion.h"
-#include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
-
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-
-// import LHEEventProduction definition
+#include "JetMETCorrections/Modules/interface/JetResolution.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-#include "AnalysisDataFormats/TopObjects/interface/TtGenEvent.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
-//HHbbTauTau Framework
 #include "AnalysisTools/Core/include/AnalyzerData.h"
-#include "AnalysisTools/Core/include/CutTools.h"
-#include "h-tautau/Core/include/AnalysisTypes.h"
-#include "h-tautau/Core/include/Candidate.h"
 #include "h-tautau/Core/include/EventTuple.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_mssm.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_sm.h"
-#include "h-tautau/Cuts/include/hh_bbtautau_2016.h"
-#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
-#include "h-tautau/Core/include/DiscriminatorIdResults.h"
+#include "h-tautau/Cuts/include/eleID_Run2.h"
 
-//SVFit
-#include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "SelectionResults.h"
-
-//Recoil Correction
-#include "HTT-utilities/RecoilCorrections/interface/RecoilCorrector.h"
-
 #include "TriggerTools.h"
 
 struct TupleProducerData : public root_ext::AnalyzerData {
@@ -109,7 +62,7 @@ inline bool LeptonComparitor(const SelectionResultsBase::ElectronCandidate& l1,
                              const SelectionResultsBase::ElectronCandidate& l2)
 {
     static const std::vector<std::string> iso_wp_list = {
-        "mvaEleID-Fall17-iso-V2-wp80", "mvaEleID-Fall17-iso-V2-wp90"
+        ::cuts::electronID_Run2::mvaEleID_iso_Tight, ::cuts::electronID_Run2::mvaEleID_iso_Medium
     };
     for(const std::string& wp_name : iso_wp_list) {
         const bool l1_pass = l1->electronID(wp_name) > 0.5f;
@@ -125,14 +78,15 @@ inline bool LeptonComparitor(const SelectionResultsBase::ElectronCandidate& l1,
 
 class TupleStore {
 public:
+    using Mutex = std::recursive_mutex;
 
-  static ntuple::EventTuple& GetTuple();
-  static void ReleaseEventTuple();
+    static ntuple::EventTuple& GetTuple();
+    static void ReleaseEventTuple();
 
 private:
-  static int tuple_counter;
-  static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
-
+    static Mutex mutex;
+    static int tuple_counter;
+    static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
 };
 
 class BaseTupleProducer : public edm::EDAnalyzer {
@@ -155,14 +109,14 @@ private:
     std::string treeName;
     TupleProducerData anaData;
     std::map<std::string, std::shared_ptr<SelectionData>> anaDataBeforeCut, anaDataAfterCut;
-    edm::EDGetToken electronsMiniAOD_token;
-    edm::EDGetToken tausMiniAOD_token;
-    edm::EDGetToken muonsMiniAOD_token;
-    edm::EDGetToken vtxMiniAOD_token;
-    edm::EDGetToken pfMETAOD_token;
-    edm::EDGetToken genMETAOD_token;
-    edm::EDGetToken jetsMiniAOD_token;
-    edm::EDGetToken fatJetsMiniAOD_token;
+    edm::EDGetTokenT<std::vector<pat::Electron>> electronsMiniAOD_token;
+    edm::EDGetTokenT<std::vector<pat::Tau>> tausMiniAOD_token;
+    edm::EDGetTokenT<std::vector<pat::Muon>> muonsMiniAOD_token;
+    edm::EDGetTokenT<edm::View<reco::Vertex>> vtxMiniAOD_token;
+    edm::EDGetTokenT<edm::View<pat::MET>> pfMETAOD_token;
+    edm::EDGetTokenT<edm::View<reco::GenMET>> genMETAOD_token;
+    edm::EDGetTokenT<std::vector<pat::Jet>> jetsMiniAOD_token;
+    edm::EDGetTokenT<std::vector<pat::Jet>> fatJetsMiniAOD_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_token;
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
     edm::EDGetTokenT<GenEventInfoProduct> genWeights_token;
@@ -179,14 +133,11 @@ private:
 
 protected:
     const analysis::Period period;
-    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, runSVfit, applyTriggerCut, storeLHEinfo, applyRecoilCorr;
+    const bool isMC, applyTriggerMatch, applyTriggerMatchCut, applyTriggerCut, storeLHEinfo;
     const int nJetsRecoilCorr;
     const bool saveGenTopInfo, saveGenBosonInfo, saveGenJetInfo, saveGenParticleInfo, isEmbedded;
     ntuple::EventTuple& eventTuple;
     analysis::TriggerTools triggerTools;
-    std::shared_ptr<analysis::sv_fit::FitProducer> svfitProducer;
-    std::shared_ptr<analysis::kin_fit::FitProducer> kinfitProducer;
-    std::shared_ptr<RecoilCorrector> recoilPFMetCorrector;
 
 private:
     const edm::Event *edmEvent;
@@ -204,8 +155,6 @@ private:
     edm::Handle<TtGenEvent> topGenEvent;
     edm::Handle<double> rho;
 
-    edm::ESHandle<JetCorrectorParametersCollection> jetCorParColl;
-    std::shared_ptr<JetCorrectionUncertainty> jecUnc;
     JME::JetResolution resolution;
 
 protected:
@@ -227,9 +176,14 @@ private:
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
     virtual void endJob() override;
     virtual void ProcessEvent(Cutter& cut) = 0;
-    const double Isolation(const pat::Electron& electron);
-    const double Isolation(const pat::Muon& muon);
-    const double Isolation(const pat::Tau& tau);
+    static double Isolation(const pat::Electron& electron);
+    static double Isolation(const pat::Muon& muon);
+
+    template<typename Input>
+    void ConsumeTag(edm::EDGetTokenT<Input>& token, const edm::ParameterSet& cfg, const std::string& name)
+    {
+        token = mayConsume<Input>(cfg.getParameter<edm::InputTag>(name));
+    }
 
 public:
     BaseTupleProducer(const edm::ParameterSet& iConfig, analysis::Channel _channel);
@@ -250,7 +204,6 @@ protected:
     void FillGenJetInfo();
     void FillLegGenMatch(const analysis::LorentzVectorXYZ& p4);
     void FillMetFilters(analysis::Period period);
-    void ApplyRecoilCorrection(const std::vector<JetCandidate>& jets);
     void FillOtherLeptons(const std::vector<ElectronCandidate>& other_electrons, const std::vector<MuonCandidate>& other_muons);
 
     std::vector<ElectronCandidate> CollectVetoElectrons(bool isTightSelection,

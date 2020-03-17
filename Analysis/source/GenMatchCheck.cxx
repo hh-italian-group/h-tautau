@@ -60,7 +60,7 @@ public:
 
             JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
 
-            boost::optional<analysis::EventInfoBase> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),args.period(), jet_ordering);
+            boost::optional<analysis::EventInfo> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),args.period(), jet_ordering);
             if(!event.is_initialized()) continue;
             // if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;

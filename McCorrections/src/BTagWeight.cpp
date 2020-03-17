@@ -9,7 +9,7 @@ namespace mc_corrections {
 
 namespace detail {
 
-JetInfo::JetInfo(EventInfoBase& eventInfo, size_t jetIndex) :
+JetInfo::JetInfo(EventInfo& eventInfo, size_t jetIndex) :
     eff(0.), SF(0.)
 {
     const ntuple::Event& event = *eventInfo;
@@ -95,7 +95,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
             ReaderInfoPtr(new ReaderInfo(reader_light, BTagEntry::FLAV_UDSG, bTagEffFile, wp));
 }
 
-double BTagWeight::Get(EventInfoBase& eventInfo) const
+double BTagWeight::Get(EventInfo& eventInfo) const
 {
     return GetEx(eventInfo, UncertaintyScale::Central);
 }
@@ -105,7 +105,7 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-double BTagWeight::GetEx(EventInfoBase& eventInfo, UncertaintyScale unc) const
+double BTagWeight::GetEx(EventInfo& eventInfo, UncertaintyScale unc) const
 {
     const std::string unc_name = GetUncertantyName(unc);
 

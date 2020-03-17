@@ -130,7 +130,7 @@ EventWeights::ProviderPtr EventWeights::GetProvider(WeightType weightType) const
     return providers.at(weightType);
 }
 
-double EventWeights::GetWeight(EventInfoBase& event, WeightType weightType) const
+double EventWeights::GetWeight(EventInfo& event, WeightType weightType) const
 {
     double weight = GetProvider(weightType)->Get(event);
     if (std::isnan(weight) || std::abs(weight) == std::numeric_limits<double>::infinity())
@@ -139,7 +139,7 @@ double EventWeights::GetWeight(EventInfoBase& event, WeightType weightType) cons
 }
 
 
-double EventWeights::GetTotalWeight(EventInfoBase& event, const WeightingMode& weightingMode) const
+double EventWeights::GetTotalWeight(EventInfo& event, const WeightingMode& weightingMode) const
 {
     double weight = 1.;
     for(WeightType weightType : weightingMode)

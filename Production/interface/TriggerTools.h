@@ -18,7 +18,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/EnumNameMap.h"
 #include "AnalysisTools/Core/include/PropertyConfigReader.h"
 #include "h-tautau/Core/include/TriggerResults.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
 #include "h-tautau/Core/include/TriggerFileDescriptor.h"
 #include "h-tautau/Core/include/TriggerFileConfigEntryReader.h"
 
