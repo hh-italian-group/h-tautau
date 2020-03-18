@@ -85,7 +85,7 @@ public:
 
 private:
     static Mutex mutex;
-    static int tuple_counter;
+    static std::atomic<int> tuple_counter;
     static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
 };
 
