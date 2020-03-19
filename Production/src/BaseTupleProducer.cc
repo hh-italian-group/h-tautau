@@ -9,7 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Production/interface/GenTruthTools.h"
 
 TupleStore::Mutex TupleStore::mutex;
-int TupleStore::tuple_counter = 0;
+std::atomic<int> TupleStore::tuple_counter = 0;
 std::shared_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
 
 ntuple::EventTuple& TupleStore::GetTuple()

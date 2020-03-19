@@ -10,7 +10,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/McCorrections/include/LeptonWeights.h"
 #include "h-tautau/McCorrections/include/BTagWeight.h"
 #include "h-tautau/McCorrections/include/TopPtWeight.h"
-#include "h-tautau/McCorrections/include/TauIdWeight.h"
 #include "h-tautau/McCorrections/include/GenEventWeight.h"
 
 namespace analysis {

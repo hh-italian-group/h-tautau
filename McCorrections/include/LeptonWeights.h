@@ -9,9 +9,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TauPOG/TauIDSFs/interface/TauIDSFTool.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "WeightProvider.h"
-#include "TauTriggerSFs2017.h"
-#include "TauIdWeight.h"
-#include "TauTriggerWeight.h"
 
 namespace analysis {
 namespace mc_corrections {

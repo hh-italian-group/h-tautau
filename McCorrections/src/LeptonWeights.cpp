@@ -178,7 +178,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) co
                     && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
                     && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau_2017))
                 prescaled_weight = prescaled_weight_eTau_2017;
-            return electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
+            return prescaled_weight * electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
         }
 
     }

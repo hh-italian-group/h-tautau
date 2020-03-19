@@ -58,8 +58,6 @@ namespace trigger_tools {
 
 namespace analysis {
 
-bool TriggerTools::debug = false;
-
 TriggerTools::TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
                            EDGetTokenT<edm::TriggerResults>&& _triggerResultsRECO_token,
@@ -303,7 +301,7 @@ bool TriggerTools::TryGetAnyTriggerResult(const std::string& name, bool& result)
 
 bool TriggerTools::GetAnyTriggerResult(const std::string& name) const
 {
-    bool result;
+    bool result = false;
     if(TryGetAnyTriggerResult(name, result))
         return result;
     throw analysis::exception("Unable to find trigger '%1%'") % name;

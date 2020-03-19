@@ -10,44 +10,31 @@ namespace analysis {
 
 namespace sv_fit_ana {
 
-classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const ntuple::TupleLepton& lepton)
+classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<ntuple::TupleLepton>& lepton)
 {
-    if(lepton.leg_type() == analysis::LegType::e){
-        const auto& momentum = lepton.p4();
-        // applying fix for electron mass
+    const auto& momentum = lepton.GetMomentum();
+    double preciseVisMass = momentum.mass();
+    classic_svFit::MeasuredTauLepton::kDecayType decay_type;
+    int decay_mode = -1;
+    if(lepton->leg_type() == analysis::LegType::e) {
         static const double minVisMass = classic_svFit::electronMass, maxVisMass = minVisMass;
-        double preciseVisMass = momentum.mass();
-        if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
-        if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
-        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay,
-                                                momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass);
+        preciseVisMass = std::clamp(preciseVisMass, minVisMass, maxVisMass);
+        decay_type = classic_svFit::MeasuredTauLepton::kTauToElecDecay;
+    } else if(lepton->leg_type() == analysis::LegType::mu) {
+        decay_type = classic_svFit::MeasuredTauLepton::kTauToMuDecay;
+    } else if(lepton->leg_type() == analysis::LegType::tau){
+        const auto [minVisMass, maxVisMass] = lepton->decayMode() == 0
+                ? std::make_pair(classic_svFit::chargedPionMass, classic_svFit::chargedPionMass)
+                : std::make_pair(0.3, 1.5);
+        preciseVisMass = std::clamp(preciseVisMass, minVisMass, maxVisMass);
+        decay_type = classic_svFit::MeasuredTauLepton::kTauToHadDecay;
+        decay_mode = lepton->decayMode();
+    } else {
+        throw exception("Leg Type not supported for SVFitAnaInterface.");
     }
-    if(lepton.leg_type() == analysis::LegType::mu){
-        const auto& momentum = lepton.p4();
-        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay,
-                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M());
-    }
-    if(lepton.leg_type() == analysis::LegType::tau){
-        const auto& momentum = lepton.p4();
-        double minVisMass, maxVisMass;
-        if ( lepton.decayMode() == -1 ) {
-          minVisMass = classic_svFit::chargedPionMass;
-          maxVisMass = 1.5;
-        } else if ( lepton.decayMode() == 0 ) {
-          minVisMass = classic_svFit::chargedPionMass;
-          maxVisMass = minVisMass;
-        } else {
-          minVisMass = 0.3;
-          maxVisMass = 1.5;
-        }
-        double preciseVisMass = momentum.mass();
-        if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
-        if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
-        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay,
-                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass,
-                                                  lepton.decayMode());
-    }
-    throw exception("Leg Type not supported for SVFitAnaInterface.");
+
+    return classic_svFit::MeasuredTauLepton(decay_type, momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass,
+                                            decay_mode);
 }
 
 FitProducer::FitProducer(int _verbosity)
@@ -61,8 +48,8 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
                             const MissingET<ntuple::TupleMet>& met) const
 {
     std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
-        CreateMeasuredLepton(*first_daughter),
-        CreateMeasuredLepton(*second_daughter)
+        CreateMeasuredLepton(first_daughter),
+        CreateMeasuredLepton(second_daughter)
     };
 
     const TMatrixD met_cov_t = ConvertMatrix(met.GetCovMatrix());

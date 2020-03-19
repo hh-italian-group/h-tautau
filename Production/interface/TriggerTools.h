@@ -58,7 +58,7 @@ public:
     using VectorTriggerObjectSet = std::vector<TriggerObjectSet>;
     using BitsContainer = analysis::TriggerDescriptorCollection::BitsContainer;
 
-    static bool debug;
+    static constexpr bool debug = false;
 
     TriggerTools(EDGetTokenT<edm::TriggerResults>&& _triggerResultsSIM_token,
                  EDGetTokenT<edm::TriggerResults>&& _triggerResultsHLT_token,
