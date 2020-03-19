@@ -213,16 +213,9 @@ bool BaseTupleProducer::PassPFTightId(const pat::Jet& pat_jet, analysis::Period 
                           patJet.chargedMultiplicity() <= 0 ||
                           patJet.chargedEmEnergyFraction() >= 0.99)) return false;
         if(abs_eta > 2.7 && abs_eta <= 3.0 && (
-<<<<<<< HEAD
                         patJet.neutralEmEnergyFraction() <= 0.01 ||
-                        patJet.neutralHadronEnergyFraction() <= 0.98 ||
+                        patJet.neutralHadronEnergyFraction() >= 0.98 ||
                         patJet.neutralMultiplicity() <= 2)) return false;
-
-=======
-                                           patJet.neutralEmEnergyFraction() <= 0.01 ||
-                                           patJet.neutralEmEnergyFraction() >= 0.99 ||
-                                           patJet.neutralMultiplicity() <= 2)) return false;
->>>>>>> c73f1726508d14698fb944494e31808501518b2d
         if(abs_eta > 3.0 && (
                          patJet.neutralEmEnergyFraction() >= 0.9 ||
                          patJet.neutralMultiplicity() <= 10)) return false;
@@ -802,7 +795,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
     eventTuple().rho = *rho;
 
-    if(period == analysis::Period::Run2016 && period == analysis::Period::Run2017){
+    if(period == analysis::Period::Run2016 || period == analysis::Period::Run2017){
         edm::Handle<double> _theprefweight;
         edmEvent->getByToken(prefweight_token, _theprefweight);
         eventTuple().l1_prefiring_weight = *_theprefweight;

@@ -434,4 +434,3 @@ SignalObjectSelector::SelectedSignalJets SignalObjectSelector::SelectSignalJets(
 }
 
 } // namespace analysis
-e
