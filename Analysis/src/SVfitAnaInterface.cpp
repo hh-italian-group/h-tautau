@@ -47,7 +47,7 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
                             const LeptonCandidate<ntuple::TupleLepton>& second_daughter,
                             const MissingET<ntuple::TupleMet>& met) const
 {
-    std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
+    const std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
         CreateMeasuredLepton(first_daughter),
         CreateMeasuredLepton(second_daughter)
     };
@@ -57,6 +57,19 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
     algo.addLogM_fixed(false);
     algo.addLogM_dynamic(false);
     // algo.setDiTauMassConstraint(-1.0);
+    if(verbosity > 0) {
+        std::cout << "SVfit inputs:\n";
+        for(size_t n = 0; n < measured_leptons.size(); ++n) {
+            const auto& lep = measured_leptons.at(n);
+            std::cout << std::fixed << std::setprecision(3);
+            std::cout << "\tlep" << n << ", (pt, eta, phi, m) = (" << lep.pt() << ", " << lep.eta()
+                      << ", " << lep.phi() << ", " << lep.mass() << "), type=" << lep.type()
+                      << ", decayMode=" << lep.decayMode() << "\n";
+        }
+        std::cout << "\tMET (px, py) = (" << met.GetMomentum().Px() << ", " << met.GetMomentum().Py() << ")\n"
+                  << "\tmet_cov: (00, 01, 10, 11) = (" << met_cov_t[0][0] << ", " << met_cov_t[0][1]
+                  << ", " << met_cov_t[1][0] << ", " << met_cov_t[1][1] << ")\n";
+    }
     algo.integrate(measured_leptons, met.GetMomentum().Px(), met.GetMomentum().Py(), met_cov_t);
 
     FitResults result;
@@ -67,6 +80,11 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
         result.transverseMass = histoAdapter->getTransverseMass();
         result.transverseMass_error = histoAdapter->getTransverseMassErr();
         result.has_valid_momentum = true;
+        if(verbosity > 0) {
+            std::cout << "SVfit result: (pt, eta, phi, m) = (" << histoAdapter->getPt() << ", "
+                      << histoAdapter->getEta() << ", " << histoAdapter->getPhi() << ", "
+                      << histoAdapter->getMass() << ")\n";
+        }
     }
     return result;
 }
