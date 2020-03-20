@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Analysis/include/KinFitInterface.h"
 #include "HHKinFit2/HHKinFit2/interface/HHKinFitMasterHeavyHiggs.h"
 #include "AnalysisTools/Core/include/RootExt.h"
+#include "AnalysisTools/Core/include/TextIO.h"
 
 namespace analysis {
 
@@ -18,20 +19,16 @@ FitResults FitProducer::FitImpl(const TLorentzVector& lepton1_p4, const TLorentz
     FitResults result;
     try {
         if(verbosity >= 100) {
-            const auto print_p4 = [](const std::string& name, const TLorentzVector& p4) {
-                std::cout << name << " (pt, eta, phi, mass) = (" << p4.Pt() << ", " << p4.Eta() << ", "
-                          << p4.Phi() << ", " << p4.M() << ")" << std::endl;
-            };
-            std::cout << std::setprecision(6);
-            print_p4("lepton1", lepton1_p4);
-            print_p4("lepton2", lepton2_p4);
-            print_p4("jet1", jet1_p4);
-            print_p4("jet2", jet2_p4);
-            std::cout << "met (pt, phi) = (" << met.Mod() << ", " << met.Phi() << ")" << std::endl;
-            std::cout << "met_cov:" << met_cov << std::endl;
+            std::cout << std::setprecision(6)
+                      << "lepton1 " << analysis::LorentzVectorToString(lepton1_p4, analysis::LVectorRepr::PtEtaPhiME)
+                      << "\nlepton2 " << analysis::LorentzVectorToString(lepton2_p4, analysis::LVectorRepr::PtEtaPhiME)
+                      << "\njet1 "  << analysis::LorentzVectorToString(jet1_p4, analysis::LVectorRepr::PtEtaPhiME)
+                      << ", resolution=" << resolution_1
+                      << "\njet2 "  << analysis::LorentzVectorToString(jet2_p4, analysis::LVectorRepr::PtEtaPhiME)
+                      << ", resolution=" << resolution_2
+                      << "\nmet (pt, phi) = (" << met.Mod() << ", " << met.Phi() << ")\nmet_cov:" << met_cov;
         }
 
-        // add here the resolution
         HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(jet1_p4, jet2_p4, lepton1_p4, lepton2_p4, met, met_cov,
                                                        resolution_1, resolution_2);
         hh_kin_fit.verbosity = verbosity;

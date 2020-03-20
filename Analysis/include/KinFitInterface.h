@@ -30,8 +30,8 @@ public:
     {
         const auto& met_p4 = met.GetMomentum();
         const TMatrixD& met_cov = ConvertMatrix(met.GetCovMatrix());
-        return FitImpl(ConvertVector(jet1_p4), ConvertVector(jet2_p4), ConvertVector(lepton1_p4),
-                       ConvertVector(lepton2_p4), TVector2(met_p4.Px(), met_p4.Py()), met_cov,
+        return FitImpl(ConvertVector(lepton1_p4), ConvertVector(lepton2_p4), ConvertVector(jet1_p4),
+                       ConvertVector(jet2_p4), TVector2(met_p4.Px(), met_p4.Py()), met_cov,
                        resolution_1, resolution_2);
     }
 
