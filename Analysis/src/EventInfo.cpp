@@ -256,19 +256,7 @@ const sv_fit_ana::FitResults& EventInfo::GetSVFitResults(bool allow_calc)
             throw exception("Not allowed to calculate SVFit.");
         else if(!gotSVFit){
             const auto& svfitProducer = GetSVFitProducer();
-            std::cout << "lep 1 pt = " << GetLeg(1)->p4().pt() << "\n";
-            std::cout << "lep 1 eta = " << GetLeg(1)->p4().eta() << "\n";
-            std::cout << "lep 1 phi = " << GetLeg(1)->p4().phi() << "\n";
-            std::cout << "lep 1 m = " << GetLeg(1)->p4().M() << "\n";
 
-            std::cout << "lep 2 pt = " << GetLeg(2)->p4().pt() << "\n";
-            std::cout << "lep 2 eta = " << GetLeg(2)->p4().eta() << "\n";
-            std::cout << "lep 2 phi = " << GetLeg(2)->p4().phi() << "\n";
-            std::cout << "lep 2 m = " << GetLeg(2)->p4().M() << "\n";
-
-            std::cout << "MET = " << event_candidate.GetMET().GetMomentum() << "\n";
-            std::cout << "METx = " << event_candidate.GetMET().GetMomentum().px() << "\n";
-            std::cout << "METy = " << event_candidate.GetMET().GetMomentum().py() << "\n";
             const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
             svfit_results->has_valid_momentum = result.has_valid_momentum;
             svfit_results->momentum = result.momentum;
