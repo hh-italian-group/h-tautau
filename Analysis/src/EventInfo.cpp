@@ -87,18 +87,15 @@ const SummaryInfo& EventInfo::GetSummaryInfo() const
 
 const kin_fit::FitProducer& EventInfo::GetKinFitProducer()
 {
-    static kin_fit::FitProducer kinfitProducer;
+    static const kin_fit::FitProducer kinfitProducer;
     return kinfitProducer;
 }
 
 const sv_fit_ana::FitProducer& EventInfo::GetSVFitProducer()
 {
-    static sv_fit_ana::FitProducer svfitProducer;
+    static const sv_fit_ana::FitProducer svfitProducer;
     return svfitProducer;
 }
-
-// const AnalysisObject& EventInfo::GetLeg(size_t /*leg_id*/) { throw exception("Method not supported."); }
-// LorentzVector EventInfo::GetHiggsTTMomentum(bool /*useSVfit*/) { throw exception("Method not supported."); }
 
 size_t EventInfo::GetNJets() const
 {

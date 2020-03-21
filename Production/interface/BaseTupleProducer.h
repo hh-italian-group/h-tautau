@@ -86,7 +86,7 @@ public:
 private:
     static Mutex mutex;
     static std::atomic<int> tuple_counter;
-    static std::shared_ptr<ntuple::EventTuple> eventTuple_ptr;
+    static const std::unique_ptr<std::shared_ptr<ntuple::EventTuple>> eventTuple_ptr;
 };
 
 class BaseTupleProducer : public edm::EDAnalyzer {

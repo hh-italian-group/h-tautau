@@ -22,20 +22,16 @@ namespace analysis {
 
 class EventCandidate {
 public:
-
-    EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
-                   UncertaintyScale _scale);
-
-    EventCandidate(const EventCandidate& ) = default; //copy constructor
-    EventCandidate(EventCandidate&& ) = default; // move constructor
-
-    EventCandidate& operator= ( const EventCandidate& ) = default; //assignment
+    EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source, UncertaintyScale _scale);
+    EventCandidate(const EventCandidate&) = default;
+    EventCandidate(EventCandidate&&) = default;
+    EventCandidate& operator=(const EventCandidate&) = default;
 
     static void InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
                                         TauIdDiscriminator tau_id_discriminator);
 
     static const jec::JECUncertaintiesWrapper& GetJecUncertainties();
-    const TauESUncertainties& GetTauESUncertainties();
+    static const TauESUncertainties& GetTauESUncertainties();
 
     const LepCollection& GetLeptons();
     const JetCollection& GetJets();
@@ -60,8 +56,8 @@ private:
     std::shared_ptr<std::vector<LepCandidate>> lepton_candidates;
     std::shared_ptr<std::vector<JetCandidate>> jet_candidates;
     std::shared_ptr<MET> met;
-    static std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
-    static std::shared_ptr<TauESUncertainties> tauESUncertainties;
+    static const std::unique_ptr<boost::optional<jec::JECUncertaintiesWrapper>> jecUncertainties;
+    static const std::unique_ptr<boost::optional<TauESUncertainties>> tauESUncertainties;
 };
 
 } // namespace analysis
