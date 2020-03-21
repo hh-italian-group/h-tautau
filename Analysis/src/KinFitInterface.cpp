@@ -26,7 +26,8 @@ FitResults FitProducer::FitImpl(const TLorentzVector& lepton1_p4, const TLorentz
                       << ", resolution=" << resolution_1
                       << "\njet2 "  << analysis::LorentzVectorToString(jet2_p4, analysis::LVectorRepr::PtEtaPhiME)
                       << ", resolution=" << resolution_2
-                      << "\nmet (pt, phi) = (" << met.Mod() << ", " << met.Phi() << ")\nmet_cov:" << met_cov;
+                      << "\nmet (px, py, pt, phi) = (" << met.Px() << ", " << met.Py() << ", "
+                      << met.Mod() << ", " << met.Phi() << ")\nmet_cov:" << met_cov;
         }
 
         HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(jet1_p4, jet2_p4, lepton1_p4, lepton2_p4, met, met_cov,

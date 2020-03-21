@@ -23,9 +23,8 @@ classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<ntup
     } else if(lepton->leg_type() == analysis::LegType::mu) {
         decay_type = classic_svFit::MeasuredTauLepton::kTauToMuDecay;
     } else if(lepton->leg_type() == analysis::LegType::tau){
-        const auto [minVisMass, maxVisMass] = lepton->decayMode() == 0
-                ? std::make_pair(classic_svFit::chargedPionMass, classic_svFit::chargedPionMass)
-                : std::make_pair(0.3, 1.5);
+        const double minVisMass = lepton->decayMode() == 0 ? classic_svFit::chargedPionMass : 0.3;
+        const double maxVisMass = lepton->decayMode() == 0 ? classic_svFit::chargedPionMass : 1.5;
         preciseVisMass = std::clamp(preciseVisMass, minVisMass, maxVisMass);
         decay_type = classic_svFit::MeasuredTauLepton::kTauToHadDecay;
         decay_mode = lepton->decayMode();

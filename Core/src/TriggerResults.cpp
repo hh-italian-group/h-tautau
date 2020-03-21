@@ -54,6 +54,11 @@ bool TriggerDescriptorCollection::TriggerDescriptor::RequiresJetMatching() const
     return !jet_legs.empty();
 }
 
+TriggerDescriptorCollection::TriggerDescriptorCollection()
+    : path_index_cache(std::make_unique<std::unordered_map<std::string, size_t>>())
+{
+}
+
 size_t TriggerDescriptorCollection::size() const { return descriptors.size(); }
 
 const TriggerDescriptorCollection::TriggerDescriptor& TriggerDescriptorCollection::at(size_t index) const
@@ -77,7 +82,7 @@ void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<
         throw exception("Maximal number of triggers is exceeded.");
     desc_indices[pattern] = descriptors.size();
     descriptors.emplace_back(pattern, legs);
-    path_index_cache.clear();
+    path_index_cache->clear();
     for(auto& leg : descriptors.back().jet_legs) {
         leg.jet_filter_indices.clear();
         for(const auto& filter : leg.filters) {
@@ -95,8 +100,8 @@ void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<
 
 bool TriggerDescriptorCollection::FindPatternMatch(const std::string& path_name, size_t& index) const
 {
-    auto iter = path_index_cache.find(path_name);
-    if(iter == path_index_cache.end()) {
+    auto iter = path_index_cache->find(path_name);
+    if(iter == path_index_cache->end()) {
         size_t counter = 0;
         for(size_t n = 0; n < descriptors.size(); ++n) {
             const TriggerDescriptor& descriptor = descriptors.at(n);
@@ -107,8 +112,8 @@ bool TriggerDescriptorCollection::FindPatternMatch(const std::string& path_name,
         }
         if (counter > 1)
             throw exception("More than 1 pattern matched.");
-        path_index_cache[path_name] = counter == 1 ? index : descriptors.size();
-        iter = path_index_cache.find(path_name);
+        (*path_index_cache)[path_name] = counter == 1 ? index : descriptors.size();
+        iter = path_index_cache->find(path_name);
     }
     index = iter->second;
     return index < descriptors.size();

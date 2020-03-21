@@ -17,12 +17,13 @@ struct FitResults {
     double transverseMass;
     double transverseMass_error;
 
-    FitResults() : has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()),
-                   transverseMass_error(std::numeric_limits<double>::lowest()) {}
-   FitResults(bool _has_valid_momentum, LorentzVectorM _momentum, LorentzVectorM _momentum_error,
-              double _transverseMass, double _transverseMass_error) : has_valid_momentum(_has_valid_momentum),
-              momentum(_momentum),momentum_error(_momentum_error),transverseMass(_transverseMass),
-                  transverseMass_error(_transverseMass_error) {}
+    FitResults() :
+        has_valid_momentum(false), transverseMass(std::numeric_limits<double>::lowest()),
+        transverseMass_error(std::numeric_limits<double>::lowest()) {}
+    FitResults(bool _has_valid_momentum, LorentzVectorM _momentum, LorentzVectorM _momentum_error,
+               double _transverseMass, double _transverseMass_error) :
+        has_valid_momentum(_has_valid_momentum), momentum(_momentum), momentum_error(_momentum_error),
+        transverseMass(_transverseMass), transverseMass_error(_transverseMass_error) {}
 };
 
 class FitProducer {

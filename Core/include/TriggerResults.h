@@ -89,6 +89,7 @@ public:
     static BitsContainer ConvertFromRootRepresentation(const RootBitsContainer& match_bits);
     static std::shared_ptr<TriggerDescriptorCollection> Load(const std::string& cfg_name, const Channel& channel);
 
+    TriggerDescriptorCollection();
     size_t size() const;
     const TriggerDescriptor& at(size_t index) const;
     const TriggerDescriptor& at(const Pattern& pattern) const;
@@ -101,7 +102,7 @@ public:
 private:
     std::vector<TriggerDescriptor> descriptors;
     std::unordered_map<Pattern, size_t> desc_indices;
-    mutable std::unordered_map<std::string, size_t> path_index_cache;
+    std::unique_ptr<std::unordered_map<std::string, size_t>> path_index_cache;
     std::vector<std::string> jet_filters;
 };
 

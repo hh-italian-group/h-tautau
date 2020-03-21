@@ -44,7 +44,7 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
         full_path_source = tools::FullPath({working_path, file_reduced_uncertainty_sources.at(period)});
     }
 
-    jecUncertainties = std::make_shared<jec::JECUncertaintiesWrapper>(full_path_source,is_full,period);
+    *jecUncertainties = jec::JECUncertaintiesWrapper(full_path_source,is_full,period);
 
     const std::map<analysis::Period, std::map<TauIdDiscriminator, std::vector<std::string>>> file_tes = {
         { analysis::Period::Run2016, { { TauIdDiscriminator::byDeepTau2017v2p1VSjet,
@@ -78,7 +78,7 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
     if(!file_ele_faking_tau.count(period))
         throw exception("Period not found in files for electron faking tau.");
 
-    tauESUncertainties = std::make_shared<TauESUncertainties>(
+    *tauESUncertainties = TauESUncertainties(
             tools::FullPath({ working_path, file_tes.at(period).at(tau_id_discriminator).at(0) }),
             tools::FullPath({ working_path, file_tes.at(period).at(tau_id_discriminator).at(1) }),
             tools::FullPath({ working_path, file_ele_faking_tau.at(period) }));
@@ -86,16 +86,16 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
 
 const jec::JECUncertaintiesWrapper& EventCandidate::GetJecUncertainties()
 {
-    if(!jecUncertainties)
+    if(!(*jecUncertainties))
         throw exception("JEC uncertainties are not initialized.");
-    return *jecUncertainties;
+    return **jecUncertainties;
 }
 
 const TauESUncertainties& EventCandidate::GetTauESUncertainties()
 {
-    if(!tauESUncertainties)
+    if(!(*tauESUncertainties))
         throw exception("TauES uncertainties are not initialized.");
-    return *tauESUncertainties;
+    return **tauESUncertainties;
 }
 
 
@@ -224,8 +224,9 @@ void EventCandidate::CreateJets()
     }
 }
 
-std::shared_ptr<jec::JECUncertaintiesWrapper> EventCandidate::jecUncertainties;
-std::shared_ptr<TauESUncertainties> EventCandidate::tauESUncertainties;
-
+const std::unique_ptr<boost::optional<jec::JECUncertaintiesWrapper>> EventCandidate::jecUncertainties
+    = std::make_unique<boost::optional<jec::JECUncertaintiesWrapper>>();
+const std::unique_ptr<boost::optional<TauESUncertainties>> EventCandidate::tauESUncertainties
+    = std::make_unique<boost::optional<TauESUncertainties>>();
 
 } // namespace analysis

@@ -10,7 +10,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 TupleStore::Mutex TupleStore::mutex;
 std::atomic<int> TupleStore::tuple_counter = 0;
-std::shared_ptr<ntuple::EventTuple> TupleStore::eventTuple_ptr;
+const std::unique_ptr<std::shared_ptr<ntuple::EventTuple>> TupleStore::eventTuple_ptr =
+    std::make_unique<std::shared_ptr<ntuple::EventTuple>>();
 
 ntuple::EventTuple& TupleStore::GetTuple()
 {
@@ -19,10 +20,10 @@ ntuple::EventTuple& TupleStore::GetTuple()
         TFile& file = edm::Service<TFileService>()->file();
         file.SetCompressionAlgorithm(ROOT::kLZ4);
         file.SetCompressionLevel(4);
-        eventTuple_ptr = ntuple::CreateEventTuple("events", &file, false, ntuple::TreeState::Full);
+        *eventTuple_ptr = ntuple::CreateEventTuple("events", &file, false, ntuple::TreeState::Full);
     }
     ++tuple_counter;
-    return *eventTuple_ptr;
+    return **eventTuple_ptr;
 }
 
 void TupleStore::ReleaseEventTuple()
@@ -32,8 +33,8 @@ void TupleStore::ReleaseEventTuple()
         throw analysis::exception("Tuple Counter equals zero.");
     --tuple_counter;
     if(tuple_counter == 0) {
-        eventTuple_ptr->Write();
-        eventTuple_ptr.reset();
+        (*eventTuple_ptr)->Write();
+        eventTuple_ptr->reset();
     }
 }
 

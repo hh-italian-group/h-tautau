@@ -187,8 +187,7 @@ double asymm_mt2_lester_bisect::get_mT2( // returns asymmetric mT2 (which is >=0
 
 void asymm_mt2_lester_bisect::disableCopyrightMessage(const bool printIfFirst)
 {
-    static bool first = true;
-    if (first && printIfFirst) {
+    if (printIfFirst) {
     std::cout
       << "\n\n"
       << "#=========================================================\n"
@@ -211,7 +210,6 @@ void asymm_mt2_lester_bisect::disableCopyrightMessage(const bool printIfFirst)
       << "#=========================================================\n"
       << "\n\n" << std::flush;
     }
-    first = false;
 }
 
   double asymm_mt2_lester_bisect::get_mT2_Sq( // returns square of asymmetric mT2 (which is >=0), or returns a negative number (such as MT2_ERROR) in the case of an error.
