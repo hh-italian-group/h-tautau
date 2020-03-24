@@ -796,7 +796,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
     eventTuple().rho = *rho;
 
-    if(period == analysis::Period::Run2016 || period == analysis::Period::Run2017){
+    if((period == analysis::Period::Run2016 || period == analysis::Period::Run2017) && isMC){
         edm::Handle<double> _theprefweight;
         edmEvent->getByToken(prefweight_token, _theprefweight);
         eventTuple().l1_prefiring_weight = *_theprefweight;
