@@ -791,6 +791,7 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().isData  = !(isMC || isEmbedded);
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
+    eventTuple().genEventLHEWeight = isMC && genEvt->weights().size() > 1 ? genEvt->weights()[1] : 1;
 
     if(isMC && (genEvt->weights().size() == 14 || genEvt->weights().size() == 46)) {
         const double nominal = genEvt->weights()[1];  // Called 'Baseline' in GenLumiInfoHeader

@@ -113,6 +113,7 @@ using Point3D = analysis::Point3D_Float;
     VAR(Int_t, eventEnergyScale) /* event type category */ \
     VAR(Int_t, genEventType) /* gen event type */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
+    VAR(Float_t, genEventLHEWeight) /* Nominal event weight in the LHE file */ \
     VAR(std::vector<Float_t>, genEventPSWeights) /* parton shower weights (w_var / w_nominal): \
                                                     [0] is ISR=0.5 FSR=1; [1] is ISR=1 FSR=0.5; \
                                                     [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 */ \
