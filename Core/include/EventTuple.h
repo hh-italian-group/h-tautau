@@ -19,8 +19,6 @@ using Point3D = analysis::Point3D_Float;
 #define OTHERVAR(type, name, col) VAR(std::vector<type>, col##_##name)
 #define TAU_ID(name, pattern, has_raw, wp_list) VAR(std::vector<uint16_t>, name) VAR(std::vector<Float_t>, name##raw)
 
-
-
 #define LEG_DATA() \
     LVAR(LorentzVectorM, p4) /* 4-momentum */ \
     LVAR(Int_t, q) /* Charge */ \
@@ -115,6 +113,9 @@ using Point3D = analysis::Point3D_Float;
     VAR(Int_t, eventEnergyScale) /* event type category */ \
     VAR(Int_t, genEventType) /* gen event type */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
+    VAR(std::vector<Float_t>, genEventPSWeights) /* parton shower weights (w_var / w_nominal): \
+                                                    [0] is ISR=0.5 FSR=1; [1] is ISR=1 FSR=0.5; \
+                                                    [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 */ \
 	/* Event Weights Variables */ \
     VAR(Double_t, weight_pu) \
     VAR(Double_t, weight_lepton_trig) \

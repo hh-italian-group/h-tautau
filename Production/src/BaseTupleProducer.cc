@@ -792,6 +792,12 @@ void BaseTupleProducer::FillEventTuple(const analysis::SelectionResultsBase& sel
     eventTuple().genEventType = static_cast<int>(GenEventType::Other);
     eventTuple().genEventWeight = isMC ? genEvt->weight() : 1;
 
+    if(isMC && (genEvt->weights().size() == 14 || genEvt->weights().size() == 46)) {
+        const double nominal = genEvt->weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
+        for (size_t i = 6; i < 10; ++i)
+            eventTuple().genEventPSWeights.push_back(genEvt->weights()[i] / nominal);
+    }
+
     eventTuple().npv = vertices->size();
     eventTuple().npu = gen_truth::GetNumberOfPileUpInteractions(PUInfo);
     eventTuple().rho = *rho;
