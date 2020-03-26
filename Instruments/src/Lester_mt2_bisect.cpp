@@ -221,7 +221,7 @@ void asymm_mt2_lester_bisect::disableCopyrightMessage(const bool printIfFirst)
     const bool useDeciSectionsInitially // If true, interval is cut at the 10% point until first acceptance, which gives factor 3 increase in speed calculating kinematic min, but 3% slowdown for events in the bulk.  Is on (true) by default, but can be turned off by setting to false.
       )
 {
-    disableCopyrightMessage(true); // By supplying an argument to disable, we actually ask for the message to be printed, if printing is not already disabled.   This counterintuitive function naming is to avoid the need to introduce static variable initialisations ....
+    disableCopyrightMessage(false); // By supplying an argument to disable, we actually ask for the message to be printed, if printing is not already disabled.   This counterintuitive function naming is to avoid the need to introduce static variable initialisations ....
 
     const double m1Min = mVis1+mInvis1; // when parent has this mass, ellipse 1 has smallest physical size
     const double m2Min = mVis2+mInvis2; // when parent has this mass, ellipse 2 has smallest physical size
