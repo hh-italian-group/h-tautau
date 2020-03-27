@@ -85,18 +85,6 @@ const SummaryInfo& EventInfo::GetSummaryInfo() const
     return *summaryInfo;
 }
 
-const kin_fit::FitProducer& EventInfo::GetKinFitProducer()
-{
-    static const kin_fit::FitProducer kinfitProducer;
-    return kinfitProducer;
-}
-
-const sv_fit_ana::FitProducer& EventInfo::GetSVFitProducer()
-{
-    static const sv_fit_ana::FitProducer svfitProducer;
-    return svfitProducer;
-}
-
 size_t EventInfo::GetNJets() const
 {
     return event_candidate.GetEvent().jets_p4.size();
@@ -209,7 +197,7 @@ size_t EventInfo::GetLegIndex(size_t leg_id)
     throw exception("Invalid leg id = %1%.") % leg_id;
 }
 
-const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc)
+const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc, int verbosity)
 {
     Lock lock(*mutex);
     if(!HasBjetPair())
@@ -225,10 +213,10 @@ const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc)
         else if(!gotKinFit){
             double energy_resolution_1 = GetBJet(1)->resolution() * GetBJet(1).GetMomentum().E();
             double energy_resolution_2 = GetBJet(2)->resolution() * GetBJet(2).GetMomentum().E();
-            const auto& kinfitProducer = GetKinFitProducer();
-            const auto& result = kinfitProducer.Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
-                                                    GetBJet(1).GetMomentum(), GetBJet(2).GetMomentum(),
-                                                    event_candidate.GetMET(), energy_resolution_1, energy_resolution_2);
+            const auto& result = kin_fit::FitProducer::Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
+                                                           GetBJet(1).GetMomentum(), GetBJet(2).GetMomentum(),
+                                                           event_candidate.GetMET(), energy_resolution_1,
+                                                           energy_resolution_2, verbosity);
             kinfit_results->convergence = result.convergence;
             kinfit_results->chi2 = result.chi2;
             kinfit_results->probability = TMath::Prob(result.chi2, 2);
@@ -241,7 +229,7 @@ const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc)
     return *kinfit_results;
 }
 
-const sv_fit_ana::FitResults& EventInfo::GetSVFitResults(bool allow_calc)
+const sv_fit_ana::FitResults& EventInfo::GetSVFitResults(bool allow_calc, int verbosity)
 {
     Lock lock(*mutex);
     if(!svfit_results){
@@ -252,9 +240,8 @@ const sv_fit_ana::FitResults& EventInfo::GetSVFitResults(bool allow_calc)
         if(!allow_calc && !gotSVFit)
             throw exception("Not allowed to calculate SVFit.");
         else if(!gotSVFit){
-            const auto& svfitProducer = GetSVFitProducer();
-
-            const auto& result = svfitProducer.Fit(GetLeg(1),GetLeg(2),event_candidate.GetMET());
+            const auto& result = sv_fit_ana::FitProducer::Fit(GetLeg(1), GetLeg(2), event_candidate.GetMET(),
+                                                              verbosity);
             svfit_results->has_valid_momentum = result.has_valid_momentum;
             svfit_results->momentum = result.momentum;
             svfit_results->momentum_error = result.momentum_error;

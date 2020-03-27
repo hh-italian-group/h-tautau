@@ -36,16 +36,14 @@ classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<ntup
                                             decay_mode);
 }
 
-FitProducer::FitProducer(int _verbosity)
-    : verbosity(_verbosity)
-{
-    TH1::AddDirectory(false);
-}
-
 FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_daughter,
                             const LeptonCandidate<ntuple::TupleLepton>& second_daughter,
-                            const MissingET<ntuple::TupleMet>& met) const
+                            const MissingET<ntuple::TupleMet>& met, int verbosity)
 {
+    static const auto init = []() { TH1::AddDirectory(false); return true; };
+    static const bool initialized = init();
+    (void) initialized;
+
     const std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
         CreateMeasuredLepton(first_daughter),
         CreateMeasuredLepton(second_daughter)
@@ -60,7 +58,7 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
         std::cout << "SVfit inputs:\n";
         for(size_t n = 0; n < measured_leptons.size(); ++n) {
             const auto& lep = measured_leptons.at(n);
-            std::cout << std::fixed << std::setprecision(3);
+            std::cout << std::fixed << std::setprecision(7);
             std::cout << "\tlep" << n << ", (pt, eta, phi, m) = (" << lep.pt() << ", " << lep.eta()
                       << ", " << lep.phi() << ", " << lep.mass() << "), type=" << lep.type()
                       << ", decayMode=" << lep.decayMode() << "\n";

@@ -10,15 +10,13 @@ namespace analysis {
 
 namespace kin_fit {
 
-FitProducer::FitProducer(int _verbosity) : verbosity(_verbosity) {}
-
 FitResults FitProducer::FitImpl(const TLorentzVector& lepton1_p4, const TLorentzVector& lepton2_p4,
                const TLorentzVector& jet1_p4, const TLorentzVector& jet2_p4, const TVector2& met,
-               const TMatrixD& met_cov, double resolution_1, double resolution_2) const
+               const TMatrixD& met_cov, double resolution_1, double resolution_2, int verbosity)
 {
     FitResults result;
     try {
-        if(verbosity >= 100) {
+        if(verbosity > 0) {
             std::cout << std::setprecision(6)
                       << "lepton1 " << analysis::LorentzVectorToString(lepton1_p4, analysis::LVectorRepr::PtEtaPhiME)
                       << "\nlepton2 " << analysis::LorentzVectorToString(lepton2_p4, analysis::LVectorRepr::PtEtaPhiME)
@@ -27,12 +25,14 @@ FitResults FitProducer::FitImpl(const TLorentzVector& lepton1_p4, const TLorentz
                       << "\njet2 "  << analysis::LorentzVectorToString(jet2_p4, analysis::LVectorRepr::PtEtaPhiME)
                       << ", resolution=" << resolution_2
                       << "\nmet (px, py, pt, phi) = (" << met.Px() << ", " << met.Py() << ", "
-                      << met.Mod() << ", " << met.Phi() << ")\nmet_cov:" << met_cov;
+                      << met.Mod() << ", " << met.Phi() << ")"
+                      << "\nmet_cov: (00, 01, 10, 11) = (" << met_cov[0][0] << ", " << met_cov[0][1]
+                      << ", " << met_cov[1][0] << ", " << met_cov[1][1] << ")\n";
         }
 
         HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(jet1_p4, jet2_p4, lepton1_p4, lepton2_p4, met, met_cov,
                                                        resolution_1, resolution_2);
-        hh_kin_fit.verbosity = verbosity;
+        //hh_kin_fit.verbosity = verbosity;
         hh_kin_fit.fit();
 
         result.convergence = hh_kin_fit.getConvergence();
@@ -42,7 +42,7 @@ FitResults FitProducer::FitImpl(const TLorentzVector& lepton1_p4, const TLorentz
             result.probability = hh_kin_fit.getFitProb();
         }
 
-        if(verbosity >= 100) {
+        if(verbosity > 0) {
             std::cout << "Convergence = " << result.convergence << std::endl;
             if(result.HasValidMass()) {
                 std::cout << std::setprecision(6);

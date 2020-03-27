@@ -64,6 +64,15 @@ private:
         (*expressTuple)().lumi = event.id().luminosityBlock();
         (*expressTuple)().evt = event.id().event();
         (*expressTuple)().genEventWeight = genEvent->weight();
+        (*expressTuple)().genEventWeight = isMC ? genEvent->weight() : 1;
+        (*expressTuple)().genEventLHEWeight = isMC && genEvent->weights().size() > 1 ? genEvent->weights()[1] : 1;
+
+        if(genEvent->weights().size() == 14 || genEvent->weights().size() == 46) {
+            const double nominal = genEvent->weights()[1];  // Called 'Baseline' in GenLumiInfoHeader
+            for (size_t i = 6; i < 10; ++i)
+                (*expressTuple)().genEventPSWeights.push_back(genEvent->weights()[i] / nominal);
+        }
+
         (*expressTuple)().gen_top_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().lhe_H_m = ntuple::DefaultFillValue<Float_t>();

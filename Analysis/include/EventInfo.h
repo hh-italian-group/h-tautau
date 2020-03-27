@@ -77,10 +77,6 @@ public:
     const EventIdentifier& GetEventId() const;
     const TriggerResults& GetTriggerResults() const;
     const SummaryInfo& GetSummaryInfo() const;
-    static const kin_fit::FitProducer& GetKinFitProducer();
-    static const sv_fit_ana::FitProducer& GetSVFitProducer();
-
-    // virtual const Candidate& GetLeg(size_t /*leg_id*/);
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
@@ -108,8 +104,8 @@ public:
     size_t GetLegIndex(const size_t leg_id);
     static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
 
-    const kin_fit::FitResults& GetKinFitResults(bool allow_calc = false);
-    const sv_fit_ana::FitResults& GetSVFitResults(bool allow_calc = false);
+    const kin_fit::FitResults& GetKinFitResults(bool allow_calc = false, int verbosity = 0);
+    const sv_fit_ana::FitResults& GetSVFitResults(bool allow_calc = false, int verbosity = 0);
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET, bool allow_calc = false);
     double GetMT2();

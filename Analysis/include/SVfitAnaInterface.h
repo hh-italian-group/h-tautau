@@ -28,15 +28,9 @@ struct FitResults {
 
 class FitProducer {
 public:
-    FitProducer(int _verbosity = 0);
-
-    FitResults Fit(const LeptonCandidate<ntuple::TupleLepton>& first_daughter,
-                   const LeptonCandidate<ntuple::TupleLepton>& second_daughter,
-                   const MissingET<ntuple::TupleMet>& met) const;
-
-
-private:
-    int verbosity;
+    static FitResults Fit(const LeptonCandidate<ntuple::TupleLepton>& first_daughter,
+                          const LeptonCandidate<ntuple::TupleLepton>& second_daughter,
+                          const MissingET<ntuple::TupleMet>& met, int verbosity = 0);
 };
 
 } // namespace sv_fit_ana

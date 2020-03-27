@@ -35,6 +35,10 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
     VAR(UInt_t, lumi) /* lumi section */ \
     VAR(ULong64_t, evt) /* event number */ \
     VAR(Float_t, genEventWeight) /* gen event weight */ \
+    VAR(Float_t, genEventLHEWeight) /* Nominal event weight in the LHE file */ \
+    VAR(std::vector<Float_t>, genEventPSWeights) /* parton shower weights (w_var / w_nominal): \
+                                                    [0] is ISR=0.5 FSR=1; [1] is ISR=1 FSR=0.5; \
+                                                    [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 */ \
     VAR(Float_t, gen_top_pt) /* pt of gen ME top */ \
     VAR(Float_t, gen_topBar_pt) /* pt of gen ME anti-top */ \
     VAR(Int_t,   genEventType) /* top gen event type */ \
