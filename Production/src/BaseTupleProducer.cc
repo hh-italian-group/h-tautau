@@ -301,12 +301,20 @@ void BaseTupleProducer::FillGenParticleInfo()
     using analysis::GenEventType;
     static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
     static constexpr int electronNeutrinoPdgId = 12, muonNeutrinoPdgId = 14, tauNeutrinoPdgId = 16;
+    static constexpr int topPdgId = 6;
     static const std::set<int> chargedLeptons = { electronPdgId, muonPdgId, tauPdgId };
     static const std::set<int> neutralLeptons = { electronNeutrinoPdgId, muonNeutrinoPdgId, tauNeutrinoPdgId };
     static const std::set<int> bosons = { 23, 24, 25, 35 };
 
-    std::vector<const reco::GenParticle*> particles_to_store;
-    std::vector<const reco::GenParticle*> particles_to_store_backup;
+    std::vector<const reco::GenParticle*> particles_to_store, mothers_to_store;
+
+    const auto findStoredMother = [&](const reco::GenParticle& p) -> const reco::GenParticle* {
+        for(auto iter = particles_to_store.rbegin(); iter != particles_to_store.rend(); ++iter) {
+            if(analysis::gen_truth::CheckAncestry(p, **iter))
+                return *iter;
+        }
+        return nullptr;
+    };
 
     std::map<int, size_t> particle_counts;
     for(const auto& particle : *genParticles) {
@@ -314,18 +322,15 @@ void BaseTupleProducer::FillGenParticleInfo()
         if(!flag.isPrompt() || !flag.isLastCopy() || !flag.fromHardProcess()) continue;
         const int abs_pdg = std::abs(particle.pdgId());
         ++particle_counts[abs_pdg];
-        if(saveGenBosonInfo) {
-            if(bosons.count(abs_pdg))
+        if(saveGenBosonInfo || saveGenTopInfo) {
+            const bool is_gen_top = abs_pdg == topPdgId;
+            const bool is_gen_boson = bosons.count(abs_pdg) != 0;
+            const bool is_lepton = chargedLeptons.count(abs_pdg) || neutralLeptons.count(abs_pdg);
+            if((is_gen_top && saveGenTopInfo) || (is_gen_boson && saveGenBosonInfo) || is_lepton) {
+                mothers_to_store.push_back(findStoredMother(particle));
                 particles_to_store.push_back(&particle);
-            else if(chargedLeptons.count(abs_pdg) || neutralLeptons.count(abs_pdg))
-                particles_to_store_backup.push_back(&particle);
+            }
         }
-    }
-
-    if(saveGenBosonInfo && particles_to_store.empty()){
-        if(particles_to_store_backup.size() < 2)
-            throw analysis::exception("Less than 2 prompt leptons in the event");
-        particles_to_store = particles_to_store_backup;
     }
 
     if(saveGenBosonInfo && particles_to_store.empty()) {
@@ -349,20 +354,23 @@ void BaseTupleProducer::FillGenParticleInfo()
         eventTuple().genEventType = static_cast<int>(genEventType);
 
         auto top = topGenEvent->top();
-        if(top)
+        if(top) {
             particles_to_store.push_back(top);
+            mothers_to_store.push_back(nullptr);
+        }
         auto top_bar = topGenEvent->topBar();
-        if(top_bar)
+        if(top_bar) {
             particles_to_store.push_back(top_bar);
+            mothers_to_store.push_back(nullptr);
+        }
     }
 
-    auto returnIndex = [&](const reco::GenParticle* particle_ptr){
-
+    auto returnIndex = [&](const reco::GenParticle* particle_ptr) {
 		int particle_index = -1;
 		if(particle_ptr != nullptr){
             particle_index = static_cast<int>(particle_ptr - genParticles->data());
 		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0) {
-                if(saveGenTopInfo && std::abs(particle_ptr->pdgId()) == 6) {
+                if(saveGenTopInfo && std::abs(particle_ptr->pdgId()) == topPdgId) {
                     particle_index = -10;
                 } else {
 		                  throw analysis::exception("Particle index = %1% for particle with pdgId = %2% exceeds"
@@ -374,7 +382,8 @@ void BaseTupleProducer::FillGenParticleInfo()
 		return particle_index;
 	};
 
-    auto fillGenInfo = [&](const reco::GenParticle* particle) {
+    auto fillGenInfo = [&](const reco::GenParticle* particle, bool use_connected,
+                           const reco::GenParticle* connected_mother) {
     	int index = returnIndex(particle);
         eventTuple().genParticles_index.push_back(index);
     	eventTuple().genParticles_vertex.push_back(ntuple::Point3D(particle->vertex()));
@@ -385,24 +394,30 @@ void BaseTupleProducer::FillGenParticleInfo()
         eventTuple().genParticles_p4.push_back(ntuple::LorentzVectorM(particle->p4()));
 
         if(index >= 0) {
-        	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
-                eventTuple().genParticles_rel_pIndex.push_back(index);
-        		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
-        		int mother_index = returnIndex(mother_ptr);
-        		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
-        	}
+            if(use_connected) {
+                if(connected_mother) {
+                    eventTuple().genParticles_rel_pIndex.push_back(index);
+                    const int mother_index = returnIndex(connected_mother);
+                    eventTuple().genParticles_rel_mIndex.push_back(mother_index);
+                }
+            } else {
+            	for(size_t mother_id = 0; mother_id < particle->numberOfMothers(); ++mother_id) {
+                    eventTuple().genParticles_rel_pIndex.push_back(index);
+            		const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle->mother(mother_id));
+            		const int mother_index = returnIndex(mother_ptr);
+            		eventTuple().genParticles_rel_mIndex.push_back(mother_index);
+            	}
+            }
         }
-
     };
 
     if(saveGenParticleInfo) {
     	for(const auto& particle : *genParticles) {
-    	    fillGenInfo(&particle);
+    	    fillGenInfo(&particle, false, nullptr);
     	}
-	}
-    else {
-    	for(const auto& particle : particles_to_store) {
-    	    fillGenInfo(particle);
+	} else {
+    	for(size_t n = 0; n < particles_to_store.size(); ++n) {
+    	    fillGenInfo(particles_to_store.at(n), true, mothers_to_store.at(n));
     	}
     }
 }

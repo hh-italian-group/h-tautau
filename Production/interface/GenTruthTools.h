@@ -28,13 +28,12 @@ struct LeptonMatchResult {
 
 void FindFinalStateDaughters(const reco::GenParticle& particle, std::set<const reco::GenParticle*>& daughters,
                              const std::set<int>& pdg_to_exclude);
-
-LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle, std::vector<const reco::GenParticle*>& visible_daughters,
+LorentzVectorXYZ GetFinalStateMomentum(const reco::GenParticle& particle,
+                                       std::vector<const reco::GenParticle*>& visible_daughters,
                                        bool excludeInvisible, bool excludeLightLeptons);
+LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenParticleCollection& genParticles);
 
-LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4,
-    const reco::GenParticleCollection& genParticles);
-
+bool CheckAncestry(const reco::GenParticle& particle, const reco::GenParticle& possible_ancestor);
 
 float GetNumberOfPileUpInteractions(edm::Handle<std::vector<PileupSummaryInfo>>& pu_infos);
 

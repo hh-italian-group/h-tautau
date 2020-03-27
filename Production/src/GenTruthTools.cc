@@ -111,6 +111,16 @@ LeptonMatchResult LeptonGenMatch(const LorentzVectorM& p4, const reco::GenPartic
     return result;
 }
 
+bool CheckAncestry(const reco::GenParticle& particle, const reco::GenParticle& possible_ancestor)
+{
+    for(size_t mother_id = 0; mother_id < particle.numberOfMothers(); ++mother_id) {
+        const auto mother_ptr = dynamic_cast<const reco::GenParticle*>(particle.mother(mother_id));
+        if(mother_ptr == &possible_ancestor || CheckAncestry(*mother_ptr, possible_ancestor))
+            return true;
+    }
+    return false;
+}
+
 float GetNumberOfPileUpInteractions(edm::Handle<std::vector<PileupSummaryInfo>>& pu_infos)
 {
     if(pu_infos.isValid()) {
