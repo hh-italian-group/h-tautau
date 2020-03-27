@@ -271,7 +271,7 @@ double EventInfo::GetMT2()
     if(!mt2.is_initialized()) {
         mt2 = Calculate_MT2(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
                             GetHiggsBB().GetFirstDaughter().GetMomentum(),
-                            GetHiggsBB().GetSecondDaughter().GetMomentum(), event_candidate.GetEvent().pfMET_p4);
+                            GetHiggsBB().GetSecondDaughter().GetMomentum(), GetMET().GetMomentum());
     }
     return *mt2;
 }
