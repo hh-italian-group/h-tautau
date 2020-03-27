@@ -11,8 +11,6 @@ double Calculate_MT2_old(const LVector1& lepton1_p4, const LVector2& lepton2_p4,
 {
     asymm_mt2_lester_bisect::disableCopyrightMessage();
     const auto sideA = lepton1_p4 + bjet_1;
-    std::cout << "sideA = " << lepton1_p4 + bjet_1 << "\n";
-
     const auto sideB = lepton2_p4 + bjet_2;
     const double mVisA = sideA.mass();
     const double pxA = sideA.px();
