@@ -1,4 +1,0 @@
-EventAwareLumiBased
-applyTriggerMatch=False sampleType=Spring16MC ReRunJEC=False globalTag=80X_mcRun2_asymptotic_2016_miniAODv2_v1 runSVfit=False runKinFit=False productionMode=h_tt_sm energyScales=Central saveGenJetInfo=False
-
-VBFHToTauTau_M125 50000 /VBFHToTauTau_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM
