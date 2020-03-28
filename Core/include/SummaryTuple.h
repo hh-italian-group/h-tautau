@@ -45,6 +45,10 @@ INITIALIZE_TREE(ntuple, SummaryTuple, SUMMARY_DATA)
     VAR(Float_t, lhe_H_m) /* mass of lhe H */ \
     VAR(Float_t, lhe_hh_m) /* mass of lhe hh pair */ \
     VAR(Float_t, lhe_hh_cosTheta) /* cos(theta) between h and z-axis in the hh reference frame */ \
+    VAR(std::vector<Int_t>, genParticles_index) \
+    VAR(std::vector<Int_t>, genParticles_pdg) \
+    VAR(std::vector<Int_t>, genParticles_rel_pIndex) \
+    VAR(std::vector<Int_t>, genParticles_rel_mIndex) \
     /* MC truth event splitting */ \
     VAR(UInt_t, file_desc_id)  /*File id in ExpressTuple.*/  \
     VAR(UInt_t, split_id) /* Split id in TupleSkimmer. */ \

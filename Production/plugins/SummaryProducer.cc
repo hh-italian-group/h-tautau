@@ -32,9 +32,11 @@ public:
         start(clock::now()),
         isMC(cfg.getParameter<bool>("isMC")),
         saveGenTopInfo(cfg.getParameter<bool>("saveGenTopInfo")),
+        saveGenBosonInfo(cfg.getParameter<bool>("saveGenBosonInfo")),
         lheEventProduct_token(mayConsume<LHEEventProduct>(cfg.getParameter<edm::InputTag>("lheEventProduct"))),
         genEvent_token(mayConsume<GenEventInfoProduct>(cfg.getParameter<edm::InputTag>("genEvent"))),
         topGenEvent_token(mayConsume<TtGenEvent>(cfg.getParameter<edm::InputTag>("topGenEvent"))),
+        genParticles_token(mayConsume<std::vector<reco::GenParticle>>(cfg.getParameter<edm::InputTag>("genParticles"))),
         puInfo_token(mayConsume<std::vector<PileupSummaryInfo>>(cfg.getParameter<edm::InputTag>("puInfo"))),
         summaryTuple(ntuple::CreateSummaryTuple("summary", &edm::Service<TFileService>()->file(), false,
                                                 ntuple::TreeState::Full))
@@ -77,26 +79,8 @@ private:
         (*expressTuple)().gen_topBar_pt = ntuple::DefaultFillValue<Float_t>();
         (*expressTuple)().lhe_H_m = ntuple::DefaultFillValue<Float_t>();
 
-        if(saveGenTopInfo) {
-            edm::Handle<TtGenEvent> topGenEvent;
-            event.getByToken(topGenEvent_token, topGenEvent);
-            if(topGenEvent.isValid()) {
-                analysis::GenEventType genEventType = analysis::GenEventType::Other;
-                if(topGenEvent->isFullHadronic())
-                    genEventType = analysis::GenEventType::TTbar_Hadronic;
-                else if(topGenEvent->isSemiLeptonic())
-                    genEventType = analysis::GenEventType::TTbar_SemiLeptonic;
-                else if(topGenEvent->isFullLeptonic())
-                    genEventType = analysis::GenEventType::TTbar_Leptonic;
-                (*expressTuple)().genEventType = static_cast<int>(genEventType);
-                ++genEventTypeCountMap[genEventType];
-
-                auto top = topGenEvent->top();
-                (*expressTuple)().gen_top_pt = top ? top->pt() : ntuple::DefaultFillValue<Float_t>();
-                auto top_bar = topGenEvent->topBar();
-                (*expressTuple)().gen_topBar_pt = top_bar ? top_bar->pt() : ntuple::DefaultFillValue<Float_t>();
-            }
-        }
+        if(saveGenTopInfo || saveGenBosonInfo)
+            FillGenParticleInfo(event);
 
         edm::Handle<LHEEventProduct> lheEventProduct;
         event.getByToken(lheEventProduct_token, lheEventProduct);
@@ -126,13 +110,99 @@ private:
             expressTuple->Write();
     }
 
+    void FillGenParticleInfo(const edm::Event& event)
+    {
+        using analysis::GenEventType;
+        static constexpr int electronPdgId = 11, muonPdgId = 13, tauPdgId = 15;
+        static constexpr int electronNeutrinoPdgId = 12, muonNeutrinoPdgId = 14, tauNeutrinoPdgId = 16;
+        static constexpr int topPdgId = 6;
+        static const std::set<int> chargedLeptons = { electronPdgId, muonPdgId, tauPdgId };
+        static const std::set<int> neutralLeptons = { electronNeutrinoPdgId, muonNeutrinoPdgId, tauNeutrinoPdgId };
+        static const std::set<int> bosons = { 23, 24, 25, 35 };
+
+        std::vector<const reco::GenParticle*> particles_to_store, mothers_to_store;
+
+        const auto findStoredMother = [&](const reco::GenParticle& p) -> const reco::GenParticle* {
+            for(auto iter = particles_to_store.rbegin(); iter != particles_to_store.rend(); ++iter) {
+                if(analysis::gen_truth::CheckAncestry(p, **iter))
+                    return *iter;
+            }
+            return nullptr;
+        };
+
+        edm::Handle<std::vector<reco::GenParticle>> genParticles;
+        event.getByToken(genParticles_token, genParticles);
+        if(genParticles.isValid()) {
+            for(const auto& particle : *genParticles) {
+                const auto& flag = particle.statusFlags();
+                if(!flag.isPrompt() || !flag.isLastCopy() || !flag.fromHardProcess()) continue;
+                const int abs_pdg = std::abs(particle.pdgId());
+                const bool is_gen_top = abs_pdg == topPdgId;
+                const bool is_gen_boson = bosons.count(abs_pdg) != 0;
+                const bool is_lepton = chargedLeptons.count(abs_pdg) || neutralLeptons.count(abs_pdg);
+                if((is_gen_top && saveGenTopInfo) || (is_gen_boson && saveGenBosonInfo) || is_lepton) {
+                    mothers_to_store.push_back(findStoredMother(particle));
+                    particles_to_store.push_back(&particle);
+                }
+            }
+        }
+
+        if(saveGenTopInfo) {
+            edm::Handle<TtGenEvent> topGenEvent;
+            event.getByToken(topGenEvent_token, topGenEvent);
+            if(topGenEvent.isValid()) {
+                analysis::GenEventType genEventType = analysis::GenEventType::Other;
+                if(topGenEvent->isFullHadronic())
+                    genEventType = analysis::GenEventType::TTbar_Hadronic;
+                else if(topGenEvent->isSemiLeptonic())
+                    genEventType = analysis::GenEventType::TTbar_SemiLeptonic;
+                else if(topGenEvent->isFullLeptonic())
+                    genEventType = analysis::GenEventType::TTbar_Leptonic;
+                (*expressTuple)().genEventType = static_cast<int>(genEventType);
+                ++genEventTypeCountMap[genEventType];
+
+                auto top = topGenEvent->top();
+                (*expressTuple)().gen_top_pt = top ? top->pt() : ntuple::DefaultFillValue<Float_t>();
+                auto top_bar = topGenEvent->topBar();
+                (*expressTuple)().gen_topBar_pt = top_bar ? top_bar->pt() : ntuple::DefaultFillValue<Float_t>();
+            }
+        }
+
+        auto returnIndex = [&](const reco::GenParticle* particle_ptr) {
+    		int particle_index = -1;
+    		if(particle_ptr != nullptr){
+                particle_index = static_cast<int>(particle_ptr - genParticles->data());
+    		    if(particle_index > static_cast<int>(genParticles->size()) || particle_index < 0) {
+	                  throw analysis::exception("Particle index = %1% for particle with pdgId = %2% exceeds"
+                                                " the size of gen particles collection = %3%.")
+                                                % particle_index % particle_ptr->pdgId() % genParticles->size();
+                }
+    		}
+    		return particle_index;
+    	};
+
+    	for(size_t n = 0; n < particles_to_store.size(); ++n) {
+            const reco::GenParticle* particle = particles_to_store.at(n);
+            const reco::GenParticle* connected_mother = mothers_to_store.at(n);
+            int index = returnIndex(particle);
+            (*expressTuple)().genParticles_index.push_back(index);
+            (*expressTuple)().genParticles_pdg.push_back(particle->pdgId());
+            if(connected_mother) {
+                (*expressTuple)().genParticles_rel_pIndex.push_back(index);
+                const int mother_index = returnIndex(connected_mother);
+                (*expressTuple)().genParticles_rel_mIndex.push_back(mother_index);
+            }
+        }
+    }
+
 private:
     const clock::time_point start;
-    const bool isMC, saveGenTopInfo;
+    const bool isMC, saveGenTopInfo, saveGenBosonInfo;
 
     edm::EDGetTokenT<LHEEventProduct> lheEventProduct_token;
     edm::EDGetTokenT<GenEventInfoProduct> genEvent_token;
     edm::EDGetTokenT<TtGenEvent> topGenEvent_token;
+    edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticles_token;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> puInfo_token;
 
     std::shared_ptr<ntuple::SummaryTuple> summaryTuple;
