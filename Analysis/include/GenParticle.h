@@ -66,9 +66,9 @@ public:
     static particles::ParticleType GetParticleType(int pdg);
 
 private:
-    static std::map<int, std::string> particle_names;
-    static std::map<int, particles::ParticleType> particle_types;
-    static std::map<int, int> particle_charge;
+    static const std::unique_ptr<std::map<int, std::string>> particle_names;
+    static const std::unique_ptr<std::map<int, particles::ParticleType>> particle_types;
+    static const std::unique_ptr<std::map<int, int>> particle_charge;
 
 };
 } //analysis

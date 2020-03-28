@@ -13,7 +13,7 @@ namespace mc_corrections {
 class IWeightProvider {
 public:
     virtual ~IWeightProvider() {}
-    virtual double Get(EventInfoBase& eventInfo) const = 0;
+    virtual double Get(EventInfo& eventInfo) const = 0;
     virtual double Get(const ntuple::ExpressEvent& event) const = 0;
 };
 

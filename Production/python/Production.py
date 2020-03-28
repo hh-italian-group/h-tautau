@@ -21,14 +21,10 @@ options.register('anaChannels', 'all', VarParsing.multiplicity.singleton, VarPar
                         "Analysis channels to run.")
 options.register('tupleOutput', 'eventTuple.root', VarParsing.multiplicity.singleton, VarParsing.varType.string,
                         "Event tuple file.")
-options.register('runSVfit', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                        "Run SVfit algorithm on the selected tau pair.")
 options.register('applyTriggerCut', True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Apply trigger cut for signal objects. Default: True")
 options.register('storeLHEinfo', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                         "Store LHE information. Default: False")
-options.register('applyRecoilCorr', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                        "Apply Met Recoil Corrections")
 options.register('nJetsRecoilCorr', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int,
                         "Number of Additional Jets for Recoil Correction")
 options.register('lumiFile', '', VarParsing.multiplicity.singleton, VarParsing.varType.string,
@@ -298,14 +294,16 @@ if period == 'Run2018' and options.isEmbedded :
 
 
 process.summaryTupleProducer = cms.EDAnalyzer('SummaryProducer',
-    isMC            = cms.bool(not isData or options.isEmbedded),
-    saveGenTopInfo  = cms.bool(options.saveGenTopInfo),
-    lheEventProduct = cms.InputTag('externalLHEProducer'),
-    genEvent        = cms.InputTag('generator'),
-    topGenEvent     = cms.InputTag('genEvt'),
-    puInfo          = cms.InputTag('slimmedAddPileupInfo'),
-    triggerCfg      = cms.string(triggerCfg),
-    channels        = cms.vstring(channels)
+    isMC             = cms.bool(not isData or options.isEmbedded),
+    saveGenTopInfo   = cms.bool(options.saveGenTopInfo),
+    saveGenBosonInfo = cms.bool(options.saveGenBosonInfo),
+    lheEventProduct  = cms.InputTag('externalLHEProducer'),
+    genEvent         = cms.InputTag('generator'),
+    topGenEvent      = cms.InputTag('genEvt'),
+    genParticles     = cms.InputTag('prunedGenParticles'),
+    puInfo           = cms.InputTag('slimmedAddPileupInfo'),
+    triggerCfg       = cms.string(triggerCfg),
+    channels         = cms.vstring(channels)
 )
 
 process.tupleProductionSequence = cms.Sequence(process.summaryTupleProducer)
@@ -336,10 +334,8 @@ for channel in channels:
         isMC                    = cms.bool(not isData or options.isEmbedded),
         applyTriggerMatch       = cms.bool(options.applyTriggerMatch),
         applyTriggerMatchCut    = cms.bool(options.applyTriggerMatchCut),
-        runSVfit                = cms.bool(options.runSVfit),
         applyTriggerCut         = cms.bool(options.applyTriggerCut),
         storeLHEinfo            = cms.bool(options.storeLHEinfo),
-        applyRecoilCorr         = cms.bool(options.applyRecoilCorr),
         nJetsRecoilCorr         = cms.int32(options.nJetsRecoilCorr),
         period                  = cms.string(period),
         triggerCfg              = cms.string(triggerCfg),

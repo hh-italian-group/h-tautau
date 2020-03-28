@@ -10,59 +10,43 @@ namespace analysis {
 
 namespace sv_fit_ana {
 
-classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const ntuple::TupleLepton& lepton)
+classic_svFit::MeasuredTauLepton CreateMeasuredLepton(const LeptonCandidate<ntuple::TupleLepton>& lepton)
 {
-    if(lepton.leg_type() == analysis::LegType::e){
-        const auto& momentum = lepton.p4();
-        // applying fix for electron mass
+    const auto& momentum = lepton.GetMomentum();
+    double preciseVisMass = momentum.mass();
+    classic_svFit::MeasuredTauLepton::kDecayType decay_type;
+    int decay_mode = -1;
+    if(lepton->leg_type() == analysis::LegType::e) {
         static const double minVisMass = classic_svFit::electronMass, maxVisMass = minVisMass;
-        double preciseVisMass = momentum.mass();
-        if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
-        if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
-        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay,
-                                                momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass);
+        preciseVisMass = std::clamp(preciseVisMass, minVisMass, maxVisMass);
+        decay_type = classic_svFit::MeasuredTauLepton::kTauToElecDecay;
+    } else if(lepton->leg_type() == analysis::LegType::mu) {
+        decay_type = classic_svFit::MeasuredTauLepton::kTauToMuDecay;
+    } else if(lepton->leg_type() == analysis::LegType::tau){
+        const double minVisMass = lepton->decayMode() == 0 ? classic_svFit::chargedPionMass : 0.3;
+        const double maxVisMass = lepton->decayMode() == 0 ? classic_svFit::chargedPionMass : 1.5;
+        preciseVisMass = std::clamp(preciseVisMass, minVisMass, maxVisMass);
+        decay_type = classic_svFit::MeasuredTauLepton::kTauToHadDecay;
+        decay_mode = lepton->decayMode();
+    } else {
+        throw exception("Leg Type not supported for SVFitAnaInterface.");
     }
-    if(lepton.leg_type() == analysis::LegType::mu){
-        const auto& momentum = lepton.p4();
-        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay,
-                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), momentum.M());
-    }
-    if(lepton.leg_type() == analysis::LegType::tau){
-        const auto& momentum = lepton.p4();
-        double minVisMass, maxVisMass;
-        if ( lepton.decayMode() == -1 ) {
-          minVisMass = classic_svFit::chargedPionMass;
-          maxVisMass = 1.5;
-        } else if ( lepton.decayMode() == 0 ) {
-          minVisMass = classic_svFit::chargedPionMass;
-          maxVisMass = minVisMass;
-        } else {
-          minVisMass = 0.3;
-          maxVisMass = 1.5;
-        }
-        double preciseVisMass = momentum.mass();
-        if ( preciseVisMass < minVisMass ) preciseVisMass = minVisMass;
-        if ( preciseVisMass > maxVisMass ) preciseVisMass = maxVisMass;
-        return classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay,
-                                                  momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass,
-                                                  lepton.decayMode());
-    }
-    throw exception("Leg Type not supported for SVFitAnaInterface.");
-}
 
-FitProducer::FitProducer(int _verbosity)
-    : verbosity(_verbosity)
-{
-    TH1::AddDirectory(false);
+    return classic_svFit::MeasuredTauLepton(decay_type, momentum.Pt(), momentum.Eta(), momentum.Phi(), preciseVisMass,
+                                            decay_mode);
 }
 
 FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_daughter,
                             const LeptonCandidate<ntuple::TupleLepton>& second_daughter,
-                            const MissingET<ntuple::TupleMet>& met) const
+                            const MissingET<ntuple::TupleMet>& met, int verbosity)
 {
-    std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
-        CreateMeasuredLepton(*first_daughter),
-        CreateMeasuredLepton(*second_daughter)
+    static const auto init = []() { TH1::AddDirectory(false); return true; };
+    static const bool initialized = init();
+    (void) initialized;
+
+    const std::vector<classic_svFit::MeasuredTauLepton> measured_leptons = {
+        CreateMeasuredLepton(first_daughter),
+        CreateMeasuredLepton(second_daughter)
     };
 
     const TMatrixD met_cov_t = ConvertMatrix(met.GetCovMatrix());
@@ -70,6 +54,19 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
     algo.addLogM_fixed(false);
     algo.addLogM_dynamic(false);
     // algo.setDiTauMassConstraint(-1.0);
+    if(verbosity > 0) {
+        std::cout << "SVfit inputs:\n";
+        for(size_t n = 0; n < measured_leptons.size(); ++n) {
+            const auto& lep = measured_leptons.at(n);
+            std::cout << std::fixed << std::setprecision(7);
+            std::cout << "\tlep" << n << ", (pt, eta, phi, m) = (" << lep.pt() << ", " << lep.eta()
+                      << ", " << lep.phi() << ", " << lep.mass() << "), type=" << lep.type()
+                      << ", decayMode=" << lep.decayMode() << "\n";
+        }
+        std::cout << "\tMET (px, py) = (" << met.GetMomentum().Px() << ", " << met.GetMomentum().Py() << ")\n"
+                  << "\tmet_cov: (00, 01, 10, 11) = (" << met_cov_t[0][0] << ", " << met_cov_t[0][1]
+                  << ", " << met_cov_t[1][0] << ", " << met_cov_t[1][1] << ")\n";
+    }
     algo.integrate(measured_leptons, met.GetMomentum().Px(), met.GetMomentum().Py(), met_cov_t);
 
     FitResults result;
@@ -80,6 +77,11 @@ FitResults FitProducer::Fit(const LeptonCandidate<ntuple::TupleLepton>& first_da
         result.transverseMass = histoAdapter->getTransverseMass();
         result.transverseMass_error = histoAdapter->getTransverseMassErr();
         result.has_valid_momentum = true;
+        if(verbosity > 0) {
+            std::cout << "SVfit result: (pt, eta, phi, m) = (" << histoAdapter->getPt() << ", "
+                      << histoAdapter->getEta() << ", " << histoAdapter->getPhi() << ", "
+                      << histoAdapter->getMass() << ")\n";
+        }
     }
     return result;
 }

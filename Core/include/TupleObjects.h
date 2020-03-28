@@ -60,7 +60,8 @@ public:
     Integer decayMode() const;
     analysis::LegType leg_type() const;
     bool passConversionVeto() const;
-    bool passEleIso(DiscriminatorWP wp) const;
+    bool passEleIsoId(DiscriminatorWP wp) const;
+    bool passEleNoIsoId(DiscriminatorWP wp) const;
     bool passMuonId(DiscriminatorWP wp) const;
 
     bool Passed(analysis::TauIdDiscriminator tauIdDiscriminator, DiscriminatorWP wp) const;

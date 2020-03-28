@@ -3,10 +3,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "../interface/TupleProducer_muMu.h"
 #include "../interface/GenTruthTools.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_Run2.h"
 
 void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 {
-    using namespace cuts::H_tautau_2016::MuMu;
+    using namespace cuts::hh_bbtautau_Run2::MuMu;
+    using HiggsCandidate = analysis::CompositeCandidate<MuonCandidate,MuonCandidate>;
 
     SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
@@ -27,7 +29,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
     auto other_tight_electrons = CollectVetoElectrons(true,{});
     cut(other_tight_electrons.empty(), "tightElectronVeto");
 
-    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::MuMu::DeltaR_betweenSignalObjects;
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_Run2::DeltaR_Lep_Lep;
     auto higgses_indexes = FindCompatibleObjects(muons, muons, DeltaR_betweenSignalObjects, "H_mu_mu");
     cut(higgses_indexes.size(), "mu_mu_pair");
 
@@ -60,7 +62,8 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     std::sort(higgses_indexes.begin(), higgses_indexes.end(), Comparitor);
     auto selected_higgs_index = higgses_indexes.front();
-    analysis::CompositeCandidate<MuonCandidate,MuonCandidate> selected_higgs(muons.at(selected_higgs_index.first), muons.at(selected_higgs_index.second));
+    const HiggsCandidate selected_higgs(muons.at(selected_higgs_index.first),
+                                        muons.at(selected_higgs_index.second));
 
     cut(selected_higgs.GetFirstDaughter().GetIsolation() < muonID::pfRelIso04, "iso_of_1st_daughter");
 
@@ -69,8 +72,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
 
     if(applyTriggerMatch){
         analysis::TriggerResults triggerResults(refTriggerResults);
-        triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
-                                      cuts::H_tautau_2016::DeltaR_triggerMatch);
+        triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs, cuts::hh_bbtautau_Run2::DeltaR_triggerMatch);
         selection.triggerResults.push_back(triggerResults);
     }
 
@@ -84,11 +86,7 @@ void TupleProducer_muMu::ProcessEvent(Cutter& cut)
         &selected_higgs.GetSecondDaughter() });
     cut(other_tight_muons.empty(), "no_extra_muon");
 
-    if(runSVfit)
-        selection.svfitResult[0] = svfitProducer->Fit(selected_higgs, *met);
-
     ApplyBaseSelection(selection);
-
     FillEventTuple(selection);
 }
 
@@ -101,11 +99,11 @@ std::vector<BaseTupleProducer::MuonCandidate> TupleProducer_muMu::CollectSignalM
 
 void TupleProducer_muMu::SelectSignalMuon(const MuonCandidate& muon, Cutter& cut) const
 {
-    using namespace cuts::H_tautau_2016::MuMu::muonID;
+    using namespace cuts::hh_bbtautau_Run2::MuMu::muonID;
 
     cut(true, "gt0_cand");
     const LorentzVector& p4 = muon.GetMomentum();
-    cut(p4.pt() > cuts::hh_bbtautau_2016::MuMu::muonID::pt, "pt", p4.pt());
+    cut(p4.pt() > pt_sel, "pt", p4.pt());
     cut(std::abs(p4.eta()) < eta, "eta", p4.eta());
     const double muon_dxy = std::abs(muon->muonBestTrack()->dxy(primaryVertex->position()));
     cut(muon_dxy < dxy, "dxy", muon_dxy);

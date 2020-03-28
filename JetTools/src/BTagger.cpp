@@ -3,9 +3,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 
 #include "h-tautau/JetTools/include/BTagger.h"
-#include "h-tautau/Cuts/include/Btag_2017.h"
-#include "h-tautau/Cuts/include/Btag_2016.h"
-#include "h-tautau/Cuts/include/Btag_2018.h"
+#include "h-tautau/Cuts/include/btag_Run2.h"
 
 namespace analysis {
 
@@ -15,55 +13,57 @@ BTagger::BTagger(Period _period, JetOrdering _ordering) :
     static const std::map<Period, std::map<JetOrdering, std::map<DiscriminatorWP, double>>> working_points = {
         {Period::Run2018, {
             {JetOrdering::DeepCSV, {
-                {DiscriminatorWP::Loose, cuts::btag_2018::DeepCSVL},
-                {DiscriminatorWP::Medium, cuts::btag_2018::DeepCSVM},
-                {DiscriminatorWP::Tight, cuts::btag_2018::DeepCSVT}
+                {DiscriminatorWP::Loose, cuts::btag_Run2::Run2018::DeepCSVL},
+                {DiscriminatorWP::Medium, cuts::btag_Run2::Run2018::DeepCSVM},
+                {DiscriminatorWP::Tight, cuts::btag_Run2::Run2018::DeepCSVT}
             }},
             {JetOrdering::DeepFlavour, {
-                {DiscriminatorWP::Loose, cuts::btag_2018::deepFlavourL},
-                {DiscriminatorWP::Medium, cuts::btag_2018::deepFlavourM},
-                {DiscriminatorWP::Tight, cuts::btag_2018::deepFlavourT}
+                {DiscriminatorWP::Loose, cuts::btag_Run2::Run2018::deepFlavourL},
+                {DiscriminatorWP::Medium, cuts::btag_Run2::Run2018::deepFlavourM},
+                {DiscriminatorWP::Tight, cuts::btag_Run2::Run2018::deepFlavourT}
             }},
             {JetOrdering::Pt, {
-                {DiscriminatorWP::Medium, cuts::btag_2018::pt}
+                {DiscriminatorWP::Medium, cuts::btag_Run2::pt}
             }}
         }},
         {Period::Run2017, {
             {JetOrdering::DeepCSV, {
-                {DiscriminatorWP::Loose, cuts::btag_2017::deepCSVv2L},{DiscriminatorWP::Medium, cuts::btag_2017::deepCSVv2M},
-                {DiscriminatorWP::Tight, cuts::btag_2017::deepCSVv2T}
+                {DiscriminatorWP::Loose, cuts::btag_Run2::Run2017::deepCSVv2L},
+                {DiscriminatorWP::Medium, cuts::btag_Run2::Run2017::deepCSVv2M},
+                {DiscriminatorWP::Tight, cuts::btag_Run2::Run2017::deepCSVv2T}
             }},
             {JetOrdering::CSV, {
-                {DiscriminatorWP::Loose, cuts::btag_2017::CSVv2L}, {DiscriminatorWP::Medium, cuts::btag_2017::CSVv2M},
-                {DiscriminatorWP::Tight, cuts::btag_2017::CSVv2T}
+                {DiscriminatorWP::Loose, cuts::btag_Run2::Run2017::CSVv2L},
+                {DiscriminatorWP::Medium, cuts::btag_Run2::Run2017::CSVv2M},
+                {DiscriminatorWP::Tight, cuts::btag_Run2::Run2017::CSVv2T}
             }},
             {JetOrdering::DeepFlavour, {
-                {DiscriminatorWP::Loose, cuts::btag_2017::deepFlavourL},
-                {DiscriminatorWP::Medium, cuts::btag_2017::deepFlavourM},
-                {DiscriminatorWP::Tight, cuts::btag_2017::deepFlavourT}
+                {DiscriminatorWP::Loose, cuts::btag_Run2::Run2017::deepFlavourL},
+                {DiscriminatorWP::Medium, cuts::btag_Run2::Run2017::deepFlavourM},
+                {DiscriminatorWP::Tight, cuts::btag_Run2::Run2017::deepFlavourT}
             }},
             {JetOrdering::Pt, {
-                {DiscriminatorWP::Medium, cuts::btag_2017::pt}
+                {DiscriminatorWP::Medium, cuts::btag_Run2::pt}
             }}
         }},
         {Period::Run2016, {
             {JetOrdering::CSV, {
-                {DiscriminatorWP::Loose, cuts::btag_2016::CSVv2L},
-                {DiscriminatorWP::Medium, cuts::btag_2016::CSVv2M},
-                {DiscriminatorWP::Tight, cuts::btag_2016::CSVv2T}
+                {DiscriminatorWP::Loose, cuts::btag_Run2::Run2016::CSVv2L},
+                {DiscriminatorWP::Medium, cuts::btag_Run2::Run2016::CSVv2M},
+                {DiscriminatorWP::Tight, cuts::btag_Run2::Run2016::CSVv2T}
             }},
              {JetOrdering::DeepCSV, {
-                 {DiscriminatorWP::Loose, cuts::btag_2016::DeepCSVL},
-                 {DiscriminatorWP::Medium, cuts::btag_2016::DeepCSVM},
-                 {DiscriminatorWP::Tight, cuts::btag_2016::DeepCSVT}
+                 {DiscriminatorWP::Loose, cuts::btag_Run2::Run2016::DeepCSVL},
+                 {DiscriminatorWP::Medium, cuts::btag_Run2::Run2016::DeepCSVM},
+                 {DiscriminatorWP::Tight, cuts::btag_Run2::Run2016::DeepCSVT}
              }},
              {JetOrdering::DeepFlavour, {
-                 {DiscriminatorWP::Loose, cuts::btag_2016::deepFlavourL},
-                 {DiscriminatorWP::Medium, cuts::btag_2016::deepFlavourM},
-                 {DiscriminatorWP::Tight, cuts::btag_2016::deepFlavourT}
+                 {DiscriminatorWP::Loose, cuts::btag_Run2::Run2016::deepFlavourL},
+                 {DiscriminatorWP::Medium, cuts::btag_Run2::Run2016::deepFlavourM},
+                 {DiscriminatorWP::Tight, cuts::btag_Run2::Run2016::deepFlavourT}
              }},
             {JetOrdering::Pt, {
-                {DiscriminatorWP::Medium, cuts::btag_2016::pt}
+                {DiscriminatorWP::Medium, cuts::btag_Run2::pt}
             }}
 
         }}
@@ -131,28 +131,7 @@ bool BTagger::Pass(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_
     else return BTag(jet,unc_source,unc_scale,true) > cut->at(wp);
 }
 
-double BTagger::PtCut() const
-{
-    double pt_cut = 0;
-    if(period == analysis::Period::Run2016)
-        pt_cut = cuts::btag_2016::pt;
-    if(period == analysis::Period::Run2017)
-        pt_cut = cuts::btag_2017::pt;
-    else if(period == analysis::Period::Run2018)
-        pt_cut = cuts::btag_2018::pt;
-    return pt_cut;
-}
-
-double BTagger::EtaCut() const
-{
-    double eta_cut = 0;
-    if(period == analysis::Period::Run2016)
-        eta_cut = cuts::btag_2016::eta;
-    if(period == analysis::Period::Run2017)
-        eta_cut = cuts::btag_2017::eta;
-    else if(period == analysis::Period::Run2018)
-        eta_cut = cuts::btag_2018::eta;
-    return eta_cut;
-}
+double BTagger::PtCut() const { return cuts::btag_Run2::pt; }
+double BTagger::EtaCut() const { return cuts::btag_Run2::eta; }
 
 }

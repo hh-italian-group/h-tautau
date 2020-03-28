@@ -3,10 +3,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "../interface/TupleProducer_tauTau.h"
 #include "../interface/GenTruthTools.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_Run2.h"
 
 void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
 {
-    using namespace cuts::H_tautau_2016::TauTau;
+    using namespace cuts::hh_bbtautau_Run2::TauTau;
+    using HiggsCandidate = analysis::CompositeCandidate<TauCandidate,TauCandidate>;
 
     SelectionResultsBase selection(eventId);
     cut(primaryVertex.isNonnull(), "vertex");
@@ -32,30 +34,27 @@ void TupleProducer_tauTau::ProcessEvent(Cutter& cut)
     selection.taus = CollectSignalTaus();
     cut(selection.taus.size() > 1, "taus");
 
-    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_2016::DeltaR_betweenSignalObjects;
-    auto higgses_indexes = FindCompatibleObjects(selection.taus, selection.taus, DeltaR_betweenSignalObjects, "H_tau_tau");
+    static constexpr double DeltaR_betweenSignalObjects = cuts::hh_bbtautau_Run2::DeltaR_Lep_Lep;
+    auto higgses_indexes = FindCompatibleObjects(selection.taus, selection.taus, DeltaR_betweenSignalObjects,
+                                                 "H_tau_tau");
     cut(higgses_indexes.size(), "tau_tau_pair");
 
     for(size_t n = 0; n < higgses_indexes.size(); ++n){
         auto daughter_index = higgses_indexes.at(n);
-        analysis::CompositeCandidate<TauCandidate,TauCandidate> selected_higgs = analysis::CompositeCandidate<TauCandidate,TauCandidate>(selection.taus.at(daughter_index.first), selection.taus.at(daughter_index.second));
+        const HiggsCandidate selected_higgs(selection.taus.at(daughter_index.first),
+                                            selection.taus.at(daughter_index.second));
 
         if(applyTriggerMatch){
             analysis::TriggerResults triggerResults(refTriggerResults);
             triggerTools.SetTriggerMatchBits(triggerResults, selected_higgs,
-                                          cuts::H_tautau_2016::DeltaR_triggerMatch);
+                                             cuts::hh_bbtautau_Run2::DeltaR_triggerMatch);
             selection.triggerResults.push_back(triggerResults);
         }
 
         selection.higgses_pair_indexes.push_back(daughter_index);
-
-        if(runSVfit)
-            selection.svfitResult[n] = svfitProducer->Fit(selected_higgs, *met);
-
     }
 
     ApplyBaseSelection(selection);
-
     FillEventTuple(selection);
 }
 
@@ -68,19 +67,8 @@ std::vector<BaseTupleProducer::TauCandidate> TupleProducer_tauTau::CollectSignal
 
 void TupleProducer_tauTau::SelectSignalTau(const TauCandidate& tau, Cutter& cut) const
 {
-    using namespace cuts::H_tautau_2016::TauTau::tauID;
-
     cut(true, "gt0_cand");
-    const LorentzVector& p4 = tau.GetMomentum();
-    static constexpr double pt_cut = cuts::hh_bbtautau_2017::TauTau::tauID::pt;
-    cut(p4.Pt() > pt_cut - BaseTupleProducer::pt_shift, "pt", p4.Pt());
-    static constexpr double eta_cut = cuts::hh_bbtautau_2017::TauTau::tauID::eta;
-    cut(std::abs(p4.Eta()) < eta_cut, "eta", p4.Eta());
-    const auto packedLeadTauCand = dynamic_cast<const pat::PackedCandidate*>(tau->leadChargedHadrCand().get());
-    cut(std::abs(packedLeadTauCand->dz()) < dz, "dz", packedLeadTauCand->dz());
-    cut(std::abs(tau->charge()) == absCharge, "charge", tau->charge());
-    bool iso_condition = PassMatchOrIsoSelection(tau);
-    cut(iso_condition, "iso");
+    cut(PassMatchSelection(tau) || PassIsoSelection(tau), "iso");
 }
 
 void TupleProducer_tauTau::FillEventTuple(const SelectionResultsBase& selection)

@@ -12,9 +12,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/Core/include/SummaryTuple.h"
 #include "h-tautau/Core/include/TriggerResults.h"
 #include "h-tautau/Core/include/TupleObjects.h"
-#include "h-tautau/Cuts/include/hh_bbtautau_2017.h"
-#include "h-tautau/Cuts/include/H_tautau_2016_baseline.h"
-#include "h-tautau/Cuts/include/H_tautau_2017_baseline.h"
 #include "h-tautau/JetTools/include/BTagger.h"
 #include "h-tautau/Analysis/include/EventCandidate.h"
 #include "h-tautau/Analysis/include/EventCacheProvider.h"
@@ -48,7 +45,7 @@ private:
 
 };
 
-class EventInfoBase {
+class EventInfo {
 public:
     using Event = ntuple::Event;
     using LegPair = ntuple::LegPair;
@@ -63,15 +60,15 @@ public:
 
     Channel GetChannel() const { return static_cast<Channel>(event_candidate.GetEvent().channelId); }
 
-    EventInfoBase(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
+    EventInfo(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
                   size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
 
-    EventInfoBase(const EventInfoBase& ) = default; //copy constructor
-    virtual ~EventInfoBase(){} //destructor
+    EventInfo(const EventInfo& ) = default; //copy constructor
+    virtual ~EventInfo(){} //destructor
 
-    EventInfoBase& operator= ( const EventInfoBase& ) = default; //assignment
+    EventInfo& operator= ( const EventInfo& ) = default; //assignment
 
 
     const Event& operator*() const;
@@ -80,10 +77,6 @@ public:
     const EventIdentifier& GetEventId() const;
     const TriggerResults& GetTriggerResults() const;
     const SummaryInfo& GetSummaryInfo() const;
-    static const kin_fit::FitProducer& GetKinFitProducer();
-    static const sv_fit_ana::FitProducer& GetSVFitProducer();
-
-    // virtual const Candidate& GetLeg(size_t /*leg_id*/);
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
@@ -111,8 +104,8 @@ public:
     size_t GetLegIndex(const size_t leg_id);
     static bool PassDefaultLegSelection(const ntuple::TupleLepton& lepton, Channel channel);
 
-    const kin_fit::FitResults& GetKinFitResults(bool allow_calc = false);
-    const sv_fit_ana::FitResults& GetSVFitResults(bool allow_calc = false);
+    const kin_fit::FitResults& GetKinFitResults(bool allow_calc = false, int verbosity = 0);
+    const sv_fit_ana::FitResults& GetSVFitResults(bool allow_calc = false, int verbosity = 0);
 
     LorentzVector GetResonanceMomentum(bool useSVfit, bool addMET, bool allow_calc = false);
     double GetMT2();
@@ -183,7 +176,7 @@ private:
 };
 
 //to be added isEmbedded flag
-boost::optional<EventInfoBase> CreateEventInfo(const ntuple::Event& event,
+boost::optional<EventInfo> CreateEventInfo(const ntuple::Event& event,
                                                const SignalObjectSelector& signalObjectSelector,
                                                const SummaryInfo* summaryInfo = nullptr,
                                                Period period = analysis::Period::Run2017,

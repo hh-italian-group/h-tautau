@@ -21,7 +21,7 @@ LegPair LegIndexToPair(size_t index)
 
 LegPair UndefinedLegPair()
 {
-    static LegPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
+    static const LegPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
     return pair;
 }
 

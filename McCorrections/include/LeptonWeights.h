@@ -9,9 +9,6 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TauPOG/TauIDSFs/interface/TauIDSFTool.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "WeightProvider.h"
-#include "TauTriggerSFs2017.h"
-#include "TauIdWeight.h"
-#include "TauTriggerWeight.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -148,14 +145,14 @@ public:
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
                   const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp);
 
-    double GetIdIsoWeight(EventInfoBase& eventInfo) const;
-    double GetTriggerWeight(EventInfoBase& eventInfo) const;
+    double GetIdIsoWeight(EventInfo& eventInfo) const;
+    double GetTriggerWeight(EventInfo& eventInfo) const;
 
-    virtual double Get(EventInfoBase& eventInfo) const override;
+    virtual double Get(EventInfo& eventInfo) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
 private:
-    double GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData) const;
+    double GetTriggerEfficiency(EventInfo& eventInfo, bool isData) const;
 
 private:
     detail::LeptonScaleFactors electronSF, muonSF;

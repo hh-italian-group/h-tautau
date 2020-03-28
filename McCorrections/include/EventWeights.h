@@ -29,9 +29,9 @@ public:
         return casted_provider;
     }
 
-    double GetWeight(EventInfoBase& event, WeightType weightType) const;
+    double GetWeight(EventInfo& event, WeightType weightType) const;
     double GetWeight(const ntuple::ExpressEvent& event, WeightType weightType) const;
-    double GetTotalWeight(EventInfoBase& event, const WeightingMode& weightingMode) const;
+    double GetTotalWeight(EventInfo& event, const WeightingMode& weightingMode) const;
     double GetTotalWeight(const ntuple::ExpressEvent& event, const WeightingMode& weightingMode) const;
 
 protected:

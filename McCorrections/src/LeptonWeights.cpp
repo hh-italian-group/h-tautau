@@ -80,7 +80,7 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
                                                                         ToString(tau_iso_wp));
 }
 
-double LeptonWeights::GetIdIsoWeight(EventInfoBase& eventInfo) const
+double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo) const
 {
     const ntuple::Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
@@ -107,7 +107,7 @@ double LeptonWeights::GetIdIsoWeight(EventInfoBase& eventInfo) const
         throw exception ("channel not allowed");
 }
 
-double LeptonWeights::GetTriggerWeight(EventInfoBase& eventInfo) const
+double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo) const
 {
     const ntuple::Event& event = *eventInfo;
     const double eff_data = GetTriggerEfficiency(eventInfo, true);
@@ -122,7 +122,7 @@ double LeptonWeights::GetTriggerWeight(EventInfoBase& eventInfo) const
 }
 
 
-double LeptonWeights::Get(EventInfoBase& eventInfo) const
+double LeptonWeights::Get(EventInfo& eventInfo) const
 {
     return GetIdIsoWeight(eventInfo) * GetTriggerWeight(eventInfo);
 }
@@ -132,7 +132,7 @@ double LeptonWeights::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in LeptonWeights::Get.");
 }
 
-double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData) const
+double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) const
 {
     const Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
@@ -178,7 +178,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfoBase& eventInfo, bool isData
                     && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
                     && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau_2017))
                 prescaled_weight = prescaled_weight_eTau_2017;
-            return electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
+            return prescaled_weight * electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
         }
 
     }
