@@ -5,7 +5,6 @@
 
 #include "AnalysisTools/Core/include/EventIdentifier.h"
 
-
 struct Arguments {
     REQ_ARG(std::string, inputPath);
     REQ_ARG(analysis::Channel, channel);
@@ -28,11 +27,9 @@ public:
 
         for(const auto& event : *tuple) {
             GenEvent genEvent(event);
-
             const EventIdentifier EventId(event.run, event.lumi, event.evt);
             const EventIdentifier EventIdTest(args.event_id());
-            if((EventId == EventIdTest))
-            if(!(EventId == EventIdTest)) continue;
+            if(EventId != EventIdTest) continue;
             genEvent.Print();
 
         }

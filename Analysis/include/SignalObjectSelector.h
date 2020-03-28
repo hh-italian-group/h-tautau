@@ -137,7 +137,6 @@ private:
     bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync = false) const;
     bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
     bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId,  bool is_sync = false) const;
-    bool PassHH_legacy_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId) const;
 
 private:
     SignalMode mode;

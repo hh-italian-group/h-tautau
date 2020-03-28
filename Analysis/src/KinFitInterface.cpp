@@ -32,7 +32,7 @@ FitResults FitProducer::FitImpl(const TLorentzVector& lepton1_p4, const TLorentz
 
         HHKinFit2::HHKinFitMasterHeavyHiggs hh_kin_fit(jet1_p4, jet2_p4, lepton1_p4, lepton2_p4, met, met_cov,
                                                        resolution_1, resolution_2);
-        //hh_kin_fit.verbosity = verbosity;
+        hh_kin_fit.verbosity = verbosity;
         hh_kin_fit.fit();
 
         result.convergence = hh_kin_fit.getConvergence();
