@@ -2,6 +2,9 @@ CMakeLists.txt.user*
 *.pyc
 __init__.py
 *.swp
+*.d
+*.so
+*.pcm
 .DS_Store
 /Production/crab/*.log
 /Production/crab/*.txt
