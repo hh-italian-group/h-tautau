@@ -7,7 +7,7 @@ namespace analysis {
 
 EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source,
                                UncertaintyScale _scale) :
-    event(&_event), uncertainty_source(_uncertainty_source), scale(_scale)
+    event(&_event), uncertainty_source(_uncertainty_source), scale(_scale), same_as_central(true)
 {
 }
 
@@ -128,12 +128,16 @@ const FatJetCollection& EventCandidate::GetFatJets()
 
 const MET& EventCandidate::GetMET()
 {
-    if(!met) {
-        CreateLeptons();
-        if(jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source))
-            CreateJets();
-    }
+    GetLeptons();
+    if(jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source))
+        GetJets();
     return *met;
+}
+
+bool EventCandidate::IsSameAsCentral()
+{
+    GetMET();
+    return same_as_central;
 }
 
 const ntuple::Event& EventCandidate::GetEvent() const
@@ -153,6 +157,7 @@ UncertaintySource EventCandidate::GetUncSource() const
 
 void EventCandidate::CreateLeptons()
 {
+    static constexpr bool preserve_dm0_mass = false;
     double shifted_met_px = 0;
     double shifted_met_py = 0;
 
@@ -168,28 +173,26 @@ void EventCandidate::CreateLeptons()
     for(size_t n = 0; n < tuple_leptons->size(); ++n)
         lepton_candidates->emplace_back(tuple_leptons->at(n), tuple_leptons->at(n).iso());
     for(size_t n = 0; n < tuple_leptons->size(); ++n) {
-      auto tuple_lepton = tuple_leptons->at(n);
-      LorentzVectorM lepton_p4(tuple_lepton.p4());
-      LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
+        auto tuple_lepton = tuple_leptons->at(n);
+        LorentzVectorM lepton_p4(tuple_lepton.p4());
+        LorentzVectorM corrected_lepton_p4(tuple_lepton.p4());
 
-      if(!event->isData && tuple_lepton.leg_type() == analysis::LegType::tau){
+        if(!event->isData && tuple_lepton.leg_type() == analysis::LegType::tau) {
+            bool tau_same_as_central = true;
+            const double sf = GetTauESUncertainties().GetCorrectionFactor(
+                    tuple_lepton.decayMode(), tuple_lepton.gen_match(), uncertainty_source, scale,
+                    tuple_lepton.p4().pt(), tuple_lepton.p4().eta(), &tau_same_as_central);
+            same_as_central = same_as_central && tau_same_as_central;
 
-
-          double sf = GetTauESUncertainties().GetCorrectionFactor(tuple_lepton.decayMode(), tuple_lepton.gen_match(),
-                                                              uncertainty_source, scale, tuple_lepton.p4().pt(),
-                                                              tuple_lepton.p4().eta());
-
-          // if(tuple_lepton.decayMode() == 0){
-          //     double shifted_pt = lepton_p4.pt() * sf;
-          //     corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());
-          // }
-          // else{
-          corrected_lepton_p4 = lepton_p4 * sf;
-          // }
+            if(preserve_dm0_mass && tuple_lepton.decayMode() == 0) {
+                const double shifted_pt = lepton_p4.pt() * sf;
+                corrected_lepton_p4 = LorentzVectorM(shifted_pt, lepton_p4.eta(), lepton_p4.phi(),lepton_p4.M());
+            } else {
+                corrected_lepton_p4 = lepton_p4 * sf;
+            }
 
           shifted_met_px += tuple_lepton.p4().px() - corrected_lepton_p4.px();
           shifted_met_py += tuple_lepton.p4().py() - corrected_lepton_p4.py();
-
       }
       lepton_candidates->at(n).SetMomentum(corrected_lepton_p4);
     }
@@ -216,6 +219,7 @@ void EventCandidate::CreateJets()
     for(size_t n = 0; n < tuple_jets->size(); ++n)
         jet_candidates->emplace_back(tuple_jets->at(n));
     if(!event->isData && jec::JECUncertaintiesWrapper::IsJetUncertainties(uncertainty_source)) {
+        same_as_central = false;
         const auto& other_jets_p4 = event->other_jets_p4;
         auto shifted_met_p4(met->GetMomentum());
         *jet_candidates = GetJecUncertainties().ApplyShift(*jet_candidates, uncertainty_source, scale, &other_jets_p4,

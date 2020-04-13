@@ -42,7 +42,6 @@ private:
     ProdSummary summary;
     std::shared_ptr<const TriggerDescriptorCollection> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
-
 };
 
 class EventInfo {
@@ -54,29 +53,24 @@ public:
     using Lock = std::lock_guard<Mutex>;
     using HiggsTTCandidate = CompositeCandidate<LepCandidate, LepCandidate>;
 
-
-    std::array<size_t,2> GetSelectedBjetIndices() const;
-    std::set<size_t> GetSelectedBjetIndicesSet() const;
-
-    Channel GetChannel() const { return static_cast<Channel>(event_candidate.GetEvent().channelId); }
-
     EventInfo(EventCandidate&& _event_candidate, const SummaryInfo* _summaryInfo,
                   size_t _selected_htt_index, const SignalObjectSelector::SelectedSignalJets& _selected_signal_jets,
                   Period _period, JetOrdering _jet_ordering);
 
-
-    EventInfo(const EventInfo& ) = default; //copy constructor
-    virtual ~EventInfo(){} //destructor
-
-    EventInfo& operator= ( const EventInfo& ) = default; //assignment
-
+    EventInfo(const EventInfo&) = default;
+    EventInfo& operator=(const EventInfo&) = default;
 
     const Event& operator*() const;
     const Event* operator->() const;
 
+    std::array<size_t, 2> GetSelectedBjetIndices() const;
+    std::set<size_t> GetSelectedBjetIndicesSet() const;
+    Channel GetChannel() const { return static_cast<Channel>(event_candidate.GetEvent().channelId); }
+
     const EventIdentifier& GetEventId() const;
     const TriggerResults& GetTriggerResults() const;
     const SummaryInfo& GetSummaryInfo() const;
+    EventCandidate& GetEventCandidate();
 
     size_t GetNJets() const;
     size_t GetNFatJets() const;
@@ -90,9 +84,7 @@ public:
                              bool applyPu = false, bool passBtag = false,
                              JetOrdering jet_ordering = JetOrdering::DeepCSV,
                              const std::set<size_t>& jet_to_exclude_indexes = {},
-                             double low_eta_cut = 0,
-                             analysis::UncertaintySource unc_source = analysis::UncertaintySource::None,
-                             analysis::UncertaintyScale unc_scale = analysis::UncertaintyScale::Central);
+                             double low_eta_cut = 0);
 
     double GetHT(bool includeHbbJets, bool apply_pt_eta_cut);
     const FatJetCollection& GetFatJets();
@@ -113,46 +105,17 @@ public:
     void SetMvaScore(double _mva_score);
     double GetMvaScore() const;
 
-    const LepCandidate& GetFirstLeg();
-    const LepCandidate& GetSecondLeg();
+    const LepCandidate& GetLeg(size_t leg_id);
+    const LepCandidate& GetFirstLeg() { return GetLeg(1); }
+    const LepCandidate& GetSecondLeg() { return GetLeg(2); }
 
-    const LepCandidate& GetLeg(size_t leg_id)
-    {
-        if(leg_id == 1) return GetFirstLeg();
-        if(leg_id == 2) return GetSecondLeg();
-        throw exception("Invalid leg id = %1%.") % leg_id;
-    }
-
-    const HiggsTTCandidate& GetHiggsTT(bool useSVfit, bool allow_calc = false)
-    {
-        Lock lock(*mutex);
-        if(useSVfit) {
-            if(!higgs_tt_sv) {
-                if(!GetSVFitResults(allow_calc).has_valid_momentum) throw exception("SVFit not converged");
-                higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(),
-                                                                 GetSVFitResults(allow_calc).momentum);
-            }
-            return *higgs_tt_sv;
-        }
-        if(!higgs_tt)
-            higgs_tt = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg());
-        return *higgs_tt;
-    }
-
-    LorentzVector GetHiggsTTMomentum(bool useSVfit, bool allow_calc = false)
-    {
-        return GetHiggsTT(useSVfit, allow_calc).GetMomentum();
-    }
-
-    EventCandidate& GetEventCandidate()
-    {
-        return event_candidate;
-    }
+    const HiggsTTCandidate& GetHiggsTT(bool useSVfit, bool allow_calc = false);
+    LorentzVector GetHiggsTTMomentum(bool useSVfit, bool allow_calc = false);
 
     const JetCollection& GetJets();
     const MET& GetMET();
 
-protected:
+private:
     EventCandidate event_candidate;
     EventCacheProvider eventCacheProvider;
     const SummaryInfo* summaryInfo;
@@ -160,7 +123,6 @@ protected:
     std::shared_ptr<Mutex> mutex;
     size_t selected_htt_index;
 
-private:
     EventIdentifier eventIdentifier;
     SignalObjectSelector::SelectedSignalJets selected_signal_jets;
     Period period;
@@ -172,18 +134,16 @@ private:
     boost::optional<double> mt2;
     double mva_score;
     std::shared_ptr<HiggsTTCandidate> higgs_tt, higgs_tt_sv;
-
 };
 
-//to be added isEmbedded flag
 boost::optional<EventInfo> CreateEventInfo(const ntuple::Event& event,
-                                               const SignalObjectSelector& signalObjectSelector,
-                                               const SummaryInfo* summaryInfo = nullptr,
-                                               Period period = analysis::Period::Run2017,
-                                               JetOrdering jet_ordering = JetOrdering::DeepCSV,
-                                               bool is_sync = false,
-                                               UncertaintySource uncertainty_source = UncertaintySource::None,
-                                               UncertaintyScale scale = UncertaintyScale::Central,
-                                               bool debug = false);
+                                           const SignalObjectSelector& signalObjectSelector,
+                                           const SummaryInfo* summaryInfo = nullptr,
+                                           Period period = analysis::Period::Run2017,
+                                           JetOrdering jet_ordering = JetOrdering::DeepCSV,
+                                           bool is_sync = false,
+                                           UncertaintySource uncertainty_source = UncertaintySource::None,
+                                           UncertaintyScale scale = UncertaintyScale::Central,
+                                           bool debug = false);
 
 } // namespace analysis

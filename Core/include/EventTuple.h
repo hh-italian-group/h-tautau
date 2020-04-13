@@ -140,20 +140,18 @@ using Point3D = analysis::Point3D_Float;
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
     VAR(Float_t, rho) /* Jet energy density in the event */ \
-	VAR(UInt_t, n_jets) /* Number of jets in the event */\
-    VAR(Float_t, ht_other_jets) /* Ht of all jets in the event except the first 2 jets */\
     /* Trigger results */ \
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(std::vector<ULong64_t>, trigger_matches) /* Leg matching results for the selected triggers */ \
-    /* SV Fit variables */ \
-    VAR(std::vector<size_t>, SVfit_Higgs_index) /* SVfit using integration method */ \
-    VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit using integration method */ \
-    VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit using integration method */ \
-    VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit using integration method */ \
-    VAR(std::vector<Float_t>, SVfit_mt) /* SVfit using integration method */ \
-    VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit using integration method */ \
-    VAR(std::vector<Int_t>, SVfit_unc_source) /* SVfit using integration method */ \
-    VAR(std::vector<Int_t>, SVfit_unc_scale) /* SVfit using integration method */ \
+    /* SVfit variables */ \
+    VAR(std::vector<UInt_t>, SVfit_Higgs_index) /* SVfit: Higgs index */ \
+    VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit: has a valid result */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit: 4-momentum */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit: error on 4-momentum */ \
+    VAR(std::vector<Float_t>, SVfit_mt) /* SVfit: transverse mass */ \
+    VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit: error on transverse mass */ \
+    VAR(std::vector<Int_t>, SVfit_unc_source) /* SVfit: uncertainty source */ \
+    VAR(std::vector<Int_t>, SVfit_unc_scale) /* SVfit: uncertainty scale */ \
     /* Signal leptons */ \
     LEG_DATA() /* muon, electron or tau */ \
     TAU_IDS() /* raw values of tau ID discriminators */ \
@@ -165,19 +163,20 @@ using Point3D = analysis::Point3D_Float;
     VAR(std::vector<LorentzVectorE>, other_jets_p4) /* Other Jet 4-momentum */\
     FATJET_DATA(fatJets) \
     SUBJET_DATA(subJets) \
-    /* KinFit Variables */ \
-    VAR(std::vector<size_t>, kinFit_Higgs_index) /* kinFit Higgs indexes */ \
-    VAR(std::vector<UInt_t>, kinFit_jetPairId) /* indices of jet pairs for which KinFit is calculated */\
-    VAR(std::vector<Float_t>, kinFit_m) /* KinFit m_bbtt mass */\
-    VAR(std::vector<Float_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
-    VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
-    VAR(std::vector<Int_t>, kinFit_unc_source) /* kinFit */ \
-    VAR(std::vector<Int_t>, kinFit_unc_scale) /* kinFit */ \
-    /* Jet score Variables */ \
-    VAR(std::vector<size_t>, jet_hh_score_index) /* jet score indexes */ \
-    VAR(std::vector<Int_t>, jet_hh_score_unc_scale) /* jet score scale */ \
-    VAR(std::vector<Int_t>, jet_hh_score_unc_source) /* jet score source */ \
-    VAR(std::vector<Float_t>, jet_hh_score_value) /* jet score value */ \
+    /* HHKinFit variables */ \
+    VAR(std::vector<UInt_t>, kinFit_Higgs_index) /* HHKinFit: Higgs index */ \
+    VAR(std::vector<UInt_t>, kinFit_jetPair_index) /* HHKinFit: jet pair index */\
+    VAR(std::vector<Float_t>, kinFit_m) /* HHKinFit: m_bbtt mass */\
+    VAR(std::vector<Float_t>, kinFit_chi2) /*  HHKinFit: chi2 value*/ \
+    VAR(std::vector<Int_t>, kinFit_convergence) /* HHKinFit: convergence code */\
+    VAR(std::vector<Int_t>, kinFit_unc_source) /* HHKinFit: uncertianty source */ \
+    VAR(std::vector<Int_t>, kinFit_unc_scale) /* HHKinFit: uncertainty scale */ \
+    /* Jet HH-btag score variables */ \
+    VAR(std::vector<UInt_t>, jet_HHbtag_Higgs_index) /* HH-btag: Higgs index */ \
+    VAR(std::vector<UInt_t>, jet_HHbtag_jet_index) /* HH-btag: jet index */ \
+    VAR(std::vector<Int_t>, jet_HHbtag_unc_source) /* HH-btag: uncertainty source */ \
+    VAR(std::vector<Int_t>, jet_HHbtag_unc_scale) /* HH-btag: uncertainty scale */ \
+    VAR(std::vector<Float_t>, jet_HHbtag_value) /* HH-btag: tagging score */ \
     /* Generator level information */\
     VAR(UInt_t, lhe_n_partons) \
     VAR(UInt_t, lhe_n_c_partons) \

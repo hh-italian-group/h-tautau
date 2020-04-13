@@ -101,7 +101,7 @@ public:
     DiscriminatorResult csv() const;
     DiscriminatorResult deepcsv() const;
     DiscriminatorResult deepFlavour() const;
-    RealNumber hh_tag(analysis::UncertaintySource unc_source, analysis::UncertaintyScale unc_scale) const;
+    RealNumber hh_btag(analysis::UncertaintySource unc_source, analysis::UncertaintyScale unc_scale) const;
     Integer partonFlavour() const;
     Integer hadronFlavour() const;
     RealNumber rawf() const;

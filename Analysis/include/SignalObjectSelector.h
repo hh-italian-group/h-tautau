@@ -80,7 +80,6 @@ namespace jet_ordering {
         std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
         return jets_ordered;
     }
-
 }
 
 

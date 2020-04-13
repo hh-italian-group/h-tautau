@@ -46,6 +46,16 @@ std::set<size_t> EventInfo::GetSelectedBjetIndicesSet() const
     return bjet_indexes;
 }
 
+const LepCandidate& EventInfo::GetLeg(size_t leg_id)
+{
+    Lock lock(*mutex);
+    const size_t leg_index = GetLegIndex(leg_id);
+    return event_candidate.GetLeptons().at(leg_index);
+}
+
+const LepCandidate& EventInfo::GetFirstLeg() { return GetLeg(1); }
+const LepCandidate& EventInfo::GetSecondLeg() { return GetLeg(2); }
+
 const analysis::LepCandidate& EventInfo::GetFirstLeg()
 {
     Lock lock(*mutex);
@@ -75,8 +85,8 @@ event_candidate(_event_candidate), eventCacheProvider(_event_candidate.GetEvent(
 const EventInfo::Event& EventInfo::operator*() const { return event_candidate.GetEvent(); }
 const EventInfo::Event* EventInfo::operator->() const { return &(event_candidate.GetEvent()); }
 
+EventCandidate& EventInfo::GetEventCandidate() { return event_candidate; }
 const EventIdentifier& EventInfo::GetEventId() const { return eventIdentifier; }
-
 const TriggerResults& EventInfo::GetTriggerResults() const { return triggerResults; }
 const SummaryInfo& EventInfo::GetSummaryInfo() const
 {
@@ -85,14 +95,15 @@ const SummaryInfo& EventInfo::GetSummaryInfo() const
     return *summaryInfo;
 }
 
-size_t EventInfo::GetNJets() const
-{
-    return event_candidate.GetEvent().jets_p4.size();
-}
-
+size_t EventInfo::GetNJets() const { return event_candidate.GetEvent().jets_p4.size(); }
 size_t EventInfo::GetNFatJets() const { return event_candidate.GetEvent().fatJets_p4.size(); }
 size_t EventInfo::GetHttIndex() const { return selected_htt_index; }
-const SignalObjectSelector::SelectedSignalJets& EventInfo::GetSelectedSignalJets() const { return selected_signal_jets; }
+
+const SignalObjectSelector::SelectedSignalJets& EventInfo::GetSelectedSignalJets() const
+{
+    return selected_signal_jets;
+}
+
 Period EventInfo::GetPeriod() const { return period; }
 JetOrdering EventInfo::GetJetOrdering() const {return jet_ordering; }
 
@@ -100,9 +111,7 @@ JetOrdering EventInfo::GetJetOrdering() const {return jet_ordering; }
 JetCollection EventInfo::SelectJets(double pt_cut, double eta_cut, bool applyPu,
                                                        bool passBtag, JetOrdering jet_ordering,
                                                        const std::set<size_t>& jet_to_exclude_indexes,
-                                                       double low_eta_cut,
-                                                       analysis::UncertaintySource unc_source,
-                                                       analysis::UncertaintyScale unc_scale)
+                                                       double low_eta_cut)
 {
     Lock lock(*mutex);
     BTagger bTagger(period,jet_ordering);
@@ -175,6 +184,27 @@ const JetCandidate& EventInfo::GetBJet(const size_t index)
     if(index == 1)
         return GetJets().at(selected_signal_jets.selectedBjetPair.first);
     return GetJets().at(selected_signal_jets.selectedBjetPair.second);
+}
+
+const EventInfo::HiggsTTCandidate& EventInfo::GetHiggsTT(bool useSVfit, bool allow_calc)
+{
+    Lock lock(*mutex);
+    if(useSVfit) {
+        if(!higgs_tt_sv) {
+            if(!GetSVFitResults(allow_calc).has_valid_momentum) throw exception("SVFit not converged");
+            higgs_tt_sv = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg(),
+                                                             GetSVFitResults(allow_calc).momentum);
+        }
+        return *higgs_tt_sv;
+    }
+    if(!higgs_tt)
+        higgs_tt = std::make_shared<HiggsTTCandidate>(GetFirstLeg(), GetSecondLeg());
+    return *higgs_tt;
+}
+
+LorentzVector EventInfo::GetHiggsTTMomentum(bool useSVfit, bool allow_calc)
+{
+    return GetHiggsTT(useSVfit, allow_calc).GetMomentum();
 }
 
 const EventInfo::HiggsBBCandidate& EventInfo::GetHiggsBB()

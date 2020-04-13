@@ -10,9 +10,9 @@ namespace analysis {
 SignalObjectSelector::SignalObjectSelector(SignalMode _mode) : mode(_mode)
 {
     if(mode == SignalMode::HTT || mode == SignalMode::TauPOG)
-	   DR2_leptons = std::pow(cuts::H_tautau_Run2::DeltaR_Lep_Lep, 2);
+        DR2_leptons = std::pow(cuts::H_tautau_Run2::DeltaR_Lep_Lep, 2);
     else if(mode == SignalMode::HH || mode == SignalMode::HH_legacy)
-    	DR2_leptons = std::pow(cuts::hh_bbtautau_Run2::DeltaR_Lep_Lep, 2);
+        DR2_leptons = std::pow(cuts::hh_bbtautau_Run2::DeltaR_Lep_Lep, 2);
     else
         throw analysis::exception("Signal Mode for SignalObjectSelector constructor not supported");
 }

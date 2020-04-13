@@ -2,6 +2,7 @@
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "h-tautau/Core/include/EventTuple.h"
+#include "AnalysisTools/Core/include/Tools.h"
 
 namespace ntuple {
 
@@ -28,15 +29,44 @@ LegPair UndefinedLegPair()
 std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory* directory,
                                                     bool readMode, TreeState treeState)
 {
+    static const std::set<std::string> weight_branches = {
+        "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso", "weight_tau_id", "weight_btag", "weight_btag_up",
+        "weight_btag_down", "weight_dy", "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt",
+        "weight_xs", "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt",
+    };
+
+    static const std::set<std::string> gen_study_branches = {
+        "sample_type", "sample_year", "mass_point", "spin", "node",
+    };
+
+    static const std::set<std::string> skimmer_branches = {
+        "isData", "file_desc_id", "split_id",
+    };
+
+    static const std::set<std::string> SVfit_branches = {
+        "SVfit_Higgs_index", "SVfit_is_valid", "SVfit_p4", "SVfit_p4_error", "SVfit_mt", "SVfit_mt_error",
+        "SVfit_unc_source", "SVfit_unc_scale",
+    };
+
+    static const std::set<std::string> kinFit_branches = {
+        "kinFit_Higgs_index", "kinFit_jetPair_index", "kinFit_m", "kinFit_chi2", "kinFit_convergence",
+        "kinFit_unc_source", "kinFit_unc_scale",
+    };
+
+    static const std::set<std::string> HHbtag_branches = {
+        "jet_HHbtag_Higgs_index", "jet_HHbtag_jet_index", "jet_HHbtag_unc_source", "jet_HHbtag_unc_scale",
+        "jet_HHbtag_value",
+    };
+
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
-        { TreeState::Full, { "n_jets", "ht_other_jets", "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso",
-                             "weight_tau_id", "weight_btag", "weight_btag_up", "weight_btag_down", "weight_dy",
-                             "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt", "weight_xs",
-                             "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt", "isData", "file_desc_id",
-                             "split_id", "jet_hh_score_index", "jet_hh_score_unc_scale", "jet_hh_score_unc_source",
-                             "jet_hh_score_value", "sample_type", "sample_year", "mass_point", "spin", "node"
-                          } },
-        { TreeState::Skimmed, { } }
+        {
+            TreeState::Full,
+            analysis::tools::union_sets({
+                weight_branches, gen_study_branches, skimmer_branches, SVfit_branches, kinFit_branches,
+                HHbtag_branches,
+            })
+        },
+        { TreeState::Skimmed, { } },
     };
 
     const auto& disabled = disabled_branches.at(treeState);

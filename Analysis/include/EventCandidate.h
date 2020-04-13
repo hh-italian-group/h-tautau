@@ -37,6 +37,7 @@ public:
     const JetCollection& GetJets();
     const FatJetCollection& GetFatJets();
     const MET& GetMET();
+    bool IsSameAsCentral();
     const ntuple::Event& GetEvent() const;
     UncertaintyScale GetScale() const;
     UncertaintySource GetUncSource() const;
@@ -48,6 +49,7 @@ private:
     const ntuple::Event* event;
     UncertaintySource uncertainty_source;
     UncertaintyScale scale;
+    bool same_as_central;
     std::shared_ptr<std::vector<ntuple::TupleLepton>> tuple_leptons;
     std::shared_ptr<std::vector<ntuple::TupleJet>> tuple_jets;
     std::shared_ptr<std::vector<ntuple::TupleFatJet>> tuple_fatJets;
