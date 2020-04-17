@@ -190,6 +190,23 @@ ENUM_NAMES(UncertaintySource) = {
 
 const std::set<UncertaintyScale>& GetAllUncertaintyScales();
 const std::set<UncertaintyScale>& GetActiveUncertaintyScales(UncertaintySource unc_source);
+template<typename Collection>
+std::vector<std::pair<UncertaintySource, UncertaintyScale>> EnumerateUncVariations(const Collection& unc_sources)
+{
+    static const std::vector<UncertaintyScale> unc_scales = {
+        UncertaintyScale::Central, UncertaintyScale::Down, UncertaintyScale::Up
+    };
+    std::vector<std::pair<UncertaintySource, UncertaintyScale>> result;
+    for(UncertaintySource unc_source : unc_sources) {
+        for(UncertaintyScale unc_scale : unc_scales) {
+            if((unc_source == UncertaintySource::None && unc_scale == UncertaintyScale::Central)
+                    || (unc_source != UncertaintySource::None && unc_scale != UncertaintyScale::Central)) {
+                result.emplace_back(unc_source, unc_scale);
+            }
+        }
+    }
+    return result;
+}
 
 enum class DiscriminatorWP { VVVLoose = 0, VVLoose = 1, VLoose = 2, Loose = 3, Medium = 4, Tight = 5,
                              VTight = 6, VVTight = 7, VVVTight = 8 };
@@ -210,7 +227,7 @@ ENUM_NAMES(MetType) = {
     { MetType::PF, "PF" }, { MetType::MVA, "MVA" }, { MetType::PUPPI, "PUPPI" }
 };
 
-enum class Period { Run2015, Run2016, Run2017, Run2018 };
+enum class Period { Run2015 = 2015, Run2016 = 2016, Run2017 = 2017, Run2018 = 2018 };
 ENUM_NAMES(Period) = {
     { Period::Run2015, "Run2015" },
     { Period::Run2016, "Run2016" },

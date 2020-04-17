@@ -9,39 +9,34 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-enum class JetOrdering { NoOrdering, Pt, CSV, DeepCSV, DeepFlavour, HHJetTag };
-ENUM_NAMES(JetOrdering) = {
-    { JetOrdering::NoOrdering, "NoOrdering" },
-    { JetOrdering::Pt, "Pt" },
-    { JetOrdering::CSV, "CSV" },
-    { JetOrdering::DeepCSV, "DeepCSV" },
-    { JetOrdering::DeepFlavour, "DeepFlavour" },
-    { JetOrdering::HHJetTag, "HHJetTag" },
+enum class BTaggerKind { NoTagger, Pt, CSV, DeepCSV, DeepFlavour, HHbtag };
+ENUM_NAMES(BTaggerKind) = {
+    { BTaggerKind::NoTagger, "NoTagger" },
+    { BTaggerKind::Pt, "Pt" },
+    { BTaggerKind::CSV, "CSV" },
+    { BTaggerKind::DeepCSV, "DeepCSV" },
+    { BTaggerKind::DeepFlavour, "DeepFlavour" },
+    { BTaggerKind::HHbtag, "HHbtag" },
 };
 
 struct BTagger {
 public:
-    BTagger(Period _period, JetOrdering _ordering);
+    BTagger(Period _period, BTaggerKind _tagger);
 
-    double BTag(const ntuple::Event& event, size_t jet_index,
-        analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale,
-        bool use_base_ordering) const;
-    double BTag(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_source,
-        analysis::UncertaintyScale unc_scale, bool use_base_ordering) const;
-    bool Pass(const ntuple::Event& event, size_t jet_index,
-        analysis::UncertaintySource unc_source,analysis::UncertaintyScale unc_scale,
-        DiscriminatorWP wp = DiscriminatorWP::Medium) const;
-    bool Pass(const ntuple::TupleJet& jet, analysis::UncertaintySource unc_source,
-        analysis::UncertaintyScale unc_scale, DiscriminatorWP wp = DiscriminatorWP::Medium) const;
+    double BTag(const ntuple::TupleJet& jet, bool use_base_tagger) const;
+    bool Pass(const ntuple::TupleJet& jet, DiscriminatorWP wp) const;
 
     double PtCut() const;
     double EtaCut() const;
 
+    Period GetPeriod() const;
+    BTaggerKind GetTagger() const;
+    BTaggerKind GetBaseTagger() const;
+
 private:
     Period period;
-    JetOrdering ordering;
-    JetOrdering base_ordering;
-    const std::map<DiscriminatorWP,double>* cut;
+    BTaggerKind tagger, base_tagger;
+    const std::map<DiscriminatorWP, double>* cut;
 };
 
 }

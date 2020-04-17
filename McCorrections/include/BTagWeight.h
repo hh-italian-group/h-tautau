@@ -24,11 +24,12 @@ struct JetInfo {
     double eff, SF;
     bool bTagOutcome;
 
-    JetInfo(EventInfo& eventInfo, size_t jetIndex);
+    JetInfo(const JetCandidate& jet);
 };
 
 struct BTagReaderInfo {
-    using ReaderPtr = std::shared_ptr<btag_calibration::BTagCalibrationReader>;
+    using Reader = btag_calibration::BTagCalibrationReader;
+    using ReaderPtr = std::shared_ptr<Reader>;
     using HistPtr = std::shared_ptr<TH2D>;
     using JetFlavor = btag_calibration::BTagEntry::JetFlavor;
     using FilePtr = std::shared_ptr<TFile>;
@@ -49,33 +50,35 @@ private:
 class BTagWeight : public IWeightProvider {
 public:
     using BTagCalibration = btag_calibration::BTagCalibration;
-    using BTagCalibrationReader = btag_calibration::BTagCalibrationReader;
     using BTagEntry = btag_calibration::BTagEntry;
     using OperatingPoint = BTagEntry::OperatingPoint;
     using JetFlavor = BTagEntry::JetFlavor;
     using JetInfo = detail::JetInfo;
     using JetInfoVector = std::vector<JetInfo>;
     using ReaderInfo = detail::BTagReaderInfo;
-    using ReaderInfoPtr = std::shared_ptr<detail::BTagReaderInfo>;
-    using ReaderInfoMap = std::map<int, ReaderInfoPtr>;
-    using ReaderPtr = std::shared_ptr<btag_calibration::BTagCalibrationReader>;
+    using ReaderInfoPtr = std::shared_ptr<ReaderInfo>;
+    using ReaderInfoMap = std::map<DiscriminatorWP, std::map<int, ReaderInfoPtr>>;
+    using Reader = ReaderInfo::Reader;
+    using ReaderPtr = ReaderInfo::ReaderPtr;
 
-    BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName,Period period,
-               JetOrdering ordering, DiscriminatorWP wp);
+    BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, const BTagger& _bTagger,
+               DiscriminatorWP _default_wp);
 
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
-    double GetEx(EventInfo& eventInfo, UncertaintyScale unc) const;
+
+    double Get(EventInfo& event, DiscriminatorWP wp) const;
 
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
     static double GetBtagWeight(const JetInfoVector& jetInfos);
-    ReaderInfo& GetReader(int hadronFlavour) const;
+    ReaderInfo& GetReader(DiscriminatorWP wp, int hadronFlavour) const;
 
 private:
     BTagCalibration calib;
     ReaderInfoMap readerInfos;
     BTagger bTagger;
+    DiscriminatorWP default_wp;
 };
 
 } // namespace mc_corrections

@@ -9,13 +9,12 @@ namespace mc_corrections {
 
 namespace detail {
 
-JetInfo::JetInfo(EventInfo& eventInfo, size_t jetIndex) :
-    eff(0.), SF(0.)
+JetInfo::JetInfo(const JetCandidate& jet) :
+        eff(0.), SF(0.)
 {
-    const ntuple::Event& event = *eventInfo;
-    pt  = event.jets_p4.at(jetIndex).pt();
-    eta = event.jets_p4.at(jetIndex).eta();
-    hadronFlavour = event.jets_hadronFlavour.at(jetIndex);
+    pt  = jet.GetMomentum().pt();
+    eta = jet.GetMomentum().eta();
+    hadronFlavour = jet->hadronFlavour();
 }
 
 BTagReaderInfo::BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr file, DiscriminatorWP wp) :
@@ -60,44 +59,36 @@ double BTagReaderInfo::GetEfficiency(double pt, double eta) const
 
 } // namespace detail
 
-BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName,Period period,
-                       JetOrdering ordering, DiscriminatorWP wp) :
-    calib(ToString(ordering), bjetSFFileName), bTagger(period,ordering)
+BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, const BTagger& _bTagger,
+                       DiscriminatorWP _default_wp) :
+    calib(ToString(_bTagger.GetBaseTagger()), bjetSFFileName), bTagger(_bTagger), default_wp(_default_wp)
 {
-
     static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
         {DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, {DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM} ,
         {DiscriminatorWP::Tight, BTagEntry::OP_TIGHT}
     };
-
     static const std::map<JetFlavor, int> jet_flavors {
         { BTagEntry::FLAV_B, 5 }, { BTagEntry::FLAV_C, 4 }, { BTagEntry::FLAV_UDSG, 0 },
     };
+    static const std::vector<std::string> unc_scale_names = { "up", "down" };
 
-    if(!op_map.count(wp))
-        throw exception("Working point %1% is not supported.") % wp;
+    if(!op_map.count(default_wp))
+        throw exception("BTagWeight: default working point %1% is not supported.") % default_wp;
 
     auto bTagEffFile = root_ext::OpenRootFile(bTagEffFileName);
 
-    ReaderPtr reader_b(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
-    reader_b->load(calib, BTagEntry::FLAV_B, "comb");
-    readerInfos[jet_flavors.at(BTagEntry::FLAV_B)] =
-            ReaderInfoPtr(new ReaderInfo(reader_b, BTagEntry::FLAV_B, bTagEffFile, wp));
-
-    ReaderPtr reader_c(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
-    reader_c->load(calib, BTagEntry::FLAV_C, "comb");
-    readerInfos[jet_flavors.at(BTagEntry::FLAV_C)] =
-            ReaderInfoPtr(new ReaderInfo(reader_c, BTagEntry::FLAV_C, bTagEffFile, wp));
-
-    ReaderPtr reader_light(new BTagCalibrationReader(op_map.at(wp), "central", {"up", "down"}));
-    reader_light->load(calib, BTagEntry::FLAV_UDSG, "incl");
-    readerInfos[jet_flavors.at(BTagEntry::FLAV_UDSG)] =
-            ReaderInfoPtr(new ReaderInfo(reader_light, BTagEntry::FLAV_UDSG, bTagEffFile, wp));
+    for(const auto& [wp, op] : op_map) {
+        for(const auto& [flavor, flavor_id] : jet_flavors) {
+            auto reader = std::make_shared<Reader>(op, "central", unc_scale_names);
+            reader->load(calib, flavor, "comb");
+            readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, wp);
+        }
+    }
 }
 
 double BTagWeight::Get(EventInfo& eventInfo) const
 {
-    return GetEx(eventInfo, UncertaintyScale::Central);
+    return Get(eventInfo, default_wp);
 }
 
 double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -105,17 +96,24 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-double BTagWeight::GetEx(EventInfo& eventInfo, UncertaintyScale unc) const
+double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp) const
 {
-    const std::string unc_name = GetUncertantyName(unc);
+    UncertaintyScale scale = UncertaintyScale::Central;
+    if(eventInfo.GetEventCandidate().GetUncSource() == UncertaintySource::Eff_b)
+        scale = eventInfo.GetEventCandidate().GetUncScale();
+    const std::string unc_name = GetUncertantyName(scale);
 
     JetInfoVector jetInfos;
-    const ntuple::Event& event = *eventInfo;
-    for (size_t jetIndex = 0; jetIndex < event.jets_p4.size(); ++jetIndex) {
-        JetInfo jetInfo(eventInfo, jetIndex);
-        if(std::abs(jetInfo.eta) >= bTagger.EtaCut()) continue;
-        GetReader(jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
-        jetInfo.bTagOutcome = bTagger.Pass(event, jetIndex,eventInfo.GetEventCandidate().GetUncSource(),eventInfo.GetEventCandidate().GetScale());
+
+    const auto sel_jets = SignalObjectSelector::CreateJetInfos(eventInfo.GetEventCandidate(), bTagger, true,
+                                                               eventInfo.GetHttIndex(),
+                                                               SignalObjectSelector::SelectedSignalJets());
+    for(const auto& sel_jet_info : sel_jets) {
+        const auto& jet = eventInfo.GetEventCandidate().GetJets().at(sel_jet_info.index);
+        JetInfo jetInfo(jet);
+        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
+        GetReader(wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
+        jetInfo.bTagOutcome = bTagger.Pass(*jet, wp);
         jetInfos.push_back(jetInfo);
     }
 
@@ -140,13 +138,16 @@ double BTagWeight::GetBtagWeight(const JetInfoVector& jetInfos)
     return MC != 0 ? Data/MC : 0;
 }
 
-BTagWeight::ReaderInfo& BTagWeight::GetReader(int hadronFlavour) const
+BTagWeight::ReaderInfo& BTagWeight::GetReader(DiscriminatorWP wp, int hadronFlavour) const
 {
     static const int default_flavour = 0;
+
+    auto wp_iter = readerInfos.find(wp);
+    if(wp_iter == readerInfos.end())
+        throw exception("BTagWeight: working point %1% is not supported.") % wp;
     int flavour = std::abs(hadronFlavour);
-    if(!readerInfos.count(flavour))
-        flavour = default_flavour;
-    return *readerInfos.at(flavour);
+    auto flav_iter = wp_iter->second.find(flavour);
+    return flav_iter == wp_iter->second.end() ? *wp_iter->second.at(default_flavour) : *flav_iter->second;
 }
 
 } // namespace mc_corrections

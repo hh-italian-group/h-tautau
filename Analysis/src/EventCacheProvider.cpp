@@ -5,69 +5,115 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace analysis {
 
-    bool EventCacheProvider::TryGetKinFit(kin_fit::FitResults& kinfit_result, const LegPair& htt_pair,
-        const LegPair& hbb_pair, UncertaintySource unc_source, UncertaintyScale unc_scale)
-    {
-        KinFitKey kinFitKey(htt_pair,hbb_pair,unc_source,unc_scale);
-        bool gotKinFit = false;
-        auto iter = kinFit_map.find(kinFitKey);
-        if(iter != kinFit_map.end()){
-            gotKinFit = true;
-            kinfit_result = iter->second;
-        }
-        return gotKinFit;
-    }
+EventCacheProvider::SVFitKey::SVFitKey(size_t _htt_index, UncertaintySource _unc_source, UncertaintyScale _unc_scale) :
+        htt_index(_htt_index), unc_source(_unc_source), unc_scale(_unc_scale)
+{
+}
 
-    bool EventCacheProvider::TryGetSVFit(sv_fit_ana::FitResults& svfit_result, const LegPair& htt_pair,
-        UncertaintySource unc_source, UncertaintyScale unc_scale)
-    {
-        SVFitKey svFitKey(htt_pair,unc_source,unc_scale);
-        bool gotSVFit = false;
-        auto iter = SVFit_map.find(svFitKey);
-        if(iter != SVFit_map.end()){
-            gotSVFit = true;
-            svfit_result = iter->second;
-        }
-        return gotSVFit;
-    }
+bool EventCacheProvider::SVFitKey::operator<(const SVFitKey& other) const
+{
+    if(htt_index != other.htt_index) return htt_index < other.htt_index;
+    if(unc_source != other.unc_source) return unc_source < other.unc_source;
+    return unc_scale < other.unc_scale;
+}
 
-    EventCacheProvider::SVFitKey::SVFitKey() : htt_pair(ntuple::UndefinedLegPair()),
-            unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
+EventCacheProvider::KinFitKey::KinFitKey(size_t _htt_index, size_t _hbb_index, UncertaintySource _unc_source,
+                                         UncertaintyScale _unc_scale) :
+        SVFitKey(_htt_index, _unc_source, _unc_scale), hbb_index(_hbb_index)
+{
+}
 
-    EventCacheProvider::SVFitKey::SVFitKey(LegPair _htt_pair,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
-            htt_pair(_htt_pair), unc_source(_unc_source), unc_scale(_unc_scale) { }
+bool EventCacheProvider::KinFitKey::operator<(const KinFitKey& other) const
+{
+    if(hbb_index != other.hbb_index) return hbb_index < other.hbb_index;
+    return SVFitKey::operator<(other);
+}
 
-    bool EventCacheProvider::SVFitKey::operator<(const SVFitKey& other) const
-    {
-        if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
-        if(unc_source != other.unc_source) return unc_source < other.unc_source;
-        return unc_scale < other.unc_scale;
-    }
+EventCacheProvider::HHBtagKey::HHBtagKey(size_t _htt_index, size_t _jet_index, UncertaintySource _unc_source,
+                                         UncertaintyScale _unc_scale) :
+        SVFitKey(_htt_index, _unc_source, _unc_scale), jet_index(_jet_index)
+{
+}
 
-    EventCacheProvider::KinFitKey::KinFitKey() : SVFitKey(),hbb_pair(ntuple::UndefinedLegPair()) { }
+bool EventCacheProvider::HHBtagKey::HHBtagKey::operator<(const HHBtagKey& other) const
+{
+    if(jet_index != other.jet_index) return jet_index < other.jet_index;
+    return SVFitKey::operator<(other);
+}
 
-    EventCacheProvider::KinFitKey::KinFitKey(LegPair _htt_pair, LegPair _hbb_pair, UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
-            SVFitKey(_htt_pair,_unc_source,_unc_scale), hbb_pair(_hbb_pair) { }
 
-    bool EventCacheProvider::KinFitKey::operator<(const KinFitKey& other) const
-    {
-        if(htt_pair != other.htt_pair) return htt_pair < other.htt_pair;
-        if(hbb_pair != other.hbb_pair) return hbb_pair < other.hbb_pair;
-        if(unc_source != other.unc_source) return unc_source < other.unc_source;
-        return unc_scale < other.unc_scale;
-    }
+void EventCacheProvider::AddSVfitResults(size_t htt_index, UncertaintySource unc_source, UncertaintyScale unc_scale,
+                                         const sv_fit_ana::FitResults& fit_results)
+{
+    const SVFitKey key(htt_index, unc_source, unc_scale);
+    if(SVFit_map.count(key))
+        throw exception("EventCacheProvider: duplicated SVfit entry.");
+    SVFit_map[key] = fit_results;
+}
 
-    EventCacheProvider::JetScoreKey::JetScoreKey() : jet_index(0),
-            unc_source(UncertaintySource::None), unc_scale(UncertaintyScale::Central) { }
+void EventCacheProvider::AddKinFitResults(size_t htt_index, size_t hbb_index, UncertaintySource unc_source,
+                                          UncertaintyScale unc_scale, const kin_fit::FitResults& fit_results)
+{
+    const KinFitKey key(htt_index, hbb_index, unc_source, unc_scale);
+    if(kinFit_map.count(key))
+        throw exception("EventCacheProvider: duplicated KinFit entry.");
+    kinFit_map[key] = fit_results;
+}
 
-    EventCacheProvider::JetScoreKey::JetScoreKey(size_t _jet_index,UncertaintySource _unc_source,UncertaintyScale _unc_scale) :
-            jet_index(_jet_index), unc_source(_unc_source), unc_scale(_unc_scale) { }
+void EventCacheProvider::AddHHbtagResults(size_t htt_index, size_t jet_index, UncertaintySource unc_source,
+                                          UncertaintyScale unc_scale, float hhbtag_score)
+{
+    const HHBtagKey key(htt_index, jet_index, unc_source, unc_scale);
+    if(hhBtag_map.count(key))
+        throw exception("EventCacheProvider: duplicated HHBtag entry.");
+    hhBtag_map[key] = hhbtag_score;
+}
 
-    bool EventCacheProvider::JetScoreKey::JetScoreKey::operator<(const JetScoreKey& other) const
-    {
-        if(jet_index != other.jet_index) return jet_index < other.jet_index;
-        if(unc_source != other.unc_source) return unc_source < other.unc_source;
-        return unc_scale < other.unc_scale;
-    }
+void EventCacheProvider::AddHHbtagResults(size_t htt_index, UncertaintySource unc_source, UncertaintyScale unc_scale,
+                                          const std::vector<float>& hhbtag_scores)
+{
+    for(size_t jet_index = 0; jet_index < hhbtag_scores.size(); ++jet_index)
+        AddHHbtagResults(htt_index, jet_index, unc_source, unc_scale, hhbtag_scores.at(jet_index));
+}
+
+bool EventCacheProvider::IsEmpty() const
+{
+    return SVFit_map.empty() && kinFit_map.empty() && hhBtag_map.empty();
+}
+
+boost::optional<sv_fit_ana::FitResults> EventCacheProvider::TryGetSVFit(size_t htt_index, UncertaintySource unc_source,
+                                                                        UncertaintyScale unc_scale) const
+{
+    boost::optional<sv_fit_ana::FitResults> result;
+    const SVFitKey key(htt_index, unc_source, unc_scale);
+    auto iter = SVFit_map.find(key);
+    if(iter != SVFit_map.end())
+        result = iter->second;
+    return result;
+}
+
+boost::optional<kin_fit::FitResults> EventCacheProvider::TryGetKinFit(size_t htt_index, size_t hbb_index,
+                                                                      UncertaintySource unc_source,
+                                                                      UncertaintyScale unc_scale) const
+{
+    boost::optional<kin_fit::FitResults> result;
+    const KinFitKey key(htt_index, hbb_index, unc_source, unc_scale);
+    auto iter = kinFit_map.find(key);
+    if(iter != kinFit_map.end())
+        result = iter->second;
+    return result;
+}
+
+boost::optional<float> EventCacheProvider::TryGetHHbtag(size_t htt_index, size_t jet_index,
+                                                        UncertaintySource unc_source,
+                                                        UncertaintyScale unc_scale) const
+{
+    boost::optional<float> result;
+    const HHBtagKey key(htt_index, jet_index, unc_source, unc_scale);
+    auto iter = hhBtag_map.find(key);
+    if(iter != hhBtag_map.end())
+        result = iter->second;
+    return result;
+}
 
 } // namespace analysis

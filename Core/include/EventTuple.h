@@ -117,6 +117,9 @@ using Point3D = analysis::Point3D_Float;
     VAR(std::vector<Float_t>, genEventPSWeights) /* parton shower weights (w_var / w_nominal): \
                                                     [0] is ISR=0.5 FSR=1; [1] is ISR=1 FSR=0.5; \
                                                     [2] is ISR=2 FSR=1; [3] is ISR=1 FSR=2 */ \
+    VAR(Bool_t, isData) \
+    VAR(Bool_t, isEmbedded) \
+    VAR(Int_t, period) /* datataking period */ \
 	/* Event Weights Variables */ \
     VAR(Double_t, weight_pu) \
     VAR(Double_t, weight_lepton_trig) \
@@ -134,8 +137,6 @@ using Point3D = analysis::Point3D_Float;
     VAR(Double_t, weight_xs_withTopPt) \
     VAR(Double_t, weight_total) \
     VAR(Double_t, weight_total_withTopPt) \
-    VAR(Bool_t, isData) \
-    VAR(Bool_t, isEmbedded) \
     /* Event Variables */ \
     VAR(Int_t, npv) /* NPV */ \
     VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -144,7 +145,7 @@ using Point3D = analysis::Point3D_Float;
     VAR(ULong64_t, trigger_accepts) /* Trigger accept bits for the selected triggers */ \
     VAR(std::vector<ULong64_t>, trigger_matches) /* Leg matching results for the selected triggers */ \
     /* SVfit variables */ \
-    VAR(std::vector<UInt_t>, SVfit_Higgs_index) /* SVfit: Higgs index */ \
+    VAR(std::vector<UInt_t>, SVfit_htt_index) /* SVfit: H->tautau index */ \
     VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit: has a valid result */ \
     VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit: 4-momentum */ \
     VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit: error on 4-momentum */ \
@@ -164,15 +165,15 @@ using Point3D = analysis::Point3D_Float;
     FATJET_DATA(fatJets) \
     SUBJET_DATA(subJets) \
     /* HHKinFit variables */ \
-    VAR(std::vector<UInt_t>, kinFit_Higgs_index) /* HHKinFit: Higgs index */ \
-    VAR(std::vector<UInt_t>, kinFit_jetPair_index) /* HHKinFit: jet pair index */\
+    VAR(std::vector<UInt_t>, kinFit_htt_index) /* HHKinFit: H->tautau index */ \
+    VAR(std::vector<UInt_t>, kinFit_hbb_index) /* HHKinFit: H->bb index */\
+    VAR(std::vector<Int_t>, kinFit_unc_source) /* HHKinFit: uncertianty source */ \
+    VAR(std::vector<Int_t>, kinFit_unc_scale) /* HHKinFit: uncertainty scale */ \
     VAR(std::vector<Float_t>, kinFit_m) /* HHKinFit: m_bbtt mass */\
     VAR(std::vector<Float_t>, kinFit_chi2) /*  HHKinFit: chi2 value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* HHKinFit: convergence code */\
-    VAR(std::vector<Int_t>, kinFit_unc_source) /* HHKinFit: uncertianty source */ \
-    VAR(std::vector<Int_t>, kinFit_unc_scale) /* HHKinFit: uncertainty scale */ \
     /* Jet HH-btag score variables */ \
-    VAR(std::vector<UInt_t>, jet_HHbtag_Higgs_index) /* HH-btag: Higgs index */ \
+    VAR(std::vector<UInt_t>, jet_HHbtag_htt_index) /* HH-btag: H->tautau index */ \
     VAR(std::vector<UInt_t>, jet_HHbtag_jet_index) /* HH-btag: jet index */ \
     VAR(std::vector<Int_t>, jet_HHbtag_unc_source) /* HH-btag: uncertainty source */ \
     VAR(std::vector<Int_t>, jet_HHbtag_unc_scale) /* HH-btag: uncertainty scale */ \
@@ -254,11 +255,21 @@ template<typename T>
 constexpr T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
 
 enum class TreeState { Full, Skimmed };
-using LegPair = std::pair<size_t, size_t>;
 
-size_t LegPairToIndex(const LegPair& pair);
-LegPair LegIndexToPair(size_t index);
-LegPair UndefinedLegPair();
+struct LegPair : std::pair<size_t, size_t> {
+    LegPair();
+    LegPair(size_t _first, size_t _second);
+    LegPair(const std::pair<size_t, size_t>& p);
+
+    size_t Get(size_t position) const;
+    size_t ToIndex() const;
+    bool IsDefined() const;
+    bool Contains(size_t i) const;
+
+    static LegPair FromIndex(size_t index);
+    static const LegPair Undefined;
+};
+
 std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory* directory,
                                              bool readMode, TreeState treeState);
 } // namespace ntuple

@@ -6,23 +6,28 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace ntuple {
 
+const LegPair LegPair::Undefined(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
 
-size_t LegPairToIndex(const LegPair& pair)
+LegPair::LegPair() : std::pair<size_t, size_t>(Undefined) {}
+LegPair::LegPair(size_t _first, size_t _second) : std::pair<size_t, size_t>(_first, _second) {}
+LegPair::LegPair(const std::pair<size_t, size_t>& p) : std::pair<size_t, size_t>(p) {}
+
+size_t LegPair::Get(size_t position) const
 {
-    return pair.first * 1000 + pair.second;
+    if(position == 1) return first;
+    if(position == 2) return second;
+    throw analysis::exception("LegPair: position is out of range");
 }
 
-LegPair LegIndexToPair(size_t index)
+size_t LegPair::ToIndex() const { return first * 1000 + second; }
+bool LegPair::IsDefined() const { return first != Undefined.first && second != Undefined.second; }
+bool LegPair::Contains(size_t i) const { return first == i || second == i; }
+
+LegPair LegPair::FromIndex(size_t index)
 {
     LegPair pair;
     pair.second = index % 1000;
     pair.first = (index - pair.second) / 1000;
-    return pair;
-}
-
-LegPair UndefinedLegPair()
-{
-    static const LegPair pair(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
     return pair;
 }
 
@@ -40,21 +45,21 @@ std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory
     };
 
     static const std::set<std::string> skimmer_branches = {
-        "isData", "file_desc_id", "split_id",
+        "period", "isData", "file_desc_id", "split_id",
     };
 
     static const std::set<std::string> SVfit_branches = {
-        "SVfit_Higgs_index", "SVfit_is_valid", "SVfit_p4", "SVfit_p4_error", "SVfit_mt", "SVfit_mt_error",
+        "SVfit_htt_index", "SVfit_is_valid", "SVfit_p4", "SVfit_p4_error", "SVfit_mt", "SVfit_mt_error",
         "SVfit_unc_source", "SVfit_unc_scale",
     };
 
     static const std::set<std::string> kinFit_branches = {
-        "kinFit_Higgs_index", "kinFit_jetPair_index", "kinFit_m", "kinFit_chi2", "kinFit_convergence",
+        "kinFit_htt_index", "kinFit_hbb_index", "kinFit_m", "kinFit_chi2", "kinFit_convergence",
         "kinFit_unc_source", "kinFit_unc_scale",
     };
 
     static const std::set<std::string> HHbtag_branches = {
-        "jet_HHbtag_Higgs_index", "jet_HHbtag_jet_index", "jet_HHbtag_unc_source", "jet_HHbtag_unc_scale",
+        "jet_HHbtag_htt_index", "jet_HHbtag_jet_index", "jet_HHbtag_unc_source", "jet_HHbtag_unc_scale",
         "jet_HHbtag_value",
     };
 

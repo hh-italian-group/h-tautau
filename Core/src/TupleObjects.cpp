@@ -135,21 +135,6 @@ TupleObject::DiscriminatorResult TupleJet::deepFlavour() const
          + CheckAndGet(event->jets_deepFlavour_bb, "jets_deepFlavour_bb")
          + CheckAndGet(event->jets_deepFlavour_lepb, "jets_deepFlavour_lepb");
 }
-TupleObject::RealNumber TupleJet::hh_tag(analysis::UncertaintySource unc_source,
-                                         analysis::UncertaintyScale unc_scale) const
-{
-    const size_t N = event->jet_hh_score_value.size();
-    if(event->jet_hh_score_index.size() != N || event->jet_hh_score_unc_source.size() != N
-            || event->jet_hh_score_unc_scale.size() != N)
-        throw analysis::exception("Inconsistent jet_hh_score branches size.");
-    for(size_t n = 0; n < N; ++n) {
-        if(event->jet_hh_score_index.at(n) != jet_id) continue;
-        if(event->jet_hh_score_unc_source.at(n) != static_cast<int>(unc_source)) continue;
-        if(event->jet_hh_score_unc_scale.at(n) != static_cast<int>(unc_scale)) continue;
-        return event->jet_hh_score_value.at(n);
-    }
-    throw analysis::exception("HH tag not found for TupleObjects.");
-}
 TupleObject::Integer TupleJet::partonFlavour() const
 {
     return CheckAndGet(event->jets_partonFlavour, "jets_partonFlavour");
@@ -172,6 +157,14 @@ TupleJet::FilterBits TupleJet::triggerFilterMatch() const
     }};
     return analysis::TriggerDescriptorCollection::ConvertFromRootRepresentation(match_bits);
 }
+
+TupleObject::RealNumber TupleJet::hh_btag() const
+{
+    if(!hh_btag_score.is_initialized())
+        throw analysis::exception("TupleJet: hh_btag score is not set.");
+    return *hh_btag_score;
+}
+void TupleJet::set_hh_btag(RealNumber score) { hh_btag_score = score; }
 
 TupleSubJet::TupleSubJet(const ntuple::Event& _event, size_t _jet_id) : TupleObject(_event), jet_id(_jet_id) {}
 const LorentzVectorE& TupleSubJet::p4() const

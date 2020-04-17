@@ -15,7 +15,7 @@ using LorentzVectorM = ntuple::LorentzVectorM;
     VAR(ULong64_t, evt) /* event number */ \
     VAR(Long64_t, entry_index) /* entry index in the original tuple */ \
     /* SVfit variables */ \
-    VAR(std::vector<UInt_t>, SVfit_Higgs_index) /* SVfit: Higgs index */ \
+    VAR(std::vector<UInt_t>, SVfit_htt_index) /* SVfit: Higgs index */ \
     VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit: has a valid result */ \
     VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit: 4-momentum */ \
     VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit: error on 4-momentum */ \
@@ -24,15 +24,15 @@ using LorentzVectorM = ntuple::LorentzVectorM;
     VAR(std::vector<Int_t>, SVfit_unc_source) /* SVfit: uncertainty source */ \
     VAR(std::vector<Int_t>, SVfit_unc_scale) /* SVfit: uncertainty scale */ \
     /* HHKinFit variables */ \
-    VAR(std::vector<UInt_t>, kinFit_Higgs_index) /* HHKinFit: Higgs index */ \
-    VAR(std::vector<UInt_t>, kinFit_jetPair_index) /* HHKinFit: jet pair index */\
+    VAR(std::vector<UInt_t>, kinFit_htt_index) /* HHKinFit: H->tautau index */ \
+    VAR(std::vector<UInt_t>, kinFit_hbb_index) /* HHKinFit: H->bb index */\
+    VAR(std::vector<Int_t>, kinFit_unc_source) /* HHKinFit: uncertianty source */ \
+    VAR(std::vector<Int_t>, kinFit_unc_scale) /* HHKinFit: uncertainty scale */ \
     VAR(std::vector<Float_t>, kinFit_m) /* HHKinFit: m_bbtt mass */\
     VAR(std::vector<Float_t>, kinFit_chi2) /*  HHKinFit: chi2 value*/ \
     VAR(std::vector<Int_t>, kinFit_convergence) /* HHKinFit: convergence code */\
-    VAR(std::vector<Int_t>, kinFit_unc_source) /* HHKinFit: uncertianty source */ \
-    VAR(std::vector<Int_t>, kinFit_unc_scale) /* HHKinFit: uncertainty scale */ \
     /* Jet HH-btag score variables */ \
-    VAR(std::vector<UInt_t>, jet_HHbtag_Higgs_index) /* HH-btag: Higgs index */ \
+    VAR(std::vector<UInt_t>, jet_HHbtag_htt_index) /* HH-btag: H->tautau index */ \
     VAR(std::vector<UInt_t>, jet_HHbtag_jet_index) /* HH-btag: jet index */ \
     VAR(std::vector<Int_t>, jet_HHbtag_unc_source) /* HH-btag: uncertainty source */ \
     VAR(std::vector<Int_t>, jet_HHbtag_unc_scale) /* HH-btag: uncertainty scale */ \
