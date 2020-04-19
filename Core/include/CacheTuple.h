@@ -58,10 +58,10 @@ INITIALIZE_TREE(cache_tuple, CacheTuple, CACHE_DATA)
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
-DECLARE_TREE(cache_ntuple, CacheProdSummary, CacheSummaryTuple, CACHE_SUMMARY_DATA, "summary")
+DECLARE_TREE(cache_tuple, CacheProdSummary, CacheSummaryTuple, CACHE_SUMMARY_DATA, "summary")
 #undef VAR
 
 #define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
-INITIALIZE_TREE(cache_ntuple, CacheSummaryTuple, CACHE_SUMMARY_DATA)
+INITIALIZE_TREE(cache_tuple, CacheSummaryTuple, CACHE_SUMMARY_DATA)
 #undef VAR
 #undef CACHE_SUMMARY_DATA

@@ -116,4 +116,90 @@ boost::optional<float> EventCacheProvider::TryGetHHbtag(size_t htt_index, size_t
     return result;
 }
 
+EventCacheSource::EventCacheSource(const std::string& file_name, const std::string& tree_name) :
+    file(root_ext::OpenRootFile(file_name)),
+    cache(std::make_shared<cache_tuple::CacheTuple>(tree_name, file.get(), true)),
+    current_cache_entry(-1)
+{
+    Advance();
+    cache_tuple::CacheSummaryTuple summary_tuple("summary", file.get(), true);
+    for(const auto& s : summary_tuple)
+        summary.push_back(s);
+}
+
+bool EventCacheSource::Read(Long64_t entry_index, EventCacheProvider& provider)
+{
+    while(current_cache_entry < cache->GetEntries() && cache->data().entry_index < entry_index)
+        Advance();
+    if(current_cache_entry < cache->GetEntries() && cache->data().entry_index == entry_index) {
+        provider.AddEvent(cache->data());
+        Advance();
+        return true;
+    }
+    return false;
+}
+
+boost::optional<Long64_t> EventCacheSource::GetCurrentEntryIndex() const
+{
+    boost::optional<Long64_t> entry_index;
+    if(current_cache_entry < cache->GetEntries())
+        entry_index = cache->data().entry_index;
+    return entry_index;
+}
+
+size_t EventCacheSource::GetTotalNumberOfEntries() const { return static_cast<size_t>(cache->GetEntries()); }
+size_t EventCacheSource::GetRemainingNumberOfEntries() const
+{
+    const Long64_t delta = std::max<Long64_t>(cache->GetEntries() - current_cache_entry, 0);
+    return static_cast<size_t>(delta);
+}
+const std::vector<cache_tuple::CacheProdSummary>& EventCacheSource::GetSummary() const { return summary; }
+
+void EventCacheSource::Advance()
+{
+    ++current_cache_entry;
+    if(current_cache_entry < cache->GetEntries())
+        cache->GetEntry(current_cache_entry);
+}
+
+EventCacheReader::EventCacheReader(const std::vector<std::string>& cache_files, const std::string& tree_name)
+    : last_entry_index(-1), n_total(0)
+{
+    for(const std::string& file_name : cache_files) {
+        sources.emplace_back(file_name, tree_name);
+        n_total += sources.back().GetTotalNumberOfEntries();
+        summary.insert(summary.end(), sources.back().GetSummary().begin(), sources.back().GetSummary().end());
+    }
+    n_remaining = n_total;
+}
+
+EventCacheProvider EventCacheReader::Read(Long64_t entry_index)
+{
+    if(entry_index <= last_entry_index)
+        throw exception("EventCacheReader: only the forward reading is supported.");
+    last_entry_index = entry_index;
+    EventCacheProvider provider;
+    n_remaining = 0;
+    for(auto& source : sources) {
+        source.Read(entry_index, provider);
+        n_remaining += source.GetRemainingNumberOfEntries();
+    }
+    return provider;
+}
+
+boost::optional<Long64_t> EventCacheReader::GetCurrentEntryIndex() const
+{
+    boost::optional<Long64_t> entry_index;
+    for(const auto& source : sources) {
+        const auto source_entry_index = source.GetCurrentEntryIndex();
+        if(source_entry_index && (!entry_index || *entry_index < *source_entry_index))
+            entry_index = source_entry_index;
+    }
+    return entry_index;
+}
+
+size_t EventCacheReader::GetTotalNumberOfEntries() const { return n_total; }
+size_t EventCacheReader::GetRemainingNumberOfEntries() const { return n_remaining; }
+const std::vector<cache_tuple::CacheProdSummary>& EventCacheReader::GetSummary() const { return summary; }
+
 } // namespace analysis

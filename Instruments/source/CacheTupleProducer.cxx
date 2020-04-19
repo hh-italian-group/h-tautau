@@ -32,7 +32,7 @@ class CacheTupleProducer {
 public:
     using CacheEvent = cache_tuple::CacheEvent;
     using CacheTuple = cache_tuple::CacheTuple;
-    using CacheSummaryTuple = cache_ntuple::CacheSummaryTuple;
+    using CacheSummaryTuple = cache_tuple::CacheSummaryTuple;
     using clock = std::chrono::system_clock;
 
     CacheTupleProducer(const Arguments& _args) :

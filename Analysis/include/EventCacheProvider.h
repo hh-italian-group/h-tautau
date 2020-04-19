@@ -5,6 +5,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #include "h-tautau/Analysis/include/KinFitInterface.h"
 #include "h-tautau/Analysis/include/SVfitAnaInterface.h"
+#include "h-tautau/Core/include/CacheTuple.h"
 
 namespace analysis {
 
@@ -162,6 +163,41 @@ private:
     std::map<SVFitKey, sv_fit_ana::FitResults> SVFit_map;
     std::map<KinFitKey, kin_fit::FitResults> kinFit_map;
     std::map<HHBtagKey, float> hhBtag_map;
+};
+
+class EventCacheSource {
+public:
+    EventCacheSource(const std::string& file_name, const std::string& tree_name);
+    bool Read(Long64_t entry_index, EventCacheProvider& provider);
+    boost::optional<Long64_t> GetCurrentEntryIndex() const;
+    size_t GetTotalNumberOfEntries() const;
+    size_t GetRemainingNumberOfEntries() const;
+    const std::vector<cache_tuple::CacheProdSummary>& GetSummary() const;
+
+private:
+    void Advance();
+
+private:
+    std::shared_ptr<TFile> file;
+    std::shared_ptr<cache_tuple::CacheTuple> cache;
+    Long64_t current_cache_entry;
+    std::vector<cache_tuple::CacheProdSummary> summary;
+};
+
+class EventCacheReader {
+public:
+    EventCacheReader(const std::vector<std::string>& cache_files, const std::string& tree_name);
+    EventCacheProvider Read(Long64_t entry_index);
+    boost::optional<Long64_t> GetCurrentEntryIndex() const;
+    size_t GetTotalNumberOfEntries() const;
+    size_t GetRemainingNumberOfEntries() const;
+    const std::vector<cache_tuple::CacheProdSummary>& GetSummary() const;
+
+private:
+    std::vector<EventCacheSource> sources;
+    Long64_t last_entry_index;
+    size_t n_total, n_remaining;
+    std::vector<cache_tuple::CacheProdSummary> summary;
 };
 
 } // namespace analysis
