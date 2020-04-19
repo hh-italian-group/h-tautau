@@ -51,8 +51,6 @@ public:
                           const kin_fit::FitResults& fit_results);
     void AddHHbtagResults(size_t htt_index, size_t jet_index, UncertaintySource unc_source, UncertaintyScale unc_scale,
                           float hhbtag_score);
-    void AddHHbtagResults(size_t htt_index, UncertaintySource unc_source, UncertaintyScale unc_scale,
-                          const std::vector<float>& hhbtag_scores);
 
     template<typename Event>
     void AddEvent(const Event& event, bool add_svfit = true, bool add_kinfit = true, bool add_hhbtag = true)

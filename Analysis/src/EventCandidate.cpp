@@ -125,12 +125,13 @@ UncertaintyScale EventCandidate::GetCacheUncScale() const
     return IsSameAsCentral() ? UncertaintyScale::Central : unc_scale;
 }
 
-void EventCandidate::SetHHTagScores(size_t htt_index)
+void EventCandidate::SetHHTagScores(size_t htt_index, const EventCacheProvider* cache)
 {
     Lock lock(mutex);
+    if(!cache)
+        cache = &cache_provider;
     for(size_t jet_index = 0; jet_index < tuple_jets.size(); ++jet_index) {
-        const auto cached_score = cache_provider.TryGetHHbtag(htt_index, jet_index, GetCacheUncSource(),
-                                                              GetCacheUncScale());
+        const auto cached_score = cache->TryGetHHbtag(htt_index, jet_index, GetCacheUncSource(), GetCacheUncScale());
         float score = -1;
         if(cached_score.is_initialized())
             score = *cached_score;

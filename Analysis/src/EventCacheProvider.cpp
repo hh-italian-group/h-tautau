@@ -69,13 +69,6 @@ void EventCacheProvider::AddHHbtagResults(size_t htt_index, size_t jet_index, Un
     hhBtag_map[key] = hhbtag_score;
 }
 
-void EventCacheProvider::AddHHbtagResults(size_t htt_index, UncertaintySource unc_source, UncertaintyScale unc_scale,
-                                          const std::vector<float>& hhbtag_scores)
-{
-    for(size_t jet_index = 0; jet_index < hhbtag_scores.size(); ++jet_index)
-        AddHHbtagResults(htt_index, jet_index, unc_source, unc_scale, hhbtag_scores.at(jet_index));
-}
-
 bool EventCacheProvider::IsEmpty() const
 {
     return SVFit_map.empty() && kinFit_map.empty() && hhBtag_map.empty();

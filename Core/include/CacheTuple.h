@@ -48,13 +48,14 @@ INITIALIZE_TREE(cache_tuple, CacheTuple, CACHE_DATA)
 #undef VAR
 #undef CACHE_DATA
 
-
 #define CACHE_SUMMARY_DATA() \
     /* Run statistics */ \
-    VAR(UInt_t, exeTime) \
-    VAR(Int_t, numberOfOriginalEvents) \
-    VAR(Int_t, numberOfTimesSVFit) \
-    VAR(Int_t, numberOfTimesKinFit) \
+    VAR(UInt_t, exeTime) /* execution time */ \
+    VAR(Int_t, n_orig_events) /* number of events from the original EventTuple that were processed */ \
+    VAR(Int_t, n_stored_events) /* number of events that are stored in the CacheTuple */ \
+    VAR(Int_t, n_SVfit) /* number of times the SVfit algo was executed */ \
+    VAR(Int_t, n_KinFit) /* number of times the HHKinFit algo was executed */ \
+    VAR(Int_t, n_HHbtag) /* number of times the HH-btag algo was executed */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)

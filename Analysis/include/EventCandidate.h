@@ -53,7 +53,7 @@ public:
     Period GetPeriod() const;
     const EventCacheProvider& GetCacheProvider() const;
 
-    void SetHHTagScores(size_t htt_index);
+    void SetHHTagScores(size_t htt_index, const EventCacheProvider* cache = nullptr);
 
 private:
     void CreateLeptons();
