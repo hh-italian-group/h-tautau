@@ -67,7 +67,7 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
                                        { "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2018ReReco.root",
                                          "TauPOG/TauIDSFs/data/TauES_dm_DeepTau2017v2p1VSjet_2018ReReco_ptgt100.root" }},
                                        { TauIdDiscriminator::byIsolationMVArun2017v2DBoldDMwLT2017,
-                                       { "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2018ReRec.root",
+                                       { "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2018ReReco.root",
                                          "TauPOG/TauIDSFs/data/TauES_dm_MVAoldDM2017v2_2018ReReco_ptgt100.root" }}} }
     };
 
