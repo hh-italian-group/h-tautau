@@ -16,7 +16,8 @@ public:
                        const std::string& file_ele_faking_tau);
 
     double GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
-                               UncertaintySource unc_source, UncertaintyScale scale, double pt, double eta) const;
+                               UncertaintySource unc_source, UncertaintyScale scale, double pt, double eta,
+                               bool* same_as_central = nullptr) const;
     double GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale) const;
     double GetCorrectionFactorEleFakingTau(double eta, int decayMode, UncertaintyScale scale) const;
     double GetCorrectionFactorMuonFakingTau(UncertaintyScale scale) const;

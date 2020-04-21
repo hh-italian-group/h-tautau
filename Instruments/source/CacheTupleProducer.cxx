@@ -1,25 +1,21 @@
 /*! Produce synchronization tree.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
 
-#include "AnalysisTools/Run/include/program_main.h"
-#include "AnalysisTools/Core/include/RootExt.h"
-#include "AnalysisTools/Core/include/TextIO.h"
 #include "AnalysisTools/Core/include/ProgressReporter.h"
+#include "AnalysisTools/Run/include/program_main.h"
+#include "h-tautau/Analysis/include/EventCacheProvider.h"
 #include "h-tautau/Analysis/include/EventInfo.h"
 #include "h-tautau/Core/include/CacheTuple.h"
-#include "h-tautau/Core/include/EventTuple.h"
-#include "h-tautau/Analysis/include/SignalObjectSelector.h"
-#include <ctime>
-#include <chrono>
+#include "HHTools/HHbtag/interface/HH_BTag.h"
 
 struct Arguments {
     REQ_ARG(std::string, input_file);
     REQ_ARG(std::string, output_file);
     REQ_ARG(std::string, channels);
-    REQ_ARG(std::string, period);
+    REQ_ARG(analysis::Period, period);
     REQ_ARG(std::string, selections);
     REQ_ARG(std::string, unc_sources);
-    REQ_ARG(std::string, jet_orderings);
+    REQ_ARG(std::string, btaggers);
     REQ_ARG(bool, isData);
     REQ_ARG(bool, hasBjetPair);
     OPT_ARG(bool, runSVFit, true);
@@ -28,6 +24,7 @@ struct Arguments {
     OPT_ARG(Long64_t, begin_entry_index, 0);
     OPT_ARG(Long64_t, end_entry_index, std::numeric_limits<Long64_t>::max());
     OPT_ARG(std::string, working_path, "./");
+    OPT_ARG(analysis::DiscriminatorWP, btag_wp, analysis::DiscriminatorWP::Medium);
 };
 
 namespace analysis {
@@ -36,28 +33,46 @@ class CacheTupleProducer {
 public:
     using CacheEvent = cache_tuple::CacheEvent;
     using CacheTuple = cache_tuple::CacheTuple;
-    using CacheSummaryTuple = cache_ntuple::CacheSummaryTuple;
+    using CacheSummaryTuple = cache_tuple::CacheSummaryTuple;
     using clock = std::chrono::system_clock;
 
-    CacheTupleProducer(const Arguments& _args) : args(_args), outputFile(root_ext::CreateRootFile(args.output_file())),
-                cacheSummary("summary", outputFile.get(), false), start(clock::now()), run_period(Parse<analysis::Period>(args.period())),
-                progressReporter(10, std::cout)
+    CacheTupleProducer(const Arguments& _args) :
+            args(_args), outputFile(root_ext::CreateRootFile(args.output_file())),
+            cacheSummary("summary", outputFile.get(), false), start(clock::now()),
+            progressReporter(10, std::cout)
     {
-        auto signalModes = SplitValueListT<analysis::SignalMode>(args.selections(),false,",");
-        for(unsigned n = 0; n < signalModes.size(); ++n){
-            signalObjectSelectors.emplace_back(signalModes.at(n));
-        }
+        const auto signal_modes = SplitValueListT<SignalMode>(args.selections(), false, ",");
+        for(auto signal_mode : signal_modes)
+            signalObjectSelectors.emplace_back(signal_mode);
 
-        EventCandidate::InitializeUncertainties(run_period, false, args.working_path(),
+        EventCandidate::InitializeUncertainties(args.period(), false, args.working_path(),
                                                 signalObjectSelectors.at(0).GetTauVSjetDiscriminator().first);
 
-        unc_sources = SplitValueListT<analysis::UncertaintySource>(args.unc_sources(),false,",");
-        vector_jet_ordering = SplitValueListT<JetOrdering>(args.jet_orderings(),false,",");
-        channels = SplitValueList(args.channels(),false,",");
+        unc_sources = SplitValueListT<UncertaintySource>(args.unc_sources(), false, ",");
+        channels = SplitValueListT<Channel>(args.channels(), false, ",");
+        auto btagger_kinds = SplitValueListT<BTaggerKind>(args.btaggers(), false, ",");
+        for(BTaggerKind kind : btagger_kinds) {
+            if(kind == BTaggerKind::HHbtag) {
+                static const std::string HH_BTag_version = "1";
+                std::array<std::string, 2> btag_models;
 
-        cacheSummary().numberOfOriginalEvents = 0;
-        cacheSummary().numberOfTimesSVFit = 0;
-        cacheSummary().numberOfTimesKinFit = 0;
+                for(size_t parity = 0; parity < 2; ++parity) {
+                    std::ostringstream ss;
+                    ss << args.working_path() + "/HHTools/HHbtag/models/HHbtag_v" << HH_BTag_version
+                       << "_par_" << parity;
+                    btag_models.at(parity) = ss.str();
+                }
+                hh_btagger = std::make_unique<hh_btag::HH_BTag>(btag_models);
+                deepFlavourTagger = std::make_unique<BTagger>(args.period(), BTaggerKind::DeepFlavour);
+            }
+            btaggers.emplace_back(args.period(), kind);
+        }
+
+        cacheSummary().n_orig_events = 0;
+        cacheSummary().n_stored_events = 0;
+        cacheSummary().n_SVfit = 0;
+        cacheSummary().n_KinFit = 0;
+        cacheSummary().n_HHbtag = 0;
     }
 
     void Run()
@@ -67,14 +82,15 @@ public:
 
         auto originalFile = root_ext::OpenRootFile(args.input_file());
         size_t n_tot_events = 0;
-        std::map<std::string,std::pair<std::shared_ptr<ntuple::EventTuple>,Long64_t>> map_event;
-        for(unsigned c = 0; c < channels.size(); ++c){
+        std::map<Channel, std::shared_ptr<ntuple::EventTuple>> map_event;
+        for(Channel channel : channels){
             try {
-                auto originalTuple = ntuple::CreateEventTuple(channels.at(c),originalFile.get(),true,ntuple::TreeState::Full);
-                Long64_t n_entries = std::min(originalTuple->GetEntries(), args.end_entry_index())
-                                     - args.begin_entry_index();
-                Long64_t n_events = std::min(args.max_events_per_tree(), n_entries);
-                map_event[channels.at(c)] = std::make_pair(originalTuple, n_events);
+                auto originalTuple = ntuple::CreateEventTuple(ToString(channel), originalFile.get(), true,
+                                                              ntuple::TreeState::Full);
+                const Long64_t n_entries = std::min(originalTuple->GetEntries(), args.end_entry_index())
+                                           - args.begin_entry_index();
+                const Long64_t n_events = std::min(args.max_events_per_tree(), n_entries);
+                map_event[channel] = originalTuple;
                 n_tot_events += static_cast<size_t>(n_events);
             } catch(std::runtime_error) {
             }
@@ -82,112 +98,147 @@ public:
 
         size_t n_processed_events = 0;
         progressReporter.SetTotalNumberOfEvents(n_tot_events);
-        for(unsigned c = 0; c < channels.size(); ++c){
-            if(!map_event.count(channels.at(c))) {
-                std::cout << "Channel: " << channels.at(c) << " not found." << std::endl;
+        for(Channel channel : channels){
+            if(!map_event.count(channel)) {
+                std::cout << "Channel: " << channel << " not found." << std::endl;
                 continue;
             }
-            std::cout << "Channel: " << channels.at(c) << std::endl;
-            CacheTuple cache(channels.at(c), outputFile.get(), false);
+            std::cout << "Channel: " << channel << std::endl;
+            CacheTuple cache(ToString(channel), outputFile.get(), false);
             cache.SetAutoFlush(1000);
             cache.SetMaxVirtualSize(10000000);
-            auto& originalTuple = *map_event.at(channels.at(c)).first;
+            auto& originalTuple = *map_event.at(channel);
             const Long64_t n_entries = originalTuple.GetEntries();
             Long64_t n_processed_events_channel = 0;
-            for(Long64_t current_entry = 0; current_entry < n_entries
-                    && n_processed_events_channel < args.max_events_per_tree(); ++current_entry) {
-                if(current_entry >= args.begin_entry_index() && current_entry < args.end_entry_index()) {
-                    originalTuple.GetEntry(current_entry);
-                    if(static_cast<Channel>(originalTuple().channelId) == Channel::MuMu){ //temporary fix due tue a bug in mumu channel in production
-                        originalTuple().first_daughter_indexes = {0};
-                        originalTuple().second_daughter_indexes = {1};
-                    }
-                    FillCacheTuple(cache, originalTuple.data());
-                    ++n_processed_events_channel;
-                    ++n_processed_events;
-                }
-                cache.Fill();
+            for(Long64_t current_entry = args.begin_entry_index();
+                    current_entry < n_entries && n_processed_events_channel < args.max_events_per_tree()
+                    && current_entry < args.end_entry_index(); ++current_entry) {
+                originalTuple.GetEntry(current_entry);
+                originalTuple().isData = args.isData();
+                originalTuple().period = static_cast<int>(args.period());
+                FillCacheTuple(cache, current_entry, originalTuple.data());
+                ++n_processed_events_channel;
+                ++n_processed_events;
                 if(n_processed_events % 100 == 0) progressReporter.Report(n_processed_events, false);
-
             }
             progressReporter.Report(n_processed_events, true);
             cache.Write();
             const auto stop = clock::now();
-            cacheSummary().exeTime = static_cast<UInt_t>(std::chrono::duration_cast<std::chrono::seconds>(stop - start).count());
+            const auto exeTime = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+            cacheSummary().exeTime = static_cast<UInt_t>(exeTime);
             cacheSummary.Fill();
             cacheSummary.Write();
         }
-        progressReporter.Report(n_tot_events,true);
+        progressReporter.Report(n_tot_events, true);
     }
 
 private:
-
-    void FillCacheTuple(CacheTuple& cacheTuple, const ntuple::Event& event)
+    void FillCacheTuple(CacheTuple& cacheTuple, Long64_t original_entry, const ntuple::Event& event)
     {
+        ++cacheSummary().n_orig_events;
+        if(!SignalObjectSelector::PassLeptonVetoSelection(event)) return;
+        if(!SignalObjectSelector::PassMETfilters(event, args.period(), args.isData())) return;
 
-        std::set<size_t> Htt_indexes;
-        std::set<std::pair<size_t,size_t>> HH_indexes;
-        for(unsigned selector = 0; selector < signalObjectSelectors.size(); ++selector){
-            for(unsigned ordering = 0; ordering < vector_jet_ordering.size(); ++ordering){
-                for(unsigned source = 0; source < unc_sources.size(); ++source){
-                    for(int variation = -1; variation < 2; ++variation){
-                        cacheSummary().numberOfOriginalEvents++;
-                        cacheTuple().run = event.run;
-                        cacheTuple().lumi = event.lumi;
-                        cacheTuple().evt = event.evt;
-                        const SignalObjectSelector& signalObjectSelector = signalObjectSelectors.at(selector);
-                        JetOrdering jet_ordering = vector_jet_ordering.at(ordering);
-                        UncertaintySource unc_source = unc_sources.at(source);
-                        UncertaintyScale scale = static_cast<UncertaintyScale>(variation);
-                        if(scale != UncertaintyScale::Central && unc_source == UncertaintySource::None) continue;
-                        if(scale == UncertaintyScale::Central && unc_source != UncertaintySource::None) continue;
-
-                        boost::optional<EventInfo> event_info_base = CreateEventInfo(event,signalObjectSelector,
-                                                                                         nullptr,run_period,jet_ordering,
-                                                                                         false,unc_source,scale);
-                        if(!event_info_base.is_initialized()) continue;
-
-                        if(args.hasBjetPair() && !event_info_base->HasBjetPair()) continue;
-                        if(!signalObjectSelector.PassLeptonVetoSelection(event)) continue;
-                        if(!signalObjectSelector.PassMETfilters(event,run_period,args.isData())) continue;
-
-                        size_t selected_htt_index = event_info_base->GetHttIndex();
-                        size_t selected_hbb_index = ntuple::LegPairToIndex(event_info_base->GetSelectedSignalJets().selectedBjetPair);
-                        if(!Htt_indexes.count(selected_htt_index) && args.runSVFit()){
-                            cacheSummary().numberOfTimesSVFit++;
-                            const sv_fit_ana::FitResults& result = event_info_base->GetSVFitResults(true);
-                            cacheTuple().SVfit_Higgs_index.push_back(selected_htt_index);
-                            cacheTuple().SVfit_is_valid.push_back(result.has_valid_momentum);
-                            cacheTuple().SVfit_p4.push_back(result.momentum);
-                            cacheTuple().SVfit_p4_error.push_back(LorentzVectorM(result.momentum_error));
-                            cacheTuple().SVfit_mt.push_back(static_cast<Float_t>(result.transverseMass));
-                            cacheTuple().SVfit_mt_error.push_back(static_cast<Float_t>(result.transverseMass_error));
-                            cacheTuple().SVfit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(source)));
-                            cacheTuple().SVfit_unc_scale.push_back(variation);
-                            Htt_indexes.insert(selected_htt_index);
+        EventCacheProvider cache_provider;
+        for(auto [unc_source, unc_scale] : EnumerateUncVariations(unc_sources)) {
+            auto event_candidate = std::make_shared<EventCandidate>(event, unc_source, unc_scale);
+            if(unc_scale != UncertaintyScale::Central && event_candidate->IsSameAsCentral()) continue;
+            std::set<size_t> htt_indices, hh_btagged_htt_indices;
+            std::set<std::pair<size_t, size_t>> hh_indices;
+            for(const SignalObjectSelector& signalObjectSelector : signalObjectSelectors) {
+                for(const BTagger& bTagger : btaggers) {
+                    if(bTagger.GetTagger() == BTaggerKind::HHbtag) {
+                        const auto ref_event_info = EventInfo::Create(event_candidate, signalObjectSelector,
+                                                                      *deepFlavourTagger, args.btag_wp());
+                        if(!ref_event_info || !ref_event_info->HasBjetPair()) continue;
+                        const size_t ref_htt_index = ref_event_info->GetHttIndex();
+                        if(!hh_btagged_htt_indices.count(ref_htt_index)) {
+                            ++cacheSummary().n_HHbtag;
+                            CalculateHHbtag(*ref_event_info, cache_provider);
+                            hh_btagged_htt_indices.insert(ref_htt_index);
                         }
+                        event_candidate->SetHHTagScores(ref_htt_index, &cache_provider);
+                    }
 
+                    const auto event_info = EventInfo::Create(event_candidate, signalObjectSelector, bTagger,
+                                                              args.btag_wp());
+                    if(!event_info) continue;
+                    if(args.hasBjetPair() && !event_info->HasBjetPair()) continue;
 
-                        std::pair<size_t,size_t> hh_pair = std::make_pair(selected_htt_index,selected_hbb_index);
-                        if(!HH_indexes.count(hh_pair) && args.runKinFit() && event_info_base->HasBjetPair()){
-                            cacheSummary().numberOfTimesKinFit++;
-                            const kin_fit::FitResults& result = event_info_base->GetKinFitResults(true);
-                            cacheTuple().kinFit_Higgs_index.push_back(selected_htt_index);
-                            cacheTuple().kinFit_jetPairId.push_back(selected_hbb_index);
-                            cacheTuple().kinFit_m.push_back(static_cast<Float_t>(result.mass));
-                            cacheTuple().kinFit_chi2.push_back(static_cast<Float_t>(result.chi2));
-                            cacheTuple().kinFit_convergence.push_back(result.convergence);
-                            cacheTuple().kinFit_unc_source.push_back(static_cast<Int_t>(unc_sources.at(source)));
-                            cacheTuple().kinFit_unc_scale.push_back(variation);
-                            HH_indexes.insert(hh_pair);
+                    const size_t htt_index = event_info->GetHttIndex();
+                    if(args.runSVFit() && !htt_indices.count(htt_index)) {
+                        ++cacheSummary().n_SVfit;
+                        const sv_fit_ana::FitResults& fit_results = event_info->GetSVFitResults(true);
+                        cache_provider.AddSVfitResults(htt_index, unc_source, unc_scale, fit_results);
+                        htt_indices.insert(htt_index);
+                    }
+
+                    if(args.runKinFit() && event_info->HasBjetPair()) {
+                        const size_t hbb_index = event_info->GetSelectedSignalJets().bjet_pair.ToIndex();
+                        const auto hh_pair = std::make_pair(htt_index, hbb_index);
+                        if(!hh_indices.count(hh_pair)) {
+                            ++cacheSummary().n_KinFit;
+                            const kin_fit::FitResults& fit_results = event_info->GetKinFitResults(true);
+                            cache_provider.AddKinFitResults(htt_index, hbb_index, unc_source, unc_scale, fit_results);
+                            hh_indices.insert(hh_pair);
                         }
-
                     }
                 }
             }
-
         }
 
+        if(!cache_provider.IsEmpty()) {
+            cacheTuple().run = event.run;
+            cacheTuple().lumi = event.lumi;
+            cacheTuple().evt = event.evt;
+            cacheTuple().entry_index = original_entry;
+            cache_provider.FillEvent(cacheTuple());
+            cacheTuple.Fill();
+            ++cacheSummary().n_stored_events;
+        }
+    }
+
+    void CalculateHHbtag(EventInfo& event_info, EventCacheProvider& cache_provider) const
+    {
+        const auto& event_candidate = event_info.GetEventCandidate();
+        const int sample_year = static_cast<int>(event_candidate.GetPeriod());
+        const int channelId = static_cast<int>(event_candidate.GetChannel());
+        const ULong64_t parity = event_candidate.GetEvent().evt % 2;
+        const auto& htt_p4 = *event_info.GetHiggsTTMomentum(false);
+        const auto& met_p4 = event_candidate.GetMET().GetMomentum();
+        const float htt_pt = static_cast<float>(htt_p4.pt());
+        const float htt_eta = static_cast<float>(htt_p4.eta());
+        const float htt_met_dphi = static_cast<float>(ROOT::Math::VectorUtil::DeltaPhi(htt_p4, met_p4));
+        const float htt_scalar_pt = static_cast<float>(
+                event_info.GetLeg(1).GetMomentum().pt() + event_info.GetLeg(2).GetMomentum().pt());
+        const float rel_met_pt_htt_pt = static_cast<float>(met_p4.pt() / htt_scalar_pt);
+
+        const auto& jets = event_info.GetCentralJets();
+        const size_t N = jets.size();
+        std::vector<float> jet_pt(N), jet_eta(N), rel_jet_M_pt(N), rel_jet_E_pt(N), jet_htt_deta(N),
+                           jet_deepFlavour(N), jet_htt_dphi(N);
+        for(size_t jet_id = 0; jet_id < N; ++jet_id) {
+            const auto& jet_p4 = jets.at(jet_id)->GetMomentum();
+            jet_pt.at(jet_id) = static_cast<float>(jet_p4.pt());
+            jet_eta.at(jet_id) = static_cast<float>(jet_p4.eta());
+            rel_jet_M_pt.at(jet_id) = static_cast<float>(jet_p4.mass() / jet_p4.pt());
+            rel_jet_E_pt.at(jet_id) = static_cast<float>(jet_p4.E() / jet_p4.pt());
+            jet_htt_deta.at(jet_id) = static_cast<float>(htt_p4.eta() - jet_p4.eta());
+            jet_htt_dphi.at(jet_id) = static_cast<float>(ROOT::Math::VectorUtil::DeltaPhi(htt_p4, jet_p4));
+            jet_deepFlavour.at(jet_id) = (*jets.at(jet_id))->deepFlavour();
+        }
+
+        const auto scores = hh_btagger->GetScore(jet_pt, jet_eta, rel_jet_M_pt, rel_jet_E_pt, jet_htt_deta,
+                                                 jet_deepFlavour, jet_htt_dphi, sample_year, channelId, htt_pt,
+                                                 htt_eta, htt_met_dphi, rel_met_pt_htt_pt, htt_scalar_pt, parity);
+
+        if(scores.size() != N)
+            throw exception("CacheTupleProducer: inconsistent HH-btag output.");
+        for(size_t jet_id = 0; jet_id < N; ++jet_id) {
+            cache_provider.AddHHbtagResults(event_info.GetHttIndex(), (*jets.at(jet_id))->jet_index(),
+                                            event_candidate.GetUncSource(), event_candidate.GetUncScale(),
+                                            scores.at(jet_id));
+        }
     }
 
 private:
@@ -195,12 +246,13 @@ private:
     std::shared_ptr<TFile> outputFile;
     CacheSummaryTuple cacheSummary;
     const clock::time_point start;
-    analysis::Period run_period;
-    std::vector<std::string> channels;
+    std::vector<Channel> channels;
     std::vector<SignalObjectSelector> signalObjectSelectors;
     std::vector<UncertaintySource> unc_sources;
-    std::vector<JetOrdering> vector_jet_ordering;
-    analysis::tools::ProgressReporter progressReporter;
+    std::vector<BTagger> btaggers;
+    tools::ProgressReporter progressReporter;
+    std::unique_ptr<BTagger> deepFlavourTagger;
+    std::unique_ptr<hh_btag::HH_BTag> hh_btagger;
 };
 
 } // namespace analysis

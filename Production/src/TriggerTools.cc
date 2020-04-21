@@ -47,6 +47,15 @@ namespace trigger_tools {
                 triggerObject.unpackFilterLabels(event, triggerResults);
             }
         };
+
+        template<typename TriggerObject>
+        struct UnpackFiltersImpl<TriggerObject, 11>{
+            static void Unpack(const edm::Event& event, const edm::TriggerResults& triggerResults,
+                               TriggerObject& triggerObject)
+            {
+                triggerObject.unpackFilterLabels(event, triggerResults);
+            }
+        };
     }
 
     inline void UnpackFilters(const edm::Event& event, const edm::TriggerResults& triggerResults,

@@ -52,16 +52,16 @@ public:
 
         auto summaryTuple = ntuple::CreateSummaryTuple("summary", originalFile.get(), true, ntuple::TreeState::Full);
         summaryTuple->GetEntry(0);
-        std::shared_ptr<SummaryInfo> summaryInfo(new SummaryInfo(summaryTuple->data(),Parse<Channel>(args.tree_name())));
+        auto summaryInfo = std::make_shared<SummaryInfo>(summaryTuple->data(), Parse<Channel>(args.tree_name()));
         const Channel channel = Parse<Channel>(args.tree_name());
         const Long64_t n_entries = originalTuple->GetEntries();
+        const BTagger bTagger(args.period(), BTaggerKind::DeepFlavour);
         for(Long64_t current_entry = 0; current_entry < n_entries; ++current_entry) {
             originalTuple->GetEntry(current_entry);
 
-            JetOrdering jet_ordering = args.period() == Period::Run2017 ? JetOrdering::DeepCSV : JetOrdering::CSV;
-
-            boost::optional<analysis::EventInfo> event = CreateEventInfo(originalTuple->data(), signalObjectSelector, summaryInfo.get(),args.period(), jet_ordering);
-            if(!event.is_initialized()) continue;
+            auto event = EventInfo::Create(originalTuple->data(), signalObjectSelector, bTagger,
+                                           DiscriminatorWP::Medium, summaryInfo);
+            if(!event) continue;
             // if(event->GetEnergyScale() != EventEnergyScale::Central) continue;
             if(!event->GetTriggerResults().AnyAcceptAndMatch()) continue;
             if((*event)->extraelec_veto || (*event)->extramuon_veto) continue;

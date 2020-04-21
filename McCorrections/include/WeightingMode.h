@@ -29,29 +29,32 @@ ENUM_NAMES(WeightType) = {
     { WeightType::GenEventWeight, "GenEventWeight" }
 };
 
-using WeightingMode = std::set<WeightType>;
+class WeightingMode : public std::set<WeightType> {
+public:
+    using Base = std::set<WeightType>;
 
-inline WeightingMode operator|(const WeightingMode& a, const WeightingMode& b)
-{
-    WeightingMode c(a.begin(), a.end());
-    c.insert(b.begin(), b.end());
-    return c;
-}
+    WeightingMode() = default;
+    WeightingMode(const WeightingMode&) = default;
+    WeightingMode(WeightingMode&&) = default;
+    WeightingMode& operator=(const WeightingMode&) = default;
 
-inline WeightingMode operator&(const WeightingMode& a, const WeightingMode& b)
-{
-    WeightingMode c;
-    std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
-    return c;
-}
+    template<typename ...Args>
+    WeightingMode(Args&&... args) { Initialize(std::forward<Args>(args)...); }
 
-inline WeightingMode operator-(const WeightingMode& a, const WeightingMode& b)
-{
-    WeightingMode c;
-    std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
-    return c;
-}
+    WeightingMode operator|(const WeightingMode& b) const;
+    WeightingMode operator&(const WeightingMode& b) const;
+    WeightingMode operator-(const WeightingMode& b) const;
 
+private:
+    void Initialize() {}
+
+    template<typename ...Args>
+    void Initialize(WeightType value, Args&&... other_values)
+    {
+        insert(value);
+        Initialize(std::forward<Args>(other_values)...);
+    }
+};
 
 } // namespace analysis
 } // namespace mc_corrections

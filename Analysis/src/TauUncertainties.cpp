@@ -78,10 +78,12 @@ TauESUncertainties::TauESUncertainties(const std::string& file_tes_low_pt, const
 
 double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source, UncertaintyScale scale, double pt,
-                                               double eta) const
+                                               double eta, bool* same_as_central) const
 {
     const UncertaintyScale current_scale = ApplyUncertaintyScale(decayMode, genLeptonMatch, unc_source)
                                          ? scale : UncertaintyScale::Central;
+    if(same_as_central)
+        *same_as_central = current_scale == UncertaintyScale::Central;
     if(genLeptonMatch == GenLeptonMatch::Tau) {
         return GetCorrectionFactorTrueTau(pt, decayMode, current_scale);
 
@@ -92,8 +94,11 @@ double TauESUncertainties::GetCorrectionFactor(int decayMode, GenLeptonMatch gen
     else if(genLeptonMatch == GenLeptonMatch::Muon || genLeptonMatch == GenLeptonMatch::TauMuon){
         return GetCorrectionFactorMuonFakingTau(current_scale);
     }
-    else
+    else {
+        if(same_as_central)
+            *same_as_central = true;
         return 1.;
+    }
 }
 
 double TauESUncertainties::GetCorrectionFactorTrueTau(double pt, int decayMode, UncertaintyScale scale) const

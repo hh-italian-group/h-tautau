@@ -15,8 +15,12 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 namespace mc_corrections {
 
-EventWeights::EventWeights(Period period, JetOrdering jet_ordering, DiscriminatorWP btag_wp, const WeightingMode& mode)
+EventWeights::EventWeights(Period period, const BTagger& bTagger, const WeightingMode& mode)
 {
+    static constexpr DiscriminatorWP default_btag_wp = DiscriminatorWP::Medium;
+
+    const BTaggerKind base_tagger = bTagger.GetBaseTagger();
+
     if(period == Period::Run2016) {
         if(mode.empty() || mode.count(WeightType::PileUp))
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
@@ -32,18 +36,23 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"), "",
                         FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),period, DiscriminatorWP::Medium);
         if(mode.empty() || mode.count(WeightType::BTag)){
-            if(jet_ordering == JetOrdering::CSV)
+            if(base_tagger == BTaggerKind::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2016/btag/bTagEfficiencies_Moriond17.root"), FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
-                        period, jet_ordering, btag_wp);
-            else if(jet_ordering == JetOrdering::DeepCSV)
+                        FullName("2016/btag/bTagEfficiencies_Moriond17.root"),
+                        FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
+                        bTagger, default_btag_wp);
+            else if(base_tagger == BTaggerKind::DeepCSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2016/btag/b_eff_HH_DeepCSV_2016.root"), FullName("2016/btag/DeepCSV_2016LegacySF_WP_V1.csv"),
-                        period, jet_ordering, btag_wp);
-            else if(jet_ordering == JetOrdering::DeepFlavour)
+                        FullName("2016/btag/b_eff_HH_DeepCSV_2016.root"),
+                        FullName("2016/btag/DeepCSV_2016LegacySF_WP_V1.csv"),
+                        bTagger, default_btag_wp);
+            else if(base_tagger == BTaggerKind::DeepFlavour)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2016/btag/b_eff_HH_DeepFlavour_2016.root"), FullName("2016/btag/DeepJet_2016LegacySF_WP_V1.csv"),
-                        period, jet_ordering, btag_wp);
+                        FullName("2016/btag/b_eff_HH_DeepFlavour_2016.root"),
+                        FullName("2016/btag/DeepJet_2016LegacySF_WP_V1.csv"),
+                        bTagger, default_btag_wp);
+            else
+                throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
@@ -56,20 +65,23 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullName("2017/pu_mc_distr_per_sample_100_100_2017.root"),
                         FullName("2017/pileup_groups.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
-            if(jet_ordering == JetOrdering::DeepCSV)
+            if(base_tagger == BTaggerKind::DeepCSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2017/btag/b_eff_HH_DeepCSV_2017.root"), FullName("2017/btag/DeepCSV_94XSF_WP_V4_B_F.csv"),
-                        period, jet_ordering, btag_wp);
-            else if(jet_ordering == JetOrdering::CSV)
+                        FullName("2017/btag/b_eff_HH_DeepCSV_2017.root"),
+                        FullName("2017/btag/DeepCSV_94XSF_WP_V4_B_F.csv"),
+                        bTagger, default_btag_wp);
+            else if(base_tagger == BTaggerKind::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"), FullName("2017/btag/CSVv2_94XSF_V2_B_F.csv"),
-                        period, jet_ordering, btag_wp);
-            else if(jet_ordering == JetOrdering::DeepFlavour)
+                        FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"),
+                        FullName("2017/btag/CSVv2_94XSF_V2_B_F.csv"),
+                        bTagger, default_btag_wp);
+            else if(base_tagger == BTaggerKind::DeepFlavour)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2017/btag/b_eff_HH_DeepFlavour_2017.root"), FullName("2017/btag/DeepFlavour_94XSF_WP_V3_B_F.csv"),
-                        period, jet_ordering, btag_wp);
+                        FullName("2017/btag/b_eff_HH_DeepFlavour_2017.root"),
+                        FullName("2017/btag/DeepFlavour_94XSF_WP_V3_B_F.csv"),
+                        bTagger, default_btag_wp);
             else
-               throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
+               throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
@@ -91,17 +103,19 @@ EventWeights::EventWeights(Period period, JetOrdering jet_ordering, Discriminato
                         FullName("2018/pu_mc_distr_per_sample_100_100_2018.root"),
                         FullName("2018/pileup_groups_2018.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
-            if(jet_ordering == JetOrdering::DeepCSV)
+            if(base_tagger == BTaggerKind::DeepCSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2018/btag/b_eff_HH_DeepCSV_2018.root"), FullName("2018/btag/DeepCSV_102XSF_WP_V1.csv"),
-                        period, jet_ordering, btag_wp);
-            else if(jet_ordering == JetOrdering::DeepFlavour)
+                        FullName("2018/btag/b_eff_HH_DeepCSV_2018.root"),
+                        FullName("2018/btag/DeepCSV_102XSF_WP_V1.csv"),
+                        bTagger, default_btag_wp);
+            else if(base_tagger == BTaggerKind::DeepFlavour)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
-                        FullName("2018/btag/b_eff_HH_DeepFlavour_2018.root"), FullName("2018/btag/DeepJet_102XSF_WP_V1.csv"),
-                        period, jet_ordering, btag_wp);
+                        FullName("2018/btag/b_eff_HH_DeepFlavour_2018.root"),
+                        FullName("2018/btag/DeepJet_102XSF_WP_V1.csv"),
+                        bTagger, default_btag_wp);
             else
-               throw exception("Jet_Ordering %1% is not supported.") % jet_ordering;
-        } //Temporary fix, needs to be updated
+               throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
+        }
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))

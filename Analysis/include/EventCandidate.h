@@ -3,29 +3,34 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
+#include "AnalysisTools/Core/include/EventIdentifier.h"
 #include "h-tautau/Core/include/EventTuple.h"
 #include "h-tautau/Core/include/TupleObjects.h"
 #include "h-tautau/Core/include/Candidate.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
+#include "h-tautau/Analysis/include/EventCacheProvider.h"
 #include "h-tautau/Analysis/include/TauUncertainties.h"
 #include "h-tautau/JetTools/include/JECUncertaintiesWrapper.h"
-#include "AnalysisTools/Core/include/Tools.h"
+
 
 namespace analysis {
-    using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
-    using LepCollection = std::vector<LepCandidate>;
-    using JetCandidate = Candidate<ntuple::TupleJet>;
-    using JetCollection = std::vector<JetCandidate>;
-    using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
-    using FatJetCollection = std::vector<FatJetCandidate>;
-    using MET = MissingET<ntuple::TupleMet>;
+using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
+using LepCollection = std::vector<LepCandidate>;
+using JetCandidate = Candidate<ntuple::TupleJet>;
+using JetCollection = std::vector<JetCandidate>;
+using FatJetCandidate = Candidate<ntuple::TupleFatJet>;
+using FatJetCollection = std::vector<FatJetCandidate>;
+using MET = MissingET<ntuple::TupleMet>;
 
 class EventCandidate {
 public:
-    EventCandidate(const ntuple::Event& _event, UncertaintySource _uncertainty_source, UncertaintyScale _scale);
-    EventCandidate(const EventCandidate&) = default;
-    EventCandidate(EventCandidate&&) = default;
-    EventCandidate& operator=(const EventCandidate&) = default;
+    using Mutex = std::recursive_mutex;
+    using Lock = std::lock_guard<Mutex>;
+
+    EventCandidate(const ntuple::Event& _event, UncertaintySource _unc_source, UncertaintyScale _unc_scale);
+    EventCandidate(const EventCandidate&) = delete;
+    EventCandidate(EventCandidate&&) = delete;
+    EventCandidate& operator=(const EventCandidate&) = delete;
 
     static void InitializeUncertainties(Period period, bool is_full, const std::string& working_path,
                                         TauIdDiscriminator tau_id_discriminator);
@@ -33,29 +38,44 @@ public:
     static const jec::JECUncertaintiesWrapper& GetJecUncertainties();
     static const TauESUncertainties& GetTauESUncertainties();
 
-    const LepCollection& GetLeptons();
-    const JetCollection& GetJets();
-    const FatJetCollection& GetFatJets();
-    const MET& GetMET();
+    const LepCollection& GetLeptons() const;
+    const JetCollection& GetJets() const;
+    const FatJetCollection& GetFatJets() const;
+    const MET& GetMET() const;
+    bool IsSameAsCentral() const;
     const ntuple::Event& GetEvent() const;
-    UncertaintyScale GetScale() const;
     UncertaintySource GetUncSource() const;
+    UncertaintyScale GetUncScale() const;
+    UncertaintySource GetCacheUncSource() const;
+    UncertaintyScale GetCacheUncScale() const;
+    const EventIdentifier& GetEventId() const;
+    Channel GetChannel() const;
+    Period GetPeriod() const;
+    const EventCacheProvider& GetCacheProvider() const;
+
+    void SetHHTagScores(size_t htt_index, const EventCacheProvider* cache = nullptr);
 
 private:
     void CreateLeptons();
     void CreateJets();
+    void CreateFatJets();
 
+    Mutex mutex;
     const ntuple::Event* event;
-    UncertaintySource uncertainty_source;
-    UncertaintyScale scale;
-    std::shared_ptr<std::vector<ntuple::TupleLepton>> tuple_leptons;
-    std::shared_ptr<std::vector<ntuple::TupleJet>> tuple_jets;
-    std::shared_ptr<std::vector<ntuple::TupleFatJet>> tuple_fatJets;
-    std::shared_ptr<FatJetCollection> fatJets;
-    std::shared_ptr<ntuple::TupleMet> tuple_met;
-    std::shared_ptr<std::vector<LepCandidate>> lepton_candidates;
-    std::shared_ptr<std::vector<JetCandidate>> jet_candidates;
-    std::shared_ptr<MET> met;
+    const UncertaintySource unc_source;
+    const UncertaintyScale unc_scale;
+    const EventIdentifier event_id;
+    bool same_as_central;
+    const EventCacheProvider cache_provider;
+    std::vector<ntuple::TupleLepton> tuple_leptons;
+    std::vector<ntuple::TupleJet> tuple_jets;
+    std::vector<ntuple::TupleFatJet> tuple_fatJets;
+    ntuple::TupleMet tuple_met;
+    std::vector<LepCandidate> lepton_candidates;
+    std::vector<JetCandidate> jet_candidates;
+    FatJetCollection fatJets;
+    MET met;
+
     static const std::unique_ptr<boost::optional<jec::JECUncertaintiesWrapper>> jecUncertainties;
     static const std::unique_ptr<boost::optional<TauESUncertainties>> tauESUncertainties;
 };

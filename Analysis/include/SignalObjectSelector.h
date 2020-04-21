@@ -25,62 +25,20 @@ ENUM_NAMES(SignalMode) = {
 
 namespace jet_ordering {
 
-    template<typename LorentzVector>
     struct JetInfo {
-        LorentzVector p4;
+        LorentzVectorE p4;
         size_t index;
         double tag;
 
-        JetInfo() : index(0), tag(0.0) { }
-
-        JetInfo(const LorentzVector _p4, size_t _index, double _tag)
-            : p4(_p4), index(_index), tag(_tag) { }
-
+        JetInfo() : index(0), tag(0.0) {}
+        template<typename LVector>
+        JetInfo(const LVector _p4, size_t _index, double _tag) : p4(_p4), index(_index), tag(_tag) {}
     };
 
-    template<typename LorentzVector>
-    bool CompareJets(const JetInfo<LorentzVector>& jet_1, const JetInfo<LorentzVector>& jet_2,
-                     double pt_thr, double eta_thr)
-    {
-        const auto eta1 = std::abs(jet_1.p4.eta());
-        const auto eta2 = std::abs(jet_2.p4.eta());
-        if(eta1 < eta_thr && eta2 >= eta_thr) return true;
-        if(eta1 >= eta_thr && eta2 < eta_thr) return false;
-        const auto pt1 = jet_1.p4.pt();
-        const auto pt2 = jet_2.p4.pt();
-        if(pt1 > pt_thr && pt2 <= pt_thr) return true;
-        if(pt1 <= pt_thr && pt2 > pt_thr) return false;
-
-        if(jet_1.tag != jet_2.tag)
-            return jet_1.tag > jet_2.tag;
-        return pt1 > pt2;
-    };
-
-    template<typename LorentzVector>
-    std::vector<JetInfo<LorentzVector>> OrderJets(
-                                  const std::vector<JetInfo<LorentzVector>>& jet_info_vector,
-                                  bool apply_hard_cut,
-                                  double pt_cut = std::numeric_limits<double>::lowest(),
-                                  double eta_cut = std::numeric_limits<double>::max())
-    {
-        const auto comparitor = [&](const JetInfo<LorentzVector>& jet_1,
-                                    const JetInfo<LorentzVector>& jet_2) -> bool {
-            return analysis::jet_ordering::CompareJets(jet_1, jet_2, pt_cut, eta_cut);
-        };
-
-        std::vector<JetInfo<LorentzVector>> jets_ordered;
-        if(apply_hard_cut){
-            for(size_t n = 0; n < jet_info_vector.size(); ++n) {
-                if(jet_info_vector.at(n).p4.Pt() > pt_cut && std::abs(jet_info_vector.at(n).p4.eta()) < eta_cut)
-                    jets_ordered.push_back(jet_info_vector.at(n));
-            }
-        }
-        else
-            jets_ordered = jet_info_vector;
-        std::sort(jets_ordered.begin(), jets_ordered.end(), comparitor);
-        return jets_ordered;
-    }
-
+    bool CompareJets(const JetInfo& jet_1, const JetInfo& jet_2, const Cut1D& pt_cut, const Cut1D& eta_cut);
+    std::vector<JetInfo> FilterJets(const std::vector<JetInfo>& jets, const Cut1D& pt_cut, const Cut1D& eta_cut);
+    std::vector<JetInfo> OrderJets(const std::vector<JetInfo>& jets, bool apply_hard_cut,
+                                   const Cut1D& pt_cut, const Cut1D& eta_cut);
 }
 
 
@@ -88,52 +46,53 @@ class SignalObjectSelector {
 public:
     using LegPair = ntuple::LegPair;
     using LepCandidate = LeptonCandidate<ntuple::TupleLepton>;
-
-    SignalObjectSelector(SignalMode _mode);
-
-    bool PassLeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId, bool is_sync = false) const;
-    boost::optional<size_t> GetHiggsCandidateIndex(EventCandidate& event_candidate, bool is_sync = false) const;
-    bool PassLeptonVetoSelection(const ntuple::Event& event) const;
-    bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data) const;
-    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSjetDiscriminator() const;
-    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSeDiscriminator(analysis::Channel) const;
-    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSmuDiscriminator(analysis::Channel) const;
-    std::pair<DiscriminatorWP, DiscriminatorWP>  GetTauVSjetSidebandWPRange() const;
-
-    SignalMode GetSignalMode() const { return mode; }
+    using JetInfoCollection = std::vector<jet_ordering::JetInfo>;
 
     struct SelectedSignalJets{
-        LegPair selectedBjetPair;
-        LegPair selectedVBFjetPair;
+        LegPair bjet_pair;
+        LegPair vbf_pair;
         size_t n_bjets;
 
         SelectedSignalJets();
-        bool HasBjetPair(size_t njets) const;
-        bool HasVBFPair(size_t njets) const;
+        bool HasBjetPair() const;
+        bool HasVBFPair() const;
         bool isSelectedBjet(size_t n) const;
         bool isSelectedVBFjet(size_t n) const;
     };
 
-    static SelectedSignalJets SelectSignalJets(EventCandidate& event_candidate,
-                                               const analysis::Period& period,
-                                               analysis::JetOrdering jet_ordering,
-                                               size_t selected_higgs_index,
-                                               analysis::UncertaintySource unc_source,
-                                               analysis::UncertaintyScale unc_scale);
+    SignalObjectSelector(SignalMode _mode);
 
-     template<typename LorentzVector>
-     static bool PassEcalNoiceVetoJets(const LorentzVector& jet_p4, Period period, DiscriminatorIdResults jets_pu_id)
-     {
-         if(period !=  analysis::Period::Run2017)
-             return true;
+    SignalMode GetSignalMode() const { return mode; }
 
-         const double abs_eta = std::abs(jet_p4.eta());
-         return !(jet_p4.pt() < cuts::hh_bbtautau_Run2::jetID::max_pt_veto &&
-                     abs_eta > cuts::hh_bbtautau_Run2::jetID::eta_low_veto &&
-                     abs_eta < cuts::hh_bbtautau_Run2::jetID::eta_high_veto && !jets_pu_id.Passed(analysis::DiscriminatorWP::Loose));
-     }
+    bool PassLeptonSelection(const LepCandidate& lepton, Channel channel, const size_t legId,
+                             bool is_sync = false) const;
+    boost::optional<size_t> GetHiggsCandidateIndex(const EventCandidate& event_candidate, bool is_sync = false) const;
+    static bool PassLeptonVetoSelection(const ntuple::Event& event);
+    static bool PassMETfilters(const ntuple::Event& event, Period period, bool is_Data);
+    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSjetDiscriminator() const;
+    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSeDiscriminator(Channel channel) const;
+    std::pair<TauIdDiscriminator, DiscriminatorWP> GetTauVSmuDiscriminator(Channel channel) const;
+    std::pair<DiscriminatorWP, DiscriminatorWP>  GetTauVSjetSidebandWPRange() const;
+
+    static JetInfoCollection CreateJetInfos(const EventCandidate& event_candidate, const BTagger& bTagger,
+                                            bool apply_jet_up_id);
+    static JetInfoCollection CreateJetInfos(const EventCandidate& event_candidate, const BTagger& bTagger,
+                                            bool apply_jet_up_id, const boost::optional<size_t>& selected_htt_index,
+                                            const SelectedSignalJets& selected_signal_jets);
+    static SelectedSignalJets SelectSignalJets(const EventCandidate& event_candidate, size_t selected_htt_index,
+                                               const BTagger& bTagger, DiscriminatorWP btag_wp);
+    static const FatJetCandidate* SelectFatJet(const EventCandidate& event_candidate,
+                                               const SelectedSignalJets& selected_signal_jets);
+
+    template<typename LVector>
+    static bool PassEcalNoiceVeto(const LVector& jet_p4, Period period, DiscriminatorIdResults jet_pu_id)
+    {
+        return PassEcalNoiceVetoImpl(LorentzVector(jet_p4), period, jet_pu_id);
+    }
 
 private:
+    static bool PassEcalNoiceVetoImpl(const LorentzVector& jet_p4, Period period, DiscriminatorIdResults jet_pu_id);
+
     bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync = false) const;
     bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
     bool PassHH_LeptonSelection(const LepCandidate& lepton, Channel channel, size_t legId,  bool is_sync = false) const;

@@ -101,13 +101,15 @@ public:
     DiscriminatorResult csv() const;
     DiscriminatorResult deepcsv() const;
     DiscriminatorResult deepFlavour() const;
-    RealNumber hh_tag(analysis::UncertaintySource unc_source, analysis::UncertaintyScale unc_scale) const;
     Integer partonFlavour() const;
     Integer hadronFlavour() const;
     RealNumber rawf() const;
     RealNumber resolution() const;
     FilterBits triggerFilterMatch() const;
     size_t jet_index() const;
+
+    RealNumber hh_btag() const;
+    void set_hh_btag(RealNumber score);
 
 private:
     template<typename Value>
@@ -124,6 +126,7 @@ private:
 
 private:
     size_t jet_id;
+    boost::optional<RealNumber> hh_btag_score;
 };
 
 class TupleSubJet : public TupleObject {

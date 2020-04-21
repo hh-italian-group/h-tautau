@@ -45,6 +45,7 @@ public:
 
     void Run()
     {
+        const BTagger bTagger(Period::Run2018, BTaggerKind::DeepFlavour);
         for(const auto& file_name : args.input_MC_files()){
             const std::string filename = args.input_path()  + "/" + file_name;
             std::cout << "MC filename: " << filename << std::endl;
@@ -52,8 +53,8 @@ public:
             ntuple::EventTuple eventTuple_mc(args.tree_name(), inputFile_mc.get(), true, {}, GetEnabledBranches());
             for(const ntuple::Event& event : eventTuple_mc) {
                 if (event.eventEnergyScale != 0 ) continue;
-                boost::optional<analysis::EventInfo> eventInfo = CreateEventInfo(event,signalObjectSelector);
-                if(!eventInfo.is_initialized()) continue;
+                auto eventInfo = EventInfo::Create(event, signalObjectSelector, bTagger, DiscriminatorWP::Medium);
+                if(!eventInfo) continue;
                 anaData.npv("mc").Fill(event.npv, pu_weight.Get(*eventInfo));
                 anaData.npv("mc_noweights").Fill(event.npv);
             }

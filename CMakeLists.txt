@@ -17,6 +17,7 @@ add_library(TauAnalysisTools STATIC ${TauAnalysisTool_SRC})
 
 file(GLOB_RECURSE TauPOG_SRC "${CMSSW_BASE_SRC}/TauPOG/TauIDSFs/src/*.cc")
 add_library(TauPOG STATIC ${TauPOG_SRC})
+set_source_files_properties(${TauPOG_SRC} PROPERTIES COMPILE_FLAGS "-w")
 
 file(GLOB_RECURSE HH_KINFIT2_SRC "${CMSSW_BASE_SRC}/HHKinFit2/*.cpp")
 add_library(HHKinFit2 STATIC ${HH_KINFIT2_SRC})
@@ -28,10 +29,19 @@ add_library(SVfit STATIC ${SVFIT_SRC})
 target_compile_definitions(SVfit PRIVATE USE_SVFITTF=1)
 set_source_files_properties(${SVFIT_SRC} PROPERTIES COMPILE_FLAGS "-w")
 
+include("${AnalysisTools_DIR}/cmake/include/tensorflow.cmake")
+file(GLOB_RECURSE HHbtag_SRC "${CMSSW_BASE_SRC}/HHTools/HHbtag/src/*.cpp")
+add_library(HHbtag STATIC ${HHbtag_SRC})
+target_link_libraries(HHbtag ${TF_LIBRARIES})
+target_include_directories(HHbtag PRIVATE ${TF_INCLUDES})
+
 add_library(h-tautau STATIC ${SOURCE_LIST})
 
 foreach(exe_name ${EXE_LIST})
     target_link_libraries("${exe_name}" h-tautau AnalysisTools HTT-utilities SVfit HHKinFit2 TauAnalysisTools TauPOG)
 endforeach()
+
+target_link_libraries(CacheTupleProducer ${TF_LIBRARIES} HHbtag)
+target_include_directories(CacheTupleProducer PRIVATE ${TF_INCLUDES})
 
 set_target_properties(Print_Graph Print_Graph_2 Print_Graph_3 Print_TreeBranch2D PROPERTIES EXCLUDE_FROM_ALL 1)

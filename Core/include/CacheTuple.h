@@ -3,39 +3,40 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 #pragma once
 
-#include "AnalysisTools/Core/include/SmartTree.h"
-#include "AnalysisTools/Core/include/AnalysisMath.h"
+#include "EventTuple.h"
 
 namespace cache_tuple {
-using LorentzVectorM = analysis::LorentzVectorM;
+using LorentzVectorM = ntuple::LorentzVectorM;
 }
 
 #define CACHE_DATA() \
     VAR(UInt_t, run) /* run */ \
     VAR(UInt_t, lumi) /* lumi section */ \
     VAR(ULong64_t, evt) /* event number */ \
-    /* SV Fit variables */ \
-    VAR(std::vector<size_t>, SVfit_Higgs_index) /* SVfit using integration method */ \
-    VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit using integration method */ \
-    VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit using integration method */ \
-    VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit using integration method */ \
-    VAR(std::vector<Float_t>, SVfit_mt) /* SVfit using integration method */ \
-    VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit using integration method */ \
-    VAR(std::vector<Int_t>, SVfit_unc_source) /* SVfit using integration method */ \
-    VAR(std::vector<Int_t>, SVfit_unc_scale) /* SVfit using integration method */ \
-    /* KinFit Variables */ \
-    VAR(std::vector<size_t>, kinFit_Higgs_index) /* kinFit Higgs indexes */ \
-    VAR(std::vector<size_t>, kinFit_jetPairId) /* indices of jet pairs for which KinFit is calculated */\
-    VAR(std::vector<Float_t>, kinFit_m) /* KinFit m_bbtt mass */\
-    VAR(std::vector<Float_t>, kinFit_chi2) /*  KinFit chi2 value*/ \
-    VAR(std::vector<Int_t>, kinFit_convergence) /* KinFit convergence code */\
-    VAR(std::vector<Int_t>, kinFit_unc_source) /* kinFit */ \
-    VAR(std::vector<Int_t>, kinFit_unc_scale) /* kinFit */ \
-    /* Jet score Variables */ \
-    VAR(std::vector<size_t>, jet_hh_score_index) /* jet score indexes */ \
-    VAR(std::vector<Int_t>, jet_hh_score_unc_scale) /* jet score scale */ \
-    VAR(std::vector<Int_t>, jet_hh_score_unc_source) /* jet score source */ \
-    VAR(std::vector<Float_t>, jet_hh_score_value) /* jet score value */ \
+    VAR(Long64_t, entry_index) /* entry index in the original tuple */ \
+    /* SVfit variables */ \
+    VAR(std::vector<UInt_t>, SVfit_htt_index) /* SVfit: Higgs index */ \
+    VAR(std::vector<Bool_t>, SVfit_is_valid) /* SVfit: has a valid result */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4) /* SVfit: 4-momentum */ \
+    VAR(std::vector<LorentzVectorM>, SVfit_p4_error) /* SVfit: error on 4-momentum */ \
+    VAR(std::vector<Float_t>, SVfit_mt) /* SVfit: transverse mass */ \
+    VAR(std::vector<Float_t>, SVfit_mt_error) /* SVfit: error on transverse mass */ \
+    VAR(std::vector<Int_t>, SVfit_unc_source) /* SVfit: uncertainty source */ \
+    VAR(std::vector<Int_t>, SVfit_unc_scale) /* SVfit: uncertainty scale */ \
+    /* HHKinFit variables */ \
+    VAR(std::vector<UInt_t>, kinFit_htt_index) /* HHKinFit: H->tautau index */ \
+    VAR(std::vector<UInt_t>, kinFit_hbb_index) /* HHKinFit: H->bb index */\
+    VAR(std::vector<Int_t>, kinFit_unc_source) /* HHKinFit: uncertianty source */ \
+    VAR(std::vector<Int_t>, kinFit_unc_scale) /* HHKinFit: uncertainty scale */ \
+    VAR(std::vector<Float_t>, kinFit_m) /* HHKinFit: m_bbtt mass */\
+    VAR(std::vector<Float_t>, kinFit_chi2) /*  HHKinFit: chi2 value*/ \
+    VAR(std::vector<Int_t>, kinFit_convergence) /* HHKinFit: convergence code */\
+    /* Jet HH-btag score variables */ \
+    VAR(std::vector<UInt_t>, jet_HHbtag_htt_index) /* HH-btag: H->tautau index */ \
+    VAR(std::vector<UInt_t>, jet_HHbtag_jet_index) /* HH-btag: jet index */ \
+    VAR(std::vector<Int_t>, jet_HHbtag_unc_source) /* HH-btag: uncertainty source */ \
+    VAR(std::vector<Int_t>, jet_HHbtag_unc_scale) /* HH-btag: uncertainty scale */ \
+    VAR(std::vector<Float_t>, jet_HHbtag_value) /* HH-btag: tagging score */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
@@ -47,20 +48,21 @@ INITIALIZE_TREE(cache_tuple, CacheTuple, CACHE_DATA)
 #undef VAR
 #undef CACHE_DATA
 
-
 #define CACHE_SUMMARY_DATA() \
     /* Run statistics */ \
-    VAR(UInt_t, exeTime) \
-    VAR(Int_t, numberOfOriginalEvents) \
-    VAR(Int_t, numberOfTimesSVFit) \
-    VAR(Int_t, numberOfTimesKinFit) \
+    VAR(UInt_t, exeTime) /* execution time */ \
+    VAR(Int_t, n_orig_events) /* number of events from the original EventTuple that were processed */ \
+    VAR(Int_t, n_stored_events) /* number of events that are stored in the CacheTuple */ \
+    VAR(Int_t, n_SVfit) /* number of times the SVfit algo was executed */ \
+    VAR(Int_t, n_KinFit) /* number of times the HHKinFit algo was executed */ \
+    VAR(Int_t, n_HHbtag) /* number of times the HH-btag algo was executed */ \
     /**/
 
 #define VAR(type, name) DECLARE_BRANCH_VARIABLE(type, name)
-DECLARE_TREE(cache_ntuple, CacheProdSummary, CacheSummaryTuple, CACHE_SUMMARY_DATA, "summary")
+DECLARE_TREE(cache_tuple, CacheProdSummary, CacheSummaryTuple, CACHE_SUMMARY_DATA, "summary")
 #undef VAR
 
 #define VAR(type, name) ADD_DATA_TREE_BRANCH(name)
-INITIALIZE_TREE(cache_ntuple, CacheSummaryTuple, CACHE_SUMMARY_DATA)
+INITIALIZE_TREE(cache_tuple, CacheSummaryTuple, CACHE_SUMMARY_DATA)
 #undef VAR
 #undef CACHE_SUMMARY_DATA

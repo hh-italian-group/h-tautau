@@ -19,9 +19,9 @@ parser.add_argument('--queue', required=True, type=str, help="queue to submit th
 parser.add_argument('--long-jobs', required=False, type=str, default=None, help="file with the list of long jobs")
 parser.add_argument('--channels', required=False, type=str, default='eTau,muTau,tauTau', help="list of channels")
 parser.add_argument('--selections', required=False, type=str, default='HH_legacy,HH', help="list of selections")
-parser.add_argument('--jet-orderings', required=False, type=str, default='CSV,DeepCSV,DeepFlavour',
-                    help="list of jet orderings")
-parser.add_argument('--data-file-pattern', required=False, type=str, default='.*_Run201[678][A-H].*',
+parser.add_argument('--btaggers', required=False, type=str, default='DeepCSV,DeepFlavour,HHbtag',
+                    help="list of b taggers")
+parser.add_argument('--data-file-pattern', required=False, type=str, default='.*Run201[678][A-H].*',
                     help="pattern to determine whatever the input file is data")
 parser.add_argument('--cache-tuple-producer', required=False, type=str, default='../build/h-tautau/CacheTupleProducer',
                     help="path to the CacheTupleProducer executable")
@@ -251,7 +251,7 @@ for job in calc_jobs:
                                                                             os.path.abspath(args.cache_tuple_producer))
         submit_cmd += ' --input_file {} --output_file {}'.format(job.input_file, job.output_file)
         submit_cmd += ' --channels {} --period {} --selections {}'.format(job.channel, args.period, args.selections)
-        submit_cmd += ' --unc_sources {} --jet_orderings {}'.format(','.join(job.unc_sources), args.jet_orderings)
+        submit_cmd += ' --unc_sources {} --btaggers {}'.format(','.join(job.unc_sources), args.btaggers)
         submit_cmd += ' --isData {} --hasBjetPair {}'.format(int(job.is_data), args.hasBjetPair)
         submit_cmd += ' --runSVFit {} --runKinFit {}'.format(args.runSVFit, args.runKinFit)
         submit_cmd += ' --working_path {}'.format(os.path.abspath('.'))
