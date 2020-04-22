@@ -145,7 +145,7 @@ void EventCandidate::CreateLeptons()
     double shifted_met_px = 0;
     double shifted_met_py = 0;
 
-    for(size_t n = 0; n < event->lep_p4.size(); ++n)
+    for(size_t n = 0; n < event->lep_type.size(); ++n)
         tuple_leptons.emplace_back(*event, n);
     for(size_t n = 0; n < tuple_leptons.size(); ++n)
         lepton_candidates.emplace_back(tuple_leptons.at(n), tuple_leptons.at(n).iso());

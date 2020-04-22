@@ -22,24 +22,25 @@ public:
     using Integer = int;
     using RealNumber = float;
 
-    TupleObject(const ntuple::Event& _event);
+    TupleObject(const Event& _event);
 
 protected:
     const Event* event;
 
-    static void CheckIndexRange(size_t index, size_t size, std::string_view obj_name, std::string_view branch_name);
+    void CheckIndexRange(size_t index, size_t size, std::string_view obj_name,
+                         std::string_view branch_name) const;
 
     template<typename Value>
-    static Value CheckAndGet(size_t index, const std::vector<Value>& col, std::string_view obj_name,
-                             std::string_view branch_name)
+    Value CheckAndGet(size_t index, const std::vector<Value>& col, std::string_view obj_name,
+                      std::string_view branch_name) const
     {
         CheckIndexRange(index, col.size(), obj_name, branch_name);
         return col.at(index);
     }
 
     template<typename Value>
-    static const Value& CheckAndGetRef(size_t index, const std::vector<Value>& col, std::string_view obj_name,
-                                       std::string_view branch_name)
+    const Value& CheckAndGetRef(size_t index, const std::vector<Value>& col, std::string_view obj_name,
+                                std::string_view branch_name) const
     {
         CheckIndexRange(index, col.size(), obj_name, branch_name);
         return col.at(index);

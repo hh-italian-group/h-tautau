@@ -47,12 +47,17 @@ public:
         std::cout << "done.\nMerging caches..." << std::endl;
 
         size_t n_steps = 0;
+        std::set<Long64_t> processed_entries;
         while(true) {
             const auto entry_index = cache_reader.GetCurrentEntryIndex();
             if(!entry_index) break;
+            if(processed_entries.count(*entry_index))
+                throw exception("Duplicated entry_index = %1%") % *entry_index;
+            processed_entries.insert(*entry_index);
             const auto provider = cache_reader.Read(*entry_index);
             if(!provider.IsEmpty()) {
                 provider.FillEvent(output_cache());
+                output_cache().entry_index = *entry_index;
                 output_cache.Fill();
             }
             if(++n_steps % 100 == 0) {

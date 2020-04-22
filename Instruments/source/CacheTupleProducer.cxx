@@ -113,6 +113,7 @@ public:
             for(Long64_t current_entry = args.begin_entry_index();
                     current_entry < n_entries && n_processed_events_channel < args.max_events_per_tree()
                     && current_entry < args.end_entry_index(); ++current_entry) {
+
                 originalTuple.GetEntry(current_entry);
                 originalTuple().isData = args.isData();
                 originalTuple().period = static_cast<int>(args.period());
@@ -188,9 +189,6 @@ private:
         }
 
         if(!cache_provider.IsEmpty()) {
-            cacheTuple().run = event.run;
-            cacheTuple().lumi = event.lumi;
-            cacheTuple().evt = event.evt;
             cacheTuple().entry_index = original_entry;
             cache_provider.FillEvent(cacheTuple());
             cacheTuple.Fill();

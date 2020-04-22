@@ -7,13 +7,16 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 
 namespace ntuple {
 
-TupleObject::TupleObject(const ntuple::Event& _event) : event(&_event) {}
+TupleObject::TupleObject(const Event& _event) : event(&_event) {}
 
-void TupleObject::CheckIndexRange(size_t index, size_t size, std::string_view obj_name, std::string_view branch_name)
+void TupleObject::CheckIndexRange(size_t index, size_t size, std::string_view obj_name,
+                                  std::string_view branch_name) const
 {
-    if(index >= size)
-        throw analysis::exception("%1% index = %2% is out of range to index %3%, which has the size = %4%.")
-                % obj_name % index % branch_name % size;
+    if(index >= size) {
+        analysis::EventIdentifier event_id(*event);
+        throw analysis::exception("%1%: %2% index = %3% is out of range to index %4%, which has the size = %5%.")
+                % event_id % obj_name % index % branch_name % size;
+    }
 }
 
 TupleLepton::TupleLepton(const ntuple::Event& _event, size_t _object_id)

@@ -199,8 +199,16 @@ boost::optional<size_t> SignalObjectSelector::GetHiggsCandidateIndex(const Event
 
 bool SignalObjectSelector::PassLeptonVetoSelection(const ntuple::Event& event)
 {
-    for(unsigned n = 0; n < event.other_lepton_p4.size(); ++n){
+    const size_t N = event.other_lepton_type.size();
+    if(event.other_lepton_eleId_iso.size() != N || event.other_lepton_eleId_noIso.size() != N
+            || event.other_lepton_muonId.size() != N || event.other_lepton_iso.size() != N) {
+        const EventIdentifier event_id(event);
+        throw exception("SignalObjectSelector::PassLeptonVetoSelection: %1%: inconsistent ntuple::Event") % event_id;
+    }
+
+    for(size_t n = 0; n < N; ++n) {
         if(static_cast<LegType>(event.other_lepton_type.at(n)) == LegType::e) {
+
             const DiscriminatorIdResults eleId_iso(event.other_lepton_eleId_iso.at(n));
             const DiscriminatorIdResults eleId_noIso(event.other_lepton_eleId_noIso.at(n));
             const float iso = event.other_lepton_iso.at(n);

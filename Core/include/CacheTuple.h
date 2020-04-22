@@ -10,9 +10,6 @@ using LorentzVectorM = ntuple::LorentzVectorM;
 }
 
 #define CACHE_DATA() \
-    VAR(UInt_t, run) /* run */ \
-    VAR(UInt_t, lumi) /* lumi section */ \
-    VAR(ULong64_t, evt) /* event number */ \
     VAR(Long64_t, entry_index) /* entry index in the original tuple */ \
     /* SVfit variables */ \
     VAR(std::vector<UInt_t>, SVfit_htt_index) /* SVfit: Higgs index */ \
