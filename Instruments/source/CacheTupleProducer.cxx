@@ -46,7 +46,7 @@ public:
             signalObjectSelectors.emplace_back(signal_mode);
 
         EventCandidate::InitializeUncertainties(args.period(), false, args.working_path(),
-                                                signalObjectSelectors.at(0).GetTauVSjetDiscriminator().first);
+                                                TauIdDiscriminator::byDeepTau2017v2p1VSjet);
 
         unc_sources = SplitValueListT<UncertaintySource>(args.unc_sources(), false, ",");
         channels = SplitValueListT<Channel>(args.channels(), false, ",");
