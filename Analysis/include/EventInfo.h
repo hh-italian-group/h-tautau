@@ -92,6 +92,8 @@ public:
     void SetMvaScore(double _mva_score);
     double GetMvaScore() const;
 
+    [[ noreturn ]] void ThrowException(const std::string& message) const;
+
     static std::unique_ptr<EventInfo> Create(const ntuple::Event& event,
                                              const SignalObjectSelector& signalObjectSelector,
                                              const BTagger& bTagger, DiscriminatorWP btag_wp,

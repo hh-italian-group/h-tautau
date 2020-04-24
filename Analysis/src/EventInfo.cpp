@@ -72,7 +72,7 @@ const EventCandidate& EventInfo::GetEventCandidate() const { return *event_candi
 const SummaryInfo& EventInfo::GetSummaryInfo() const
 {
     if(!summaryInfo)
-        throw exception("SummaryInfo was not provided for this event.");
+        ThrowException("SummaryInfo was not provided for this event.");
     return *summaryInfo;
 }
 size_t EventInfo::GetHttIndex() const { return selected_htt_index; }
@@ -98,7 +98,8 @@ const EventInfo::HiggsTTCandidate& EventInfo::GetHiggsTT(bool useSVfit, bool all
     Lock lock(mutex);
     if(useSVfit) {
         if(!higgs_tt_sv) {
-            if(!GetSVFitResults(allow_calc).has_valid_momentum) throw exception("SVFit not converged");
+            if(!GetSVFitResults(allow_calc).has_valid_momentum)
+                ThrowException("SVFit not converged");
             higgs_tt_sv = HiggsTTCandidate(GetFirstLeg(), GetSecondLeg(), GetSVFitResults(allow_calc).momentum);
         }
         return *higgs_tt_sv;
@@ -119,7 +120,7 @@ bool EventInfo::HasBjetPair() const { return selected_signal_jets.HasBjetPair();
 const JetCandidate& EventInfo::GetBJet(size_t index) const
 {
     if(!HasBjetPair() || (index != 1 && index != 2) )
-        throw exception("B jet not found.");
+        ThrowException("B jet not found.");
     return event_candidate->GetJets().at(selected_signal_jets.bjet_pair.Get(index));
 }
 const EventInfo::HiggsBBCandidate& EventInfo::GetHiggsBB()
@@ -127,7 +128,7 @@ const EventInfo::HiggsBBCandidate& EventInfo::GetHiggsBB()
     Lock lock(mutex);
     if(!higgs_bb) {
         if(!HasBjetPair())
-            throw exception("Can't create H->bb candidate.");
+            ThrowException("Can't create H->bb candidate.");
         higgs_bb = HiggsBBCandidate(GetBJet(1), GetBJet(2));
     }
     return *higgs_bb;
@@ -137,7 +138,7 @@ bool EventInfo::HasVBFjetPair() const { return selected_signal_jets.HasVBFPair()
 const JetCandidate& EventInfo::GetVBFJet(size_t index) const
 {
     if(!HasVBFjetPair() || (index != 1 && index != 2))
-        throw exception("VBF jet not found.");
+        ThrowException("VBF jet not found.");
     return event_candidate->GetJets().at(selected_signal_jets.vbf_pair.Get(index));
 }
 
@@ -145,7 +146,7 @@ boost::optional<LorentzVector> EventInfo::GetResonanceMomentum(bool useSVfit, bo
 {
     Lock lock(mutex);
     if(useSVfit && addMET)
-        throw exception("Can't add MET and with SVfit applied.");
+        ThrowException("Can't add MET and with SVfit applied.");
     boost::optional<LorentzVector> p4;
     if(!useSVfit || GetSVFitResults(allow_calc).has_valid_momentum)
         p4 = *GetHiggsTTMomentum(useSVfit, allow_calc) + GetHiggsBB().GetMomentum();
@@ -183,7 +184,7 @@ const sv_fit_ana::FitResults& EventInfo::GetSVFitResults(bool allow_calc, int ve
                                                                         event_candidate->GetUncScale());
         if(!svfit_results) {
             if(!allow_calc)
-                throw exception("Not allowed to calculate SVFit.");
+                ThrowException("Not allowed to calculate SVFit.");
             svfit_results = sv_fit_ana::FitProducer::Fit(GetLeg(1), GetLeg(2), event_candidate->GetMET(), verbosity);
         }
     }
@@ -195,7 +196,7 @@ const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc, int verb
     Lock lock(mutex);
     if(!kinfit_results) {
         if(!HasBjetPair())
-            throw exception("Can't retrieve KinFit results.");
+            ThrowException("Can't retrieve KinFit results.");
 
         kinfit_results = event_candidate->GetCacheProvider().TryGetKinFit(selected_htt_index,
                                                                           selected_signal_jets.bjet_pair.ToIndex(),
@@ -203,7 +204,7 @@ const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc, int verb
                                                                           event_candidate->GetUncScale());
         if(!kinfit_results) {
             if(!allow_calc)
-                throw exception("Not allowed to calculate KinFit.");
+                ThrowException("Not allowed to calculate KinFit.");
             const double energy_resolution_1 = GetBJet(1)->resolution() * GetBJet(1).GetMomentum().E();
             const double energy_resolution_2 = GetBJet(2)->resolution() * GetBJet(2).GetMomentum().E();
             kinfit_results = kin_fit::FitProducer::Fit(GetLeg(1).GetMomentum(), GetLeg(2).GetMomentum(),
@@ -292,8 +293,13 @@ void EventInfo::SetMvaScore(double _mva_score)
 double EventInfo::GetMvaScore() const
 {
     if(!mva_score)
-        throw exception("EventInfo: mva_score is not set.");
+        ThrowException("EventInfo: mva_score is not set.");
     return *mva_score;
+}
+
+void EventInfo::ThrowException(const std::string& message) const
+{
+    throw exception("%1%: %2%") % GetEventId() % message;
 }
 
 std::unique_ptr<EventInfo> EventInfo::Create(const ntuple::Event& event,

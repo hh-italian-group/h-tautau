@@ -8,7 +8,7 @@ namespace analysis {
 EventCandidate::EventCandidate(const ntuple::Event& _event, UncertaintySource _unc_source,
                                UncertaintyScale _unc_scale) :
     event(&_event), unc_source(_unc_source), unc_scale(_unc_scale), event_id(_event), same_as_central(true),
-    cache_provider(_event), tuple_met(*event, MetType::PF), met(tuple_met, tuple_met.cov())
+    tuple_met(*event, MetType::PF), met(tuple_met, tuple_met.cov())
 {
     CreateLeptons();
     CreateJets();
@@ -113,7 +113,6 @@ UncertaintyScale EventCandidate::GetUncScale() const { return unc_scale; }
 const EventIdentifier& EventCandidate::GetEventId() const { return event_id; }
 Channel EventCandidate::GetChannel() const { return static_cast<Channel>(event->channelId); }
 Period EventCandidate::GetPeriod() const { return static_cast<Period>(event->period); }
-const EventCacheProvider& EventCandidate::GetCacheProvider() const { return cache_provider; }
 
 UncertaintySource EventCandidate::GetCacheUncSource() const
 {
@@ -125,13 +124,26 @@ UncertaintyScale EventCandidate::GetCacheUncScale() const
     return IsSameAsCentral() ? UncertaintyScale::Central : unc_scale;
 }
 
-void EventCandidate::SetHHTagScores(size_t htt_index, const EventCacheProvider* cache)
+const EventCacheProvider& EventCandidate::GetCacheProvider()
 {
     Lock lock(mutex);
-    if(!cache)
-        cache = &cache_provider;
+    if(!cache_provider)
+        cache_provider = std::make_shared<EventCacheProvider>(*event);
+    return *cache_provider;
+}
+
+void EventCandidate::SetCacheProvider(const std::shared_ptr<EventCacheProvider>& _cache_provider)
+{
+    Lock lock(mutex);
+    cache_provider = _cache_provider;
+}
+
+void EventCandidate::SetHHTagScores(size_t htt_index)
+{
+    Lock lock(mutex);
+    const auto& cache = GetCacheProvider();
     for(size_t jet_index = 0; jet_index < tuple_jets.size(); ++jet_index) {
-        const auto cached_score = cache->TryGetHHbtag(htt_index, jet_index, GetCacheUncSource(), GetCacheUncScale());
+        const auto cached_score = cache.TryGetHHbtag(htt_index, jet_index, GetCacheUncSource(), GetCacheUncScale());
         float score = -1;
         if(cached_score.is_initialized())
             score = *cached_score;

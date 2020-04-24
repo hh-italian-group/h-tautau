@@ -25,6 +25,7 @@ struct Arguments {
     OPT_ARG(Long64_t, end_entry_index, std::numeric_limits<Long64_t>::max());
     OPT_ARG(std::string, working_path, "./");
     OPT_ARG(analysis::DiscriminatorWP, btag_wp, analysis::DiscriminatorWP::Medium);
+    OPT_ARG(bool, debug, false);
 };
 
 namespace analysis {
@@ -39,7 +40,7 @@ public:
     CacheTupleProducer(const Arguments& _args) :
             args(_args), outputFile(root_ext::CreateRootFile(args.output_file())),
             cacheSummary("summary", outputFile.get(), false), start(clock::now()),
-            progressReporter(10, std::cout)
+            progressReporter(10, std::cout), debug(args.debug())
     {
         const auto signal_modes = SplitValueListT<SignalMode>(args.selections(), false, ",");
         for(auto signal_mode : signal_modes)
@@ -113,7 +114,8 @@ public:
             for(Long64_t current_entry = args.begin_entry_index();
                     current_entry < n_entries && n_processed_events_channel < args.max_events_per_tree()
                     && current_entry < args.end_entry_index(); ++current_entry) {
-
+                if(debug)
+                    std::cout << "Loading entry " << current_entry << std::endl;
                 originalTuple.GetEntry(current_entry);
                 originalTuple().isData = args.isData();
                 originalTuple().period = static_cast<int>(args.period());
@@ -140,37 +142,53 @@ private:
         if(!SignalObjectSelector::PassLeptonVetoSelection(event)) return;
         if(!SignalObjectSelector::PassMETfilters(event, args.period(), args.isData())) return;
 
-        EventCacheProvider cache_provider;
+        if(debug)
+            std::cout << "Event passed pre-selection" << std::endl;
+
+        auto cache_provider = std::make_shared<EventCacheProvider>();
         for(auto [unc_source, unc_scale] : EnumerateUncVariations(unc_sources)) {
             auto event_candidate = std::make_shared<EventCandidate>(event, unc_source, unc_scale);
+            if(debug)
+                std::cout << "unc_source=" << unc_source << ", unc_scale=" << unc_scale
+                          << ", event_id=" << event_candidate->GetEventId()
+                          << ", same_as_central=" << event_candidate->IsSameAsCentral() << std::endl;
+
             if(unc_scale != UncertaintyScale::Central && event_candidate->IsSameAsCentral()) continue;
+            event_candidate->SetCacheProvider(cache_provider);
             std::set<size_t> htt_indices, hh_btagged_htt_indices;
             std::set<std::pair<size_t, size_t>> hh_indices;
             for(const SignalObjectSelector& signalObjectSelector : signalObjectSelectors) {
                 for(const BTagger& bTagger : btaggers) {
+                    if(debug)
+                        std::cout << "Btagger: " << bTagger.GetTagger() << std::endl;
+
                     if(bTagger.GetTagger() == BTaggerKind::HHbtag) {
                         const auto ref_event_info = EventInfo::Create(event_candidate, signalObjectSelector,
-                                                                      *deepFlavourTagger, args.btag_wp());
+                                                                      *deepFlavourTagger, args.btag_wp(),
+                                                                      nullptr, false, debug);
                         if(!ref_event_info || !ref_event_info->HasBjetPair()) continue;
                         const size_t ref_htt_index = ref_event_info->GetHttIndex();
                         if(!hh_btagged_htt_indices.count(ref_htt_index)) {
                             ++cacheSummary().n_HHbtag;
-                            CalculateHHbtag(*ref_event_info, cache_provider);
+                            CalculateHHbtag(*ref_event_info, *cache_provider);
                             hh_btagged_htt_indices.insert(ref_htt_index);
                         }
-                        event_candidate->SetHHTagScores(ref_htt_index, &cache_provider);
                     }
 
                     const auto event_info = EventInfo::Create(event_candidate, signalObjectSelector, bTagger,
-                                                              args.btag_wp());
+                                                              args.btag_wp(), nullptr, false, debug);
                     if(!event_info) continue;
                     if(args.hasBjetPair() && !event_info->HasBjetPair()) continue;
+
+                    if(debug)
+                        std::cout << "Event passed selection" << std::endl;
+
 
                     const size_t htt_index = event_info->GetHttIndex();
                     if(args.runSVFit() && !htt_indices.count(htt_index)) {
                         ++cacheSummary().n_SVfit;
                         const sv_fit_ana::FitResults& fit_results = event_info->GetSVFitResults(true);
-                        cache_provider.AddSVfitResults(htt_index, unc_source, unc_scale, fit_results);
+                        cache_provider->AddSVfitResults(htt_index, unc_source, unc_scale, fit_results);
                         htt_indices.insert(htt_index);
                     }
 
@@ -180,7 +198,7 @@ private:
                         if(!hh_indices.count(hh_pair)) {
                             ++cacheSummary().n_KinFit;
                             const kin_fit::FitResults& fit_results = event_info->GetKinFitResults(true);
-                            cache_provider.AddKinFitResults(htt_index, hbb_index, unc_source, unc_scale, fit_results);
+                            cache_provider->AddKinFitResults(htt_index, hbb_index, unc_source, unc_scale, fit_results);
                             hh_indices.insert(hh_pair);
                         }
                     }
@@ -188,9 +206,9 @@ private:
             }
         }
 
-        if(!cache_provider.IsEmpty()) {
+        if(!cache_provider->IsEmpty()) {
             cacheTuple().entry_index = original_entry;
-            cache_provider.FillEvent(cacheTuple());
+            cache_provider->FillEvent(cacheTuple());
             cacheTuple.Fill();
             ++cacheSummary().n_stored_events;
         }
@@ -251,6 +269,7 @@ private:
     tools::ProgressReporter progressReporter;
     std::unique_ptr<BTagger> deepFlavourTagger;
     std::unique_ptr<hh_btag::HH_BTag> hh_btagger;
+    const bool debug;
 };
 
 } // namespace analysis

@@ -51,9 +51,10 @@ public:
     const EventIdentifier& GetEventId() const;
     Channel GetChannel() const;
     Period GetPeriod() const;
-    const EventCacheProvider& GetCacheProvider() const;
 
-    void SetHHTagScores(size_t htt_index, const EventCacheProvider* cache = nullptr);
+    const EventCacheProvider& GetCacheProvider();
+    void SetCacheProvider(const std::shared_ptr<EventCacheProvider>& _cache_provider);
+    void SetHHTagScores(size_t htt_index);
 
 private:
     void CreateLeptons();
@@ -66,7 +67,7 @@ private:
     const UncertaintyScale unc_scale;
     const EventIdentifier event_id;
     bool same_as_central;
-    const EventCacheProvider cache_provider;
+    std::shared_ptr<EventCacheProvider> cache_provider;
     std::vector<ntuple::TupleLepton> tuple_leptons;
     std::vector<ntuple::TupleJet> tuple_jets;
     std::vector<ntuple::TupleFatJet> tuple_fatJets;

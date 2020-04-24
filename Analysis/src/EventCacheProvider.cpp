@@ -185,7 +185,7 @@ boost::optional<Long64_t> EventCacheReader::GetCurrentEntryIndex() const
     boost::optional<Long64_t> entry_index;
     for(const auto& source : sources) {
         const auto source_entry_index = source.GetCurrentEntryIndex();
-        if(source_entry_index && (!entry_index || *entry_index < *source_entry_index))
+        if(source_entry_index && (!entry_index || *source_entry_index < *entry_index))
             entry_index = source_entry_index;
     }
     return entry_index;
