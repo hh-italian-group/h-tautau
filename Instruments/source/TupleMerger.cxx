@@ -106,13 +106,13 @@ private:
         }
     }
 
-  private:
-      std::map<analysis::Channel, std::shared_ptr<ntuple::EventTuple>> output_eventTuple;
-      ntuple::SummaryTuple output_summaryTuple;
-      std::shared_ptr<ntuple::ExpressTuple> output_expressTuple;
-      std::map<analysis::Channel, std::set<analysis::EventIdentifier>> processed_entries;
-      std::set<analysis::EventIdentifier> processed_entries_express;
-      size_t n_total_duplicates,n_total_epress_duplicates;
+private:
+    std::map<analysis::Channel, std::shared_ptr<ntuple::EventTuple>> output_eventTuple;
+    ntuple::SummaryTuple output_summaryTuple;
+    std::shared_ptr<ntuple::ExpressTuple> output_expressTuple;
+    std::map<analysis::Channel, std::set<analysis::EventIdentifier>> processed_entries;
+    std::set<analysis::EventIdentifier> processed_entries_express;
+    size_t n_total_duplicates, n_total_epress_duplicates;
 };
 
 PROGRAM_MAIN(TupleMerger, Arguments)
