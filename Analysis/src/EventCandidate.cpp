@@ -212,7 +212,8 @@ void EventCandidate::CreateJets()
 
 void EventCandidate::CreateFatJets()
 {
-    for(size_t n = 0; n < event->fatJets_m_softDrop.size(); ++n)
+    const size_t N = std::min(event->fatJets_p4.size(), event->fatJets_m_softDrop.size()); // workaround
+    for(size_t n = 0; n < N; ++n)
         tuple_fatJets.emplace_back(*event, n);
     for(size_t n = 0; n < tuple_fatJets.size(); ++n)
         fatJets.emplace_back(tuple_fatJets.at(n));
