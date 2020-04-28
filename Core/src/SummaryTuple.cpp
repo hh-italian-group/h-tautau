@@ -20,7 +20,7 @@ std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirec
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
         { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt",
-                             "file_desc_id", "file_desc_name", "n_splits", "split_seed" } },
+                             "file_desc_id", "file_desc_name", "n_splits", "split_seed", "cross_section" } },
         { TreeState::Skimmed, { } }
     };
 
