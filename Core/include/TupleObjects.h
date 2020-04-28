@@ -102,6 +102,8 @@ public:
     DiscriminatorResult csv() const;
     DiscriminatorResult deepcsv() const;
     DiscriminatorResult deepFlavour() const;
+    DiscriminatorResult deepFlavour_CvsL() const;
+    DiscriminatorResult deepFlavour_CvsB() const;
     Integer partonFlavour() const;
     Integer hadronFlavour() const;
     RealNumber rawf() const;

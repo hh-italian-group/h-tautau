@@ -138,6 +138,21 @@ TupleObject::DiscriminatorResult TupleJet::deepFlavour() const
          + CheckAndGet(event->jets_deepFlavour_bb, "jets_deepFlavour_bb")
          + CheckAndGet(event->jets_deepFlavour_lepb, "jets_deepFlavour_lepb");
 }
+TupleObject::DiscriminatorResult TupleJet::deepFlavour_CvsL() const
+{
+    const auto prob_c = CheckAndGet(event->jets_deepFlavour_c, "jets_deepFlavour_c");
+    const auto prob_uds = CheckAndGet(event->jets_deepFlavour_uds, "jets_deepFlavour_uds");
+    const auto prob_g = CheckAndGet(event->jets_deepFlavour_g, "jets_deepFlavour_g");
+    return prob_c / (prob_c + prob_uds + prob_g);
+}
+TupleObject::DiscriminatorResult TupleJet::deepFlavour_CvsB() const
+{
+    const auto prob_c = CheckAndGet(event->jets_deepFlavour_c, "jets_deepFlavour_c");
+    const auto prob_b = CheckAndGet(event->jets_deepFlavour_b, "jets_deepFlavour_b");
+    const auto prob_bb = CheckAndGet(event->jets_deepFlavour_bb, "jets_deepFlavour_bb");
+    const auto prob_lepb = CheckAndGet(event->jets_deepFlavour_lepb, "jets_deepFlavour_lepb");
+    return prob_c / (prob_c + prob_b + prob_bb + prob_lepb);
+}
 TupleObject::Integer TupleJet::partonFlavour() const
 {
     return CheckAndGet(event->jets_partonFlavour, "jets_partonFlavour");
