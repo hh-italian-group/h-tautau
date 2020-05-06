@@ -178,10 +178,9 @@ const sv_fit_ana::FitResults& EventInfo::GetSVFitResults(bool allow_calc, int ve
 {
     Lock lock(mutex);
     if(!svfit_results) {
-        svfit_results = sv_fit_ana::FitResults();
         svfit_results = event_candidate->GetCacheProvider().TryGetSVFit(selected_htt_index,
-                                                                        event_candidate->GetUncSource(),
-                                                                        event_candidate->GetUncScale());
+                                                                        event_candidate->GetCacheUncSource(),
+                                                                        event_candidate->GetCacheUncScale());
         if(!svfit_results) {
             if(!allow_calc)
                 ThrowException("Not allowed to calculate SVFit.");
@@ -200,8 +199,8 @@ const kin_fit::FitResults& EventInfo::GetKinFitResults(bool allow_calc, int verb
 
         kinfit_results = event_candidate->GetCacheProvider().TryGetKinFit(selected_htt_index,
                                                                           selected_signal_jets.bjet_pair.ToIndex(),
-                                                                          event_candidate->GetUncSource(),
-                                                                          event_candidate->GetUncScale());
+                                                                          event_candidate->GetCacheUncSource(),
+                                                                          event_candidate->GetCacheUncScale());
         if(!kinfit_results) {
             if(!allow_calc)
                 ThrowException("Not allowed to calculate KinFit.");
