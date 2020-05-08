@@ -27,7 +27,7 @@ public:
     void setLepPy(float fPy);
     void setLepPz(float fPz);
 
-    float getUncertainty(bool fDirection);
+    boost::optional<float> getUncertainty(bool fDirection);
 
 private:
 

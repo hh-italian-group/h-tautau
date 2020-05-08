@@ -135,13 +135,12 @@ void JetCorrectionUncertainty::setLepPz(float fPz)
     mIsLepPzset  = true;
 }
 
-float JetCorrectionUncertainty::getUncertainty(bool fDirection)
+boost::optional<float> JetCorrectionUncertainty::getUncertainty(bool fDirection)
 {
-    float result;
     std::vector<float> vx,vy;
     vx = fillVector(mUncertainty->parameters().definitions().binVar());
     vy = fillVector(mUncertainty->parameters().definitions().parVar());
-    result = mUncertainty->uncertainty(vx,vy[0],fDirection);
+    boost::optional<float> result = mUncertainty->uncertainty(vx,vy[0],fDirection);
     mIsJetEset   = false;
     mIsJetPtset  = false;
     mIsJetPhiset = false;

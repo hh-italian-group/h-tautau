@@ -30,15 +30,13 @@ const JetCorrectorParameters& SimpleJetCorrectionUncertainty::parameters() const
     return *mParameters;
 }
 
-float SimpleJetCorrectionUncertainty::uncertainty(const std::vector<float>& fX, float fY, bool fDirection) const
+boost::optional<float> SimpleJetCorrectionUncertainty::uncertainty(const std::vector<float>& fX, float fY,
+                                                                   bool fDirection) const
 {
-    float result = 1.;
-    int bin = mParameters->binIndex(fX);
-    if (bin<0) {
-        std::cout << "SimpleJetCorrectionUncertainty bin variables out of range" << std::endl;
-        result = -999.0;
-    } else
-        result = uncertaintyBin(unsigned(bin),fY,fDirection);
+    boost::optional<float> result;
+    const int bin = mParameters->binIndex(fX);
+    if(bin >= 0)
+        result = uncertaintyBin(static_cast<unsigned>(bin), fY, fDirection);
     return result;
 }
 

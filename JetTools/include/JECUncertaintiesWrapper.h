@@ -58,7 +58,8 @@ public:
          for (const auto& jet : jet_candidates){
              unc->setJetPt(static_cast<float>(jet.GetMomentum().pt()));
              unc->setJetEta(static_cast<float>(jet.GetMomentum().eta()));
-             const double unc_var = unc->getUncertainty(scales.at(scale));
+             const auto unc_result = unc->getUncertainty(scales.at(scale));
+             const double unc_var = unc_result ? *unc_result : 0;
              const int sign = scales_variation.at(scale);
              const auto sf = static_cast<typename LorentzVector1::Scalar>(1.0 + (sign * unc_var));
              const auto shiftedMomentum = jet.GetMomentum() * sf;
@@ -75,7 +76,8 @@ public:
                      LorentzVector1 other_jet = other_jets_p4->at(n);
                      unc->setJetPt(other_jet.pt());
                      unc->setJetEta(other_jet.eta());
-                     const double unc_var = unc->getUncertainty(scales.at(scale));
+                     const auto unc_result = unc->getUncertainty(scales.at(scale));
+                     const double unc_var = unc_result ? *unc_result : 0;
                      const int sign = scales_variation.at(scale);
                      const auto sf = static_cast<typename LorentzVector1::Scalar>(1.0 + (sign * unc_var));
                      const auto shiftedMomentum = other_jet * sf;
