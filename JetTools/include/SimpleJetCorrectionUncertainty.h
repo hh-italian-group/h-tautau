@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/optional.hpp>
 #include "JetCorrectorParameters.h"
 
 namespace jec {
@@ -14,7 +15,7 @@ public:
     SimpleJetCorrectionUncertainty& operator= (const SimpleJetCorrectionUncertainty&) = delete;
 
     const JetCorrectorParameters& parameters() const;
-    float uncertainty(const std::vector<float>& fX, float fY, bool fDirection) const;
+    boost::optional<float> uncertainty(const std::vector<float>& fX, float fY, bool fDirection) const;
 
 private:
     int findBin(const std::vector<float>& v, float x) const;

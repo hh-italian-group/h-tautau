@@ -118,8 +118,9 @@ namespace hh_tag {
 }
 
 namespace VBF {
-    constexpr double mass_jj = 650;
-    constexpr double deltaeta_jj = 2;
+    constexpr double mass_jj = 500;
+    constexpr double deltaeta_jj = 3;
+    constexpr double mass_jj_tight = 800;
 }
 
 namespace fatJetID {
