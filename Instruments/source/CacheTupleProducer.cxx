@@ -220,7 +220,7 @@ private:
         const int sample_year = static_cast<int>(event_candidate.GetPeriod());
         const int channelId = static_cast<int>(event_candidate.GetChannel());
         const ULong64_t parity = event_candidate.GetEvent().evt % 2;
-        const auto htt_p4 = *event_info.GetHiggsTTMomentum(false);
+        const LorentzVector htt_p4 = *event_info.GetHiggsTTMomentum(false);
         const auto& met_p4 = event_candidate.GetMET().GetMomentum();
         const float htt_pt = static_cast<float>(htt_p4.pt());
         const float htt_eta = static_cast<float>(htt_p4.eta());
