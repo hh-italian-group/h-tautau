@@ -65,14 +65,6 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
     muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput), period(_period),
     tau_iso_wp(_tau_iso_wp)
 {
-    if(period == Period::Run2016)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2016Legacy","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
-    else if(period == Period::Run2017)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2017ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
-    else if(period == Period::Run2018)
-        tauIdWeight = std::make_shared<TauIDSFTool>("2018ReReco","DeepTau2017v2p1VSjet", ToString(tau_iso_wp), false);
-    else
-        throw exception("Period %1% is not supported.") % period;
 
     tauTriggerWeight_eTau = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "etau", ToString(tau_iso_wp));
     tauTriggerWeight_muTau = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "mutau", ToString(tau_iso_wp));
@@ -80,38 +72,63 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
                                                                         ToString(tau_iso_wp));
 }
 
-double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo) const
+std::shared_ptr<TauIDSFTool>& LeptonWeights::GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp)
 {
-    const ntuple::Event& event = *eventInfo;
-    const Channel channel = static_cast<Channel>(event.channelId);
-    if(channel == Channel::ETau) {
-        double tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
-                                                   static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
-        return electronSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tau_weight;
-    }
-    else if(channel == Channel::MuTau) {
-        double tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
-                                                   static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
-        return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * tau_weight;
-    }
-    else if(channel == Channel::TauTau) {
-        double tau_weight = tauIdWeight->getSFvsPT(eventInfo.GetLeg(1).GetMomentum().pt(),
-                                                   static_cast<int>(eventInfo.GetLeg(1)->gen_match()))
-                          * tauIdWeight->getSFvsPT(eventInfo.GetLeg(2).GetMomentum().pt(),
-                                                   static_cast<int>(eventInfo.GetLeg(2)->gen_match()));
-        return tau_weight;
-    }
-    else if(channel == Channel::MuMu)
-        return muonSF.GetIdIsoSF(eventInfo.GetLeg(1).GetMomentum()) * muonSF.GetIdIsoSF(eventInfo.GetLeg(2).GetMomentum());
-    else
-        throw exception ("channel not allowed");
+    std::map<Period ,std::string>  period_label = { { Period::Run2016, "2016Legacy" },
+                                                     { Period::Run2017, "2017ReReco" },
+                                                     { Period::Run2018, "2018ReReco" } };
+    std::string s = "by";
+    std::string::size_type i = ToString(discr).find(s);
+
+    tau_sf_providers[discr][wp] = std::make_shared<TauIDSFTool>(period_label.at(period),
+                                ToString(discr).erase(i, s.length()), ToString(wp), false, false);
+    return tau_sf_providers[discr][wp];
 }
 
-double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo) const
+double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
+                                        DiscriminatorWP VSjet_wp,
+                                        UncertaintySource /*unc_source*/, UncertaintyScale /*unc_scale*/)
+{
+    std::map<LegType, std::pair<TauIdDiscriminator,DiscriminatorWP>> leg_wp_disc = {
+         { LegType::e, { TauIdDiscriminator::byDeepTau2017v2p1VSe, VSe_wp } },
+         { LegType::mu, { TauIdDiscriminator::byDeepTau2017v2p1VSmu, VSmu_wp } },
+         { LegType::tau, { TauIdDiscriminator::byDeepTau2017v2p1VSjet, VSjet_wp } }
+     };
+
+
+    auto tauIdWeight = GetTauIdProvider(leg_wp_disc.at(leg->leg_type()).first, leg_wp_disc.at(leg->leg_type()).second);
+
+    if(leg->leg_type() == LegType::e){
+        double tau_id_weight = tauIdWeight->getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()));
+        return electronSF.GetIdIsoSF(leg.GetMomentum()) * tau_id_weight;
+    }
+    else if(leg->leg_type() == LegType::mu){
+        double tau_id_weight = tauIdWeight->getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()));
+        return  muonSF.GetIdIsoSF(leg.GetMomentum()) * tau_id_weight;
+    }
+    else if(leg->leg_type() == LegType::tau){
+        double tau_id_weight = tauIdWeight->getSFvsPT(leg.GetMomentum().pt(), static_cast<int>(leg->gen_match()));
+        return tau_id_weight;
+    }
+    else
+        throw exception("Leg type not found.");
+}
+
+double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
+                                     DiscriminatorWP VSjet_wp, UncertaintySource unc_source,
+                                     UncertaintyScale unc_scale)
+{
+    double weight = 1;
+    for(size_t leg_id = 1; leg_id <= 2; ++leg_id)
+        weight *= GetLegIdIsoWeight(eventInfo.GetLeg(leg_id), VSe_wp, VSmu_wp, VSjet_wp, unc_source, unc_scale);
+    return weight;
+}
+
+double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo, UncertaintyScale unc_scale) const
 {
     const ntuple::Event& event = *eventInfo;
-    const double eff_data = GetTriggerEfficiency(eventInfo, true);
-    const double eff_mc = GetTriggerEfficiency(eventInfo, false);
+    const double eff_data = GetTriggerEfficiency(eventInfo, true, unc_scale);
+    const double eff_mc = GetTriggerEfficiency(eventInfo, false, unc_scale);
     if(eff_mc == 0) {
         if(event.lep_decayMode.at(0) >= 0 && eff_data != 0)
             throw exception("Undefined trigger SF for event:%1%. eff mc = 0 & eff data= %2%")
@@ -122,9 +139,9 @@ double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo) const
 }
 
 
-double LeptonWeights::Get(EventInfo& eventInfo) const
+double LeptonWeights::Get(EventInfo& /*eventInfo*/) const
 {
-    return GetIdIsoWeight(eventInfo) * GetTriggerWeight(eventInfo);
+    throw exception("Function LeptonWeights::Get no longer suits our needs.");
 }
 
 double LeptonWeights::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -132,7 +149,7 @@ double LeptonWeights::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in LeptonWeights::Get.");
 }
 
-double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) const
+double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, UncertaintyScale unc_scale ) const
 {
     const Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
@@ -146,9 +163,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) co
     static constexpr double prescaled_weight_IsoMu22_eta2p1_2016 = 0.9237823527;
 
     //2017
-    static const std::vector<std::string> triggerPaths_Prescaled_eTau_2017 = {"HLT_Ele32_WPTight_Gsf_v"};
     static const std::vector<std::string> triggerPaths_Prescaled_muTau_2017 = {"HLT_IsoMu24_v"};
-    static constexpr double prescaled_weight_eTau_2017 = 0.6530857451;
     static constexpr double prescaled_weight_muTau_2017 = 0.9161390096;
 
     if(channel == Channel::ETau) {
@@ -159,25 +174,18 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) co
             double tau_eff = 1;
             tau_eff = isData ?
                 tauTriggerWeight_eTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                            eventInfo.GetLeg(2)->decayMode()) :
+                                                                            eventInfo.GetLeg(2)->decayMode(),
+                                                                            static_cast<int>(unc_scale)) :
                 tauTriggerWeight_eTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                          eventInfo.GetLeg(2)->decayMode());
+                                                                          eventInfo.GetLeg(2)->decayMode(),
+                                                                          static_cast<int>(unc_scale));
 
             static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                 "HLT_Ele35_WPTight_Gsf_v", "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1_v" };
 
-            if(period == Period::Run2017 && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
-                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau_2017))
-                prescaled_weight = prescaled_weight_eTau_2017;
             return prescaled_weight * std::min(ele_single_eff * (1 - tau_eff) + ele_cross_eff * tau_eff, 1.);
         }
         else {
-            static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
-                "HLT_Ele35_WPTight_Gsf_v"};
-            if(period == Period::Run2017
-                    && !eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_unPrescaled_2017)
-                    && eventInfo.GetTriggerResults().AnyAcceptAndMatch(triggerPaths_Prescaled_eTau_2017))
-                prescaled_weight = prescaled_weight_eTau_2017;
             return prescaled_weight * electronSF.GetTriggerEff(eventInfo.GetLeg(1).GetMomentum(), isData);
         }
 
@@ -188,11 +196,12 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) co
                 const double muon_cross_eff = muonSF.GetTriggerEffCross(eventInfo.GetLeg(1).GetMomentum(), isData);
                 double tau_eff = 1;
                 tau_eff = isData ?
-                    tauTriggerWeight_muTau->getEfficiencyData(
-                            static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                            eventInfo.GetLeg(2)->decayMode()) :
+                    tauTriggerWeight_muTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
+                                                              eventInfo.GetLeg(2)->decayMode(),
+                                                              static_cast<int>(unc_scale)) :
                     tauTriggerWeight_muTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                            eventInfo.GetLeg(2)->decayMode());
+                                                            eventInfo.GetLeg(2)->decayMode(),
+                                                            static_cast<int>(unc_scale));
 
                 static const std::vector<std::string> triggerPaths_unPrescaled_2016 = {
                         "HLT_IsoMu19_eta2p1_LooseIsoPFTau20_v", "HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1_v" };
@@ -245,16 +254,20 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) co
         double tauSF_1 = 1;
         tauSF_1 = isData ?
             tauTriggerWeight_tauTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(1).GetMomentum().pt()),
-                                                                   eventInfo.GetLeg(1)->decayMode()) :
+                                                                          eventInfo.GetLeg(1)->decayMode(),
+                                                                          static_cast<int>(unc_scale)) :
             tauTriggerWeight_tauTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(1).GetMomentum().pt()),
-                                                                 eventInfo.GetLeg(1)->decayMode());
+                                                                        eventInfo.GetLeg(1)->decayMode(),
+                                                                        static_cast<int>(unc_scale));
 
         double tauSF_2 = 1;
         tauSF_2 = isData ?
             tauTriggerWeight_tauTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                    eventInfo.GetLeg(2)->decayMode()) :
+                                                                          eventInfo.GetLeg(2)->decayMode(),
+                                                                          static_cast<int>(unc_scale)) :
             tauTriggerWeight_tauTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                  eventInfo.GetLeg(2)->decayMode());
+                                                                        eventInfo.GetLeg(2)->decayMode(),
+                                                                        static_cast<int>(unc_scale));
 
         return  tauSF_1 * tauSF_2;
     }
