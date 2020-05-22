@@ -110,24 +110,25 @@ double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp
 
         double tau_id_weight_vs_mu = 1;
         double tau_id_weight_vs_ele = 1;
-        if(leg->gen_match() == GenLeptonMatch::Tau){
+        double tau_id_weight = 1;
 
-
+        if(leg->gen_match() == GenLeptonMatch::Electron || leg->gen_match() == GenLeptonMatch::TauElectron){
             auto tauIdWeightVsEle = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSe, VSe_wp);
-            auto tauIdWeightVsMu = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSmu, VSmu_wp);
-
             tau_id_weight_vs_ele = tauIdWeightVsEle.getSFvsEta(leg.GetMomentum().eta(),
                                                               static_cast<int>(leg->gen_match()), ToString(scale));
+        }
+        else if(leg->gen_match() == GenLeptonMatch::Muon || leg->gen_match() == GenLeptonMatch::TauMuon ){
+            auto tauIdWeightVsMu = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSmu, VSmu_wp);
             tau_id_weight_vs_mu = tauIdWeightVsMu.getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()),
                                                              ToString(scale));
         }
-
-        auto tauIdWeight = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSjet, VSjet_wp);
-
-        double tau_id_weight = is_dm_binned ? tauIdWeight.getSFvsDM(leg.GetMomentum().pt(), leg->decayMode(),
-                                                                    static_cast<int>(leg->gen_match()), ToString(scale))
-                                            : tauIdWeight.getSFvsPT(leg.GetMomentum().pt(),
-                                                                    static_cast<int>(leg->gen_match()), ToString(scale));
+        else if(leg->gen_match() == GenLeptonMatch::Tau){
+            auto tauIdWeight = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSjet, VSjet_wp);
+            tau_id_weight = is_dm_binned ? tauIdWeight.getSFvsDM(leg.GetMomentum().pt(), leg->decayMode(),
+                                                                        static_cast<int>(leg->gen_match()), ToString(scale))
+                                                : tauIdWeight.getSFvsPT(leg.GetMomentum().pt(),
+                                                                        static_cast<int>(leg->gen_match()), ToString(scale));
+        }
 
         return tau_id_weight * tau_id_weight_vs_mu * tau_id_weight_vs_ele;
     }
