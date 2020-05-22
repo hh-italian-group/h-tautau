@@ -155,7 +155,7 @@ public:
 
     double GetTriggerWeight(EventInfo& eventInfo) const ;
 
-    bool ApplyUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match,
+    bool ApplyUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match, LegType leg_type,
                                UncertaintySource unc_source);
 
 
