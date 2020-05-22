@@ -60,10 +60,10 @@ MuonScaleFactorPOG::HistPtr MuonScaleFactorPOG::LoadWeight(const std::string& we
 LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                              const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                              const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                             const std::string& tauTriggerInput, Period _period, DiscriminatorWP _tau_iso_wp) :
+                             const std::string& tauTriggerInput, Period _period, DiscriminatorWP _tau_iso_wp,  bool _is_dm_binned) :
     electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
     muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput), period(_period),
-    tau_iso_wp(_tau_iso_wp)
+    tau_iso_wp(_tau_iso_wp), is_dm_binned(_is_dm_binned)
 {
 
     tauTriggerWeight_eTau = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "etau", ToString(tau_iso_wp));
@@ -72,43 +72,50 @@ LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::
                                                                         ToString(tau_iso_wp));
 }
 
-std::shared_ptr<TauIDSFTool>& LeptonWeights::GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp)
+TauIDSFTool& LeptonWeights::GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp)
 {
-    std::map<Period ,std::string>  period_label = { { Period::Run2016, "2016Legacy" },
+    static const std::map<Period ,std::string>  period_label = { { Period::Run2016, "2016Legacy" },
                                                      { Period::Run2017, "2017ReReco" },
                                                      { Period::Run2018, "2018ReReco" } };
-    std::string s = "by";
-    std::string::size_type i = ToString(discr).find(s);
-
-    tau_sf_providers[discr][wp] = std::make_shared<TauIDSFTool>(period_label.at(period),
-                                ToString(discr).erase(i, s.length()), ToString(wp), false, false);
-    return tau_sf_providers[discr][wp];
+     auto& provider = tau_sf_providers[discr][wp];
+     if(!provider) {
+         static const std::string s = "by";
+         const auto i = ToString(discr).find(s);
+         const std::string discr_name = ToString(discr).erase(i, s.length());
+         if(!period_label.count(period))
+             throw exception("LeptonWeights::GetTauIdProvider: Period %1% is not supported.") % period;
+         provider = std::make_shared<TauIDSFTool>(period_label.at(period), discr_name, ToString(wp), is_dm_binned, false);
+     }
+     return *provider;
 }
 
 double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
                                         DiscriminatorWP VSjet_wp,
-                                        UncertaintySource /*unc_source*/, UncertaintyScale /*unc_scale*/)
+                                        UncertaintySource unc_source, UncertaintyScale unc_scale)
 {
-    std::map<LegType, std::pair<TauIdDiscriminator,DiscriminatorWP>> leg_wp_disc = {
-         { LegType::e, { TauIdDiscriminator::byDeepTau2017v2p1VSe, VSe_wp } },
-         { LegType::mu, { TauIdDiscriminator::byDeepTau2017v2p1VSmu, VSmu_wp } },
-         { LegType::tau, { TauIdDiscriminator::byDeepTau2017v2p1VSjet, VSjet_wp } }
-     };
+    const UncertaintyScale current_scale = ApplyUncertaintyScale(leg->decayMode(), leg.GetMomentum().pt(),
+                                                                 leg.GetMomentum().eta(),leg->gen_match(), unc_source)
+                                           ? unc_scale : UncertaintyScale::Central;
+    if(leg->leg_type() == LegType::e)
+        return electronSF.GetIdIsoSF(leg.GetMomentum());
 
+    else if(leg->leg_type() == LegType::mu)
+        return  muonSF.GetIdIsoSF(leg.GetMomentum());
 
-    auto tauIdWeight = GetTauIdProvider(leg_wp_disc.at(leg->leg_type()).first, leg_wp_disc.at(leg->leg_type()).second);
-
-    if(leg->leg_type() == LegType::e){
-        double tau_id_weight = tauIdWeight->getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()));
-        return electronSF.GetIdIsoSF(leg.GetMomentum()) * tau_id_weight;
-    }
-    else if(leg->leg_type() == LegType::mu){
-        double tau_id_weight = tauIdWeight->getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()));
-        return  muonSF.GetIdIsoSF(leg.GetMomentum()) * tau_id_weight;
-    }
     else if(leg->leg_type() == LegType::tau){
-        double tau_id_weight = tauIdWeight->getSFvsPT(leg.GetMomentum().pt(), static_cast<int>(leg->gen_match()));
-        return tau_id_weight;
+        auto tauIdWeightVsEle = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSe, VSe_wp);
+        auto tauIdWeightVsMu = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSmu, VSmu_wp);
+        auto tauIdWeight = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSjet, VSjet_wp);
+
+        double tau_id_weight_vs_ele = tauIdWeightVsEle.getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()));
+        double tau_id_weight_vs_mu = tauIdWeightVsMu.getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()));
+
+        double tau_id_weight = is_dm_binned ? tauIdWeight.getSFvsDM(leg.GetMomentum().pt(), leg->decayMode(),
+                                                                    static_cast<int>(leg->gen_match()))
+                                            : tauIdWeight.getSFvsPT(leg.GetMomentum().pt(),
+                                                                    static_cast<int>(leg->gen_match()));
+
+        return tau_id_weight * tau_id_weight_vs_mu * tau_id_weight_vs_ele + static_cast<int>(current_scale) ;
     }
     else
         throw exception("Leg type not found.");
@@ -124,11 +131,11 @@ double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_w
     return weight;
 }
 
-double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo, UncertaintyScale unc_scale) const
+double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo) const
 {
     const ntuple::Event& event = *eventInfo;
-    const double eff_data = GetTriggerEfficiency(eventInfo, true, unc_scale);
-    const double eff_mc = GetTriggerEfficiency(eventInfo, false, unc_scale);
+    const double eff_data = GetTriggerEfficiency(eventInfo, true);
+    const double eff_mc = GetTriggerEfficiency(eventInfo, false);
     if(eff_mc == 0) {
         if(event.lep_decayMode.at(0) >= 0 && eff_data != 0)
             throw exception("Undefined trigger SF for event:%1%. eff mc = 0 & eff data= %2%")
@@ -149,7 +156,7 @@ double LeptonWeights::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in LeptonWeights::Get.");
 }
 
-double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, UncertaintyScale unc_scale ) const
+double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData) const
 {
     const Event& event = *eventInfo;
     const Channel channel = static_cast<Channel>(event.channelId);
@@ -174,11 +181,9 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Un
             double tau_eff = 1;
             tau_eff = isData ?
                 tauTriggerWeight_eTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                            eventInfo.GetLeg(2)->decayMode(),
-                                                                            static_cast<int>(unc_scale)) :
+                                                                            eventInfo.GetLeg(2)->decayMode()) :
                 tauTriggerWeight_eTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                          eventInfo.GetLeg(2)->decayMode(),
-                                                                          static_cast<int>(unc_scale));
+                                                                          eventInfo.GetLeg(2)->decayMode());
 
             static const std::vector<std::string> triggerPaths_unPrescaled_2017 = {
                 "HLT_Ele35_WPTight_Gsf_v", "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1_v" };
@@ -197,11 +202,9 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Un
                 double tau_eff = 1;
                 tau_eff = isData ?
                     tauTriggerWeight_muTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                              eventInfo.GetLeg(2)->decayMode(),
-                                                              static_cast<int>(unc_scale)) :
+                                                              eventInfo.GetLeg(2)->decayMode()) :
                     tauTriggerWeight_muTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                            eventInfo.GetLeg(2)->decayMode(),
-                                                            static_cast<int>(unc_scale));
+                                                            eventInfo.GetLeg(2)->decayMode());
 
                 static const std::vector<std::string> triggerPaths_unPrescaled_2016 = {
                         "HLT_IsoMu19_eta2p1_LooseIsoPFTau20_v", "HLT_IsoMu19_eta2p1_LooseIsoPFTau20_SingleL1_v" };
@@ -254,26 +257,85 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Un
         double tauSF_1 = 1;
         tauSF_1 = isData ?
             tauTriggerWeight_tauTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(1).GetMomentum().pt()),
-                                                                          eventInfo.GetLeg(1)->decayMode(),
-                                                                          static_cast<int>(unc_scale)) :
+                                                                          eventInfo.GetLeg(1)->decayMode()) :
             tauTriggerWeight_tauTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(1).GetMomentum().pt()),
-                                                                        eventInfo.GetLeg(1)->decayMode(),
-                                                                        static_cast<int>(unc_scale));
+                                                                        eventInfo.GetLeg(1)->decayMode());
 
         double tauSF_2 = 1;
         tauSF_2 = isData ?
             tauTriggerWeight_tauTau->getEfficiencyData(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                          eventInfo.GetLeg(2)->decayMode(),
-                                                                          static_cast<int>(unc_scale)) :
+                                                                          eventInfo.GetLeg(2)->decayMode()) :
             tauTriggerWeight_tauTau->getEfficiencyMC(static_cast<float>(eventInfo.GetLeg(2).GetMomentum().pt()),
-                                                                        eventInfo.GetLeg(2)->decayMode(),
-                                                                        static_cast<int>(unc_scale));
+                                                                        eventInfo.GetLeg(2)->decayMode());
 
         return  tauSF_1 * tauSF_2;
     }
 
     throw exception ("channel not allowed");
 }
+
+bool LeptonWeights::ApplyUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match,
+                                          UncertaintySource unc_source)
+{
+    static const std::map<GenLeptonMatch, std::map<UncertaintySource, int>> unc_source_map_dm = {
+         {GenLeptonMatch::Tau, { {  UncertaintySource::TauVSjetSF_DM0, 0 } ,
+                                 {   UncertaintySource::TauVSjetSF_DM1, 1 } ,
+                                 {  UncertaintySource::TauVSjetSF_3prong, 10 },
+                                 {  UncertaintySource::TauVSjetSF_3prong, 11 }  }}
+    };
+
+    static const std::map<GenLeptonMatch, std::map<UncertaintySource, std::pair<double, double>>> unc_source_map_pt = {
+         {GenLeptonMatch::Tau, { {  UncertaintySource::TauVSjetSF_pt20to25, {20, 25} } ,
+                                 {   UncertaintySource::TauVSjetSF_pt25to30,{25, 30} } ,
+                                 {  UncertaintySource::TauVSjetSF_pt30to35, {30, 35} },
+                                 {  UncertaintySource::TauVSjetSF_pt35to40, {35, 40} },
+                                 {  UncertaintySource::TauVSjetSF_ptgt40,   {40, 1000} } } }
+    };
+
+    static const std::map<GenLeptonMatch, std::map<UncertaintySource, std::pair<double, double>>> unc_source_map_eta = {
+         {GenLeptonMatch::Electron, { {  UncertaintySource::TauVSeSF_barrel,        {0, 1.460} } ,
+                                      {  UncertaintySource::TauVSeSF_endcap,        {1.558, 3} } } },
+         {GenLeptonMatch::Muon,     { {  UncertaintySource::TauVSmuSF_etaLt0p4,     {0, 0.4} } ,
+                                      {  UncertaintySource::TauVSmuSF_eta0p4to0p8,  {0.4, 0.8} },
+                                      {  UncertaintySource::TauVSmuSF_eta0p8to1p2,  {0.8, 1.2} },
+                                      {  UncertaintySource::TauVSmuSF_eta1p2to1p7,  {1.2, 1.7} },
+                                      {  UncertaintySource::TauVSmuSF_etaGt1p7,     {1.7, 3} } } },
+    };
+
+    if(gen_lepton_match == GenLeptonMatch::Tau){
+        if(is_dm_binned){
+            const auto gen_iter = unc_source_map_dm.find(gen_lepton_match);
+            if(gen_iter != unc_source_map_dm.end()) {
+                const auto source_iter = gen_iter->second.find(unc_source);
+                if(source_iter != gen_iter->second.end()) {
+                    return source_iter->second < 0 || decay_mode == source_iter->second;
+                }
+            }
+        }
+        else{
+            const auto gen_iter = unc_source_map_pt.find(gen_lepton_match);
+            if(gen_iter != unc_source_map_pt.end()) {
+                const auto source_iter = gen_iter->second.find(unc_source);
+                if(source_iter != gen_iter->second.end()) {
+                    auto pt_interval = source_iter->second;
+                    return pt >= pt_interval.first  &&  pt <= pt_interval.second;
+                }
+            }
+        }
+    }
+    else if(gen_lepton_match == GenLeptonMatch::Electron || gen_lepton_match == GenLeptonMatch::Muon){
+        const auto gen_iter = unc_source_map_eta.find(gen_lepton_match);
+        if(gen_iter != unc_source_map_eta.end()) {
+            const auto source_iter = gen_iter->second.find(unc_source);
+            if(source_iter != gen_iter->second.end()) {
+                auto eta_interval = source_iter->second;
+                return std::abs(eta) >= eta_interval.first  &&  std::abs(eta) <= eta_interval.second;
+            }
+        }
+    }
+    return false;
+}
+
 
 } // namespace mc_corrections
 } // namespace analysis

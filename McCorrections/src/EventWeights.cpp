@@ -34,7 +34,8 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         "",
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IdIso.root"),
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"), "",
-                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),period, DiscriminatorWP::Medium);
+                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),
+                        period, DiscriminatorWP::Medium, false);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(base_tagger == BTaggerKind::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -92,7 +93,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
                         FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
                         FullTriggerName("2017_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium);
+                        period, DiscriminatorWP::Medium, false);
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
     }
@@ -127,7 +128,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu24orIsoMu27.root"),
                         "",
                         FullTriggerName("2018_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium);
+                        period, DiscriminatorWP::Medium, false);
     }
     else {
         throw exception("Period %1% is not supported (EventWeights).") % period;
