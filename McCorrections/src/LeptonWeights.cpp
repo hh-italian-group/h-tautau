@@ -98,13 +98,27 @@ double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp
                                                                  leg->leg_type(), unc_source)
                                            ? unc_scale : UncertaintyScale::Central;
 
-    if(leg->leg_type() == LegType::e)
-        return electronSF.GetIdIsoSF(leg.GetMomentum()) +
-            static_cast<int>(current_scale) * electronSF.GetIdIsoSFError(leg.GetMomentum());
+    if(leg->leg_type() == LegType::e){
+        if(current_scale != UncertaintyScale::Central){
+            if(electronSF.GetIdIsoSFError(leg.GetMomentum()) == 0) //uncertainty on data and MC point = 0, can not calculate uncertainty on scale factor. Uncertainty set to 0
+                return  electronSF.GetIdIsoSF(leg.GetMomentum());
+            else
+                return electronSF.GetIdIsoSF(leg.GetMomentum()) +
+                       static_cast<int>(current_scale) * electronSF.GetIdIsoSFError(leg.GetMomentum());
+       }
+        else return electronSF.GetIdIsoSF(leg.GetMomentum());
+    }
 
-    else if(leg->leg_type() == LegType::mu)
-        return  muonSF.GetIdIsoSF(leg.GetMomentum()) +
-            static_cast<int>(current_scale) * muonSF.GetIdIsoSFError(leg.GetMomentum());
+    else if(leg->leg_type() == LegType::mu){
+        if(current_scale != UncertaintyScale::Central){
+            if(muonSF.GetIdIsoSFError(leg.GetMomentum()) == 0)
+                return  muonSF.GetIdIsoSF(leg.GetMomentum());
+            else
+                return muonSF.GetIdIsoSF(leg.GetMomentum()) +
+                       static_cast<int>(current_scale) * muonSF.GetIdIsoSFError(leg.GetMomentum());
+       }
+        else return muonSF.GetIdIsoSF(leg.GetMomentum());
+    }
 
     else if(leg->leg_type() == LegType::tau){
         double tau_id_weight_vs_mu = 1;
@@ -318,20 +332,17 @@ bool LeptonWeights::ApplyUncertaintyScale(int decay_mode, double pt, double eta,
     };
 
 
-    static const std::map<GenLeptonMatch, std::map<UncertaintySource, int>> unc_source_map = {
-        { GenLeptonMatch::Electron,     { { UncertaintySource::EleIdIsoUnc, -1 } } },
-        { GenLeptonMatch::TauElectron,  { { UncertaintySource::EleIdIsoUnc, -1 } } },
-        { GenLeptonMatch::Muon,         { { UncertaintySource::MuonIdIsoUnc, -1 } } },
-        { GenLeptonMatch::TauMuon,      { { UncertaintySource::MuonIdIsoUnc, -1 } } }
+    static const std::map<GenLeptonMatch, UncertaintySource> unc_source_map = {
+        { GenLeptonMatch::Electron,    UncertaintySource::EleIdIsoUnc  },
+        { GenLeptonMatch::TauElectron, UncertaintySource::EleIdIsoUnc  },
+        { GenLeptonMatch::Muon,        UncertaintySource::MuonIdIsoUnc },
+        { GenLeptonMatch::TauMuon,     UncertaintySource::MuonIdIsoUnc }
     };
 
     if(leg_type == LegType::e || leg_type == LegType::mu){
-        const auto gen_iter = unc_source_map.find(gen_lepton_match);
-        if(gen_iter != unc_source_map.end()) {
-            const auto source_iter = gen_iter->second.find(unc_source);
-            if(source_iter != gen_iter->second.end()) {
-                return source_iter->second < 0;
-            }
+        if(unc_source_map.count(gen_lepton_match)){
+            if(unc_source_map.at(gen_lepton_match) == unc_source)
+                return true;
         }
     }
 
