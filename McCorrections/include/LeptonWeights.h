@@ -27,6 +27,12 @@ public:
     }
 
     template<typename LorentzVector>
+    double GetIdIsoSFError(const LorentzVector& p4) const
+    {
+        return idIso->get_ScaleFactorError(p4.pt(), p4.eta());
+    }
+
+    template<typename LorentzVector>
     double GetTriggerEff(const LorentzVector& p4, bool isData) const
     {
         if(isData)
