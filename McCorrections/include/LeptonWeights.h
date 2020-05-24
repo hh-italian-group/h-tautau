@@ -27,6 +27,12 @@ public:
     }
 
     template<typename LorentzVector>
+    double GetIdIsoSFError(const LorentzVector& p4) const
+    {
+        return idIso->get_ScaleFactorError(p4.pt(), p4.eta());
+    }
+
+    template<typename LorentzVector>
     double GetTriggerEff(const LorentzVector& p4, bool isData) const
     {
         if(isData)
@@ -143,10 +149,21 @@ public:
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                   const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                  const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp);
+                  const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp, bool _is_dm_binned);
 
-    double GetIdIsoWeight(EventInfo& eventInfo) const;
-    double GetTriggerWeight(EventInfo& eventInfo) const;
+    TauIDSFTool& GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp);
+
+    double GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp, DiscriminatorWP VSjet_wp,
+                             UncertaintySource unc_source, UncertaintyScale unc_scale);
+
+    double GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp, DiscriminatorWP VSjet_wp,
+                          UncertaintySource unc_source, UncertaintyScale unc_scale);
+
+    double GetTriggerWeight(EventInfo& eventInfo) const ;
+
+    bool ApplyUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match, LegType leg_type,
+                               UncertaintySource unc_source);
+
 
     virtual double Get(EventInfo& eventInfo) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
@@ -159,9 +176,10 @@ private:
     std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_eTau;
     std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_muTau;
     std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_tauTau;
-    std::shared_ptr<TauIDSFTool> tauIdWeight;
     Period period;
     DiscriminatorWP tau_iso_wp;
+    bool is_dm_binned;
+    std::map<TauIdDiscriminator, std::map<DiscriminatorWP, std::shared_ptr<TauIDSFTool>>> tau_sf_providers;
 };
 
 } // namespace mc_corrections

@@ -172,9 +172,14 @@ void TriggerTools::Initialize(const edm::Event &_iEvent, bool isData)
                         filter_toPass = leg.filters;
                     const bool has_expected_type = hasExpectedType(leg.type, unpackedTriggerObject);
                     const bool pass_filters = passFilters(unpackedTriggerObject,filter_toPass);
-                    if(debug)
-                        std::cout << "\t\t leg=" << n << ", has_expected_type=" << has_expected_type
+                    if(debug) {
+                        std::cout << "\t\tleg=" << n << ", has_expected_type=" << has_expected_type
                                   << ", pass_filters=" << pass_filters << '\n';
+                        for(const auto& filter : filter_toPass) {
+                            std::cout << "\t\t\t" << filter << ": "
+                                      << unpackedTriggerObject.hasFilterLabel(filter) << '\n';
+                        }
+                    }
                     if(!has_expected_type || !pass_filters) continue;
                     pathTriggerObjects.at(index).at(n).insert(&triggerObject);
                 }
