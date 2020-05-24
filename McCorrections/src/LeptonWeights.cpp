@@ -155,9 +155,8 @@ double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_w
                                      UncertaintyScale unc_scale)
 {
     double weight = 1;
-    for(size_t leg_id = 1; leg_id <= 2; ++leg_id){
+    for(size_t leg_id = 1; leg_id <= 2; ++leg_id)
         weight *= GetLegIdIsoWeight(eventInfo.GetLeg(leg_id), VSe_wp, VSmu_wp, VSjet_wp, unc_source, unc_scale);
-    }
     return weight;
 }
 
