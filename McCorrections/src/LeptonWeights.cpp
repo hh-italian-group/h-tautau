@@ -129,12 +129,12 @@ double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp
 
         if(leg->gen_match() == GenLeptonMatch::Electron || leg->gen_match() == GenLeptonMatch::TauElectron){
             auto tauIdWeightVsEle = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSe, VSe_wp);
-            tau_id_weight_vs_ele = tauIdWeightVsEle.getSFvsEta(leg.GetMomentum().eta(),
+            tau_id_weight_vs_ele = tauIdWeightVsEle.getSFvsEta(std::abs(leg.GetMomentum().eta()),
                                                               static_cast<int>(leg->gen_match()), scale);
         }
         else if(leg->gen_match() == GenLeptonMatch::Muon || leg->gen_match() == GenLeptonMatch::TauMuon ){
             auto tauIdWeightVsMu = GetTauIdProvider(TauIdDiscriminator::byDeepTau2017v2p1VSmu, VSmu_wp);
-            tau_id_weight_vs_mu = tauIdWeightVsMu.getSFvsEta(leg.GetMomentum().eta(), static_cast<int>(leg->gen_match()),
+            tau_id_weight_vs_mu = tauIdWeightVsMu.getSFvsEta(std::abs(leg.GetMomentum().eta()), static_cast<int>(leg->gen_match()),
                                                              scale);
         }
         else if(leg->gen_match() == GenLeptonMatch::Tau){
@@ -144,7 +144,6 @@ double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp
                                                 : tauIdWeight.getSFvsPT(leg.GetMomentum().pt(),
                                                                         static_cast<int>(leg->gen_match()), scale);
         }
-
         return tau_id_weight * tau_id_weight_vs_mu * tau_id_weight_vs_ele;
     }
     else
@@ -156,8 +155,9 @@ double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_w
                                      UncertaintyScale unc_scale)
 {
     double weight = 1;
-    for(size_t leg_id = 1; leg_id <= 2; ++leg_id)
+    for(size_t leg_id = 1; leg_id <= 2; ++leg_id){
         weight *= GetLegIdIsoWeight(eventInfo.GetLeg(leg_id), VSe_wp, VSmu_wp, VSjet_wp, unc_source, unc_scale);
+    }
     return weight;
 }
 
