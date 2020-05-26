@@ -254,7 +254,13 @@ namespace ntuple {
 template<typename T>
 constexpr T DefaultFillValue() { return std::numeric_limits<T>::lowest(); }
 
+using ::analysis::operator<<;
+using ::analysis::operator>>;
+
 enum class TreeState { Full, Skimmed };
+ENUM_NAMES(TreeState) = {
+    { TreeState::Full, "Full" }, { TreeState::Skimmed, "Skimmed" }
+};
 
 struct LegPair : std::pair<size_t, size_t> {
     LegPair();
