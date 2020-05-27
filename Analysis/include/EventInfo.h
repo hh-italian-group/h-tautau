@@ -19,16 +19,20 @@ public:
     using ProdSummary = ntuple::ProdSummary;
 
     explicit SummaryInfo(const ProdSummary& _summary, const Channel& _channel,
-                         const std::string& _trigger_cfg = "");
+                         const std::string& _trigger_cfg = "", const std::vector<std::string>& _triggers = {},
+                         const std::vector<std::string>& _vbf_triggers = {});
     std::shared_ptr<const TriggerDescriptorCollection> GetTriggerDescriptors() const;
     const ProdSummary& operator*() const;
     const ProdSummary* operator->() const;
     const jec::JECUncertaintiesWrapper& GetJecUncertainties() const;
+    const std::vector<std::string>& GetTriggers() const;
+    const std::vector<std::string>& GetVbfTriggers() const;
 
 private:
     ProdSummary summary;
     std::shared_ptr<const TriggerDescriptorCollection> triggerDescriptors;
     std::shared_ptr<jec::JECUncertaintiesWrapper> jecUncertainties;
+    std::vector<std::string> triggers, vbf_triggers;
 };
 
 class EventInfo {
@@ -92,6 +96,9 @@ public:
     void SetMvaScore(double _mva_score);
     double GetMvaScore() const;
 
+    bool PassNormalTriggers();
+    bool PassVbfTriggers();
+
     [[ noreturn ]] void ThrowException(const std::string& message) const;
 
     static std::unique_ptr<EventInfo> Create(const ntuple::Event& event,
@@ -109,6 +116,9 @@ public:
                                              bool is_sync = false, bool debug = false);
 
 private:
+    std::vector<std::string> FilterTriggers(const std::vector<std::string>& trigger_names) const;
+
+private:
     Mutex mutex;
     const std::shared_ptr<EventCandidate> event_candidate;
     const SummaryInfoPtr summaryInfo;
@@ -124,6 +134,7 @@ private:
     boost::optional<sv_fit_ana::FitResults> svfit_results;
     boost::optional<double> mt2, mva_score;
     boost::optional<std::vector<const JetCandidate*>> central_jets, forward_jets, all_jets;
+    boost::optional<bool> pass_triggers, pass_vbf_triggers;
 };
 
 } // namespace analysis
