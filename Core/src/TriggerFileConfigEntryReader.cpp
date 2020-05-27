@@ -20,6 +20,10 @@ void TriggerFileConfigEntryReader::EndEntry()
 {
     CheckReadParamCounts("channels", 1, Condition::less_equal);
     CheckReadParamCounts("leg", 0, Condition::greater_equal);
+    CheckReadParamCounts("apply_mc", 1, Condition::less_equal);
+    CheckReadParamCounts("apply_data", 1, Condition::less_equal);
+    CheckReadParamCounts("min_run", 1, Condition::less_equal);
+    CheckReadParamCounts("max_run", 1, Condition::less_equal);
 
     (*descriptors)[current.name] = current;
 }
@@ -29,6 +33,10 @@ void TriggerFileConfigEntryReader::ReadParameter(const std::string& /*param_name
 {
     ParseEnumList("channels", current.channels);
     ParseEntry("leg", current.legs);
+    ParseEntry("apply_mc", current.apply_mc);
+    ParseEntry("apply_data", current.apply_data);
+    ParseEntry<boost::optional<unsigned>, unsigned>("min_run", current.min_run);
+    ParseEntry<boost::optional<unsigned>, unsigned>("max_run", current.max_run);
 }
 
 } // namespace trigger_tools

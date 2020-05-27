@@ -7,13 +7,13 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 namespace analysis {
 
 SummaryInfo::SummaryInfo(const ProdSummary& _summary, const Channel& _channel,
-                         const std::string& _trigger_cfg) :
-                         summary(_summary)
+                         const std::string& _trigger_cfg, const std::vector<std::string>& _triggers,
+                         const std::vector<std::string>& _vbf_triggers) :
+        summary(_summary), triggers(_triggers), vbf_triggers(_vbf_triggers)
 {
-    if(!_trigger_cfg.empty()){
+    if(!_trigger_cfg.empty()) {
         triggerDescriptors = TriggerDescriptorCollection::Load(_trigger_cfg,_channel);
     }
-
 }
 
 std::shared_ptr<const TriggerDescriptorCollection> SummaryInfo::GetTriggerDescriptors() const
@@ -30,6 +30,9 @@ const jec::JECUncertaintiesWrapper& SummaryInfo::GetJecUncertainties() const
         throw exception("Jec Uncertainties not stored.");
     return *jecUncertainties;
 }
+
+const std::vector<std::string>& SummaryInfo::GetTriggers() const { return triggers; }
+const std::vector<std::string>& SummaryInfo::GetVbfTriggers() const { return vbf_triggers; }
 
 namespace {
     TriggerResults _InitializeTriggerResults(const ntuple::Event& event,
@@ -294,6 +297,56 @@ double EventInfo::GetMvaScore() const
     if(!mva_score)
         ThrowException("EventInfo: mva_score is not set.");
     return *mva_score;
+}
+
+bool EventInfo::PassNormalTriggers()
+{
+    Lock lock(mutex);
+    if(!pass_triggers.is_initialized()) {
+        const auto active_triggers = FilterTriggers(GetSummaryInfo().GetTriggers());
+        pass_triggers = GetTriggerResults().AnyAcceptAndMatchEx(active_triggers, GetLeg(1).GetMomentum().pt(),
+                                                                GetLeg(2).GetMomentum().pt());
+    }
+    return *pass_triggers;
+}
+
+bool EventInfo::PassVbfTriggers()
+{
+    Lock lock(mutex);
+    if(!pass_vbf_triggers.is_initialized()) {
+        pass_vbf_triggers = false;
+        if(HasVBFjetPair()) {
+            const auto active_triggers = FilterTriggers(GetSummaryInfo().GetVbfTriggers());
+            if(!active_triggers.empty()) {
+                const std::vector<boost::multiprecision::uint256_t> jet_trigger_match = {
+                    GetVBFJet(1)->triggerFilterMatch(), GetVBFJet(2)->triggerFilterMatch()
+                };
+
+                pass_vbf_triggers = GetTriggerResults().AnyAcceptAndMatchEx(active_triggers,
+                                                                            GetLeg(1).GetMomentum().pt(),
+                                                                            GetLeg(2).GetMomentum().pt(),
+                                                                            jet_trigger_match);
+            }
+        }
+    }
+    return *pass_vbf_triggers;
+}
+
+std::vector<std::string> EventInfo::FilterTriggers(const std::vector<std::string>& trigger_names) const
+{
+    const ntuple::Event& event = event_candidate->GetEvent();
+    std::vector<std::string> active_triggers;
+    for(const auto& trigger_name : trigger_names) {
+        const auto& desc = GetSummaryInfo().GetTriggerDescriptors()->at(trigger_name);
+        if(event.isData && !desc.apply_data) continue;
+        if(!event.isData && !desc.apply_mc) continue;
+        if(event.isData) {
+            if(desc.min_run && event.run < *desc.min_run) continue;
+            if(desc.max_run && event.run >= *desc.max_run) continue;
+        }
+        active_triggers.push_back(trigger_name);
+    }
+    return active_triggers;
 }
 
 void EventInfo::ThrowException(const std::string& message) const

@@ -30,8 +30,10 @@ TriggerDescriptorCollection::Leg::Leg(const LegType _type, double _pt, double _d
     applyL1match(_applyL1match), filters(_filters), legacy_filters(_legacy_filters) { }
 
 TriggerDescriptorCollection::TriggerDescriptor::TriggerDescriptor(const Pattern _pattern,
-                                                                  const std::vector<Leg>& legs_info) :
-    pattern(_pattern)
+                                                                  const std::vector<Leg>& legs_info, bool _apply_data, bool _apply_mc,
+                                                                  const boost::optional<unsigned>& _min_run,
+                                                                  const boost::optional<unsigned>& _max_run) :
+    pattern(_pattern), apply_data(_apply_data), apply_mc(_apply_mc), min_run(_min_run), max_run(_max_run)
 {
     static const std::string regex_format = "^%1%[0-9]+$";
     const std::string regex_str = boost::str(boost::format(regex_format) % pattern);
@@ -74,14 +76,16 @@ const TriggerDescriptorCollection::TriggerDescriptor& TriggerDescriptorCollectio
     return descriptors.at(index);
 }
 
-void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<Leg>& legs)
+void TriggerDescriptorCollection::Add(const Pattern& pattern, const std::vector<Leg>& legs, bool apply_data,
+                                      bool apply_mc, const boost::optional<unsigned>& min_run,
+                                      const boost::optional<unsigned>& max_run)
 {
     if(desc_indices.count(pattern))
         throw exception("Duplicated trigger pattern '%1%'.") % pattern;
     if(descriptors.size() == TriggerResults::MaxNumberOfTriggers)
         throw exception("Maximal number of triggers is exceeded.");
     desc_indices[pattern] = descriptors.size();
-    descriptors.emplace_back(pattern, legs);
+    descriptors.emplace_back(pattern, legs, apply_data, apply_mc, min_run, max_run);
     path_index_cache->clear();
     for(auto& leg : descriptors.back().jet_legs) {
         leg.jet_filter_indices.clear();
@@ -201,7 +205,9 @@ std::shared_ptr<TriggerDescriptorCollection> TriggerDescriptorCollection::Load(c
             const TriggerDescriptorCollection::FilterVector filters = leg_list.GetList<std::string>("filters", false);
             legs_vector.emplace_back(type,pt,delta_pt,eta,run_switch,applyL1match,filters,legacy_filters);
         }
-        (*triggerDescriptors).Add(entry.first, legs_vector);
+        (*triggerDescriptors).Add(entry.first, legs_vector, trigger_file_descriptor->apply_data,
+                                  trigger_file_descriptor->apply_mc, trigger_file_descriptor->min_run,
+                                  trigger_file_descriptor->max_run);
     }
 
     return triggerDescriptors;

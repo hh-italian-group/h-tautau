@@ -19,7 +19,8 @@ struct TriggerFileDescriptor {
     std::string name;
     std::set<analysis::Channel> channels;
     std::vector<std::string> legs;
-
+    bool apply_data{true}, apply_mc{true};
+    boost::optional<unsigned> min_run, max_run;
 };
 
 using TriggerFileDescriptorCollection = analysis::map_vec<std::string, TriggerFileDescriptor>;

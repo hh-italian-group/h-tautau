@@ -18,39 +18,16 @@ class LeptonScaleFactors {
 public:
     using SF = htt_utilities::ScaleFactor;
 
-    LeptonScaleFactors(const std::string& idIsoInput, const std::string& triggerInputSingle, const std::string& triggerInputCross = "");
+    LeptonScaleFactors(const std::string& idIsoInput, const std::string& triggerInputSingle,
+                       const std::string& triggerInputCross = "");
 
-    template<typename LorentzVector>
-    double GetIdIsoSF(const LorentzVector& p4) const
-    {
-        return idIso->get_ScaleFactor(p4.pt(), p4.eta());
-    }
-
-    template<typename LorentzVector>
-    double GetIdIsoSFError(const LorentzVector& p4) const
-    {
-        return idIso->get_ScaleFactorError(p4.pt(), p4.eta());
-    }
-
-    template<typename LorentzVector>
-    double GetTriggerEff(const LorentzVector& p4, bool isData) const
-    {
-        if(isData)
-            return triggerSingle->get_EfficiencyData(p4.pt(), p4.eta());
-        else
-            return triggerSingle->get_EfficiencyMC(p4.pt(), p4.eta());
-    }
-
-    template<typename LorentzVector>
-    double GetTriggerEffCross(const LorentzVector& p4, bool isData ) const
-    {
-        if(isData)
-            return triggerCross->get_EfficiencyData(p4.pt(), p4.eta());
-        else
-            return triggerCross->get_EfficiencyMC(p4.pt(), p4.eta());
-    }
-
+    double GetIdIsoSF(const LorentzVector& p4, UncertaintyScale unc_scale) const;
+    double GetTriggerEff(const LorentzVector& p4, bool isData, UncertaintyScale unc_scale) const;
+    double GetTriggerEffCross(const LorentzVector& p4, bool isData, UncertaintyScale unc_scale) const;
     bool HasCrossTriggers() const;
+
+private:
+    static double GetEff(const LorentzVector& p4, bool isData, UncertaintyScale unc_scale, SF& sf_provider);
 
 private:
     std::shared_ptr<SF> idIso, triggerSingle, triggerCross;
@@ -149,37 +126,37 @@ public:
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                   const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                  const std::string& tauTriggerInput, Period period, DiscriminatorWP _tau_iso_wp, bool _is_dm_binned);
+                  const std::string& tauTriggerInput, Period period, bool _is_dm_binned);
 
     TauIDSFTool& GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp);
+    const tau_trigger::SFProvider& GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp);
 
-    double GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp, DiscriminatorWP VSjet_wp,
-                             UncertaintySource unc_source, UncertaintyScale unc_scale);
+    double GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
+                             DiscriminatorWP VSjet_wp, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
-    double GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp, DiscriminatorWP VSjet_wp,
-                          UncertaintySource unc_source, UncertaintyScale unc_scale);
+    double GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
+                          DiscriminatorWP VSjet_wp, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
-    double GetTriggerWeight(EventInfo& eventInfo) const ;
+    bool ApplyIdUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match,
+                                 LegType leg_type, UncertaintySource unc_source);
 
-    bool ApplyUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match, LegType leg_type,
-                               UncertaintySource unc_source);
+    double GetTriggerWeight(EventInfo& eventInfo, DiscriminatorWP VSjet_wp, UncertaintySource unc_source,
+                            UncertaintyScale unc_scale);
+    double GetTriggerPrescaleWeight(EventInfo& eventInfo) const;
 
+    double GetTriggerEfficiency(EventInfo& eventInfo, bool isData, DiscriminatorWP VSjet_wp,
+                                UncertaintySource unc_source, UncertaintyScale unc_scale, bool& same_as_central);
 
     virtual double Get(EventInfo& eventInfo) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
 private:
-    double GetTriggerEfficiency(EventInfo& eventInfo, bool isData) const;
-
-private:
     detail::LeptonScaleFactors electronSF, muonSF;
-    std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_eTau;
-    std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_muTau;
-    std::shared_ptr<tau_trigger::SFProvider> tauTriggerWeight_tauTau;
+    std::string tauTriggerInput;
     Period period;
-    DiscriminatorWP tau_iso_wp;
     bool is_dm_binned;
     std::map<TauIdDiscriminator, std::map<DiscriminatorWP, std::shared_ptr<TauIDSFTool>>> tau_sf_providers;
+    std::map<Channel, std::map<DiscriminatorWP, std::shared_ptr<tau_trigger::SFProvider>>> tau_trigger_sf_providers;
 };
 
 } // namespace mc_corrections
