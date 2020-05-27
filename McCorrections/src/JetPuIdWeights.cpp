@@ -13,7 +13,6 @@ JetInfo::JetInfo(const JetCandidate& jet) :
 {
     pt  = jet.GetMomentum().pt();
     eta = jet.GetMomentum().eta();
-    hadronFlavour = jet->hadronFlavour();
 }
 
 JetPuIdWeights::JetPuIdWeights(const std::string& file_eff, const std::string& file_sf, const BTagger& _bTagger,
