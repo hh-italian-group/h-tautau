@@ -99,6 +99,13 @@ public:
     bool PassNormalTriggers();
     bool PassVbfTriggers();
 
+    template <class Vector1, class Vector2>
+    inline bool FindGenMatch(const Vector1& v1, const Vector2& v2, double deltaR)
+    {
+        return ROOT::Math::VectorUtil::DeltaR(v1, v2) < deltaR;
+
+    }
+
     [[ noreturn ]] void ThrowException(const std::string& message) const;
 
     static std::unique_ptr<EventInfo> Create(const ntuple::Event& event,

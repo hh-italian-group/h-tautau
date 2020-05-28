@@ -48,12 +48,12 @@ double JetPuIdWeights::Get(EventInfo& eventInfo) const
                                                                SignalObjectSelector::SelectedSignalJets());
     for(const auto& sel_jet_info : sel_jets) {
         const auto& jet = eventInfo.GetEventCandidate().GetJets().at(sel_jet_info.index);
-        if(!(jet.GetMomentum().pt() > 50)) continue;
+        if(!(jet.GetMomentum().pt() < 50)) continue;
 
         double SF = 1;
         double eff = 1;
         for (size_t n = 0; n < eventInfo->genJets_p4.size(); ++n){
-            if(ROOT::Math::VectorUtil::DeltaR(eventInfo->genJets_p4.at(n), jet.GetMomentum() ) < 0.5){
+            if(eventInfo.FindGenMatch(eventInfo->genJets_p4.at(n), jet.GetMomentum(), 0.5)){
                 SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
                 eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
             }
@@ -63,7 +63,7 @@ double JetPuIdWeights::Get(EventInfo& eventInfo) const
             }
         }
 
-        DiscriminatorIdResults jet_pu_id(eventInfo.GetEventCandidate().GetJets().at(sel_jet_info.index)->GetPuId());
+        DiscriminatorIdResults jet_pu_id(jet->GetPuId());
         bool jetPuIdOutcome = jet_pu_id.Passed(DiscriminatorWP::Loose);
 
         MC *= jetPuIdOutcome ? eff : 1 - eff;

@@ -4,6 +4,7 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 #pragma once
 
 #include "h-tautau/Core/include/AnalysisTypes.h"
+#include "h-tautau/Analysis/include/EventInfo.h"
 #include "WeightProvider.h"
 
 namespace analysis {
