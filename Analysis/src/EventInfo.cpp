@@ -334,19 +334,19 @@ bool EventInfo::PassVbfTriggers()
 
 boost::optional<size_t> EventInfo::FindGenMatch(const JetCandidate& jet) const
 {
-    std::map<float,size_t> dR_index;
-    std::vector<float> dR;
-    auto gen_jet_p4 = event_candidate->GetEvent().genJets_p4;
 
-    for (size_t n = 0; n < gen_jet_p4.size(); ++n){
-        dR_index[ROOT::Math::VectorUtil::DeltaR(gen_jet_p4.at(n), jet.GetMomentum())] = n;
-        dR.push_back(ROOT::Math::VectorUtil::DeltaR(gen_jet_p4.at(n), jet.GetMomentum()));
+    static constexpr double dR_thr = 0.5;
+    boost::optional<size_t> result;
+    double min_dR = dR_thr;
+    const auto& gen_jet_p4 = event_candidate->GetEvent().genJets_p4;
+    for (size_t n = 0; n < gen_jet_p4.size(); ++n) {
+        const double dR = ROOT::Math::VectorUtil::DeltaR(gen_jet_p4.at(n), jet.GetMomentum());
+        if(dR < min_dR) {
+            min_dR = dR;
+            result = n;
+        }
     }
-
-    auto min_dR = *std::min_element(dR.begin(), dR.end());
-    if(min_dR < 0.5)
-        return dR_index[min_dR];
-    return boost::optional<size_t>();
+    return result;
 }
 
 std::vector<std::string> EventInfo::FilterTriggers(const std::vector<std::string>& trigger_names) const

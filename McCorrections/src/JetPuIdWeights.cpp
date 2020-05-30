@@ -54,7 +54,7 @@ double JetPuIdWeights::Get(EventInfo& eventInfo) const
         double SF = 1;
         double eff = 1;
         auto index = eventInfo.FindGenMatch(jet);
-        if(index.is_initialized() && index == sel_jet_info.index){ //jet from hard interaction, index of the closest gen jet, if found
+        if(index.is_initialized()){ //jet from hard interaction, index of the closest gen jet, if found
             SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
             eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
         }
