@@ -50,17 +50,17 @@ double JetPuIdWeights::Get(EventInfo& eventInfo) const
         const auto& jet = eventInfo.GetEventCandidate().GetJets().at(sel_jet_info.index);
         if(!(jet.GetMomentum().pt() < 50)) continue;
 
+
         double SF = 1;
         double eff = 1;
-        for (size_t n = 0; n < eventInfo->genJets_p4.size(); ++n){
-            if(eventInfo.FindGenMatch(eventInfo->genJets_p4.at(n), jet.GetMomentum(), 0.5)){
-                SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
-                eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
-            }
-            else{
-                SF = GetEfficiency(sf_mistag_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
-                eff = GetEfficiency(eff_mistag_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
-            }
+        auto index = eventInfo.FindGenMatch(jet);
+        if(index.is_initialized() && index == sel_jet_info.index){ //jet from hard interaction, index of the closest gen jet, if found
+            SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
+            eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
+        }
+        else{ //jet from PileUp
+            SF = GetEfficiency(sf_mistag_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
+            eff = GetEfficiency(eff_mistag_hist, jet.GetMomentum().pt(), std::abs(jet.GetMomentum().eta()));
         }
 
         DiscriminatorIdResults jet_pu_id(jet->GetPuId());

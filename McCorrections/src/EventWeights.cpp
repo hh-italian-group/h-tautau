@@ -100,7 +100,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullName("2017/jet_pu_id/h2_mistag_sf_2017_L.root"),bTagger, period);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                        FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
+                        FullLeptonName("Electron/Run2017/Electron_Run2017_IdIso.root"),
                         FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
                         FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
                         FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
