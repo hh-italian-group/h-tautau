@@ -11,6 +11,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "h-tautau/McCorrections/include/BTagWeight.h"
 #include "h-tautau/McCorrections/include/TopPtWeight.h"
 #include "h-tautau/McCorrections/include/GenEventWeight.h"
+#include "h-tautau/McCorrections/include/JetPuIdWeights.h"
 
 namespace analysis {
 namespace mc_corrections {
@@ -33,9 +34,10 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullLeptonName("Electron/Run2016_legacy/Electron_Run2016_legacy_Ele25.root"),
                         "",
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IdIso.root"),
-                        FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"), "",
+                        FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"),
+                        FullLeptonName("Muon/Run2016BtoH/Muon_Mu19leg_2016BtoH_eff.root"),
                         FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium, false);
+                        period, false);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(base_tagger == BTaggerKind::CSV)
                 providers[WeightType::BTag] = std::make_shared<BTagWeight>(
@@ -55,6 +57,12 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
             else
                 throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
+        if(mode.empty() || mode.count(WeightType::JetPuIdWeights))
+            providers[WeightType::JetPuIdWeights] = std::make_shared<JetPuIdWeights>(
+                        FullName("2016/jet_pu_id/h2_eff_mc_2016_L.root"),
+                        FullName("2016/jet_pu_id/h2_eff_sf_2016_L.root"),
+                        FullName("2016/jet_pu_id/h2_mistag_mc_2016_L.root"),
+                        FullName("2016/jet_pu_id/h2_mistag_sf_2016_L.root"), bTagger, period);
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
     }
@@ -84,16 +92,22 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
             else
                throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
+        if(mode.empty() || mode.count(WeightType::JetPuIdWeights))
+            providers[WeightType::JetPuIdWeights] = std::make_shared<JetPuIdWeights>(
+                        FullName("2017/jet_pu_id/h2_eff_mc_2017_L.root"),
+                        FullName("2017/jet_pu_id/h2_eff_sf_2017_L.root"),
+                        FullName("2017/jet_pu_id/h2_mistag_mc_2017_L.root"),
+                        FullName("2017/jet_pu_id/h2_mistag_sf_2017_L.root"),bTagger, period);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
-                        FullLeptonName("Electron/Run2017/Electron_IdIso_IsoLt0.10_eff_RerecoFall17.root"),
+                        FullLeptonName("Electron/Run2017/Electron_Run2017_IdIso.root"),
                         FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
                         FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
                         FullLeptonName("Muon/Run2017/Muon_IdIso_IsoLt0.15_eff_RerecoFall17.root"),
                         FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
                         FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
                         FullTriggerName("2017_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium, false);
+                        period, false);
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
     }
@@ -117,18 +131,24 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
             else
                throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
+        if(mode.empty() || mode.count(WeightType::JetPuIdWeights))
+            providers[WeightType::JetPuIdWeights] = std::make_shared<JetPuIdWeights>(
+                        FullName("2018/jet_pu_id/h2_eff_mc_2018_L.root"),
+                        FullName("2018/jet_pu_id/h2_eff_sf_2018_L.root"),
+                        FullName("2018/jet_pu_id/h2_mistag_mc_2018_L.root"),
+                        FullName("2018/jet_pu_id/h2_mistag_sf_2018_L.root"), bTagger, period);
         if(mode.empty() || mode.count(WeightType::TopPt))
             providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
                         FullLeptonName("Electron/Run2018/Electron_Run2018_IdIso.root"),
                         FullLeptonName("Electron/Run2018/Electron_Run2018_Ele32orEle35.root"),
-                        "",
+                        FullLeptonName("Electron/Run2018/Electron_Run2018_Ele24.root"),
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IdIso.root"),
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu24orIsoMu27.root"),
-                        "",
+                        FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu20.root"),
                         FullTriggerName("2018_tauTriggerEff_DeepTau2017v2p1.root"),
-                        period, DiscriminatorWP::Medium, false);
+                        period, false);
     }
     else {
         throw exception("Period %1% is not supported (EventWeights).") % period;

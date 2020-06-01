@@ -78,8 +78,12 @@ public:
         Pattern pattern;
         std::vector<Leg> lepton_legs, jet_legs;
         boost::regex regex;
+        bool apply_data, apply_mc;
+        boost::optional<unsigned> min_run, max_run;
 
-        TriggerDescriptor(const Pattern _pattern, const std::vector<Leg>& legs_info);
+        TriggerDescriptor(const Pattern _pattern, const std::vector<Leg>& legs_info,
+                          bool _apply_data, bool _apply_mc, const boost::optional<unsigned>& _min_run,
+                          const boost::optional<unsigned>& _max_run);
         bool PatternMatch(const std::string& path_name) const;
         bool RequiresJetMatching() const;
     };
@@ -93,7 +97,8 @@ public:
     size_t size() const;
     const TriggerDescriptor& at(size_t index) const;
     const TriggerDescriptor& at(const Pattern& pattern) const;
-    void Add(const Pattern& pattern, const std::vector<Leg>& legs);
+    void Add(const Pattern& pattern, const std::vector<Leg>& legs, bool _apply_data, bool _apply_mc,
+             const boost::optional<unsigned>& _min_run, const boost::optional<unsigned>& _max_run);
     bool FindPatternMatch(const std::string& path_name, size_t& index) const;
     size_t GetIndex(const Pattern& pattern) const;
 
