@@ -99,6 +99,8 @@ public:
     bool PassNormalTriggers();
     bool PassVbfTriggers();
 
+    boost::optional<size_t> FindGenMatch(const JetCandidate& jet) const;
+
     [[ noreturn ]] void ThrowException(const std::string& message) const;
 
     static std::unique_ptr<EventInfo> Create(const ntuple::Event& event,

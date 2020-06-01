@@ -332,6 +332,23 @@ bool EventInfo::PassVbfTriggers()
     return *pass_vbf_triggers;
 }
 
+boost::optional<size_t> EventInfo::FindGenMatch(const JetCandidate& jet) const
+{
+
+    static constexpr double dR_thr = 0.5;
+    boost::optional<size_t> result;
+    double min_dR = dR_thr;
+    const auto& gen_jet_p4 = event_candidate->GetEvent().genJets_p4;
+    for (size_t n = 0; n < gen_jet_p4.size(); ++n) {
+        const double dR = ROOT::Math::VectorUtil::DeltaR(gen_jet_p4.at(n), jet.GetMomentum());
+        if(dR < min_dR) {
+            min_dR = dR;
+            result = n;
+        }
+    }
+    return result;
+}
+
 std::vector<std::string> EventInfo::FilterTriggers(const std::vector<std::string>& trigger_names) const
 {
     const ntuple::Event& event = event_candidate->GetEvent();
