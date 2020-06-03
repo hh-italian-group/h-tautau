@@ -80,7 +80,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
     for(const auto& [wp, op] : op_map) {
         for(const auto& [flavor, flavor_id] : jet_flavors) {
             auto reader = std::make_shared<Reader>(op, "central", unc_scale_names);
-            reader->load(calib, flavor, "comb");
+            reader->load(calib, flavor, flavor_id == 0 ? "incl" : "comb");
             readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, wp);
         }
     }
@@ -104,19 +104,13 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp) const
     const std::string unc_name = GetUncertantyName(scale);
 
     JetInfoVector jetInfos;
-
-    const auto sel_jets = SignalObjectSelector::CreateJetInfos(eventInfo.GetEventCandidate(), bTagger, true,
-                                                               eventInfo.GetHttIndex(),
-                                                               SignalObjectSelector::SelectedSignalJets());
-    for(const auto& sel_jet_info : sel_jets) {
-        const auto& jet = eventInfo.GetEventCandidate().GetJets().at(sel_jet_info.index);
-        JetInfo jetInfo(jet);
+    for(const auto& jet : eventInfo.GetCentralJets()) {
+        JetInfo jetInfo(*jet);
         if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
         GetReader(wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
-        jetInfo.bTagOutcome = bTagger.Pass(*jet, wp);
+        jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
         jetInfos.push_back(jetInfo);
     }
-
     return GetBtagWeight(jetInfos);
 }
 
