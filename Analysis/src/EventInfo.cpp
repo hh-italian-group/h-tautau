@@ -335,7 +335,7 @@ bool EventInfo::PassVbfTriggers()
 boost::optional<size_t> EventInfo::FindGenMatch(const JetCandidate& jet) const
 {
 
-    static constexpr double dR_thr = 0.5;
+    static constexpr double dR_thr = 0.4;
     boost::optional<size_t> result;
     double min_dR = dR_thr;
     const auto& gen_jet_p4 = event_candidate->GetEvent().genJets_p4;

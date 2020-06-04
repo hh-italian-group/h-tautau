@@ -393,7 +393,6 @@ SignalObjectSelector::JetInfoCollection SignalObjectSelector::CreateJetInfos(
         if(selected_signal_jets.isSelectedBjet(n)) continue;
         if(selected_signal_jets.isSelectedVBFjet(n)) continue;
         DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
-        if(!PassEcalNoiceVeto(jet_p4, event_candidate.GetPeriod(), jet_pu_id)) continue;
         if(apply_jet_up_id && jet_p4.pt() < 50 && !jet_pu_id.Passed(DiscriminatorWP::Loose)) continue;
         const double tag = bTagger.BTag(*event_candidate.GetJets().at(n), false);
         jet_info_vector.emplace_back(jet_p4, n, tag);

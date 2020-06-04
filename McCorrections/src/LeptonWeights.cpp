@@ -384,7 +384,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         efficiency = getMuonEff(false);
     } else if(channel == Channel::TauTau) {
         efficiency = getTauEff(1, false) * getTauEff(2, false);
-        if(efficiency <= 0)
+        if(efficiency <= 0 || (eventInfo.PassVbfTriggers() && !eventInfo. PassNormalTriggers()))
             efficiency = 1.; // workaround for missing VBF corrections;
     } else {
         throw exception("LeptonWeights::GetTriggerEfficiency: channel is not supported");
