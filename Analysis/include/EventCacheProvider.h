@@ -79,9 +79,13 @@ public:
 
         if(add_hhbtag) {
             for(unsigned n = 0; n < event.jet_HHbtag_htt_index.size(); ++n) {
+                int unc_source = event.jet_HHbtag_unc_source.at(n);
+                int unc_scale = event.jet_HHbtag_unc_scale.at(n);
+                if(unc_source < 0 || unc_scale > 1) // workaround for cache production bug
+                    std::swap(unc_source, unc_scale);
                 AddHHbtagResults(event.jet_HHbtag_htt_index.at(n), event.jet_HHbtag_jet_index.at(n),
-                                 static_cast<UncertaintySource>(event.jet_HHbtag_unc_source.at(n)),
-                                 static_cast<UncertaintyScale>(event.jet_HHbtag_unc_scale.at(n)),
+                                 static_cast<UncertaintySource>(unc_source),
+                                 static_cast<UncertaintyScale>(unc_scale),
                                  event.jet_HHbtag_value.at(n));
             }
         }
@@ -141,8 +145,8 @@ public:
             for(const auto& [key, result] : hhBtag_map) {
                 event.jet_HHbtag_htt_index.push_back(static_cast<UInt_t>(key.htt_index));
                 event.jet_HHbtag_jet_index.push_back(static_cast<UInt_t>(key.jet_index));
-                event.jet_HHbtag_unc_source.push_back(static_cast<Int_t>(key.unc_scale));
-                event.jet_HHbtag_unc_scale.push_back(static_cast<Int_t>(key.unc_source));
+                event.jet_HHbtag_unc_source.push_back(static_cast<Int_t>(key.unc_source));
+                event.jet_HHbtag_unc_scale.push_back(static_cast<Int_t>(key.unc_scale));
                 event.jet_HHbtag_value.push_back(result);
             }
         }
