@@ -107,7 +107,6 @@ run_cmd git clone git@github.com:hh-italian-group/HHbtag.git HHTools/HHbtag
 #run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
 
 # MulticlassInference
-run_cmd git lfs install
 run_cmd git clone https://gitlab.cern.ch/hh/bbtautau/MulticlassInference.git
 
 # Install analysis packages
