@@ -368,6 +368,53 @@ std::vector<std::string> EventInfo::FilterTriggers(const std::vector<std::string
 
 void EventInfo::ThrowException(const std::string& message) const
 {
+    const bool isData = event_candidate->GetEvent().isData;
+    std::cout << "unc_source = " << event_candidate->GetUncSource() << ", unc_scale = "
+              << event_candidate->GetUncScale() << "\n";
+    std::cout << "htt_index = " << selected_htt_index;
+    if(this->HasBjetPair())
+        std::cout << ", hbb_index = " << selected_signal_jets.bjet_pair.ToIndex();
+    std::cout << '\n';
+    for(size_t leg_id = 1; leg_id <= 2; ++leg_id) {
+        const auto& leg = this->GetLeg(leg_id);
+        std::cout << "Leg " << leg_id << ": type=" << leg->leg_type();
+        if(!isData)
+            std::cout << ", gen_match=" << leg->gen_match();
+        std::cout << ", charge=" << leg->charge() << ", dz=" << leg->dz() << "\n"
+                  << "\t" << LorentzVectorToString(leg.GetMomentum());
+        if(!isData)
+            std::cout << ", uncorrected " << LorentzVectorToString(leg->p4());
+        std::cout << "\n";
+        if(leg->leg_type() == LegType::tau) {
+            std::cout << "\tdecayMode=" << leg->decayMode() << "\n";
+        }
+    }
+    if(this->HasBjetPair()) {
+        for(size_t leg_id = 1; leg_id <= 2; ++leg_id) {
+            const auto& leg = this->GetBJet(leg_id);
+            std::cout << "b jet " << leg_id << ":\n"
+                      << "\t" << LorentzVectorToString(leg.GetMomentum())
+                      << ", resolution = " << leg->resolution() * leg.GetMomentum().E()
+                      << ", DeepFlavour = " << leg->deepFlavour() << ", HH-btag = " << leg->hh_btag();
+            if(!isData)
+                std::cout << ", uncorrected " << LorentzVectorToString(leg->p4());
+            std::cout << "\n";
+        }
+    } else {
+        std::cout << "No b-jet pair was selected.\n";
+    }
+    if(this->HasVBFjetPair()) {
+        for(size_t leg_id = 1; leg_id <= 2; ++leg_id) {
+            const auto& leg = this->GetVBFJet(leg_id);
+            std::cout << "VBF jet " << leg_id << ":\n"
+                      << "\t" << LorentzVectorToString(leg.GetMomentum());
+            if(!isData)
+                std::cout << ", uncorrected " << LorentzVectorToString(leg->p4());
+            std::cout << "\n";
+        }
+    } else {
+        std::cout << "No VBF pair was selected.\n";
+    }
     throw exception("%1%: %2%") % GetEventId() % message;
 }
 
