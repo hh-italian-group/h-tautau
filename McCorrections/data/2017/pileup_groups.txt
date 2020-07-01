@@ -14,3 +14,4 @@ n_pu_mc_DYJetsToLL_M-50_HT-400to600_ext1
 n_pu_mc_DYJetsToLL_M-50_HT-1200to2500
 n_pu_mc_ZH_HToBB_ZToQQ_M125
 n_pu_mc_ZH_HToBB_ZToLL_M125_ext1
+n_pu_mc_VBFHHTo2B2Tau_CV_1_C2V_0_C3_2
