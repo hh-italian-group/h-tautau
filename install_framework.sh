@@ -106,6 +106,14 @@ run_cmd git clone git@github.com:hh-italian-group/HHbtag.git HHTools/HHbtag
 # Recoil Corrections
 #run_cmd git clone https://github.com/CMS-HTT/RecoilCorrections.git HTT-utilities/RecoilCorrections
 
+# ggHH DNN
+run_cmd git clone -b v2.0 git@github.com:GilesStrong/cms_hh_proc_interface.git
+run_cmd git clone git@github.com:GilesStrong/cms_hh_tf_inference.git
+run_cmd git clone git@github.com:GilesStrong/cms_runII_dnn_models.git
+
+# MulticlassInference
+run_cmd git clone https://gitlab.cern.ch/hh/bbtautau/MulticlassInference.git
+
 # Install analysis packages
 declare -A ANA_PACKAGES
 ANA_PACKAGES=( ["AnalysisTools"]="prod:master ana:master ana_osx:master" \
