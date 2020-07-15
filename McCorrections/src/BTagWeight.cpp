@@ -96,11 +96,12 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp) const
+double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySource unc_source,
+                       UncertaintyScale unc_scale) const
 {
     UncertaintyScale scale = UncertaintyScale::Central;
-    if(eventInfo.GetEventCandidate().GetUncSource() == UncertaintySource::Eff_b)
-        scale = eventInfo.GetEventCandidate().GetUncScale();
+    if(unc_source == UncertaintySource::Eff_b)
+        scale = unc_scale;
     const std::string unc_name = GetUncertantyName(scale);
 
     JetInfoVector jetInfos;

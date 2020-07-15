@@ -67,7 +67,8 @@ public:
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
-    double Get(EventInfo& event, DiscriminatorWP wp) const;
+    double Get(EventInfo& event, DiscriminatorWP wp, UncertaintySource unc_source = UncertaintySource::None,
+               UncertaintyScale unc_scale = UncertaintyScale::Central) const;
 
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
