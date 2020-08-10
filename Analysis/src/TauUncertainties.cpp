@@ -44,20 +44,22 @@ std::map<std::pair<int, bool>, StVariable> TauESUncertainties::LoadElectronCorre
 bool TauESUncertainties::ApplyUncertaintyScale(int decayMode, GenLeptonMatch genLeptonMatch,
                                                UncertaintySource unc_source)
 {
-    static const std::map<GenLeptonMatch, std::map<UncertaintySource, int>> unc_source_map = {
-        { GenLeptonMatch::Tau, { { UncertaintySource::TauES, -1 },
-            { UncertaintySource::TauES_DM0, 0 }, { UncertaintySource::TauES_DM1, 1 },
-            { UncertaintySource::TauES_DM10, 10 }, { UncertaintySource::TauES_DM11, 11 } }
-        },
-        { GenLeptonMatch::Electron, { { UncertaintySource::EleFakingTauES, -1 },
-            { UncertaintySource::EleFakingTauES_DM0, 0 }, { UncertaintySource::EleFakingTauES_DM1, 0 } }
-        },
-        { GenLeptonMatch::TauElectron, { { UncertaintySource::EleFakingTauES, -1 },
-            { UncertaintySource::EleFakingTauES_DM0, 0 }, { UncertaintySource::EleFakingTauES_DM1, 0 } }
-        },
-        { GenLeptonMatch::Muon, { { UncertaintySource::MuFakingTauES, -1 },  } },
-        { GenLeptonMatch::TauMuon, { { UncertaintySource::MuFakingTauES, -1 },  } },
+    static const auto create_unc_source_map = []() {
+        std::map<GenLeptonMatch, std::map<UncertaintySource, int>> unc_sources = {
+            { GenLeptonMatch::Tau, { { UncertaintySource::TauES, -1 },
+                { UncertaintySource::TauES_DM0, 0 }, { UncertaintySource::TauES_DM1, 1 },
+                { UncertaintySource::TauES_DM10, 10 }, { UncertaintySource::TauES_DM11, 11 } }
+            },
+            { GenLeptonMatch::Electron, { { UncertaintySource::EleFakingTauES, -1 },
+                { UncertaintySource::EleFakingTauES_DM0, 0 }, { UncertaintySource::EleFakingTauES_DM1, 1 } }
+            },
+            { GenLeptonMatch::Muon, { { UncertaintySource::MuFakingTauES, -1 } } },
+        };
+        unc_sources[GenLeptonMatch::TauElectron] = unc_sources.at(GenLeptonMatch::Electron);
+        unc_sources[GenLeptonMatch::TauMuon] = unc_sources.at(GenLeptonMatch::Muon);
+        return unc_sources;
     };
+    static const std::map<GenLeptonMatch, std::map<UncertaintySource, int>> unc_source_map = create_unc_source_map();
 
     const auto gen_iter = unc_source_map.find(genLeptonMatch);
     if(gen_iter != unc_source_map.end()) {
