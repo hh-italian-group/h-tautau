@@ -62,8 +62,18 @@ void PileUpWeightEx::SetActiveDataset(const std::string& active_dataset)
 
 void PileUpWeightEx::LoadPUWeights(const std::string& pu_mc_file_name, const std::string& cfg_file_name)
 {
-    std::vector<UncertaintyScale> scales = {UncertaintyScale::Up, UncertaintyScale::Central, UncertaintyScale::Down};
     auto mc_pileup_file = root_ext::OpenRootFile(pu_mc_file_name);
+
+    std::ifstream cfg (cfg_file_name);
+    if(cfg.fail())
+        throw exception("Failed to open config file '%1%'.") % cfg_file_name;
+    std::vector<std::string> lines;
+    while (cfg.good()){
+        std::string line;
+        std::getline(cfg, line);
+        if(!line.empty())
+            lines.push_back(line);
+    }
 
     for(const auto& [unc_scale, data_file] : data_files) {
         auto data_pileup_file = root_ext::OpenRootFile(data_file);
@@ -78,16 +88,6 @@ void PileUpWeightEx::LoadPUWeights(const std::string& pu_mc_file_name, const std
 
         RenormalizeHistogram(*data_norm, 1, true);
 
-        std::ifstream cfg (cfg_file_name);
-        if(cfg.fail())
-            throw exception("Failed to open config file '%1%'.") % cfg_file_name;
-        std::vector<std::string> lines;
-        while (cfg.good()){
-            std::string line;
-            std::getline(cfg, line);
-            if(!line.empty())
-                lines.push_back(line);
-        }
         std::vector<HistPtr> pu_weights;
         for(size_t id = 0; id < lines.size(); ++id) {
             const std::string& line = lines.at(id);
@@ -138,7 +138,7 @@ double PileUpWeightEx::Get(double nPU, UncertaintyScale unc_scale) const
 
 double PileUpWeightEx::Get(EventInfo& eventInfo, UncertaintyScale unc_scale) const
 {
-    return Get(eventInfo->npu);
+    return Get(eventInfo->npu, unc_scale);
 }
 
 } // namespace mc_corrections

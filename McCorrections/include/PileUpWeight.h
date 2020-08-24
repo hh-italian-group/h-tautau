@@ -42,7 +42,7 @@ public:
 
     virtual double Get(EventInfo& eventInfo) const override;
     virtual double Get(const ntuple::ExpressEvent& event) const override;
-    double Get(EventInfo& eventInfo, UncertaintyScale unc_scale = UncertaintyScale::Central) const;
+    double Get(EventInfo& eventInfo, UncertaintyScale unc_scales) const;
     double Get(const ntuple::ExpressEvent& event, UncertaintyScale unc_scale = UncertaintyScale::Central) const;
 
     void SetActiveDataset(const std::string& active_dataset);
