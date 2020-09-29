@@ -35,25 +35,28 @@ public:
     using Hist = TH1;
     using HistPtr = std::shared_ptr<Hist>;
 
-    PileUpWeightEx(const std::string& pu_data_file_name, const std::string& pu_mc_file_name,
-                 const std::string& cfg_file_name, double _max_available_pu,
-                 double _default_pu_weight);
+    PileUpWeightEx(const std::string& pu_data_file_name, const std::string& pu_data_file_up_name,
+                   const std::string& pu_data_file_down_name, const std::string& pu_mc_file_name,
+                   const std::string& cfg_file_name, double _max_available_pu,
+                   double _default_pu_weight);
 
     virtual double Get(EventInfo& eventInfo) const override;
     virtual double Get(const ntuple::ExpressEvent& event) const override;
+    double Get(EventInfo& eventInfo, UncertaintyScale unc_scales) const;
+    double Get(const ntuple::ExpressEvent& event, UncertaintyScale unc_scale = UncertaintyScale::Central) const;
 
     void SetActiveDataset(const std::string& active_dataset);
 
 private:
-    double Get(double nPU) const;
-    void LoadPUWeights(const std::string& pu_data_file_name, const std::string& pu_mc_file_name,
-                       const std::string& cfg_file_name);
+    double Get(double nPU, UncertaintyScale unc_scale = UncertaintyScale::Central) const;
+    void LoadPUWeights(const std::string& pu_mc_file_name, const std::string& cfg_file_name);
 
 private:
     double max_available_pu, default_pu_weight;
     std::map<std::string, size_t> datasets;
-    std::vector<HistPtr> pu_weights;
+    std::map<UncertaintyScale, std::vector<HistPtr>> pu_weights_map;
     boost::optional<size_t> active_group;
+    std::map<UncertaintyScale, std::string> data_files;
 };
 
 } // namespace mc_corrections

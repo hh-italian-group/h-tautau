@@ -122,12 +122,8 @@ using Point3D = analysis::Point3D_Float;
     VAR(Int_t, period) /* datataking period */ \
 	/* Event Weights Variables */ \
     VAR(Double_t, weight_pu) \
-    VAR(Double_t, weight_lepton_trig) \
-    VAR(Double_t, weight_lepton_id_iso) \
-    VAR(Double_t, weight_tau_id) \
-    VAR(Double_t, weight_btag) \
-    VAR(Double_t, weight_btag_up) \
-    VAR(Double_t, weight_btag_down) \
+    VAR(Double_t, weight_pu_up) \
+    VAR(Double_t, weight_pu_down) \
     VAR(Double_t, weight_dy) \
     VAR(Double_t, weight_ttbar) \
     VAR(Double_t, weight_wjets) \
