@@ -25,8 +25,8 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
     if(period == Period::Run2016) {
         if(mode.empty() || mode.count(WeightType::PileUp))
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
-                        FullName("2016/Pileup_Data2016.root"),
-                        FullName("2016/pu_mc_distr_per_sample_100_100_2016.root"),
+                        FullName("2016/Pileup_Data2016.root"), FullName("2016/Pileup_Data2016_Up.root"),
+                        FullName("2016/Pileup_Data2016_Down.root"), FullName("2016/pu_mc_distr_per_sample_100_100_2016.root"),
                         FullName("2016/pileup_groups_2016.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
             providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
@@ -70,7 +70,8 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
     else if(period == Period::Run2017) {
         if(mode.empty() || mode.count(WeightType::PileUp))
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
-                        FullName("2017/Pileup_Data2017.root"),
+                        FullName("2017/Pileup_Data2017.root"), FullName("2017/Pileup_Data2017_Up.root"),
+                        FullName("2017/Pileup_Data2017_Down.root"),
                         FullName("2017/pu_mc_distr_per_sample_100_100_2017.root"),
                         FullName("2017/pileup_groups.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
@@ -114,7 +115,8 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
     else if(period == Period::Run2018) {
         if(mode.empty() || mode.count(WeightType::PileUp))
             providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
-                        FullName("2018/Pileup_Data2018.root"),
+                        FullName("2018/Pileup_Data2018.root"), FullName("2018/Pileup_Data2018_Up.root"),
+                        FullName("2018/Pileup_Data2018_Down.root"),
                         FullName("2018/pu_mc_distr_per_sample_100_100_2018.root"),
                         FullName("2018/pileup_groups_2018.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){

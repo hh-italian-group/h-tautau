@@ -19,8 +19,9 @@ std::shared_ptr<SummaryTuple> CreateSummaryTuple(const std::string& name, TDirec
                                                         bool readMode, TreeState treeState)
 {
     static const std::map<TreeState, std::set<std::string>> disabled_branches = {
-        { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt",
-                             "file_desc_id", "file_desc_name", "n_splits", "split_seed", "cross_section" } },
+        { TreeState::Full, { "totalShapeWeight", "totalShapeWeight_withTopPt", "totalShapeWeight_withPileUp_Up",
+                             "totalShapeWeight_withPileUp_Down", "file_desc_id", "file_desc_name", "n_splits",
+                             "split_seed", "cross_section" } },
         { TreeState::Skimmed, { } }
     };
 
@@ -36,6 +37,8 @@ void MergeProdSummaries(ProdSummary& summary, const ProdSummary& otherSummary)
     summary.numberOfProcessedEvents += otherSummary.numberOfProcessedEvents;
     summary.totalShapeWeight += otherSummary.totalShapeWeight;
     summary.totalShapeWeight_withTopPt += otherSummary.totalShapeWeight_withTopPt;
+    summary.totalShapeWeight_withPileUp_Up += otherSummary.totalShapeWeight_withPileUp_Up;
+    summary.totalShapeWeight_withPileUp_Down += otherSummary.totalShapeWeight_withPileUp_Down;
 }
 
 ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
@@ -54,6 +57,8 @@ ProdSummary MergeSummaryTuple(SummaryTuple& tuple)
         summary.numberOfProcessedEvents += entry.numberOfProcessedEvents;
         summary.totalShapeWeight += entry.totalShapeWeight;
         summary.totalShapeWeight_withTopPt += entry.totalShapeWeight_withTopPt;
+        summary.totalShapeWeight_withPileUp_Up += entry.totalShapeWeight_withPileUp_Up;
+        summary.totalShapeWeight_withPileUp_Down += entry.totalShapeWeight_withPileUp_Down;
     }
 
     return summary;

@@ -12,6 +12,8 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
     VAR(ULong64_t, numberOfProcessedEvents) \
     VAR(Double_t, totalShapeWeight) \
     VAR(Double_t, totalShapeWeight_withTopPt) \
+    VAR(Double_t, totalShapeWeight_withPileUp_Up) \
+    VAR(Double_t, totalShapeWeight_withPileUp_Down) \
     /* Skimmer Variables */\
     VAR(std::vector<UInt_t>, file_desc_id) /* vector of File id in TupleSkimmer. */ \
     VAR(std::vector<std::string>, file_desc_name) /* vector of File name in TupleSkimmer. */ \

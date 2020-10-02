@@ -35,9 +35,8 @@ std::shared_ptr<EventTuple> CreateEventTuple(const std::string& name, TDirectory
                                                     bool readMode, TreeState treeState)
 {
     static const std::set<std::string> weight_branches = {
-        "weight_pu", "weight_lepton_trig", "weight_lepton_id_iso", "weight_tau_id", "weight_btag", "weight_btag_up",
-        "weight_btag_down", "weight_dy", "weight_ttbar", "weight_wjets", "weight_bsm_to_sm", "weight_top_pt",
-        "weight_xs", "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt",
+        "weight_pu", "weight_pu_up", "weight_pu_down", "weight_dy", "weight_ttbar", "weight_wjets",
+        "weight_bsm_to_sm", "weight_top_pt", "weight_xs", "weight_xs_withTopPt", "weight_total", "weight_total_withTopPt"
     };
 
     static const std::set<std::string> gen_study_branches = {
