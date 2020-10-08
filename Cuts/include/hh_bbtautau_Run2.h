@@ -102,10 +102,10 @@ namespace muonVeto {
 }
 
 namespace hh_tag {
-    constexpr double boosted_m_tautau_min = 80;
-    constexpr double boosted_m_tautau_max = 152;
-    constexpr double boosted_m_bb_min = 90;
-    constexpr double boosted_m_bb_max = 160;
+    constexpr double boosted_m_tautau_min = 128;
+    constexpr double boosted_m_tautau_max = 60;
+    constexpr double boosted_m_bb_min = 159;
+    constexpr double boosted_m_bb_max = 94;
 
     constexpr analysis::EllipseParameters m_hh_window{116.0, 35.0, 111.0, 45.0};
     constexpr analysis::EllipseParameters new_m_hh_window{87.9563, 41.8451, 109.639, 43.0346};
