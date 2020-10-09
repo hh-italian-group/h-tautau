@@ -1,0 +1,8 @@
+sampleType=MC_17 applyTriggerMatch=True saveGenTopInfo=False saveGenJetInfo=True applyTriggerCut=False storeLHEinfo=True saveGenParticleInfo=True
+
+GluGluToHHTo2B2VTo2L2Nu_node_cHHH0         /GluGluToHHTo2B2VTo2L2Nu_node_cHHH0_TuneCP5_PSWeights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+GluGluToHHTo2B2VTo2L2Nu_node_cHHH1         /GluGluToHHTo2B2VTo2L2Nu_node_cHHH1_TuneCP5_PSWeights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+GluGluToHHTo2B2VTo2L2Nu_node_cHHH2p45      /GluGluToHHTo2B2VTo2L2Nu_node_cHHH2p45_TuneCP5_PSWeights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+GluGluToHHTo2B2VTo2L2Nu_node_cHHH5         /GluGluToHHTo2B2VTo2L2Nu_node_cHHH5_TuneCP5_PSWeights_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+VBFHHTo2B2VTo2L2Nu_CV_1_C2V_1_C3_1         /VBFHHTo2B2VTo2L2Nu_CV_1_C2V_1_C3_1_13TeV-madgraph/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM
+
