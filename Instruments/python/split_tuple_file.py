@@ -20,11 +20,19 @@ parser.add_argument('--min-split-size', required=False, dest='min_split_size', t
                     help="minimal size of a split of a tuple in MiB")
 parser.add_argument('--n-threads', required=False, dest='n_threads', type=int, metavar='N', default=1,
                     help="number of threads")
+parser.add_argument('--compression', required=False, type=int, default=1 * 100 + 9, help="compression level")
+parser.add_argument('--tuple-trees', required=False, type=str, default="eTau,muTau,tauTau,muMu",
+                    help="""comma separated list of tuple trees. Remining objects in TFile will be considered small
+                            and will be stored in the first file""")
+
 args = parser.parse_args()
 
 def IsComplete(tuple, entry_id):
     tuple.GetEntry(entry_id)
-    storage_mode = tuple.GetListOfLeaves().FindObject('storageMode').GetValue()
+    leaf = tuple.GetListOfLeaves().FindObject('storageMode')
+    if leaf == None:
+        return True
+    storage_mode = leaf.GetValue()
     return storage_mode == 0
 
 def FindSplitPoint(tuple, entry_id):
@@ -60,7 +68,12 @@ class TupleIter:
 
 class TupleList:
     def __init__(self, input_file, tuple_names, max_size, min_size):
-        self.tuple_iters = [ TupleIter(input_file.Get(name)) for name in tuple_names ]
+        self.tuple_iters = []
+        for name in tuple_names:
+            tree = input_file.Get(name)
+            if tree != None:
+                print("Adding {}".format(name))
+                self.tuple_iters.append(TupleIter(tree))
         self.current_iter = 0
         self.max_size = max_size
         self.min_size = min_size
@@ -80,7 +93,7 @@ class TupleList:
 if args.n_threads > 1:
     ROOT.gROOT.ProcessLine('ROOT::EnableImplicitMT({});'.format(args.n_threads))
 
-tuple_names = [ 'eTau', 'muMu', 'muTau', 'tauTau' ]
+tuple_names = args.tuple_trees.split(',')
 name_prefix = re.sub('\.[^\.]*$', '', args.output)
 name_format = '{}_part{}.root'
 
@@ -96,19 +109,18 @@ output_file = ROOT.TFile(name, 'UPDATE')
 for tuple_name in tuple_names:
     output_file.Delete(tuple_name + ';*')
 output_file.Close()
-subprocess.check_output([ 'hadd -f9 {} {}'.format(args.output, name) ], shell=True)
+subprocess.check_output([ 'hadd -f{} {} {}'.format(args.compression, args.output, name) ], shell=True)
 os.remove(name)
 
 print('Writing part 1...')
-output_file = ROOT.TFile(args.output, 'UPDATE', '', 1 * 100 + 9)
+output_file = ROOT.TFile(args.output, 'UPDATE', '', args.compression)
 tuple_list.Write(output_file)
 
 n = 2
 while tuple_list.HasUnwrittenEvents():
     print('Writing part {}...'.format(n))
     name = name_format.format(name_prefix, n)
-    output_file = ROOT.TFile(name, 'RECREATE', '', 1 * 100 + 9)
+    output_file = ROOT.TFile(name, 'RECREATE', '', args.compression)
     tuple_list.Write(output_file)
     output_file.Close()
     n += 1
-
