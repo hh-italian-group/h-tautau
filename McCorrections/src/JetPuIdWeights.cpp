@@ -30,16 +30,31 @@ JetPuIdWeights::JetPuIdWeights(const std::string& file_eff, const std::string& f
                                            sf_mistag, "", true));
 }
 
-double JetPuIdWeights::GetEfficiency(std::shared_ptr<TH2F> hist, double pt, double eta) const
+double JetPuIdWeights::GetEfficiency(std::shared_ptr<TH2F> hist, double pt, double eta,
+                                     UncertaintySource unc_source, UncertaintyScale unc_scale) const
 {
     int xBin = hist->GetXaxis()->FindFixBin(pt);
     xBin = std::min(hist->GetXaxis()->GetNbins(), std::max(1, xBin));
     int yBin = hist->GetYaxis()->FindFixBin(eta);
     yBin = std::min(hist->GetYaxis()->GetNbins(), std::max(1, yBin));
-    return hist->GetBinContent(xBin, yBin);
+    const UncertaintyScale scale = unc_source == UncertaintySource::PileUpJetId
+                                   ? unc_scale : UncertaintyScale::Central;
+
+    return hist->GetBinContent(xBin, yBin) + static_cast<int>(scale) * hist->GetBinError(xBin, yBin);
 }
 
 double JetPuIdWeights::Get(EventInfo& eventInfo) const
+{
+    return GetWeight(eventInfo);
+}
+
+double JetPuIdWeights::Get(const ntuple::ExpressEvent& /*event*/) const
+{
+    throw exception("ExpressEvent is not supported in JetPuIdWeights::Get.");
+}
+
+double JetPuIdWeights::GetWeight(EventInfo& eventInfo, UncertaintySource unc_source,
+                                 UncertaintyScale unc_scale) const
 {
     double MC = 1;
     double Data = 1;
@@ -56,12 +71,12 @@ double JetPuIdWeights::Get(EventInfo& eventInfo) const
         auto index = eventInfo.FindGenMatch(jet);
 
         if(index.is_initialized()){ //jet from hard interaction, index of the closest gen jet, if found
-            SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta());
-            eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta());
+            SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta(), unc_source, unc_scale);
+            eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta(), unc_source, unc_scale);
         }
         else{ //jet from PileUp
-            SF = GetEfficiency(sf_mistag_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta());
-            eff = GetEfficiency(eff_mistag_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta());
+            SF = GetEfficiency(sf_mistag_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta(),unc_source, unc_scale);
+            eff = GetEfficiency(eff_mistag_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta(), unc_source, unc_scale);
         }
 
         DiscriminatorIdResults jet_pu_id(jet->GetPuId());
@@ -72,11 +87,6 @@ double JetPuIdWeights::Get(EventInfo& eventInfo) const
     }
 
     return MC != 0 ? Data/MC : 0;
-}
-
-double JetPuIdWeights::Get(const ntuple::ExpressEvent& /*event*/) const
-{
-    throw exception("ExpressEvent is not supported in JetPuIdWeights::Get.");
 }
 
 } // namespace mc_corrections

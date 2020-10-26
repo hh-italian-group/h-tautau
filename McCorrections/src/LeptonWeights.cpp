@@ -190,7 +190,8 @@ double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_w
 {
     double weight = 1;
     for(size_t leg_id = 1; leg_id <= 2; ++leg_id)
-        weight *= GetLegIdIsoWeight(eventInfo.GetLeg(leg_id), VSe_wp, VSmu_wp, VSjet_wp, unc_source, unc_scale);
+        weight *= GetLegIdIsoWeight(eventInfo.GetLeg(leg_id), VSe_wp, VSmu_wp, VSjet_wp, unc_source, unc_scale) *
+                  GetCustomTauSF(eventInfo.GetLeg(leg_id), unc_scale);
     return weight;
 }
 
@@ -397,6 +398,34 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         throw exception("LeptonWeights::GetTriggerEfficiency: invalid trigger efficiency = %1% for event %2%.")
                         % eventInfo.GetEventId() % efficiency;
     return efficiency;
+}
+
+double  LeptonWeights::GetCustomTauSF(LepCandidate leg, UncertaintyScale unc_scale)
+{
+    //taken from: https://twiki.cern.ch/twiki/bin/viewauth/CMS/DoubleHiggsToBBTauTauWorkingLegacyRun2#Custom_Tau_ID_SF
+    static const std::map<int, std::map<double, std::map<UncertaintyScale, double>>> tau_sf_error = {
+        { 0, { { 1.078, {{UncertaintyScale::Up, 0.034}, {UncertaintyScale::Down, 0.036} }} } },
+        { 1, { { 1.112, {{UncertaintyScale::Up, 0.023}, {UncertaintyScale::Down, 0.023} }} } },
+        { 10, { { 0.984, {{UncertaintyScale::Up, 0.063}, {UncertaintyScale::Down, 0.067} }} } },
+        { 11, { { 0.759, {{UncertaintyScale::Up, 0.178}, {UncertaintyScale::Down, 0.259} }} } }
+    };
+
+    if(period == Period::Run2017){
+        if(leg->leg_type() == LegType::tau){
+            const auto second_map = tau_sf_error.at(leg->decayMode());
+            double sf = 1.;
+            for(const auto& third_map : second_map){
+                double sf_value = third_map.first;
+                std::map<UncertaintyScale, double> error_map = third_map.second;
+
+                double error = unc_scale == UncertaintyScale::Central ? 0. :
+                               static_cast<int>(unc_scale) * error_map.at(unc_scale);
+                sf = sf_value + error;
+            }
+            return sf;
+        }
+    }
+    return 1.;
 }
 
 bool LeptonWeights::ApplyIdUncertaintyScale(int decay_mode, double pt, double eta, GenLeptonMatch gen_lepton_match,
