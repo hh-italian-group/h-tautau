@@ -22,7 +22,7 @@ public:
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
     double GetWeight(EventInfo& eventInfo, UncertaintySource unc_source = UncertaintySource::None,
-               UncertaintyScale unc_scale = UncertaintyScale::Central) const;
+                     UncertaintyScale unc_scale = UncertaintyScale::Central) const;
 
 private:
     std::shared_ptr<TH2F> eff_hist;
