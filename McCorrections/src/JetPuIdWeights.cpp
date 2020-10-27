@@ -3,6 +3,7 @@ This file is part of https://github.com/hh-italian-group/hh-bbtautau. */
 
 #include "h-tautau/McCorrections/include/JetPuIdWeights.h"
 #include "AnalysisTools/Core/include/RootExt.h"
+#include <boost/algorithm/clamp.hpp>
 
 
 namespace analysis {
@@ -79,6 +80,7 @@ double JetPuIdWeights::GetWeight(EventInfo& eventInfo, UncertaintySource unc_sou
             syst_unc = GetEfficiency(sf_hist_unc, jet.GetMomentum().pt(), jet.GetMomentum().eta());
             SF = GetEfficiency(sf_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta()) +
                  static_cast<int>(scale) * syst_unc;
+            SF = boost::algorithm::clamp(SF, 0, 5);
             eff = GetEfficiency(eff_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta());
         }
         else{ //jet from PileUp
@@ -88,6 +90,7 @@ double JetPuIdWeights::GetWeight(EventInfo& eventInfo, UncertaintySource unc_sou
             syst_unc = GetEfficiency(sf_mistag_hist_unc, jet.GetMomentum().pt(), jet.GetMomentum().eta());
             SF = GetEfficiency(sf_mistag_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta()) +
                  static_cast<int>(scale) * syst_unc;
+            SF = boost::algorithm::clamp(SF, 0, 5);
             eff = GetEfficiency(eff_mistag_hist, jet.GetMomentum().pt(), jet.GetMomentum().eta());
         }
 

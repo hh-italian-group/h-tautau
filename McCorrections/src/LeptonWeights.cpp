@@ -417,22 +417,20 @@ double  LeptonWeights::GetCustomTauSF(const LepCandidate& leg, UncertaintySource
          {11, UncertaintySource::TauCustomSF_DM11}
     };
 
-    if(period == Period::Run2017){
-        if(leg->leg_type() == LegType::tau){
-            const auto second_map = tau_sf_error.at(leg->decayMode());
-            const UncertaintyScale scale = unc_source == dm_unc_sources.at(leg->decayMode())
-                                           ? unc_scale : UncertaintyScale::Central;
-            double sf = 1.;
-            for(const auto& third_map : second_map){
-                double sf_value = third_map.first;
-                std::map<UncertaintyScale, double> error_map = third_map.second;
+    if(period == Period::Run2017 && leg->leg_type() == LegType::tau && leg->gen_match() == GenLeptonMatch::Tau){
+        const auto second_map = tau_sf_error.at(leg->decayMode());
+        const UncertaintyScale scale = unc_source == dm_unc_sources.at(leg->decayMode())
+                                       ? unc_scale : UncertaintyScale::Central;
+        double sf = 1.;
+        for(const auto& third_map : second_map){
+            double sf_value = third_map.first;
+            std::map<UncertaintyScale, double> error_map = third_map.second;
 
-                double error = scale == UncertaintyScale::Central ? 0. :
-                               static_cast<int>(scale) * error_map.at(scale);
-                sf = sf_value + error;
-            }
-            return sf;
+            double error = scale == UncertaintyScale::Central ? 0. :
+                           static_cast<int>(scale) * error_map.at(scale);
+            sf = sf_value + error;
         }
+        return sf;
     }
     return 1.;
 }
