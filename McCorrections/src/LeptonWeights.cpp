@@ -188,7 +188,7 @@ double LeptonWeights::GetIdIsoWeight(EventInfo& eventInfo, DiscriminatorWP VSe_w
                                      DiscriminatorWP VSjet_wp, UncertaintySource unc_source,
                                      UncertaintyScale unc_scale)
 {
-    double weight = 1;
+    double weight = 1.;
     for(size_t leg_id = 1; leg_id <= 2; ++leg_id)
         weight *= GetLegIdIsoWeight(eventInfo.GetLeg(leg_id), VSe_wp, VSmu_wp, VSjet_wp, unc_source, unc_scale) *
                   GetCustomTauSF(eventInfo.GetLeg(leg_id), unc_source ,unc_scale);
@@ -400,7 +400,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
     return efficiency;
 }
 
-double  LeptonWeights::GetCustomTauSF(LepCandidate leg, UncertaintySource unc_source, UncertaintyScale unc_scale)
+double  LeptonWeights::GetCustomTauSF(const LepCandidate& leg, UncertaintySource unc_source, UncertaintyScale unc_scale)
 {
     // taken from: https://twiki.cern.ch/twiki/bin/viewauth/CMS/DoubleHiggsToBBTauTauWorkingLegacyRun2#Custom_Tau_ID_SF
     static const std::map<int, std::map<double, std::map<UncertaintyScale, double>>> tau_sf_error = {

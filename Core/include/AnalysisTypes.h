@@ -69,8 +69,8 @@ enum class UncertaintySource {
     MuFakingTauES_DM1 = 114, MuFakingTauES_3prong = 115, TauVSmuSF_etaLt0p4 = 116, TauVSmuSF_eta0p4to0p8 = 117,
     TauVSmuSF_eta0p8to1p2 = 118, TauVSmuSF_eta1p2to1p7 = 119, TauVSmuSF_etaGt1p7 = 120, MuFakingTauES = 121,
     EleIdIsoUnc = 122, MuonIdIsoUnc = 123, TauTriggerUnc_DM0 = 124, TauTriggerUnc_DM1 = 125, TauTriggerUnc_DM10 = 126,
-    TauTriggerUnc_DM11 = 127, L1_prefiring = 128, PileUp = 129, PileUpJetId  = 130, TauCustomSF_DM0 = 131,
-    TauCustomSF_DM1 = 132, TauCustomSF_DM10 = 133, TauCustomSF_DM11 = 134,
+    TauTriggerUnc_DM11 = 127, L1_prefiring = 128, PileUp = 129, PileUpJetId_eff  = 130, PileUpJetId_mistag  = 131, TauCustomSF_DM0 = 132,
+    TauCustomSF_DM1 = 133, TauCustomSF_DM10 = 134, TauCustomSF_DM11 = 135
 };
 ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::None, "None" }, { UncertaintySource::TauES, "TauES" },
@@ -201,7 +201,8 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::TauTriggerUnc_DM11, "TauTriggerUnc_DM11" },
     { UncertaintySource::L1_prefiring, "L1_prefiring" },
     { UncertaintySource::PileUp, "PileUp" },
-    { UncertaintySource::PileUpJetId, "PileUpJetId" },
+    { UncertaintySource::PileUpJetId_eff, "PileUpJetId_eff" },
+    { UncertaintySource::PileUpJetId_mistag, "PileUpJetId_mistag" },
     { UncertaintySource::TauCustomSF_DM0, "TauCustomSF_DM0" },
     { UncertaintySource::TauCustomSF_DM1, "TauCustomSF_DM1" },
     { UncertaintySource::TauCustomSF_DM10, "TauCustomSF_DM10" },
