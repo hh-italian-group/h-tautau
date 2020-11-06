@@ -107,8 +107,8 @@ namespace hh_tag {
     constexpr double boosted_m_bb_min = 159;
     constexpr double boosted_m_bb_max = 94;
 
-    constexpr analysis::EllipseParameters m_hh_window{129.0, 53.0, 169.0, 145.0};
-    constexpr analysis::EllipseParameters new_m_hh_window{87.9563, 41.8451, 109.639, 43.0346};
+    constexpr analysis::EllipseParameters resolved_window{129.0, 53.0, 169.0, 145.0};
+    constexpr analysis::EllipseParameters boosted_window{128.,60.,159.,94.};    //constexpr analysis::EllipseParameters new_m_hh_window{87.9563, 41.8451, 109.639, 43.0346};
 
     inline constexpr bool IsInsideBoostedMassWindow(double mass_tautau, double mass_bb)
     {
