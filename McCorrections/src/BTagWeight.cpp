@@ -41,10 +41,10 @@ BTagReaderInfo::BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr fil
     eff_hist = HistPtr(root_ext::ReadCloneObject<TH2D>(*file, name, "", true));
 }
 
-void BTagReaderInfo::Eval(JetInfo& jetInfo, const std::string& unc_name)
+void BTagReaderInfo::Eval(JetInfo& jetInfo, const std::string& unc_name, double btag)
 {
     jetInfo.SF  = reader->eval_auto_bounds(unc_name, flavor, static_cast<float>(jetInfo.eta),
-                                           static_cast<float>(jetInfo.pt));
+                                           static_cast<float>(jetInfo.pt), static_cast<float>(btag));
     jetInfo.eff = GetEfficiency(jetInfo.pt, std::abs(jetInfo.eta));
 }
 
@@ -64,13 +64,14 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
     calib(ToString(_bTagger.GetBaseTagger()), bjetSFFileName), bTagger(_bTagger), default_wp(_default_wp)
 {
     static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
-        {DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, {DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM} ,
-        {DiscriminatorWP::Tight, BTagEntry::OP_TIGHT}
+        { DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, { DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM },
+        { DiscriminatorWP::Tight, BTagEntry::OP_TIGHT }, { DiscriminatorWP::VVVLoose, BTagEntry::OP_RESHAPING }
     };
     static const std::map<JetFlavor, int> jet_flavors {
         { BTagEntry::FLAV_B, 5 }, { BTagEntry::FLAV_C, 4 }, { BTagEntry::FLAV_UDSG, 0 },
     };
-    static const std::vector<std::string> unc_scale_names = { "up", "down" };
+    static const std::vector<std::string> unc_scale_names_comb = { "up", "down" };
+    static const std::vector<std::string> unc_scale_names_iterative = { };
 
     if(!op_map.count(default_wp))
         throw exception("BTagWeight: default working point %1% is not supported.") % default_wp;
@@ -79,16 +80,22 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
     for(const auto& [wp, op] : op_map) {
         for(const auto& [flavor, flavor_id] : jet_flavors) {
+            const auto& unc_scale_names = op == BTagEntry::OP_RESHAPING ? unc_scale_names_iterative
+                                                                        : unc_scale_names_comb;
+            std::string measurementType = flavor_id == 0 ? "incl" : "comb";
+            if(op == BTagEntry::OP_RESHAPING)
+                measurementType = "iterativefit";
             auto reader = std::make_shared<Reader>(op, "central", unc_scale_names);
-            reader->load(calib, flavor, flavor_id == 0 ? "incl" : "comb");
-            readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, wp);
+            reader->load(calib, flavor, measurementType);
+            const DiscriminatorWP eff_wp = op == BTagEntry::OP_RESHAPING ? DiscriminatorWP::Medium : wp;
+            readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, eff_wp);
         }
     }
 }
 
 double BTagWeight::Get(EventInfo& eventInfo) const
 {
-    return Get(eventInfo, default_wp);
+    return Get(eventInfo, default_wp, false, UncertaintySource::None, UncertaintyScale::Central);
 }
 
 double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -96,7 +103,7 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySource unc_source,
+double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
                        UncertaintyScale unc_scale) const
 {
     UncertaintyScale scale = UncertaintyScale::Central;
@@ -104,15 +111,19 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySour
         scale = unc_scale;
     const std::string unc_name = GetUncertantyName(scale);
 
+    const DiscriminatorWP reader_wp = use_iterative_fit ? DiscriminatorWP::VVVLoose : wp;
+
     JetInfoVector jetInfos;
+    double SF = 1.;
     for(const auto& jet : eventInfo.GetCentralJets()) {
         JetInfo jetInfo(*jet);
         if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
-        GetReader(wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name);
+        GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true));
+        SF *= jetInfo.SF;
         jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
         jetInfos.push_back(jetInfo);
     }
-    return GetBtagWeight(jetInfos);
+    return use_iterative_fit ? SF : GetBtagWeight(jetInfos);
 }
 
 std::string BTagWeight::GetUncertantyName(UncertaintyScale unc)

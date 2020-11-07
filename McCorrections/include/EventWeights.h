@@ -35,12 +35,21 @@ public:
     double GetTotalWeight(const ntuple::ExpressEvent& event, const WeightingMode& weightingMode) const;
 
 protected:
+    template<typename ProviderType, typename ...Args>
+    void CreateProvider(WeightType weightType, Args&&... args)
+    {
+        std::cout << "\tLoading " << weightType << " weights... " << std::flush;
+        providers[weightType] = std::make_shared<ProviderType>(std::forward<Args>(args)...);
+        std::cout << "done." << std::endl;
+    }
+
+protected:
     static std::string FullName(const std::string& fileName, const std::string& path);
     static std::string FullName(const std::string& fileName);
     static std::string FullLeptonName(const std::string& fileName);
     static std::string FullTriggerName(const std::string& fileName);
 
-protected:
+private:
     ProviderMap providers;
 };
 

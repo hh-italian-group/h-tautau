@@ -75,11 +75,39 @@ void PileUpWeightEx::LoadPUWeights(const std::string& pu_mc_file_name, const std
             lines.push_back(line);
     }
 
+    std::vector<HistPtr> pu_mc_all;
+    for(size_t id = 0; id < lines.size(); ++id) {
+        const std::string& line = lines.at(id);
+        const auto vector_samples = SplitValueList(line, false, " ");
+        if(vector_samples.size() == 0)
+            throw exception("The line is empty");
+        HistPtr pu_mc;
+        for (size_t i = 0; i < vector_samples.size(); i++) {
+            datasets[vector_samples.at(i)] = id;
+
+            HistPtr hist(root_ext::ReadObject<TH1D>(*mc_pileup_file, vector_samples.at(i)));
+            if(!pu_mc)
+                pu_mc = hist;
+            else
+                pu_mc->Add(&(*hist), 1);
+        }
+        HistPtr mc_norm(root_ext::CloneObject(*pu_mc));
+        const int max_bin = mc_norm->FindBin(max_available_pu);
+        for(int i = max_bin + 1; i <= mc_norm->GetNbinsX(); ++i){
+            mc_norm->SetBinContent(i,0);
+            mc_norm->SetBinError(i,0);
+        }
+        RenormalizeHistogram(*mc_norm, 1, true);
+        pu_mc_all.push_back(mc_norm);
+    }
+
     for(const auto& [unc_scale, data_file] : data_files) {
         auto data_pileup_file = root_ext::OpenRootFile(data_file);
         auto pu_data = std::shared_ptr<TH1D>(root_ext::ReadObject<TH1D>(*data_pileup_file, "pileup"));
         auto data_norm = std::shared_ptr<TH1D>(root_ext::CloneObject(*pu_data));
         const int max_bin = pu_data->FindBin(max_available_pu);
+
+
 
         for(int i = max_bin + 1; i <= pu_data->GetNbinsX(); ++i){
             data_norm->SetBinContent(i,0);
@@ -90,26 +118,8 @@ void PileUpWeightEx::LoadPUWeights(const std::string& pu_mc_file_name, const std
 
         std::vector<HistPtr> pu_weights;
         for(size_t id = 0; id < lines.size(); ++id) {
-            const std::string& line = lines.at(id);
-            auto vector_samples = SplitValueList(line, false, " ");
-            if(vector_samples.size() == 0)
-                throw exception("The line is empty");
-            auto pu_mc = std::make_shared<TH1D>("", "", pu_data->GetNbinsX(),pu_data->GetXaxis()->GetBinLowEdge(1),
-                                                  pu_data->GetXaxis()->GetBinUpEdge(pu_data->GetNbinsX()));
-            for (size_t i = 0; i < vector_samples.size(); i++) {
-                datasets[vector_samples.at(i)] = id;
-
-                auto hist =  std::shared_ptr<TH1>(root_ext::ReadObject<TH1D>(*mc_pileup_file, vector_samples.at(i)));
-                pu_mc->Add(&(*hist), 1);
-            }
-            auto mc_norm = std::shared_ptr<TH1D>(root_ext::CloneObject(*pu_mc));
-            for(int i = max_bin + 1; i <= pu_data->GetNbinsX(); ++i){
-                mc_norm->SetBinContent(i,0);
-                mc_norm->SetBinError(i,0);
-            }
-
-            RenormalizeHistogram(*mc_norm, 1, true);
-            auto weight = std::shared_ptr<TH1D>(root_ext::CloneObject(*data_norm));
+            const auto& mc_norm = pu_mc_all.at(id);
+            HistPtr weight(root_ext::CloneObject(*data_norm));
             weight->Divide(&(*mc_norm));
             pu_weights.emplace_back(weight);
         }
