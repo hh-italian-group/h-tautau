@@ -53,7 +53,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
             else if(base_tagger == BTaggerKind::DeepFlavour)
                 CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2016/btag/b_eff_HH_DeepFlavour_2016.root"),
-                        FullName("2016/btag/DeepJet_2016LegacySF_WP_V1.csv"),
+                        FullName("2016/btag/DeepJet_2016LegacySF_V1_TuneCP5.csv"),
                         bTagger, default_btag_wp);
             else
                 throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
@@ -88,7 +88,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
             else if(base_tagger == BTaggerKind::DeepFlavour)
                 CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2017/btag/b_eff_HH_DeepFlavour_2017.root"),
-                        FullName("2017/btag/DeepFlavour_94XSF_WP_V3_B_F.csv"),
+                        FullName("2017/btag/DeepFlavour_94XSF_V4_B_F.csv"),
                         bTagger, default_btag_wp);
             else
                throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
