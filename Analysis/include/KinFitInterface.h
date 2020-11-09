@@ -33,7 +33,6 @@ public:
                        resolution_1, resolution_2, verbosity);
     }
 
-private:
     static FitResults FitImpl(const TLorentzVector& lepton1_p4, const TLorentzVector& lepton2_p4,
                               const TLorentzVector& jet1_p4, const TLorentzVector& jet2_p4, const TVector2& met,
                               const TMatrixD& met_cov, double resolution_1, double resolution_2, int verbosity);

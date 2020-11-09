@@ -39,7 +39,7 @@ struct BTagReaderInfo {
     HistPtr eff_hist;
 
     BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr file, DiscriminatorWP wp);
-    void Eval(JetInfo& jetInfo, const std::string& unc_name);
+    void Eval(JetInfo& jetInfo, const std::string& unc_name, double btag);
 
 private:
     double GetEfficiency(double pt, double eta) const;
@@ -67,8 +67,8 @@ public:
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
-    double Get(EventInfo& event, DiscriminatorWP wp, UncertaintySource unc_source = UncertaintySource::None,
-               UncertaintyScale unc_scale = UncertaintyScale::Central) const;
+    double Get(EventInfo& event, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
+               UncertaintyScale unc_scale) const;
 
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
