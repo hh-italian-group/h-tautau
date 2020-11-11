@@ -24,12 +24,13 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
 
     if(period == Period::Run2016) {
         if(mode.empty() || mode.count(WeightType::PileUp))
-            providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
+            CreateProvider<PileUpWeightEx>(WeightType::PileUp,
                         FullName("2016/Pileup_Data2016.root"), FullName("2016/Pileup_Data2016_Up.root"),
-                        FullName("2016/Pileup_Data2016_Down.root"), FullName("2016/pu_mc_distr_per_sample_100_100_2016.root"),
+                        FullName("2016/Pileup_Data2016_Down.root"),
+                        FullName("2016/pu_mc_distr_per_sample_100_100_2016.root"),
                         FullName("2016/pileup_groups_2016.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
-            providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+            CreateProvider<LeptonWeights>(WeightType::LeptonTrigIdIso,
                         FullLeptonName("Electron/Run2016_legacy/Electron_Run2016_legacy_IdIso.root"),
                         FullLeptonName("Electron/Run2016_legacy/Electron_Run2016_legacy_Ele25.root"),
                         "",
@@ -40,67 +41,65 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         period, false);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(base_tagger == BTaggerKind::CSV)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2016/btag/bTagEfficiencies_Moriond17.root"),
                         FullName("2016/btag/CSVv2_Moriond17_B_H.csv"),
                         bTagger, default_btag_wp);
             else if(base_tagger == BTaggerKind::DeepCSV)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2016/btag/b_eff_HH_DeepCSV_2016.root"),
                         FullName("2016/btag/DeepCSV_2016LegacySF_WP_V1.csv"),
                         bTagger, default_btag_wp);
             else if(base_tagger == BTaggerKind::DeepFlavour)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2016/btag/b_eff_HH_DeepFlavour_2016.root"),
-                        FullName("2016/btag/DeepJet_2016LegacySF_WP_V1.csv"),
+                        FullName("2016/btag/DeepJet_2016LegacySF_V1_TuneCP5.csv"),
                         bTagger, default_btag_wp);
             else
                 throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
         if(mode.empty() || mode.count(WeightType::JetPuIdWeights))
-            providers[WeightType::JetPuIdWeights] = std::make_shared<JetPuIdWeights>(
-                        FullName("2016/jet_pu_id/h2_eff_mc_2016_L.root"),
-                        FullName("2016/jet_pu_id/h2_eff_sf_2016_L.root"),
-                        FullName("2016/jet_pu_id/h2_mistag_mc_2016_L.root"),
-                        FullName("2016/jet_pu_id/h2_mistag_sf_2016_L.root"), bTagger, period);
+            CreateProvider<JetPuIdWeights>(WeightType::JetPuIdWeights,
+                        FullName("jet_pu_id/effcyPUID_81Xtraining.root"),
+                        FullName("jet_pu_id/scalefactorsPUID_81Xtraining.root"),
+                        bTagger, period);
         if(mode.empty() || mode.count(WeightType::TopPt))
-            providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
+            CreateProvider<TopPtWeight>(WeightType::TopPt, 0.0615, 0.0005);
     }
 
     else if(period == Period::Run2017) {
         if(mode.empty() || mode.count(WeightType::PileUp))
-            providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
+            CreateProvider<PileUpWeightEx>(WeightType::PileUp,
                         FullName("2017/Pileup_Data2017.root"), FullName("2017/Pileup_Data2017_Up.root"),
                         FullName("2017/Pileup_Data2017_Down.root"),
                         FullName("2017/pu_mc_distr_per_sample_100_100_2017.root"),
                         FullName("2017/pileup_groups.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(base_tagger == BTaggerKind::DeepCSV)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2017/btag/b_eff_HH_DeepCSV_2017.root"),
                         FullName("2017/btag/DeepCSV_94XSF_WP_V4_B_F.csv"),
                         bTagger, default_btag_wp);
             else if(base_tagger == BTaggerKind::CSV)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2017/btag/BTagEfficiency_csv_pu_id_full.root"),
                         FullName("2017/btag/CSVv2_94XSF_V2_B_F.csv"),
                         bTagger, default_btag_wp);
             else if(base_tagger == BTaggerKind::DeepFlavour)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2017/btag/b_eff_HH_DeepFlavour_2017.root"),
-                        FullName("2017/btag/DeepFlavour_94XSF_WP_V3_B_F.csv"),
+                        FullName("2017/btag/DeepFlavour_94XSF_V4_B_F.csv"),
                         bTagger, default_btag_wp);
             else
                throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
         if(mode.empty() || mode.count(WeightType::JetPuIdWeights))
-            providers[WeightType::JetPuIdWeights] = std::make_shared<JetPuIdWeights>(
-                        FullName("2017/jet_pu_id/h2_eff_mc_2017_L.root"),
-                        FullName("2017/jet_pu_id/h2_eff_sf_2017_L.root"),
-                        FullName("2017/jet_pu_id/h2_mistag_mc_2017_L.root"),
-                        FullName("2017/jet_pu_id/h2_mistag_sf_2017_L.root"),bTagger, period);
+            CreateProvider<JetPuIdWeights>(WeightType::JetPuIdWeights,
+                        FullName("jet_pu_id/effcyPUID_81Xtraining.root"),
+                        FullName("jet_pu_id/scalefactorsPUID_81Xtraining.root"),
+                        bTagger, period);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
-            providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+            CreateProvider<LeptonWeights>(WeightType::LeptonTrigIdIso,
                         FullLeptonName("Electron/Run2017/Electron_Run2017_IdIso.root"),
                         FullLeptonName("Electron/Run2017/Electron_Ele32orEle35.root"),
                         FullLeptonName("Electron/Run2017/Electron_EleTau_Ele24.root"),
@@ -110,39 +109,38 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullTriggerName("2017_tauTriggerEff_DeepTau2017v2p1.root"),
                         period, false);
         if(mode.empty() || mode.count(WeightType::TopPt))
-            providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
+            CreateProvider<TopPtWeight>(WeightType::TopPt, 0.0615, 0.0005);
     }
     else if(period == Period::Run2018) {
         if(mode.empty() || mode.count(WeightType::PileUp))
-            providers[WeightType::PileUp] = std::make_shared<PileUpWeightEx>(
+            CreateProvider<PileUpWeightEx>(WeightType::PileUp,
                         FullName("2018/Pileup_Data2018.root"), FullName("2018/Pileup_Data2018_Up.root"),
                         FullName("2018/Pileup_Data2018_Down.root"),
                         FullName("2018/pu_mc_distr_per_sample_100_100_2018.root"),
                         FullName("2018/pileup_groups_2018.txt"), 100, 0);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(base_tagger == BTaggerKind::DeepCSV)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2018/btag/b_eff_HH_DeepCSV_2018.root"),
                         FullName("2018/btag/DeepCSV_102XSF_WP_V1.csv"),
                         bTagger, default_btag_wp);
             else if(base_tagger == BTaggerKind::DeepFlavour)
-                providers[WeightType::BTag] = std::make_shared<BTagWeight>(
+                CreateProvider<BTagWeight>(WeightType::BTag,
                         FullName("2018/btag/b_eff_HH_DeepFlavour_2018.root"),
-                        FullName("2018/btag/DeepJet_102XSF_WP_V1.csv"),
+                        FullName("2018/btag/DeepJet_102XSF_V2.csv"),
                         bTagger, default_btag_wp);
             else
                throw exception("EventWeights: b tagger %1% is not supported.") % base_tagger;
         }
         if(mode.empty() || mode.count(WeightType::JetPuIdWeights))
-            providers[WeightType::JetPuIdWeights] = std::make_shared<JetPuIdWeights>(
-                        FullName("2018/jet_pu_id/h2_eff_mc_2018_L.root"),
-                        FullName("2018/jet_pu_id/h2_eff_sf_2018_L.root"),
-                        FullName("2018/jet_pu_id/h2_mistag_mc_2018_L.root"),
-                        FullName("2018/jet_pu_id/h2_mistag_sf_2018_L.root"), bTagger, period);
+            CreateProvider<JetPuIdWeights>(WeightType::JetPuIdWeights,
+                        FullName("jet_pu_id/effcyPUID_81Xtraining.root"),
+                        FullName("jet_pu_id/scalefactorsPUID_81Xtraining.root"),
+                        bTagger, period);
         if(mode.empty() || mode.count(WeightType::TopPt))
-            providers[WeightType::TopPt] = std::make_shared<TopPtWeight>(0.0615, 0.0005);
+            CreateProvider<TopPtWeight>(WeightType::TopPt, 0.0615, 0.0005);
         if(mode.empty() || mode.count(WeightType::LeptonTrigIdIso))
-            providers[WeightType::LeptonTrigIdIso] = std::make_shared<LeptonWeights>(
+            CreateProvider<LeptonWeights>(WeightType::LeptonTrigIdIso,
                         FullLeptonName("Electron/Run2018/Electron_Run2018_IdIso.root"),
                         FullLeptonName("Electron/Run2018/Electron_Run2018_Ele32orEle35.root"),
                         FullLeptonName("Electron/Run2018/Electron_Run2018_Ele24.root"),
@@ -156,7 +154,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
         throw exception("Period %1% is not supported (EventWeights).") % period;
     }
     if(mode.empty() || mode.count(WeightType::GenEventWeight))
-        providers[WeightType::GenEventWeight] = std::make_shared<GenEventWeight>();
+        CreateProvider<GenEventWeight>(WeightType::GenEventWeight);
 }
 
 EventWeights::ProviderPtr EventWeights::GetProvider(WeightType weightType) const
