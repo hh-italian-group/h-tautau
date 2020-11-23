@@ -71,7 +71,21 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
         { BTagEntry::FLAV_B, 5 }, { BTagEntry::FLAV_C, 4 }, { BTagEntry::FLAV_UDSG, 0 },
     };
     static const std::vector<std::string> unc_scale_names_comb = { "up", "down" };
-    static const std::vector<std::string> unc_scale_names_iterative = { };
+
+    //From https://twiki.cern.ch/twiki/bin/view/CMS/BTagShapeCalibration#Systematic_uncertainties
+    // Owing to the iterative approach, "jes", "lf", "hf", "hfstats1/2", and "lfstats1/2" uncertainties are applied
+    //to both b and udsg jets. For c-flavored jets, only "cferr1/2" uncertainties are applied.
+    btag_sources = { UncertaintySource::lf, UncertaintySource::hf, UncertaintySource::hfstats1,
+                     UncertaintySource::hfstats2, UncertaintySource::lfstats1, UncertaintySource::lfstats2,
+                     UncertaintySource::cferr1, UncertaintySource::cferr2, UncertaintySource::JetFull_Total,
+                     UncertaintySource::JetReduced_Total };
+
+     // Systematics names for iterative btag weights
+    sist_names = { "up_jes", "up_lf", "up_hf", "up_hfstats1", "up_hfstats2", "up_lfstats1", "up_lfstats2",
+                   "up_cferr1", "up_cferr2",
+                   "down_jes", "down_lf", "down_hf", "down_hfstats1", "down_hfstats2",
+                   "down_lfstats1", "down_lfstats2", "down_cferr1", "down_cferr2"
+    };
 
     if(!op_map.count(default_wp))
         throw exception("BTagWeight: default working point %1% is not supported.") % default_wp;
@@ -80,7 +94,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
     for(const auto& [wp, op] : op_map) {
         for(const auto& [flavor, flavor_id] : jet_flavors) {
-            const auto& unc_scale_names = op == BTagEntry::OP_RESHAPING ? unc_scale_names_iterative
+            const auto& unc_scale_names = op == BTagEntry::OP_RESHAPING ? sist_names
                                                                         : unc_scale_names_comb;
             std::string measurementType = flavor_id == 0 ? "incl" : "comb";
             if(op == BTagEntry::OP_RESHAPING)
@@ -95,7 +109,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
 double BTagWeight::Get(EventInfo& eventInfo) const
 {
-    return Get(eventInfo, default_wp, false, UncertaintySource::None, UncertaintyScale::Central);
+    return Get(eventInfo, default_wp, UncertaintySource::None, UncertaintyScale::Central);
 }
 
 double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -103,7 +117,52 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
+std::map<UncertaintyScale, std::vector<float>>  BTagWeight::GetEvtWeightShifted(EventInfo& eventInfo, DiscriminatorWP wp,
+                                                                                UncertaintySource unc_source,
+                                                                                UncertaintyScale unc_scale,
+                                                                                bool apply_JES) const
+{
+    std::map<UncertaintyScale, std::vector<float>> unc_scale_weights;
+    UncertaintyScale scale = UncertaintyScale::Central;
+    UncertaintySource source = UncertaintySource::None;
+
+    const DiscriminatorWP reader_wp = DiscriminatorWP::VVVLoose;
+    JetInfoVector jetInfos;
+
+    std::vector<float> SFs (sist_names_v2.size(), 1.);
+
+    for(const auto& jet : eventInfo.GetCentralJets()) {
+        JetInfo jetInfo(*jet);
+        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
+
+        //c jets: assign a flat scale factor of 1
+        if(jetInfo.hadronFlavour == 4) {
+            unc_scale_weights.at(unc_scale) = SFs;
+            return unc_scale_weights;
+        }
+
+        else if(std::count(btag_sources.begin(), btag_sources.end(), unc_source) ||
+            (apply_JES && (unc_source == UncertaintySource::JetFull_Total ||
+            unc_source == UncertaintySource::JetReduced_Total))) {
+                scale = unc_scale;
+                source = unc_source;
+        }
+        const std::string unc_name = GetUncertantyName(scale);
+
+        for (size_t unc = 0; unc < sist_names.size(); ++unc) {
+             GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, sist_names.at(unc),
+                       bTagger.BTag(**jet, true));
+             SFs.at(unc) *= static_cast<float>(jetInfo.SF);
+             jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
+             jetInfos.push_back(jetInfo);
+
+         }
+    }
+    unc_scale_weights[scale] = SFs;
+    return unc_scale_weights;
+}
+
+double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySource unc_source,
                        UncertaintyScale unc_scale) const
 {
     UncertaintyScale scale = UncertaintyScale::Central;
@@ -111,19 +170,17 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
         scale = unc_scale;
     const std::string unc_name = GetUncertantyName(scale);
 
-    const DiscriminatorWP reader_wp = use_iterative_fit ? DiscriminatorWP::VVVLoose : wp;
-
     JetInfoVector jetInfos;
     double SF = 1.;
     for(const auto& jet : eventInfo.GetCentralJets()) {
         JetInfo jetInfo(*jet);
         if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
-        GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true));
+        GetReader(wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true));
         SF *= jetInfo.SF;
         jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
         jetInfos.push_back(jetInfo);
     }
-    return use_iterative_fit ? SF : GetBtagWeight(jetInfos);
+    return GetBtagWeight(jetInfos);
 }
 
 std::string BTagWeight::GetUncertantyName(UncertaintyScale unc)

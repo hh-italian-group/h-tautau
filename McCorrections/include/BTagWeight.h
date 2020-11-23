@@ -67,9 +67,12 @@ public:
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
-    double Get(EventInfo& event, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
+    double Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySource unc_source,
                UncertaintyScale unc_scale) const;
-
+    std::map<UncertaintyScale, std::vector<float>> GetEvtWeightShifted(EventInfo& eventInfo, DiscriminatorWP wp,
+                                                                       UncertaintySource unc_source,
+                                                                       UncertaintyScale unc_scale,
+                                                                       bool apply_JES = true) const;
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
     static double GetBtagWeight(const JetInfoVector& jetInfos);
@@ -80,6 +83,8 @@ private:
     ReaderInfoMap readerInfos;
     BTagger bTagger;
     DiscriminatorWP default_wp;
+    std::vector<UncertaintySource> btag_sources;
+    std::vector<std::string> sist_names; 
 };
 
 } // namespace mc_corrections

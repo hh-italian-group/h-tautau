@@ -7,6 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "TauAnalysisTools/TauTriggerSFs/interface/SFProvider.h"
 #include "TauPOG/TauIDSFs/interface/TauIDSFTool.h"
+#include "VBFTrigger/VBFTriggerSFs/interface/VBFTriggerSFs.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "WeightProvider.h"
 
@@ -126,11 +127,11 @@ public:
     LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                   const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                   const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                  const std::string& tauTriggerInput, Period period, bool _is_dm_binned);
+                  const std::string& tauTriggerInput, const std::string& tauVBFTriggerInput, Period period,
+                  bool _is_dm_binned);
 
     TauIDSFTool& GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp);
     const tau_trigger::SFProvider& GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp);
-
     double GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
                              DiscriminatorWP VSjet_wp, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
@@ -146,7 +147,8 @@ public:
 
     double GetTriggerEfficiency(EventInfo& eventInfo, bool isData, DiscriminatorWP VSjet_wp,
                                 UncertaintySource unc_source, UncertaintyScale unc_scale, bool& same_as_central);
-
+    double GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData,UncertaintySource unc_source,
+                                   UncertaintyScale unc_scale);
     double GetCustomTauSF(const LepCandidate& leg, UncertaintySource unc_source, UncertaintyScale unc_scale,
                           Channel channel);
 
@@ -155,11 +157,12 @@ public:
 
 private:
     detail::LeptonScaleFactors electronSF, muonSF;
-    std::string tauTriggerInput;
+    std::string tauTriggerInput, tauVBFTriggerInput;
     Period period;
     bool is_dm_binned;
     std::map<TauIdDiscriminator, std::map<DiscriminatorWP, std::shared_ptr<TauIDSFTool>>> tau_sf_providers;
     std::map<Channel, std::map<DiscriminatorWP, std::shared_ptr<tau_trigger::SFProvider>>> tau_trigger_sf_providers;
+    std::shared_ptr<VBFTriggerSFs> vbf_trigger_provider;
 };
 
 } // namespace mc_corrections

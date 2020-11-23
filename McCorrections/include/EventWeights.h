@@ -48,6 +48,7 @@ protected:
     static std::string FullName(const std::string& fileName);
     static std::string FullLeptonName(const std::string& fileName);
     static std::string FullTriggerName(const std::string& fileName);
+    static std::string FullVBFTriggerName(const std::string& fileName);
 
 private:
     ProviderMap providers;

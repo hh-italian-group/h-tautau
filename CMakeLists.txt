@@ -15,6 +15,10 @@ set_source_files_properties(${HTT_UTILITIES_SRC} PROPERTIES COMPILE_FLAGS "-w")
 file(GLOB_RECURSE TauAnalysisTool_SRC "${CMSSW_BASE_SRC}/TauAnalysisTools/TauTriggerSFs/src/*.cc")
 add_library(TauAnalysisTools STATIC ${TauAnalysisTool_SRC})
 
+file(GLOB_RECURSE VBFTriggerSFs_SRC "${CMSSW_BASE_SRC}/VBFTrigger/VBFTriggerSFs/src/*.cc")
+add_library(VBFTriggerSFs STATIC ${VBFTriggerSFs_SRC})
+set_source_files_properties(${VBFTriggerSFs_SRC} PROPERTIES COMPILE_FLAGS "-w")
+
 file(GLOB_RECURSE TauPOG_SRC "${CMSSW_BASE_SRC}/TauPOG/TauIDSFs/src/*.cc")
 add_library(TauPOG STATIC ${TauPOG_SRC})
 set_source_files_properties(${TauPOG_SRC} PROPERTIES COMPILE_FLAGS "-w")
@@ -38,7 +42,7 @@ target_include_directories(HHbtag PRIVATE ${TF_INCLUDES})
 add_library(h-tautau STATIC ${SOURCE_LIST})
 
 foreach(exe_name ${EXE_LIST})
-    target_link_libraries("${exe_name}" h-tautau AnalysisTools HTT-utilities SVfit HHKinFit2 TauAnalysisTools TauPOG)
+    target_link_libraries("${exe_name}" h-tautau AnalysisTools HTT-utilities SVfit HHKinFit2 TauAnalysisTools VBFTriggerSFs TauPOG)
 endforeach()
 
 target_link_libraries(CacheTupleProducer ${TF_LIBRARIES} HHbtag)
