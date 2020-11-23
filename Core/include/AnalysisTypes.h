@@ -71,8 +71,8 @@ enum class UncertaintySource {
     EleIdIsoUnc = 122, MuonIdIsoUnc = 123, TauTriggerUnc_DM0 = 124, TauTriggerUnc_DM1 = 125, TauTriggerUnc_DM10 = 126,
     TauTriggerUnc_DM11 = 127, L1_prefiring = 128, PileUp = 129, PileUpJetId_eff  = 130, PileUpJetId_mistag  = 131,
     TauCustomSF_DM0 = 132, TauCustomSF_DM1 = 133, TauCustomSF_DM10 = 134, TauCustomSF_DM11 = 135,
-    VBFTauTriggerUnc = 136, lf = 137, hf = 138, hfstats1 = 139, hfstats2 = 140, lfstats1 = 141, lfstats2 = 142,
-    cferr1 = 143, cferr2 = 144
+    VBFTriggerUnc = 139, btag_lf = 140, btag_hf = 141, btag_hfstats1 = 142, btag_hfstats2 = 143,
+    btag_lfstats1 = 144, btag_lfstats2 = 145, btag_cferr1 = 146, btag_cferr2 = 147
 };
 ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::None, "None" }, { UncertaintySource::TauES, "TauES" },
@@ -209,11 +209,11 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::TauCustomSF_DM1, "TauCustomSF_DM1" },
     { UncertaintySource::TauCustomSF_DM10, "TauCustomSF_DM10" },
     { UncertaintySource::TauCustomSF_DM11, "TauCustomSF_DM11" },
-    { UncertaintySource::VBFTauTriggerUnc, "VBFTauTriggerUnc" },
-    { UncertaintySource::lf, "lf" }, { UncertaintySource::hf, "hf" },
-    { UncertaintySource::hfstats1, "hfstats1" },{ UncertaintySource::hfstats2, "hfstats2" },
-    { UncertaintySource::lfstats1, "lfstats1" }, { UncertaintySource::lfstats2, "lfstats2" },
-    { UncertaintySource::cferr1, "cferr1" }, { UncertaintySource::cferr2, "cferr2" }
+    { UncertaintySource::VBFTriggerUnc, "VBFTriggerUnc" },
+    { UncertaintySource::btag_lf, "btag_lf" }, { UncertaintySource::btag_hf, "btag_hf" },
+    { UncertaintySource::btag_hfstats1, "btag_hfstats1" },{ UncertaintySource::btag_hfstats2, "btag_hfstats2" },
+    { UncertaintySource::btag_lfstats1, "btag_lfstats1" }, { UncertaintySource::btag_lfstats2, "btag_lfstats2" },
+    { UncertaintySource::btag_cferr1, "btag_cferr1" }, { UncertaintySource::btag_cferr2, "btag_cferr2" }
 };
 
 const std::set<UncertaintyScale>& GetAllUncertaintyScales();

@@ -15,6 +15,7 @@ JetInfo::JetInfo(const JetCandidate& jet) :
     pt  = jet.GetMomentum().pt();
     eta = jet.GetMomentum().eta();
     hadronFlavour = jet->hadronFlavour();
+    SF_iter = {};
 }
 
 BTagReaderInfo::BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr file, DiscriminatorWP wp) :
@@ -41,10 +42,16 @@ BTagReaderInfo::BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr fil
     eff_hist = HistPtr(root_ext::ReadCloneObject<TH2D>(*file, name, "", true));
 }
 
-void BTagReaderInfo::Eval(JetInfo& jetInfo, const std::string& unc_name, double btag)
+void BTagReaderInfo::Eval(JetInfo& jetInfo, const std::string& unc_name, double btag,
+                          std::vector<std::string> uncs_iter)
 {
     jetInfo.SF  = reader->eval_auto_bounds(unc_name, flavor, static_cast<float>(jetInfo.eta),
                                            static_cast<float>(jetInfo.pt), static_cast<float>(btag));
+    for (size_t unc = 0; unc < uncs_iter.size(); ++unc)
+        jetInfo.SF_iter.at(unc)  *= static_cast<float>(reader->eval_auto_bounds(uncs_iter.at(unc), flavor,
+                                                                                static_cast<float>(jetInfo.eta),
+                                                                                static_cast<float>(jetInfo.pt),
+                                                                                static_cast<float>(btag)));
     jetInfo.eff = GetEfficiency(jetInfo.pt, std::abs(jetInfo.eta));
 }
 
@@ -75,9 +82,9 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
     //From https://twiki.cern.ch/twiki/bin/view/CMS/BTagShapeCalibration#Systematic_uncertainties
     // Owing to the iterative approach, "jes", "lf", "hf", "hfstats1/2", and "lfstats1/2" uncertainties are applied
     //to both b and udsg jets. For c-flavored jets, only "cferr1/2" uncertainties are applied.
-    btag_sources = { UncertaintySource::lf, UncertaintySource::hf, UncertaintySource::hfstats1,
-                     UncertaintySource::hfstats2, UncertaintySource::lfstats1, UncertaintySource::lfstats2,
-                     UncertaintySource::cferr1, UncertaintySource::cferr2, UncertaintySource::JetFull_Total,
+    btag_sources = { UncertaintySource::btag_lf, UncertaintySource::btag_hf, UncertaintySource::btag_hfstats1,
+                     UncertaintySource::btag_hfstats2, UncertaintySource::btag_lfstats1, UncertaintySource::btag_lfstats2,
+                     UncertaintySource::btag_cferr1, UncertaintySource::btag_cferr2, UncertaintySource::JetFull_Total,
                      UncertaintySource::JetReduced_Total };
 
      // Systematics names for iterative btag weights
@@ -117,54 +124,12 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
     throw exception("ExpressEvent is not supported in BTagWeight::Get.");
 }
 
-std::map<UncertaintyScale, std::vector<float>>  BTagWeight::GetEvtWeightShifted(EventInfo& eventInfo, DiscriminatorWP wp,
-                                                                                UncertaintySource unc_source,
-                                                                                UncertaintyScale unc_scale,
-                                                                                bool apply_JES) const
-{
-    std::map<UncertaintyScale, std::vector<float>> unc_scale_weights;
-    UncertaintyScale scale = UncertaintyScale::Central;
-    UncertaintySource source = UncertaintySource::None;
-
-    const DiscriminatorWP reader_wp = DiscriminatorWP::VVVLoose;
-    JetInfoVector jetInfos;
-
-    std::vector<float> SFs (sist_names.size(), 1.);
-
-    for(const auto& jet : eventInfo.GetCentralJets()) {
-        JetInfo jetInfo(*jet);
-        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
-
-        //c jets: assign a flat scale factor of 1
-        if(jetInfo.hadronFlavour == 4) {
-            unc_scale_weights.at(unc_scale) = SFs;
-            return unc_scale_weights;
-        }
-
-        else if(std::count(btag_sources.begin(), btag_sources.end(), unc_source) ||
-            (apply_JES && (unc_source == UncertaintySource::JetFull_Total ||
-            unc_source == UncertaintySource::JetReduced_Total))) {
-                scale = unc_scale;
-                source = unc_source;
-        }
-        const std::string unc_name = GetUncertantyName(scale);
-
-        for (size_t unc = 0; unc < sist_names.size(); ++unc) {
-             GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, sist_names.at(unc),
-                       bTagger.BTag(**jet, true));
-             SFs.at(unc) *= static_cast<float>(jetInfo.SF);
-             jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
-             jetInfos.push_back(jetInfo);
-
-         }
-    }
-    unc_scale_weights[scale] = SFs;
-    return unc_scale_weights;
-}
-
 double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
-                       UncertaintyScale unc_scale) const
+                       UncertaintyScale unc_scale,  bool apply_JES,
+                       std::map<UncertaintyScale,std::vector<float>> shifted_weight) const
 {
+   UncertaintyScale scale_iter = UncertaintyScale::Central;
+   UncertaintySource source = UncertaintySource::None;
    UncertaintyScale scale = UncertaintyScale::Central;
    if(unc_source == UncertaintySource::Eff_b)
        scale = unc_scale;
@@ -174,11 +139,26 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
 
    JetInfoVector jetInfos;
    double SF = 1.;
+   std::vector<float> SFs (sist_names.size(), 1.);
    for(const auto& jet : eventInfo.GetCentralJets()) {
        JetInfo jetInfo(*jet);
        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
-       GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true));
+
+       if(use_iterative_fit){
+           //c jets: assign a flat scale factor of 1
+           if(jetInfo.hadronFlavour == 4)
+               shifted_weight.at(unc_scale) = SFs;
+           else if(std::count(btag_sources.begin(), btag_sources.end(), unc_source) ||
+               (apply_JES && (unc_source == UncertaintySource::JetFull_Total ||
+               unc_source == UncertaintySource::JetReduced_Total))) {
+                   scale_iter = unc_scale;
+                   source = unc_source;
+           }
+       }
+
+       GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true), sist_names);
        SF *= jetInfo.SF;
+       shifted_weight[scale_iter] = jetInfo.SF_iter;
        jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
        jetInfos.push_back(jetInfo);
    }

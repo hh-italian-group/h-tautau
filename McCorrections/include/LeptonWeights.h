@@ -148,7 +148,7 @@ public:
     double GetTriggerEfficiency(EventInfo& eventInfo, bool isData, DiscriminatorWP VSjet_wp,
                                 UncertaintySource unc_source, UncertaintyScale unc_scale, bool& same_as_central);
     double GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData,UncertaintySource unc_source,
-                                   UncertaintyScale unc_scale);
+                                   UncertaintyScale unc_scale, bool& same_as_central);
     double GetCustomTauSF(const LepCandidate& leg, UncertaintySource unc_source, UncertaintyScale unc_scale,
                           Channel channel);
 
