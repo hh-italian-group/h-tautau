@@ -109,7 +109,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
 double BTagWeight::Get(EventInfo& eventInfo) const
 {
-    return Get(eventInfo, default_wp, UncertaintySource::None, UncertaintyScale::Central);
+    return Get(eventInfo, default_wp, false, UncertaintySource::None, UncertaintyScale::Central);
 }
 
 double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -129,7 +129,7 @@ std::map<UncertaintyScale, std::vector<float>>  BTagWeight::GetEvtWeightShifted(
     const DiscriminatorWP reader_wp = DiscriminatorWP::VVVLoose;
     JetInfoVector jetInfos;
 
-    std::vector<float> SFs (sist_names_v2.size(), 1.);
+    std::vector<float> SFs (sist_names.size(), 1.);
 
     for(const auto& jet : eventInfo.GetCentralJets()) {
         JetInfo jetInfo(*jet);
@@ -162,25 +162,27 @@ std::map<UncertaintyScale, std::vector<float>>  BTagWeight::GetEvtWeightShifted(
     return unc_scale_weights;
 }
 
-double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySource unc_source,
+double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
                        UncertaintyScale unc_scale) const
 {
-    UncertaintyScale scale = UncertaintyScale::Central;
-    if(unc_source == UncertaintySource::Eff_b)
-        scale = unc_scale;
-    const std::string unc_name = GetUncertantyName(scale);
+   UncertaintyScale scale = UncertaintyScale::Central;
+   if(unc_source == UncertaintySource::Eff_b)
+       scale = unc_scale;
+   const std::string unc_name = GetUncertantyName(scale);
 
-    JetInfoVector jetInfos;
-    double SF = 1.;
-    for(const auto& jet : eventInfo.GetCentralJets()) {
-        JetInfo jetInfo(*jet);
-        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
-        GetReader(wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true));
-        SF *= jetInfo.SF;
-        jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
-        jetInfos.push_back(jetInfo);
-    }
-    return GetBtagWeight(jetInfos);
+   const DiscriminatorWP reader_wp = use_iterative_fit ? DiscriminatorWP::VVVLoose : wp;
+
+   JetInfoVector jetInfos;
+   double SF = 1.;
+   for(const auto& jet : eventInfo.GetCentralJets()) {
+       JetInfo jetInfo(*jet);
+       if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
+       GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true));
+       SF *= jetInfo.SF;
+       jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
+       jetInfos.push_back(jetInfo);
+   }
+   return use_iterative_fit ? SF : GetBtagWeight(jetInfos);
 }
 
 std::string BTagWeight::GetUncertantyName(UncertaintyScale unc)

@@ -67,7 +67,7 @@ public:
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
-    double Get(EventInfo& eventInfo, DiscriminatorWP wp, UncertaintySource unc_source,
+    double Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
                UncertaintyScale unc_scale) const;
     std::map<UncertaintyScale, std::vector<float>> GetEvtWeightShifted(EventInfo& eventInfo, DiscriminatorWP wp,
                                                                        UncertaintySource unc_source,
@@ -84,7 +84,7 @@ private:
     BTagger bTagger;
     DiscriminatorWP default_wp;
     std::vector<UncertaintySource> btag_sources;
-    std::vector<std::string> sist_names; 
+    std::vector<std::string> sist_names;
 };
 
 } // namespace mc_corrections
