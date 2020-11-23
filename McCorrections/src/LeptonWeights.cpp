@@ -118,7 +118,7 @@ TauIDSFTool& LeptonWeights::GetTauIdProvider(TauIdDiscriminator discr, Discrimin
      return *provider;
 }
 
-const tau_trigger::SFProvider& LeptonWeights::GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp)
+const tau_trigger::SFProvider& LeptonWeights::GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp, bool is_vbf)
 {
     static const std::map<Channel, std::string> channel_names = {
         { Channel::ETau, "etau" }, { Channel::MuTau, "mutau" }, { Channel::TauTau, "ditau" }
@@ -127,8 +127,11 @@ const tau_trigger::SFProvider& LeptonWeights::GetTauTriggerSFProvider(Channel ch
     if(!provider) {
         if(!channel_names.count(channel))
             throw exception("LeptonWeights::GetTauTriggerSFProvider: channel %1% is not supported.") % channel;
-        provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, channel_names.at(channel),
-                                                             ToString(wp));
+        if(!is_vbf)
+            provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, channel_names.at(channel),
+                                                                 ToString(wp));
+        else provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "ditauvbf",
+                                                                  ToString(wp));
     }
     return *provider;
 }
@@ -377,7 +380,6 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         const auto& leg = eventInfo.GetLeg(leg_id);
         const float pt = static_cast<float>(leg.GetMomentum().pt());
         const int dm = leg->decayMode();
-
         const auto pt_iter = tau_min_pt.find(std::make_tuple(period, channel, vbf));
         if(pt_iter == tau_min_pt.end() || pt <= pt_iter->second) return 0.f;
         const auto& sf_provider = GetTauTriggerSFProvider(channel, VSjet_wp);
@@ -388,6 +390,10 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         if(current_scale != UncertaintyScale::Central)
             same_as_central = false;
         const int scale = static_cast<int>(current_scale);
+        if(vbf) {
+            const auto& sf_provider_vbf = GetTauTriggerSFProvider(channel, VSjet_wp, true);
+            return isData ? sf_provider_vbf.getEfficiencyData(pt, dm, scale) : sf_provider_vbf.getEfficiencyMC(pt, dm, scale);
+        }
         return isData ? sf_provider.getEfficiencyData(pt, dm, scale) : sf_provider.getEfficiencyMC(pt, dm, scale);
     };
 
@@ -405,7 +411,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         if(match_selection_vbf(false))
            efficiency = getTauEff(1, false) * getTauEff(2, false);
         else if(match_selection_vbf(true))
-            efficiency = getTauEff(1, false) * getTauEff(2, false) * static_cast<float>(GetVBFTriggerEfficiency(eventInfo,
+            efficiency = getTauEff(1, true) * getTauEff(2, true) * static_cast<float>(GetVBFTriggerEfficiency(eventInfo,
                 isData, unc_source, unc_scale, same_as_central));
         else efficiency = 0.;
     } else
@@ -434,15 +440,8 @@ double LeptonWeights::GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData,
     std::string_view input(tauVBFTriggerInput);
     vbf_trigger_provider = std::make_shared<VBFTriggerSFs>(input);
 
-    static const std::vector<UncertaintySource> uncs_vbf_trigger_weight = {
-        UncertaintySource::TauTriggerUnc_DM0, UncertaintySource::TauTriggerUnc_DM1,
-        UncertaintySource::TauTriggerUnc_DM10, UncertaintySource::TauTriggerUnc_DM11,
-        UncertaintySource::VBFTriggerUnc
-    };
-
     UncertaintyScale scale =  UncertaintyScale::Central;
-    for(const auto trigger_unc : uncs_vbf_trigger_weight)
-        scale = unc_source == trigger_unc ? unc_scale : UncertaintyScale::Central;
+    scale = unc_source == UncertaintySource::VBFTriggerUnc ? unc_scale : UncertaintyScale::Central;
 
     if(scale != UncertaintyScale::Central) same_as_central = false;
     const int scale_value = static_cast<int>(scale);

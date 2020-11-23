@@ -131,7 +131,7 @@ public:
                   bool _is_dm_binned);
 
     TauIDSFTool& GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp);
-    const tau_trigger::SFProvider& GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp);
+    const tau_trigger::SFProvider& GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp, bool is_vbf = false);
     double GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
                              DiscriminatorWP VSjet_wp, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
