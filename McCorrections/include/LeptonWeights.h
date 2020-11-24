@@ -163,6 +163,7 @@ private:
     bool is_dm_binned;
     std::map<TauIdDiscriminator, std::map<DiscriminatorWP, std::shared_ptr<TauIDSFTool>>> tau_sf_providers;
     std::map<Channel, std::map<DiscriminatorWP, std::shared_ptr<tau_trigger::SFProvider>>> tau_trigger_sf_providers;
+    std::shared_ptr<tau_trigger::SFProvider> tau_trigger_vbf_sf_provider;
     std::shared_ptr<VBFTriggerSFs> vbf_trigger_provider;
 };
 

@@ -120,20 +120,23 @@ TauIDSFTool& LeptonWeights::GetTauIdProvider(TauIdDiscriminator discr, Discrimin
 
 const tau_trigger::SFProvider& LeptonWeights::GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp, bool is_vbf)
 {
-    static const std::map<Channel, std::string> channel_names = {
-        { Channel::ETau, "etau" }, { Channel::MuTau, "mutau" }, { Channel::TauTau, "ditau" }
-    };
-    auto& provider = tau_trigger_sf_providers[channel][wp];
-    if(!provider) {
-        if(!channel_names.count(channel))
-            throw exception("LeptonWeights::GetTauTriggerSFProvider: channel %1% is not supported.") % channel;
-        if(!is_vbf)
-            provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, channel_names.at(channel),
-                                                                 ToString(wp));
-        else provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "ditauvbf",
-                                                                  ToString(wp));
+    if(is_vbf) {
+        tau_trigger_vbf_sf_provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "ditauvbf",
+                                                                                      ToString(wp));
+        return *tau_trigger_vbf_sf_provider;
+    } else{
+        static const std::map<Channel, std::string> channel_names = {
+            { Channel::ETau, "etau" }, { Channel::MuTau, "mutau" }, { Channel::TauTau, "ditau" }
+        };
+        auto& provider = tau_trigger_sf_providers[channel][wp];
+        if(!provider) {
+            if(!channel_names.count(channel))
+                throw exception("LeptonWeights::GetTauTriggerSFProvider: channel %1% is not supported.") % channel;
+                provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, channel_names.at(channel),
+                                                                                 ToString(wp));
+        }
+        return *provider;
     }
-    return *provider;
 }
 
 double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,

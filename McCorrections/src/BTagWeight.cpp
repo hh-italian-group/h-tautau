@@ -156,9 +156,12 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
        JetInfo jetInfo(*jet);
        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
        if(use_iterative_fit){
-           //c jets: assign a flat scale factor of 1
-           if(jetInfo.hadronFlavour == 4 )
-               return 1.;
+           //For c-flavored jets, only "cferr1/2" uncertainties are applied.
+           if(jetInfo.hadronFlavour == 4 && (unc_source == UncertaintySource::btag_cferr1 ||
+               unc_source == UncertaintySource::btag_cferr2)) {
+               scale = unc_scale;
+               source = unc_source;
+           }
            else if(std::count(btag_sources.begin(), btag_sources.end(), unc_source) ||
                (apply_JES && (unc_source == UncertaintySource::JetFull_Total ||
                unc_source == UncertaintySource::JetReduced_Total))) {
