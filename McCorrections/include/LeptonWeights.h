@@ -9,6 +9,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "TauPOG/TauIDSFs/interface/TauIDSFTool.h"
 #include "VBFTrigger/VBFTriggerSFs/interface/VBFTriggerSFs.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
+#include "h-tautau/Cuts/include/hh_bbtautau_Run2.h"
 #include "WeightProvider.h"
 
 namespace analysis {

@@ -15,7 +15,6 @@ JetInfo::JetInfo(const JetCandidate& jet) :
     pt  = jet.GetMomentum().pt();
     eta = jet.GetMomentum().eta();
     hadronFlavour = jet->hadronFlavour();
-    SF_iter = {};
 }
 
 BTagReaderInfo::BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr file, DiscriminatorWP wp) :
@@ -42,16 +41,10 @@ BTagReaderInfo::BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr fil
     eff_hist = HistPtr(root_ext::ReadCloneObject<TH2D>(*file, name, "", true));
 }
 
-void BTagReaderInfo::Eval(JetInfo& jetInfo, const std::string& unc_name, double btag,
-                          std::vector<std::string> uncs_iter)
+void BTagReaderInfo::Eval(JetInfo& jetInfo, const std::string& unc_name, double btag)
 {
     jetInfo.SF  = reader->eval_auto_bounds(unc_name, flavor, static_cast<float>(jetInfo.eta),
                                            static_cast<float>(jetInfo.pt), static_cast<float>(btag));
-    for (size_t unc = 0; unc < uncs_iter.size(); ++unc)
-        jetInfo.SF_iter.at(unc)  *= static_cast<float>(reader->eval_auto_bounds(uncs_iter.at(unc), flavor,
-                                                                                static_cast<float>(jetInfo.eta),
-                                                                                static_cast<float>(jetInfo.pt),
-                                                                                static_cast<float>(btag)));
     jetInfo.eff = GetEfficiency(jetInfo.pt, std::abs(jetInfo.eta));
 }
 
@@ -89,8 +82,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
      // Systematics names for iterative btag weights
     sist_names = { "up_jes", "up_lf", "up_hf", "up_hfstats1", "up_hfstats2", "up_lfstats1", "up_lfstats2",
-                   "up_cferr1", "up_cferr2",
-                   "down_jes", "down_lf", "down_hf", "down_hfstats1", "down_hfstats2",
+                   "up_cferr1", "up_cferr2", "down_jes", "down_lf", "down_hf", "down_hfstats1", "down_hfstats2",
                    "down_lfstats1", "down_lfstats2", "down_cferr1", "down_cferr2"
     };
 
@@ -125,10 +117,31 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
 }
 
 double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
-                       UncertaintyScale unc_scale,  bool apply_JES,
-                       std::map<UncertaintyScale,std::vector<float>> shifted_weight) const
+                       UncertaintyScale unc_scale,  bool apply_JES) const
 {
-   UncertaintyScale scale_iter = UncertaintyScale::Central;
+    std::map<std::pair<UncertaintyScale,UncertaintySource>, std::string> iter_unc_scales = {
+        { {UncertaintyScale::Up, UncertaintySource::btag_lf}, "up_lf" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_lf}, "down_lf" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_hf}, "up_hf" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_hf}, "down_hf" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_hfstats1}, "up_hfstats1" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_hfstats1}, "down_hfstats1" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_hfstats2}, "up_hfstats2" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_hfstats2}, "down_hfstats2" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_lfstats1}, "up_lfstats1" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_lfstats1}, "down_lfstats1" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_lfstats2}, "up_lfstats2" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_lfstats2}, "down_lfstats2" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_cferr1}, "up_cferr1" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_cferr1}, "down_cferr1" },
+        { {UncertaintyScale::Up, UncertaintySource::btag_cferr2}, "up_cferr2" },
+        { {UncertaintyScale::Down, UncertaintySource::btag_cferr2}, "down_cferr2" },
+        { {UncertaintyScale::Up, UncertaintySource::JetFull_Total}, "up_jes" },
+        { {UncertaintyScale::Down, UncertaintySource::JetFull_Total}, "down_jes" },
+        { {UncertaintyScale::Up, UncertaintySource::JetReduced_Total}, "up_jes" },
+        { {UncertaintyScale::Down, UncertaintySource::JetReduced_Total}, "down_jes" },
+};
+
    UncertaintySource source = UncertaintySource::None;
    UncertaintyScale scale = UncertaintyScale::Central;
    if(unc_source == UncertaintySource::Eff_b)
@@ -139,26 +152,25 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
 
    JetInfoVector jetInfos;
    double SF = 1.;
-   std::vector<float> SFs (sist_names.size(), 1.);
+   double SF_shift = 1.;
    for(const auto& jet : eventInfo.GetCentralJets()) {
        JetInfo jetInfo(*jet);
        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
-
        if(use_iterative_fit){
            //c jets: assign a flat scale factor of 1
-           if(jetInfo.hadronFlavour == 4)
-               shifted_weight.at(unc_scale) = SFs;
+           if(jetInfo.hadronFlavour == 4 )
+               return 1.;
            else if(std::count(btag_sources.begin(), btag_sources.end(), unc_source) ||
                (apply_JES && (unc_source == UncertaintySource::JetFull_Total ||
                unc_source == UncertaintySource::JetReduced_Total))) {
-                   scale_iter = unc_scale;
+                   scale = unc_scale;
                    source = unc_source;
            }
        }
-
-       GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name, bTagger.BTag(**jet, true), sist_names);
+       const std::string unc_name_string = (use_iterative_fit && source != UncertaintySource::None) ?
+           iter_unc_scales.at(std::make_pair(scale, source)) : unc_name;
+       GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name_string, bTagger.BTag(**jet, true));
        SF *= jetInfo.SF;
-       shifted_weight[scale_iter] = jetInfo.SF_iter;
        jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
        jetInfos.push_back(jetInfo);
    }

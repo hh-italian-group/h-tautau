@@ -370,9 +370,18 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
             const auto& vbf_jet_2_pt = static_cast<float>(eventInfo.GetVBFJet(2).GetMomentum().pt());
             const auto& vbf_jets_m = static_cast<float>((eventInfo.GetVBFJet(1).GetMomentum() + eventInfo.GetVBFJet(2).GetMomentum()).M());
 
-            if(vbf_jets_m > 800 && vbf_jet_1_pt > 140 && vbf_jet_2_pt > 60 && leg_1_pt > 25 && leg_2_pt > 25) return true;
+            bool is_noisy_jet = true;
+
+            for(const auto& vbf_jet: {eventInfo.GetVBFJet(1).GetMomentum(), eventInfo.GetVBFJet(2).GetMomentum()})
+                is_noisy_jet = ((vbf_jet.pt() > 20 || vbf_jet.pt() < cuts::hh_bbtautau_Run2::jetID::max_pt_veto) &&
+                                    (std::abs(vbf_jet.eta()) > cuts::hh_bbtautau_Run2::jetID::eta_low_veto) &&
+                                    (std::abs(vbf_jet.eta()) < cuts::hh_bbtautau_Run2::jetID::eta_high_veto));
+
+            if(!is_noisy_jet && vbf_jets_m > 800 && vbf_jet_1_pt > 140 && vbf_jet_2_pt > 60 && leg_1_pt > 25
+                && leg_2_pt > 25) return true;
         }
         return false;
+
     };
 
     const auto getTauEff = [&](size_t leg_id, bool vbf) {
@@ -417,10 +426,10 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
     } else
         throw exception("LeptonWeights::GetTriggerEfficiency: channel is not supported");
 
-    if(!same_as_central && efficiency > 1)
-        efficiency = 1;
+    if(!same_as_central && efficiency > 1) efficiency = 1;
+    if(!same_as_central && efficiency < 0) efficiency = 0;
 
-    if(efficiency <= 0 || efficiency > 1)
+    if(efficiency < 0 || efficiency > 1)
         throw exception("LeptonWeights::GetTriggerEfficiency: invalid trigger efficiency = %1% for event %2%.")
                         % eventInfo.GetEventId() % efficiency;
     return efficiency;
@@ -429,20 +438,22 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
 double LeptonWeights::GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData, UncertaintySource unc_source,
                                               UncertaintyScale unc_scale, bool& same_as_central)
 {
-    if(!eventInfo.HasVBFjetPair()) return 0.f;
-
     //SF taken from: https://github.com/camendola/VBFTriggerSFs
     const auto& vbf_jet_1_pt = static_cast<float>(eventInfo.GetVBFJet(1).GetMomentum().pt());
     const auto& vbf_jet_2_pt = static_cast<float>(eventInfo.GetVBFJet(2).GetMomentum().pt());
     const auto& vbf_jets_m = static_cast<float>((eventInfo.GetVBFJet(1).GetMomentum() +
                                                  eventInfo.GetVBFJet(2).GetMomentum()).M());
-
     std::string_view input(tauVBFTriggerInput);
     vbf_trigger_provider = std::make_shared<VBFTriggerSFs>(input);
 
-    UncertaintyScale scale =  UncertaintyScale::Central;
-    scale = unc_source == UncertaintySource::VBFTriggerUnc ? unc_scale : UncertaintyScale::Central;
+    static const std::vector<UncertaintySource> uncs_vbf_trigger_weight = {
+        UncertaintySource::VBFTauTriggerUnc_DM0, UncertaintySource::VBFTauTriggerUnc_DM0,
+        UncertaintySource::VBFTauTriggerUnc_3prong, UncertaintySource::VBFTriggerUnc
+    };
 
+    UncertaintyScale scale =  UncertaintyScale::Central;
+    for(const auto& trigger_unc : uncs_vbf_trigger_weight)
+        scale = unc_source == trigger_unc ? unc_scale : UncertaintyScale::Central;
     if(scale != UncertaintyScale::Central) same_as_central = false;
     const int scale_value = static_cast<int>(scale);
 

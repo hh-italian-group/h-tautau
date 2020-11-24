@@ -22,7 +22,6 @@ struct JetInfo {
     double pt, eta;
     int hadronFlavour;
     double eff, SF;
-    std::vector<float> SF_iter;
     bool bTagOutcome;
 
     JetInfo(const JetCandidate& jet);
@@ -40,8 +39,7 @@ struct BTagReaderInfo {
     HistPtr eff_hist;
 
     BTagReaderInfo(ReaderPtr _reader, JetFlavor _flavor, FilePtr file, DiscriminatorWP wp);
-    void Eval(JetInfo& jetInfo, const std::string& unc_name, double btag,
-              std::vector<std::string> unc_name_iter = {});
+    void Eval(JetInfo& jetInfo, const std::string& unc_name, double btag);
 
 private:
     double GetEfficiency(double pt, double eta) const;
@@ -70,9 +68,8 @@ public:
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
     double Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
-               UncertaintyScale unc_scale, bool apply_JES = true,
-               std::map<UncertaintyScale,std::vector<float>> shifted_weight = std::map<UncertaintyScale,std::vector<float>>()) const;
-               
+               UncertaintyScale unc_scale, bool apply_JES = true) const;
+
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
     static double GetBtagWeight(const JetInfoVector& jetInfos);
