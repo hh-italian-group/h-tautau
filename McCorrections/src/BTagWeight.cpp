@@ -152,7 +152,6 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
 
    JetInfoVector jetInfos;
    double SF = 1.;
-   double SF_shift = 1.;
    for(const auto& jet : eventInfo.GetCentralJets()) {
        JetInfo jetInfo(*jet);
        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
