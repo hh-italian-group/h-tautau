@@ -369,26 +369,17 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         //di-tau Trigger
         const auto& leg_1_pt = eventInfo.GetLeg(1).GetMomentum().pt();
         const auto& leg_2_pt = eventInfo.GetLeg(2).GetMomentum().pt();
-        if(!vbf && leg_1_pt >  40 && leg_2_pt > 40) return true;
+        if(!vbf && leg_1_pt > 40 && leg_2_pt > 40) return true;
 
         // VBF tau trigger
-        else if(vbf && (period == Period::Run2017 || period == Period::Run2018) && eventInfo.HasVBFjetPair()){
+        else if(vbf && (period == Period::Run2017 || period == Period::Run2018) && eventInfo.HasVBFjetPair()) {
             const auto& vbf_jet_1_pt = static_cast<float>(eventInfo.GetVBFJet(1).GetMomentum().pt());
             const auto& vbf_jet_2_pt = static_cast<float>(eventInfo.GetVBFJet(2).GetMomentum().pt());
-            const auto& vbf_jets_m = static_cast<float>((eventInfo.GetVBFJet(1).GetMomentum() + eventInfo.GetVBFJet(2).GetMomentum()).M());
-
-            bool is_noisy_jet = true;
-
-            for(const auto& vbf_jet: {eventInfo.GetVBFJet(1).GetMomentum(), eventInfo.GetVBFJet(2).GetMomentum()})
-                is_noisy_jet = ((vbf_jet.pt() > 20 || vbf_jet.pt() < cuts::hh_bbtautau_Run2::jetID::max_pt_veto) &&
-                                    (std::abs(vbf_jet.eta()) > cuts::hh_bbtautau_Run2::jetID::eta_low_veto) &&
-                                    (std::abs(vbf_jet.eta()) < cuts::hh_bbtautau_Run2::jetID::eta_high_veto));
-
-            if(!is_noisy_jet && vbf_jets_m > 800 && vbf_jet_1_pt > 140 && vbf_jet_2_pt > 60 && leg_1_pt > 25
-                && leg_2_pt > 25) return true;
+            const auto& vbf_jets_m = static_cast<float>((eventInfo.GetVBFJet(1).GetMomentum() +
+                                                         eventInfo.GetVBFJet(2).GetMomentum()).M());
+            if(vbf_jets_m > 800 && vbf_jet_1_pt > 140 && vbf_jet_2_pt > 60 && leg_1_pt > 25 && leg_2_pt > 25) return true;
         }
         return false;
-
     };
 
     const auto getTauEff = [&](size_t leg_id, bool vbf) {
@@ -419,7 +410,8 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
                 same_as_central = false;
             const int scale = static_cast<int>(current_scale);
 
-            return isData ? sf_provider_vbf.getEfficiencyData(pt, dm, scale) : sf_provider_vbf.getEfficiencyMC(pt, dm, scale);
+            return isData ? sf_provider_vbf.getEfficiencyData(pt, dm, scale) : sf_provider_vbf.getEfficiencyMC(pt, dm,
+                                                                                                               scale);
         }
     };
 
@@ -456,9 +448,10 @@ double LeptonWeights::GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData,
                                               UncertaintyScale unc_scale, bool& same_as_central)
 {
     //SF taken from: https://github.com/camendola/VBFTriggerSFs
-    const auto& vbf_jet_1_pt = eventInfo.GetVBFJet(1).GetMomentum().pt();
-    const auto& vbf_jet_2_pt = eventInfo.GetVBFJet(2).GetMomentum().pt();
-    const auto& vbf_jets_m   = (eventInfo.GetVBFJet(1).GetMomentum() + eventInfo.GetVBFJet(2).GetMomentum()).M();
+    const auto vbf_jet_1_pt = static_cast<float>(eventInfo.GetVBFJet(1).GetMomentum().pt());
+    const auto vbf_jet_2_pt = static_cast<float>(eventInfo.GetVBFJet(2).GetMomentum().pt());
+    const auto vbf_jets_m = static_cast<float>((eventInfo.GetVBFJet(1).GetMomentum() +
+                                                eventInfo.GetVBFJet(2).GetMomentum()).M());
     std::string_view input(tauVBFTriggerInput);
     vbf_trigger_provider = std::make_shared<VBFTriggerSFs>(input);
 
@@ -467,10 +460,8 @@ double LeptonWeights::GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData,
     if(scale != UncertaintyScale::Central) same_as_central = false;
     const int scale_value = static_cast<int>(scale);
 
-    const double eff = isData ? vbf_trigger_provider->getJetsEfficiencyData(static_cast<float>(vbf_jets_m),
-        static_cast<float>(vbf_jet_1_pt), static_cast<float>(vbf_jet_2_pt),scale_value) :
-        vbf_trigger_provider->getJetsEfficiencyMC(static_cast<float>(vbf_jets_m), static_cast<float>(vbf_jet_1_pt),
-        static_cast<float>(vbf_jet_2_pt), scale_value);
+    const double eff = isData ? vbf_trigger_provider->getJetsEfficiencyData(vbf_jets_m, vbf_jet_1_pt, vbf_jet_2_pt,
+        scale_value) : vbf_trigger_provider->getJetsEfficiencyMC(vbf_jets_m, vbf_jet_1_pt, vbf_jet_2_pt, scale_value);
     return eff;
 }
 
