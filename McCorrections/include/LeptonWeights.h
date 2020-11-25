@@ -132,7 +132,7 @@ public:
                   bool _is_dm_binned);
 
     TauIDSFTool& GetTauIdProvider(TauIdDiscriminator discr, DiscriminatorWP wp);
-    const tau_trigger::SFProvider& GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp, bool is_vbf = false);
+    const tau_trigger::SFProvider& GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp, bool is_vbf);
     double GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
                              DiscriminatorWP VSjet_wp, UncertaintySource unc_source, UncertaintyScale unc_scale);
 
@@ -162,7 +162,8 @@ private:
     Period period;
     bool is_dm_binned;
     std::map<TauIdDiscriminator, std::map<DiscriminatorWP, std::shared_ptr<TauIDSFTool>>> tau_sf_providers;
-    std::map<Channel, std::map<DiscriminatorWP, std::shared_ptr<tau_trigger::SFProvider>>> tau_trigger_sf_providers;
+    // std::map<Channel, std::map<DiscriminatorWP, std::shared_ptr<tau_trigger::SFProvider>>> tau_trigger_sf_providers;
+    std::map<std::pair<Channel, bool>, std::map<DiscriminatorWP, std::shared_ptr<tau_trigger::SFProvider>>> tau_trigger_sf_providers;
     std::shared_ptr<tau_trigger::SFProvider> tau_trigger_vbf_sf_provider;
     std::shared_ptr<VBFTriggerSFs> vbf_trigger_provider;
 };

@@ -81,7 +81,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
                      UncertaintySource::JetReduced_Total };
 
      // Systematics names for iterative btag weights
-    sist_names = { "up_jes", "up_lf", "up_hf", "up_hfstats1", "up_hfstats2", "up_lfstats1", "up_lfstats2",
+    syst_names = { "up_jes", "up_lf", "up_hf", "up_hfstats1", "up_hfstats2", "up_lfstats1", "up_lfstats2",
                    "up_cferr1", "up_cferr2", "down_jes", "down_lf", "down_hf", "down_hfstats1", "down_hfstats2",
                    "down_lfstats1", "down_lfstats2", "down_cferr1", "down_cferr2"
     };
@@ -93,7 +93,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
     for(const auto& [wp, op] : op_map) {
         for(const auto& [flavor, flavor_id] : jet_flavors) {
-            const auto& unc_scale_names = op == BTagEntry::OP_RESHAPING ? sist_names
+            const auto& unc_scale_names = op == BTagEntry::OP_RESHAPING ? syst_names
                                                                         : unc_scale_names_comb;
             std::string measurementType = flavor_id == 0 ? "incl" : "comb";
             if(op == BTagEntry::OP_RESHAPING)
@@ -108,7 +108,7 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
 
 double BTagWeight::Get(EventInfo& eventInfo) const
 {
-    return Get(eventInfo, default_wp, false, UncertaintySource::None, UncertaintyScale::Central);
+    return Get(eventInfo, default_wp, false, UncertaintySource::None, UncertaintyScale::Central, true);
 }
 
 double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
@@ -119,7 +119,7 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
 double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
                        UncertaintyScale unc_scale,  bool apply_JES) const
 {
-    std::map<std::pair<UncertaintyScale,UncertaintySource>, std::string> iter_unc_scales = {
+    static const std::map<std::pair<UncertaintyScale,UncertaintySource>, std::string> iter_unc_scales = {
         { {UncertaintyScale::Up, UncertaintySource::btag_lf}, "up_lf" },
         { {UncertaintyScale::Down, UncertaintySource::btag_lf}, "down_lf" },
         { {UncertaintyScale::Up, UncertaintySource::btag_hf}, "up_hf" },

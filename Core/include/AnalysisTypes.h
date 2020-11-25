@@ -71,7 +71,7 @@ enum class UncertaintySource {
     EleIdIsoUnc = 122, MuonIdIsoUnc = 123, TauTriggerUnc_DM0 = 124, TauTriggerUnc_DM1 = 125, TauTriggerUnc_DM10 = 126,
     TauTriggerUnc_DM11 = 127, L1_prefiring = 128, PileUp = 129, PileUpJetId_eff  = 130, PileUpJetId_mistag  = 131,
     TauCustomSF_DM0 = 132, TauCustomSF_DM1 = 133, TauCustomSF_DM10 = 134, TauCustomSF_DM11 = 135,
-    VBFTriggerUnc = 139, VBFTauTriggerUnc_DM0 = 140, VBFTauTriggerUnc_DM1 = 141, VBFTauTriggerUnc_3prong = 142,
+    VBFTriggerUnc_jets = 139, VBFTauTriggerUnc_DM0 = 140, VBFTauTriggerUnc_DM1 = 141, VBFTauTriggerUnc_3prong = 142,
     btag_lf = 143, btag_hf = 144, btag_hfstats1 = 145, btag_hfstats2 = 146,
     btag_lfstats1 = 147, btag_lfstats2 = 148, btag_cferr1 = 149, btag_cferr2 = 150
 };
@@ -210,7 +210,7 @@ ENUM_NAMES(UncertaintySource) = {
     { UncertaintySource::TauCustomSF_DM1, "TauCustomSF_DM1" },
     { UncertaintySource::TauCustomSF_DM10, "TauCustomSF_DM10" },
     { UncertaintySource::TauCustomSF_DM11, "TauCustomSF_DM11" },
-    { UncertaintySource::VBFTriggerUnc, "VBFTriggerUnc" },
+    { UncertaintySource::VBFTriggerUnc_jets, "VBFTriggerUnc_jets" },
     { UncertaintySource::VBFTauTriggerUnc_DM0, "VBFTauTriggerUnc_DM0" },
     { UncertaintySource::VBFTauTriggerUnc_DM1, "VBFTauTriggerUnc_DM1" },
     { UncertaintySource::VBFTauTriggerUnc_3prong, "VBFTauTriggerUnc_3prong" },

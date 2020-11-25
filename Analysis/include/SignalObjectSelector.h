@@ -85,13 +85,13 @@ public:
                                                const SelectedSignalJets& selected_signal_jets);
 
     template<typename LVector>
-    static bool PassEcalNoiceVeto(const LVector& jet_p4, Period period, DiscriminatorIdResults jet_pu_id)
+    static bool PassEcalNoiceVeto(const LVector& jet_p4, Period period)
     {
-        return PassEcalNoiceVetoImpl(LorentzVector(jet_p4), period, jet_pu_id);
+        return PassEcalNoiceVetoImpl(LorentzVector(jet_p4), period);
     }
 
 private:
-    static bool PassEcalNoiceVetoImpl(const LorentzVector& jet_p4, Period period, DiscriminatorIdResults jet_pu_id);
+    static bool PassEcalNoiceVetoImpl(const LorentzVector& jet_p4, Period period);
 
     bool PassHTT_LeptonSelection(const LepCandidate& lepton, Channel channel, bool is_sync = false) const;
     bool PassTauPOG_LeptonSelection(const LepCandidate& lepton, Channel channel) const;
