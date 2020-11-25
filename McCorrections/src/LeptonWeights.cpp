@@ -375,7 +375,7 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         else if(vbf && (period == Period::Run2017 || period == Period::Run2018) && eventInfo.HasVBFjetPair()) {
             const auto vbf_jet_1_pt = eventInfo.GetVBFJet(1).GetMomentum().pt();
             const auto vbf_jet_2_pt = eventInfo.GetVBFJet(2).GetMomentum().pt();
-            const auto vbf_jets_m   = eventInfo.GetVBFJet(1).GetMomentum() + eventInfo.GetVBFJet(2).GetMomentum()).M();
+            const auto vbf_jets_m   = (eventInfo.GetVBFJet(1).GetMomentum() + eventInfo.GetVBFJet(2).GetMomentum()).M();
             if(vbf_jets_m > 800 && vbf_jet_1_pt > 140 && vbf_jet_2_pt > 60 && leg_1_pt > 25 && leg_2_pt > 25) return true;
         }
         return false;
