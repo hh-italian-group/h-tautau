@@ -228,7 +228,7 @@ std::string EventWeights::FullTriggerName(const std::string& fileName)
 
 std::string EventWeights::FullVBFTriggerName(const std::string& fileName)
 {
-    static const std::string path = "VBFTrigger/VBFTriggerSFs/data/";
+    static const std::string path = "VBFTriggerSFs/VBFTriggerSFs/data/";
     return FullName(fileName, path);
 }
 

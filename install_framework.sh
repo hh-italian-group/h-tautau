@@ -100,7 +100,7 @@ run_cmd git clone git@github.com:hh-italian-group/LeptonEfficiencies.git HTT-uti
 # Tau ID and Trigger SFs
 run_cmd git clone git@github.com:cms-tau-pog/TauIDSFs.git TauPOG/TauIDSFs
 run_cmd git clone -b run2_SFs git@github.com:cms-tau-pog/TauTriggerSFs.git TauAnalysisTools/TauTriggerSFs
-run_cmd git clone git@github.com:camendola/VBFTriggerSFs.git VBFTrigger/VBFTriggerSFs
+run_cmd git clone git@github.com:camendola/VBFTriggerSFs.git VBFTriggerSFs/VBFTriggerSFs
 
 run_cmd git clone git@github.com:hh-italian-group/HHbtag.git HHTools/HHbtag
 

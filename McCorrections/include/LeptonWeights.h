@@ -7,7 +7,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "HTT-utilities/LepEffInterface/interface/ScaleFactor.h"
 #include "TauAnalysisTools/TauTriggerSFs/interface/SFProvider.h"
 #include "TauPOG/TauIDSFs/interface/TauIDSFTool.h"
-#include "VBFTrigger/VBFTriggerSFs/interface/VBFTriggerSFs.h"
+#include "VBFTriggerSFs/VBFTriggerSFs/interface/VBFTriggerSFs.h"
 #include "h-tautau/Core/include/AnalysisTypes.h"
 #include "WeightProvider.h"
 
