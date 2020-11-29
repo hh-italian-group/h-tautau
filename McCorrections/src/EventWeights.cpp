@@ -37,7 +37,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IdIso.root"),
                         FullLeptonName("Muon/Run2016_legacy/Muon_Run2016_legacy_IsoMu22.root"),
                         FullLeptonName("Muon/Run2016BtoH/Muon_Mu19leg_2016BtoH_eff.root"),
-                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"),
+                        FullTriggerName("2016_tauTriggerEff_DeepTau2017v2p1.root"), "",
                         period, false);
         if(mode.empty() || mode.count(WeightType::BTag)){
             if(base_tagger == BTaggerKind::CSV)
@@ -107,6 +107,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullLeptonName("Muon/Run2017/Muon_IsoMu24orIsoMu27.root"),
                         FullLeptonName("Muon/Run2017/Muon_MuTau_IsoMu20.root"),
                         FullTriggerName("2017_tauTriggerEff_DeepTau2017v2p1.root"),
+                        FullVBFTriggerName("2017_VBFHTauTauTrigger_JetLegs.root"),
                         period, false);
         if(mode.empty() || mode.count(WeightType::TopPt))
             CreateProvider<TopPtWeight>(WeightType::TopPt, 0.0615, 0.0005);
@@ -148,6 +149,7 @@ EventWeights::EventWeights(Period period, const BTagger& bTagger, const Weightin
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu24orIsoMu27.root"),
                         FullLeptonName("Muon/Run2018/Muon_Run2018_IsoMu20.root"),
                         FullTriggerName("2018_tauTriggerEff_DeepTau2017v2p1.root"),
+                        FullVBFTriggerName("2018_VBFHTauTauTrigger_JetLegs.root"),
                         period, false);
     }
     else {
@@ -221,6 +223,12 @@ std::string EventWeights::FullLeptonName(const std::string& fileName)
 std::string EventWeights::FullTriggerName(const std::string& fileName)
 {
     static const std::string path = "TauAnalysisTools/TauTriggerSFs/data/";
+    return FullName(fileName, path);
+}
+
+std::string EventWeights::FullVBFTriggerName(const std::string& fileName)
+{
+    static const std::string path = "VBFTriggerSFs/VBFTriggerSFs/data/";
     return FullName(fileName, path);
 }
 

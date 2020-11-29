@@ -92,10 +92,11 @@ MuonScaleFactorPOG::HistPtr MuonScaleFactorPOG::LoadWeight(const std::string& we
 LeptonWeights::LeptonWeights(const std::string& electron_idIsoInput, const std::string& electron_SingletriggerInput,
                              const std::string& electron_CrossTriggerInput, const std::string& muon_idIsoInput,
                              const std::string& muon_SingletriggerInput, const std::string& muon_CrossTriggerInput,
-                             const std::string& _tauTriggerInput, Period _period, bool _is_dm_binned) :
+                             const std::string& _tauTriggerInput, const std::string& _tauVBFTriggerInput,
+                             Period _period, bool _is_dm_binned) :
     electronSF(electron_idIsoInput, electron_SingletriggerInput, electron_CrossTriggerInput),
-    muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput),
-    tauTriggerInput(_tauTriggerInput), period(_period), is_dm_binned(_is_dm_binned)
+    muonSF(muon_idIsoInput, muon_SingletriggerInput, muon_CrossTriggerInput), tauTriggerInput(_tauTriggerInput),
+    tauVBFTriggerInput(_tauVBFTriggerInput), period(_period), is_dm_binned(_is_dm_binned)
 {
 }
 
@@ -117,19 +118,22 @@ TauIDSFTool& LeptonWeights::GetTauIdProvider(TauIdDiscriminator discr, Discrimin
      return *provider;
 }
 
-const tau_trigger::SFProvider& LeptonWeights::GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp)
+const tau_trigger::SFProvider& LeptonWeights::GetTauTriggerSFProvider(Channel channel, DiscriminatorWP wp, bool is_vbf)
 {
-    static const std::map<Channel, std::string> channel_names = {
-        { Channel::ETau, "etau" }, { Channel::MuTau, "mutau" }, { Channel::TauTau, "ditau" }
-    };
-    auto& provider = tau_trigger_sf_providers[channel][wp];
-    if(!provider) {
-        if(!channel_names.count(channel))
-            throw exception("LeptonWeights::GetTauTriggerSFProvider: channel %1% is not supported.") % channel;
-        provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, channel_names.at(channel),
-                                                             ToString(wp));
-    }
-    return *provider;
+        static const std::map<Channel, std::string> channel_names = {
+            { Channel::ETau, "etau" }, { Channel::MuTau, "mutau" }, { Channel::TauTau, "ditau" }
+        };
+        auto& provider = tau_trigger_sf_providers[std::make_pair(channel,is_vbf)][wp];
+        if(!provider) {
+            if(!channel_names.count(channel))
+                throw exception("LeptonWeights::GetTauTriggerSFProvider: channel %1% is not supported.") % channel;
+            if(!is_vbf)
+                provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, channel_names.at(channel),
+                                                                     ToString(wp));
+            else
+                provider = std::make_shared<tau_trigger::SFProvider>(tauTriggerInput, "ditauvbf", ToString(wp));
+        }
+        return *provider;
 }
 
 double LeptonWeights::GetLegIdIsoWeight(LepCandidate leg, DiscriminatorWP VSe_wp, DiscriminatorWP VSmu_wp,
@@ -295,6 +299,13 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         { UncertaintySource::TauTriggerUnc_DM11, 11 },
     };
 
+    static const std::map<UncertaintySource, int> vbf_tau_dm_unc = {
+        { UncertaintySource::VBFTauTriggerUnc_DM0, 0 },
+        { UncertaintySource::VBFTauTriggerUnc_DM1, 1 },
+        { UncertaintySource::VBFTauTriggerUnc_3prong, 10 },
+        { UncertaintySource::VBFTauTriggerUnc_3prong, 11 },
+    };
+
     static const std::map<std::pair<Period, bool>, double> ele_min_pt = {
         { { Period::Run2016, false }, 26. },
         { { Period::Run2017, false }, 33. },
@@ -354,23 +365,53 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
         return cross ? muonSF.GetTriggerEffCross(p4, isData, scale) : muonSF.GetTriggerEff(p4, isData, scale);
     };
 
+    const auto  match_selection_vbf = [&](bool vbf) {
+        //di-tau Trigger
+        const auto& leg_1_pt = eventInfo.GetLeg(1).GetMomentum().pt();
+        const auto& leg_2_pt = eventInfo.GetLeg(2).GetMomentum().pt();
+        if(!vbf && leg_1_pt > 40 && leg_2_pt > 40) return true;
+
+        // VBF tau trigger
+        else if(vbf && (period == Period::Run2017 || period == Period::Run2018) && eventInfo.HasVBFjetPair()) {
+            const auto vbf_jet_1_pt = eventInfo.GetVBFJet(1).GetMomentum().pt();
+            const auto vbf_jet_2_pt = eventInfo.GetVBFJet(2).GetMomentum().pt();
+            const auto vbf_jets_m   = (eventInfo.GetVBFJet(1).GetMomentum() + eventInfo.GetVBFJet(2).GetMomentum()).M();
+            if(vbf_jets_m > 800 && vbf_jet_1_pt > 140 && vbf_jet_2_pt > 60 && leg_1_pt > 25 && leg_2_pt > 25) return true;
+        }
+        return false;
+    };
+
     const auto getTauEff = [&](size_t leg_id, bool vbf) {
         const auto& leg = eventInfo.GetLeg(leg_id);
         const float pt = static_cast<float>(leg.GetMomentum().pt());
         const int dm = leg->decayMode();
         const auto pt_iter = tau_min_pt.find(std::make_tuple(period, channel, vbf));
         if(pt_iter == tau_min_pt.end() || pt <= pt_iter->second) return 0.f;
-        if(vbf && !eventInfo.HasVBFjetPair()) return 0.f;
-        if(vbf) return 1.f; // TODO
-        const auto& sf_provider = GetTauTriggerSFProvider(channel, VSjet_wp);
         UncertaintyScale current_scale = UncertaintyScale::Central;
-        auto iter = tau_dm_unc.find(unc_source);
-        if(iter != tau_dm_unc.end() && (iter->second < 0 || dm == iter->second))
-            current_scale = unc_scale;
-        if(current_scale != UncertaintyScale::Central)
-            same_as_central = false;
-        const int scale = static_cast<int>(current_scale);
-        return isData ? sf_provider.getEfficiencyData(pt, dm, scale) : sf_provider.getEfficiencyMC(pt, dm, scale);
+        if(!vbf) {
+            const auto& sf_provider = GetTauTriggerSFProvider(channel, VSjet_wp, false);
+
+            auto iter = tau_dm_unc.find(unc_source);
+            if(iter != tau_dm_unc.end() && (iter->second < 0 || dm == iter->second))
+                current_scale = unc_scale;
+            if(current_scale != UncertaintyScale::Central)
+                same_as_central = false;
+            const int scale = static_cast<int>(current_scale);
+
+            return isData ? sf_provider.getEfficiencyData(pt, dm, scale) : sf_provider.getEfficiencyMC(pt, dm, scale);
+        } else {
+            const auto& sf_provider_vbf = GetTauTriggerSFProvider(channel, VSjet_wp, true);
+
+            auto iter = vbf_tau_dm_unc.find(unc_source);
+            if(iter != vbf_tau_dm_unc.end() && (iter->second < 0 || dm == iter->second))
+                current_scale = unc_scale;
+            if(current_scale != UncertaintyScale::Central)
+                same_as_central = false;
+            const int scale = static_cast<int>(current_scale);
+
+            return isData ? sf_provider_vbf.getEfficiencyData(pt, dm, scale) : sf_provider_vbf.getEfficiencyMC(pt, dm,
+                                                                                                               scale);
+        }
     };
 
     double efficiency = 0;
@@ -384,20 +425,43 @@ double LeptonWeights::GetTriggerEfficiency(EventInfo& eventInfo, bool isData, Di
     } else if(channel == Channel::MuMu) {
         efficiency = getMuonEff(false);
     } else if(channel == Channel::TauTau) {
-        efficiency = getTauEff(1, false) * getTauEff(2, false);
-        if(efficiency <= 0 || (eventInfo.PassVbfTriggers() && !eventInfo. PassNormalTriggers()))
-            efficiency = 1.; // workaround for missing VBF corrections;
-    } else {
+        if(match_selection_vbf(false))
+           efficiency = getTauEff(1, false) * getTauEff(2, false);
+        else if(match_selection_vbf(true))
+            efficiency = getTauEff(1, true) * getTauEff(2, true) * static_cast<float>(GetVBFTriggerEfficiency(eventInfo,
+                isData, unc_source, unc_scale, same_as_central));
+        else efficiency = 0.;
+    } else
         throw exception("LeptonWeights::GetTriggerEfficiency: channel is not supported");
-    }
 
-    if(!same_as_central && efficiency > 1)
-        efficiency = 1;
+    if(!same_as_central && efficiency > 1) efficiency = 1;
+    if(!same_as_central && efficiency < 0) efficiency = 0;
 
-    if(efficiency <= 0 || efficiency > 1)
+    if(efficiency < 0 || efficiency > 1)
         throw exception("LeptonWeights::GetTriggerEfficiency: invalid trigger efficiency = %1% for event %2%.")
                         % eventInfo.GetEventId() % efficiency;
     return efficiency;
+}
+
+double LeptonWeights::GetVBFTriggerEfficiency(EventInfo& eventInfo, bool isData, UncertaintySource unc_source,
+                                              UncertaintyScale unc_scale, bool& same_as_central)
+{
+    //SF taken from: https://github.com/camendola/VBFTriggerSFs
+    const auto vbf_jet_1_pt = static_cast<float>(eventInfo.GetVBFJet(1).GetMomentum().pt());
+    const auto vbf_jet_2_pt = static_cast<float>(eventInfo.GetVBFJet(2).GetMomentum().pt());
+    const auto vbf_jets_m = static_cast<float>((eventInfo.GetVBFJet(1).GetMomentum() +
+                                                eventInfo.GetVBFJet(2).GetMomentum()).M());
+    std::string_view input(tauVBFTriggerInput);
+    vbf_trigger_provider = std::make_shared<VBFTriggerSFs>(input);
+
+    UncertaintyScale scale =  UncertaintyScale::Central;
+    scale = unc_source == UncertaintySource::VBFTriggerUnc_jets ? unc_scale : UncertaintyScale::Central;
+    if(scale != UncertaintyScale::Central) same_as_central = false;
+    const int scale_value = static_cast<int>(scale);
+
+    const double eff = isData ? vbf_trigger_provider->getJetsEfficiencyData(vbf_jets_m, vbf_jet_1_pt, vbf_jet_2_pt,
+        scale_value) : vbf_trigger_provider->getJetsEfficiencyMC(vbf_jets_m, vbf_jet_1_pt, vbf_jet_2_pt, scale_value);
+    return eff;
 }
 
 double  LeptonWeights::GetCustomTauSF(const LepCandidate& leg, UncertaintySource unc_source, UncertaintyScale unc_scale,
@@ -419,7 +483,7 @@ double  LeptonWeights::GetCustomTauSF(const LepCandidate& leg, UncertaintySource
     };
 
     if(period == Period::Run2017 && channel == Channel::TauTau && leg->leg_type() == LegType::tau
-            && leg->gen_match() == GenLeptonMatch::Tau){
+       && leg->gen_match() == GenLeptonMatch::Tau){
         const auto second_map = tau_sf_error.at(leg->decayMode());
         const UncertaintyScale scale = unc_source == dm_unc_sources.at(leg->decayMode())
                                        ? unc_scale : UncertaintyScale::Central;
