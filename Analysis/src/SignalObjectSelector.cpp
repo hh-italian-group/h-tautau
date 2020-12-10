@@ -358,9 +358,9 @@ SignalObjectSelector::JetInfoCollection SignalObjectSelector::CreateJetInfos(con
     return CreateJetInfos(event_candidate, bTagger, apply_jet_up_id, boost::optional<size_t>(), SelectedSignalJets());
 }
 
-SignalObjectSelector::JetInfoCollection SignalObjectSelector::CreateJetInfos(
-        const EventCandidate& event_candidate, const BTagger& bTagger, bool apply_jet_up_id,
-        const boost::optional<size_t>& selected_htt_index, const SelectedSignalJets& selected_signal_jets)
+SignalObjectSelector::JetInfoCollection SignalObjectSelector::CreateJetInfos(const EventCandidate& event_candidate,
+    const BTagger& bTagger, bool apply_jet_up_id, const boost::optional<size_t>& selected_htt_index,
+    const SelectedSignalJets& selected_signal_jets)
 {
     static constexpr double DeltaR_Lep_Jet = cuts::hh_bbtautau_Run2::DeltaR_Lep_Jet;
 
@@ -394,6 +394,7 @@ SignalObjectSelector::JetInfoCollection SignalObjectSelector::CreateJetInfos(
         if(selected_signal_jets.isSelectedVBFjet(n)) continue;
         DiscriminatorIdResults jet_pu_id(event_candidate.GetJets().at(n)->GetPuId());
         if(apply_jet_up_id && jet_p4.pt() < 50 && !jet_pu_id.Passed(DiscriminatorWP::Loose)) continue;
+        if(!PassEcalNoiceVetoImpl(jet_p4, event_candidate.GetPeriod())) continue;
         const double tag = bTagger.BTag(*event_candidate.GetJets().at(n), false);
         jet_info_vector.emplace_back(jet_p4, n, tag);
     }
@@ -492,8 +493,7 @@ const FatJetCandidate* SignalObjectSelector::SelectFatJet(const EventCandidate& 
 
 }
 
-bool SignalObjectSelector::PassEcalNoiceVetoImpl(const LorentzVector& jet_p4, Period period,
-                                                 DiscriminatorIdResults jet_pu_id)
+bool SignalObjectSelector::PassEcalNoiceVetoImpl(const LorentzVector& jet_p4, Period period)
 {
     if(period != Period::Run2017)
         return true;
@@ -501,8 +501,7 @@ bool SignalObjectSelector::PassEcalNoiceVetoImpl(const LorentzVector& jet_p4, Pe
     const double abs_eta = std::abs(jet_p4.eta());
     return !(jet_p4.pt() < cuts::hh_bbtautau_Run2::jetID::max_pt_veto
             && abs_eta > cuts::hh_bbtautau_Run2::jetID::eta_low_veto
-            && abs_eta < cuts::hh_bbtautau_Run2::jetID::eta_high_veto
-            && !jet_pu_id.Passed(DiscriminatorWP::Loose));
+            && abs_eta < cuts::hh_bbtautau_Run2::jetID::eta_high_veto);
 }
 
 } // namespace analysis

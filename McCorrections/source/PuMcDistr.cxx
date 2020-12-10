@@ -1,6 +1,6 @@
 /*! Pileup distribution for MC.
 This file is part of https://github.com/hh-italian-group/h-tautau. */
-#include <boost/format.hpp>
+
 #include "AnalysisTools/Run/include/program_main.h"
 #include "AnalysisTools/Core/include/ConfigReader.h"
 #include "AnalysisTools/Core/include/RootExt.h"
@@ -8,6 +8,7 @@ This file is part of https://github.com/hh-italian-group/h-tautau. */
 #include "AnalysisTools/Core/include/NumericPrimitives.h"
 #include "AnalysisTools/Core/include/AnalyzerData.h"
 
+#include <TKey.h>
 
 struct Arguments {
     run::Argument<std::string> tree_name{"tree_name", "Tree on which we work"};

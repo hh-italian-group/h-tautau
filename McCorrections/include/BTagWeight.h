@@ -67,8 +67,8 @@ public:
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
-    double Get(EventInfo& event, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
-               UncertaintyScale unc_scale) const;
+    double Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
+               UncertaintyScale unc_scale, bool apply_JES) const;
 
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
@@ -80,6 +80,8 @@ private:
     ReaderInfoMap readerInfos;
     BTagger bTagger;
     DiscriminatorWP default_wp;
+    std::vector<UncertaintySource> btag_sources;
+    std::vector<std::string> syst_names;
 };
 
 } // namespace mc_corrections
