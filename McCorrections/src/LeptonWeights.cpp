@@ -206,8 +206,10 @@ double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo, DiscriminatorWP VSj
     const double eff_data = GetTriggerEfficiency(eventInfo, true, VSjet_wp, unc_source, unc_scale,
                                                  data_same_as_central);
     const double eff_mc = GetTriggerEfficiency(eventInfo, false, VSjet_wp, unc_source, unc_scale, mc_same_as_central);
-    if(data_same_as_central && mc_same_as_central)
+    if(data_same_as_central && mc_same_as_central && eff_mc != 0 )
         return eff_data / eff_mc;
+    else if(eff_mc == 0 && eff_data == 0)
+        return 0.;
 
     bool tmp;
     const double eff_data_central = GetTriggerEfficiency(eventInfo, true, VSjet_wp, UncertaintySource::None,

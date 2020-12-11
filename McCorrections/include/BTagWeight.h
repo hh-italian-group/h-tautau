@@ -62,22 +62,22 @@ public:
     using ReaderPtr = ReaderInfo::ReaderPtr;
 
     BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, const BTagger& _bTagger,
-               DiscriminatorWP _default_wp);
+               DiscriminatorWP _default_wp, const std::string& bjetSFFileName_TuneCP5 = "");
 
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
 
     double Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
-               UncertaintyScale unc_scale, bool apply_JES) const;
+               UncertaintyScale unc_scale, bool apply_JES, bool is_TuneCP5 = false) const;
 
 private:
     static std::string GetUncertantyName(UncertaintyScale unc);
     static double GetBtagWeight(const JetInfoVector& jetInfos);
-    ReaderInfo& GetReader(DiscriminatorWP wp, int hadronFlavour) const;
+    ReaderInfo& GetReader(DiscriminatorWP wp, int hadronFlavour, bool is_TuneCP5 = false) const;
 
 private:
-    BTagCalibration calib;
-    ReaderInfoMap readerInfos;
+    BTagCalibration calib, calib_TuneCP5;
+    ReaderInfoMap readerInfos, readerInfos_TuneCP5;
     BTagger bTagger;
     DiscriminatorWP default_wp;
     std::vector<UncertaintySource> btag_sources;
