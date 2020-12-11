@@ -101,15 +101,15 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
             if(op == BTagEntry::OP_RESHAPING)
                 measurementType = "iterativefit";
             auto reader = std::make_shared<Reader>(op, "central", unc_scale_names);
-            auto reader_TuneCP5 = std::make_shared<Reader>(op, "central", unc_scale_names);
             reader->load(calib, flavor, measurementType);
             const DiscriminatorWP eff_wp = op == BTagEntry::OP_RESHAPING ? DiscriminatorWP::Medium : wp;
             readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, eff_wp);
 
             if(op == BTagEntry::OP_RESHAPING){
-                reader_TuneCP5->load(calib_TuneCP5, BTagEntry::FLAV_B, "iterativefit");
-                readerInfos_TuneCP5[wp][jet_flavors.at(BTagEntry::FLAV_B)] = std::make_shared<ReaderInfo>(reader,
-                    BTagEntry::FLAV_B, bTagEffFile, eff_wp);
+                auto reader_TuneCP5 = std::make_shared<Reader>(op, "central", unc_scale_names);
+                reader_TuneCP5->load(calib_TuneCP5, flavor, "iterativefit");
+                readerInfos_TuneCP5[wp][flavor_id] = std::make_shared<ReaderInfo>(reader_TuneCP5,
+                    flavor, bTagEffFile, eff_wp);
             }
         }
     }
