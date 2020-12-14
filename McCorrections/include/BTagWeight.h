@@ -62,7 +62,8 @@ public:
     using ReaderPtr = ReaderInfo::ReaderPtr;
 
     BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, const BTagger& _bTagger,
-               DiscriminatorWP _default_wp, const std::string& bjetSFFileName_TuneCP5 = "");
+               DiscriminatorWP _default_wp, const std::string& _bjetSFFileName_TuneCP5 = "");
+
 
     virtual double Get(EventInfo& event) const override;
     virtual double Get(const ntuple::ExpressEvent& /*event*/) const override;
@@ -76,12 +77,14 @@ private:
     ReaderInfo& GetReader(DiscriminatorWP wp, int hadronFlavour, bool is_TuneCP5 = false) const;
 
 private:
-    BTagCalibration calib, calib_TuneCP5;
+    BTagCalibration calib;
+    std::shared_ptr<BTagCalibration> calib_TuneCP5;
     ReaderInfoMap readerInfos, readerInfos_TuneCP5;
     BTagger bTagger;
     DiscriminatorWP default_wp;
     std::vector<UncertaintySource> btag_sources;
     std::vector<std::string> syst_names;
+    std::string bjetSFFileName_TuneCP5;
 };
 
 } // namespace mc_corrections

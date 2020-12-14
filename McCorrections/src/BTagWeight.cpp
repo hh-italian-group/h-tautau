@@ -60,11 +60,13 @@ double BTagReaderInfo::GetEfficiency(double pt, double eta) const
 } // namespace detail
 
 BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, const BTagger& _bTagger,
-                       DiscriminatorWP _default_wp, const std::string& bjetSFFileName_TuneCP5) :
+                       DiscriminatorWP _default_wp, const std::string& _bjetSFFileName_TuneCP5) :
     calib(ToString(_bTagger.GetBaseTagger()), bjetSFFileName),
-    calib_TuneCP5(ToString(_bTagger.GetBaseTagger()), bjetSFFileName_TuneCP5),
-    bTagger(_bTagger), default_wp(_default_wp)
+    bTagger(_bTagger), default_wp(_default_wp), bjetSFFileName_TuneCP5(_bjetSFFileName_TuneCP5)
 {
+    if(!bjetSFFileName_TuneCP5.empty())
+        calib_TuneCP5 = std::make_shared<BTagCalibration>(ToString(_bTagger.GetBaseTagger()), bjetSFFileName_TuneCP5);
+
     static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
         { DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, { DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM },
         { DiscriminatorWP::Tight, BTagEntry::OP_TIGHT }, { DiscriminatorWP::VVVLoose, BTagEntry::OP_RESHAPING }
@@ -105,9 +107,9 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
             const DiscriminatorWP eff_wp = op == BTagEntry::OP_RESHAPING ? DiscriminatorWP::Medium : wp;
             readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, eff_wp);
 
-            if(op == BTagEntry::OP_RESHAPING){
+            if(op == BTagEntry::OP_RESHAPING && !bjetSFFileName_TuneCP5.empty()){
                 auto reader_TuneCP5 = std::make_shared<Reader>(op, "central", unc_scale_names);
-                reader_TuneCP5->load(calib_TuneCP5, flavor, "iterativefit");
+                reader_TuneCP5->load(*calib_TuneCP5, flavor, "iterativefit");
                 readerInfos_TuneCP5[wp][flavor_id] = std::make_shared<ReaderInfo>(reader_TuneCP5,
                     flavor, bTagEffFile, eff_wp);
             }
