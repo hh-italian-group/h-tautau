@@ -60,9 +60,13 @@ double BTagReaderInfo::GetEfficiency(double pt, double eta) const
 } // namespace detail
 
 BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bjetSFFileName, const BTagger& _bTagger,
-                       DiscriminatorWP _default_wp) :
-    calib(ToString(_bTagger.GetBaseTagger()), bjetSFFileName), bTagger(_bTagger), default_wp(_default_wp)
+                       DiscriminatorWP _default_wp, const std::string& _bjetSFFileName_TuneCP5) :
+    calib(ToString(_bTagger.GetBaseTagger()), bjetSFFileName),
+    bTagger(_bTagger), default_wp(_default_wp), bjetSFFileName_TuneCP5(_bjetSFFileName_TuneCP5)
 {
+    if(!bjetSFFileName_TuneCP5.empty())
+        calib_TuneCP5 = std::make_shared<BTagCalibration>(ToString(_bTagger.GetBaseTagger()), bjetSFFileName_TuneCP5);
+
     static const std::map<DiscriminatorWP, OperatingPoint> op_map = {
         { DiscriminatorWP::Loose, BTagEntry::OP_LOOSE }, { DiscriminatorWP::Medium, BTagEntry::OP_MEDIUM },
         { DiscriminatorWP::Tight, BTagEntry::OP_TIGHT }, { DiscriminatorWP::VVVLoose, BTagEntry::OP_RESHAPING }
@@ -102,6 +106,13 @@ BTagWeight::BTagWeight(const std::string& bTagEffFileName, const std::string& bj
             reader->load(calib, flavor, measurementType);
             const DiscriminatorWP eff_wp = op == BTagEntry::OP_RESHAPING ? DiscriminatorWP::Medium : wp;
             readerInfos[wp][flavor_id] = std::make_shared<ReaderInfo>(reader, flavor, bTagEffFile, eff_wp);
+
+            if(op == BTagEntry::OP_RESHAPING && !bjetSFFileName_TuneCP5.empty()){
+                auto reader_TuneCP5 = std::make_shared<Reader>(op, "central", unc_scale_names);
+                reader_TuneCP5->load(*calib_TuneCP5, flavor, "iterativefit");
+                readerInfos_TuneCP5[wp][flavor_id] = std::make_shared<ReaderInfo>(reader_TuneCP5,
+                    flavor, bTagEffFile, eff_wp);
+            }
         }
     }
 }
@@ -117,7 +128,7 @@ double BTagWeight::Get(const ntuple::ExpressEvent& /*event*/) const
 }
 
 double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterative_fit, UncertaintySource unc_source,
-                       UncertaintyScale unc_scale,  bool apply_JES) const
+                       UncertaintyScale unc_scale,  bool apply_JES, bool is_TuneCP5) const
 {
     static const std::map<std::pair<UncertaintyScale,UncertaintySource>, std::string> iter_unc_scales = {
         { {UncertaintyScale::Up, UncertaintySource::btag_lf}, "up_lf" },
@@ -171,7 +182,7 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
        }
        const std::string unc_name_string = (use_iterative_fit && source != UncertaintySource::None) ?
            iter_unc_scales.at(std::make_pair(scale, source)) : unc_name;
-       GetReader(reader_wp, jetInfo.hadronFlavour).Eval(jetInfo, unc_name_string, bTagger.BTag(**jet, true));
+       GetReader(reader_wp, jetInfo.hadronFlavour, is_TuneCP5).Eval(jetInfo, unc_name_string, bTagger.BTag(**jet, true));
        SF *= jetInfo.SF;
        jetInfo.bTagOutcome = bTagger.Pass(**jet, wp);
        jetInfos.push_back(jetInfo);
@@ -197,12 +208,13 @@ double BTagWeight::GetBtagWeight(const JetInfoVector& jetInfos)
     return MC != 0 ? Data/MC : 0;
 }
 
-BTagWeight::ReaderInfo& BTagWeight::GetReader(DiscriminatorWP wp, int hadronFlavour) const
+BTagWeight::ReaderInfo& BTagWeight::GetReader(DiscriminatorWP wp, int hadronFlavour, bool is_TuneCP5) const
 {
     static const int default_flavour = 0;
+    const auto reader_infos = is_TuneCP5 ? readerInfos_TuneCP5 : readerInfos;
 
-    auto wp_iter = readerInfos.find(wp);
-    if(wp_iter == readerInfos.end())
+    auto wp_iter = reader_infos.find(wp);
+    if(wp_iter == reader_infos.end())
         throw exception("BTagWeight: working point %1% is not supported.") % wp;
     int flavour = std::abs(hadronFlavour);
     auto flav_iter = wp_iter->second.find(flavour);

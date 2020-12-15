@@ -207,7 +207,7 @@ double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo, DiscriminatorWP VSj
                                                  data_same_as_central);
     const double eff_mc = GetTriggerEfficiency(eventInfo, false, VSjet_wp, unc_source, unc_scale, mc_same_as_central);
     if(data_same_as_central && mc_same_as_central)
-        return eff_data / eff_mc;
+        return eff_mc == 0. ? 0. : eff_data / eff_mc;
 
     bool tmp;
     const double eff_data_central = GetTriggerEfficiency(eventInfo, true, VSjet_wp, UncertaintySource::None,
@@ -224,8 +224,9 @@ double LeptonWeights::GetTriggerWeight(EventInfo& eventInfo, DiscriminatorWP VSj
 
     const PhysicalValue pv_eff_data(eff_data_central, err_data);
     const PhysicalValue pv_eff_mc(eff_mc_central, err_mc);
+    const PhysicalValue zero(0);
     const PhysicalValue sf = pv_eff_data / pv_eff_mc;
-    return sf.GetValue() + static_cast<int>(unc_scale) * sf.GetStatisticalError();
+    return pv_eff_mc.GetValue() == 0 ? zero.GetValue() : sf.GetValue() + static_cast<int>(unc_scale) * sf.GetStatisticalError();
 }
 
 double LeptonWeights::GetTriggerPrescaleWeight(EventInfo& eventInfo) const
