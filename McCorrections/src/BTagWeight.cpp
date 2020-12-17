@@ -153,6 +153,18 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
         { {UncertaintyScale::Down, UncertaintySource::JetReduced_Total}, "down_jes" },
 };
 
+    const auto apply_unc = [&](int hadronFlavour) {
+        if(std::count(btag_sources.begin(), btag_sources.end(), unc_source)) {
+            if(apply_JES && (unc_source == UncertaintySource::JetFull_Total || unc_source == UncertaintySource::JetReduced_Total))
+             return true;
+         //For c-flavored jets, only "cferr1 and cferr2" uncertainties are applied.
+         const bool is_cferr = unc_source == UncertaintySource::btag_cferr1 || unc_source == UncertaintySource::btag_cferr2;
+         if((hadronFlavour == 4 && is_cferr) || (hadronFlavour != 4 && !is_cferr))
+            return true;
+        }
+    return false;
+    };
+
    UncertaintySource source = UncertaintySource::None;
    UncertaintyScale scale = UncertaintyScale::Central;
    if(unc_source == UncertaintySource::Eff_b)
@@ -167,17 +179,9 @@ double BTagWeight::Get(EventInfo& eventInfo, DiscriminatorWP wp, bool use_iterat
        JetInfo jetInfo(*jet);
        if(!(jetInfo.pt > bTagger.PtCut() && std::abs(jetInfo.eta) < bTagger.EtaCut())) continue;
        if(use_iterative_fit){
-           //For c-flavored jets, only "cferr1/2" uncertainties are applied.
-           if(jetInfo.hadronFlavour == 4 && (unc_source == UncertaintySource::btag_cferr1 ||
-               unc_source == UncertaintySource::btag_cferr2)) {
+           if(apply_unc(jetInfo.hadronFlavour)) {
                scale = unc_scale;
                source = unc_source;
-           }
-           else if(std::count(btag_sources.begin(), btag_sources.end(), unc_source) ||
-               (apply_JES && (unc_source == UncertaintySource::JetFull_Total ||
-               unc_source == UncertaintySource::JetReduced_Total))) {
-                   scale = unc_scale;
-                   source = unc_source;
            }
        }
        const std::string unc_name_string = (use_iterative_fit && source != UncertaintySource::None) ?
