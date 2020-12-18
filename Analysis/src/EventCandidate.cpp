@@ -29,11 +29,11 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
 
     static const std::map<analysis::Period,std::string> file_reduced_unc_sources = {
         { analysis::Period::Run2016,
-          "h-tautau/McCorrections/data/2016/JES/Regrouped_Summer16_07Aug2017_V11_MC_UncertaintySources_AK4PFchs.txt" },
+          "h-tautau/McCorrections/data/2016/JES/RegroupedV2_Summer16_07Aug2017_V11_MC_UncertaintySources_AK4PFchs.txt" },
         { analysis::Period::Run2017,
-          "h-tautau/McCorrections/data/2017/JES/Regrouped_Fall17_17Nov2017_V32_MC_UncertaintySources_AK4PFchs.txt" },
+          "h-tautau/McCorrections/data/2017/JES/RegroupedV2_Fall17_17Nov2017_V32_MC_UncertaintySources_AK4PFchs.txt" },
         { analysis::Period::Run2018,
-          "h-tautau/McCorrections/data/2018/JES/Regrouped_Autumn18_V19_MC_UncertaintySources_AK4PFchs.txt" }
+          "h-tautau/McCorrections/data/2018/JES/RegroupedV2_Autumn18_V19_MC_UncertaintySources_AK4PFchs.txt" }
     };
 
     std::string full_path_source;
