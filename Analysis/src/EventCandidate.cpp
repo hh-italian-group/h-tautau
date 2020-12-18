@@ -26,7 +26,7 @@ void EventCandidate::InitializeUncertainties(Period period, bool is_full, const 
         { analysis::Period::Run2018,
           "h-tautau/McCorrections/data/2018/JES/Autumn18_V8_MC_UncertaintySources_AK4PFchs.txt" }
     };
-
+    //taken from: https://twiki.cern.ch/twiki/bin/viewauth/CMS/JECUncertaintySources
     static const std::map<analysis::Period,std::string> file_reduced_unc_sources = {
         { analysis::Period::Run2016,
           "h-tautau/McCorrections/data/2016/JES/RegroupedV2_Summer16_07Aug2017_V11_MC_UncertaintySources_AK4PFchs.txt" },
